@@ -1,0 +1,90 @@
+﻿@* @page "/" *@
+@page "/authorize"
+@rendermode InteractiveServer
+
+<PageTitle>Authorize</PageTitle>
+
+@inject NavigationManager Navigation
+@inject AuthenticationService AuthService
+
+<div class="login-container">
+    <!-- Left Side - SVG Image -->
+    <div class="login-image">
+        <img src="images/professional.svg" alt="Professional Illustration">
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="login-form">
+        <h2>Login</h2>
+        <div>
+            <label for="username">User Name</label>
+            <input @bind="userName" type="text" class="form-control" placeholder="Enter your username" />
+        </div>
+        <div>
+            <label for="password">Password</label>
+            <input @bind="password" type="password" class="form-control" placeholder="Enter your password" />
+        </div>
+        <button @onclick="async () => await HandleLogin()" class="btn btn-primary">Login</button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="error" style="color: red;">@errorMessage</div>
+        }
+    </div>
+</div>
+
+@code {
+    private string userName = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
+    private string authCode = string.Empty;
+    private Dictionary<string, string> QueryParams = new();
+
+    protected override void OnInitialized()
+    {
+        var uri = Navigation.Uri;
+        var queryParams = new Uri(uri).Query;
+
+        if (!string.IsNullOrEmpty(queryParams))
+        {
+            var parsedParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(queryParams);
+
+            QueryParams = parsedParams.ToDictionary(
+                kvp => kvp.Key,
+                 kvp => kvp.Value is IEnumerable<string> values
+                     ? string.Join(",", values)
+                     : kvp.Value.ToString() ?? ""
+                 );
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        AuthRequest request = new()
+            {
+                UserName = userName,
+                Password = password,
+                ClientId = QueryParams["client_id"],
+                CodeChallenge = "",
+                RedirectUri = QueryParams["redirect_uri"]
+            };
+
+        try
+        {
+            var response = await AuthService.Authenticate(request);
+
+            if (response)
+            {
+                Navigation.NavigateTo("/home"); // Redirect to home page
+            }
+            else
+            {
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+}
