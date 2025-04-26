@@ -13,19 +13,17 @@ public class LookupRepo
 
     public async Task<IEnumerable<LookupValue>> GeTenantLookupsByType(int tenantId, string type)
     {
-        var cacheKey = CacheKeys.LOOKUP.FormatCacheKey(tenantId);
+        var cacheKey = CacheKeys.LOOKUP.FormatCacheKey(type, tenantId);
 
-        var lookupValues = _cache.GetValue<IEnumerable<LookupValue>>(cacheKey);
-
-        if (!lookupValues.IsSafe())
+        var lookupValues = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            lookupValues = await (from lt in _applicationDbContext.LookupTypes
-                                  join lv in _applicationDbContext.LookupValues on lt.Id equals lv.LookupTypeId
-                                  where lt.LookupTypeName == type && lt.TenantId == tenantId
-                                  select lv).ToListAsync();
 
-            _cache.Add(cacheKey, lookupValues, new TimeSpan(0, 45, 0));
-        }
+            return await (from lt in _applicationDbContext.LookupTypes
+                          join lv in _applicationDbContext.LookupValues on lt.Id equals lv.LookupTypeId
+                          where lt.LookupTypeName == type && lt.TenantId == tenantId
+                          select lv).ToListAsync();
+
+        }, new TimeSpan(0, 45, 0));
 
         return lookupValues;
     }

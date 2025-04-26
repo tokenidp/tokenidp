@@ -1,8 +1,22 @@
-﻿namespace IDP.Web.Model;
+﻿using System.Text.Json.Serialization;
+
+namespace IDP.Web.Model;
 
 public class Result<TResult>
 {
     public bool IsSuccess { get; set; }
     public TResult Value { get; set; }
-    public string ErrorMessage { get; set; }
+
+    [JsonConstructor]
+    private Result() { }
+
+    private Result(TResult value, bool isSuccess)
+    {
+        IsSuccess = isSuccess;
+        Value = value;
+    }
+
+    public static Result<TResult> Success(TResult value) => new(value, true);
+
+    public static Result<TResult> Failure(TResult error) => new(error, false);
 }

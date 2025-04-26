@@ -6,44 +6,80 @@ namespace Services.Common.Notifications;
 public class SmtpEmail : IEmailNotification
 {
     private readonly IEmailSetting _notificationSettings;
+    private readonly IAppLogger<SmtpEmail> _logger;
 
-    public SmtpEmail(IEmailSetting notificationSettings)
+    public SmtpEmail(IEmailSetting notificationSettings,
+        IAppLogger<SmtpEmail> logger)
     {
         _notificationSettings = notificationSettings;
+        _logger = logger;
     }
 
     public async Task<bool> SendNotificationAsync(NotificationRequest request)
     {
-        string htmlContent = null;
-        if (!string.IsNullOrEmpty(request.HtmlContent) && request.Tokens != null)
+        try
         {
-            htmlContent = ReplaceTokens(request.HtmlContent, request.Tokens);
-        }
+            _logger.LogInfo("Preparing to send email to {Recipient}", request.Recipient);
 
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(_notificationSettings.FromEmail, _notificationSettings.FromName),
-            Subject = request.Subject,
-            Body = htmlContent ?? request.Message,
-            IsBodyHtml = htmlContent != null
-        };
-
-        mailMessage.To.Add(request.Recipient);
-
-        AddAttachments(mailMessage, request.Attachments);
-
-        using (var smtpClient = new SmtpClient(_notificationSettings.SmtpServer, _notificationSettings.SmtpPort))
-        {
-            if (!string.IsNullOrEmpty(_notificationSettings.SmtpUsername))
+            string htmlContent = null;
+            if (!string.IsNullOrEmpty(request.HtmlContent) && request.Tokens != null)
             {
-                smtpClient.UseDefaultCredentials = false;
-                smtpClient.Credentials = new NetworkCredential(_notificationSettings.SmtpUsername,
-                    _notificationSettings.SmtpPassword);
+                _logger.LogDebug("Replacing tokens in HTML content");
+                htmlContent = ReplaceTokens(request.HtmlContent, request.Tokens);
             }
 
-            smtpClient.EnableSsl = _notificationSettings.SmtpUseSsl;
-            await smtpClient.SendMailAsync(mailMessage);
-            return true;
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(_notificationSettings.FromEmail, _notificationSettings.FromName),
+                Subject = request.Subject,
+                Body = htmlContent ?? request.Message,
+                IsBodyHtml = htmlContent != null
+            };
+            mailMessage.To.Add(request.Recipient);
+
+            _logger.LogDebug("Email message constructed. From: {From}, To: {To}, Subject: {Subject}, Body length: {BodyLength}",
+                mailMessage.From, mailMessage.To, mailMessage.Subject, mailMessage.Body.Length);
+
+            if (request.Attachments != null && request.Attachments.Any())
+            {
+                _logger.LogInfo("Adding {AttachmentCount} attachments", request.Attachments.Count);
+                AddAttachments(mailMessage, request.Attachments);
+            }
+
+            using (var smtpClient = new SmtpClient(_notificationSettings.SmtpServer, _notificationSettings.SmtpPort))
+            {
+                _logger.LogDebug("Configuring SMTP client. Server: {SmtpServer}:{SmtpPort}, SSL: {UseSsl}",
+                    _notificationSettings.SmtpServer, _notificationSettings.SmtpPort, _notificationSettings.SmtpUseSsl);
+
+                if (!string.IsNullOrEmpty(_notificationSettings.SmtpUsername))
+                {
+                    smtpClient.UseDefaultCredentials = false; // Explicitly set to false when providing credentials
+                    smtpClient.Credentials = new NetworkCredential(
+                        _notificationSettings.SmtpUsername,
+                        _notificationSettings.SmtpPassword
+                    );
+                    _logger.LogDebug("SMTP credentials set (Username: {SmtpUser})", _notificationSettings.SmtpUsername);
+                }
+
+                smtpClient.EnableSsl = _notificationSettings.SmtpUseSsl;
+
+                _logger.LogInfo("Attempting to send email...");
+                await smtpClient.SendMailAsync(mailMessage);
+                _logger.LogInfo("Email sent successfully to {Recipient}", request.Recipient);
+
+                return true;
+            }
+        }
+        catch (SmtpException smtpEx)
+        {
+            _logger.LogError(smtpEx, "SMTP error sending email to {Recipient}. Status: {StatusCode}",
+                request.Recipient, smtpEx.StatusCode);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error sending email to {Recipient}", request.Recipient);
+            return false;
         }
     }
 

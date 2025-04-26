@@ -1,7 +1,4 @@
-﻿using IDP.Service.Domain;
-using Microsoft.EntityFrameworkCore;
-
-namespace IDP.Service.Application;
+﻿namespace IDP.Service.Application;
 
 public class PreAuthorizationRepo
 {
@@ -19,7 +16,7 @@ public class PreAuthorizationRepo
     {
         var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId, userId);
 
-        var preAuthorization = _cache.GetValue<PreAuthorization>(cacheKey);
+        var preAuthorization = await _cache.GetAsync<PreAuthorization>(cacheKey);
 
         if (preAuthorization == null)
         {
@@ -33,7 +30,7 @@ public class PreAuthorizationRepo
         return preAuthorization;
     }
 
-    public async Task SavePreAuthorization(PreAuthorization preAuthorization)
+    public async Task AddPreAuthorization(PreAuthorization preAuthorization)
     {
         _applicationDbContext.PreAuthorizations.Add(preAuthorization);
         await _applicationDbContext.SaveChangesAsync();
@@ -41,6 +38,17 @@ public class PreAuthorizationRepo
         var cacheKey = CacheKeys.PRE_AUTHORIZATION
             .FormatCacheKey(preAuthorization.CorrelationId, preAuthorization.UserId);
 
-        _cache.Add(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
+        await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
+    }
+
+    public async Task UpdatePreAuthorization(PreAuthorization preAuthorization)
+    {
+        _applicationDbContext.PreAuthorizations.Update(preAuthorization);
+        await _applicationDbContext.SaveChangesAsync();
+
+        var cacheKey = CacheKeys.PRE_AUTHORIZATION
+            .FormatCacheKey(preAuthorization.CorrelationId, preAuthorization.UserId);
+
+        await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
     }
 }

@@ -35,12 +35,12 @@ public class NotificationRequest
         string htmlContent = null,
         Dictionary<string, string> attachments = null)
     {
-        return new NotificationRequest(recipient, 
+        return new NotificationRequest(recipient,
             recipientName,
             tokens,
-            subject, 
-            message, 
-            htmlContent, 
+            subject,
+            message,
+            htmlContent,
             attachments);
     }
 }

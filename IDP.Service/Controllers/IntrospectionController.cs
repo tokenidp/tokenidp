@@ -1,9 +1,7 @@
 ﻿namespace IDP.Service.Controllers;
 
 [Route("introspect")]
-[ApiController]
-[ProducesResponseType(typeof(ApiError), (int)HttpStatusCode.InternalServerError)]
-public class IntrospectionController : ControllerBase
+public class IntrospectionController : ApiControllerBase
 {
     private readonly IReferenceTokenValidator _referenceTokenValidator;
     private readonly IAppLogger<IntrospectionController> _logger;
@@ -16,7 +14,8 @@ public class IntrospectionController : ControllerBase
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(Result<TokenResponse>), (int)HttpStatusCode.OK)]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(Result<IntrospectionResponse>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> Introspect(IntrospectionRequest request)
     {
         if (request == null || string.IsNullOrWhiteSpace(request.Token))
@@ -32,6 +31,6 @@ public class IntrospectionController : ControllerBase
 
         _logger.LogInfo("Introspect completed. Active: {IsActive}", response?.Active);
 
-        return Ok(response);
+        return OkResult(response);
     }
 }

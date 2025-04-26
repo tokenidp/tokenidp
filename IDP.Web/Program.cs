@@ -1,4 +1,4 @@
-using IDP.Web;
+using IDP.Web.Authentication;
 using IDP.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);

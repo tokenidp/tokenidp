@@ -19,7 +19,7 @@ public class AuthorizationRepo
     {
         var cacheKey = CacheKeys.AUTHORIZATION.FormatCacheKey(code, userId);
 
-        var authorizationCode = _cache.GetValue<AuthorizationCode>(cacheKey);
+        var authorizationCode = await _cache.GetAsync<AuthorizationCode>(cacheKey);
 
         if (authorizationCode == null)
         {
@@ -49,6 +49,6 @@ public class AuthorizationRepo
         var cacheKey = CacheKeys.AUTHORIZATION
             .FormatCacheKey(authorizationCode.Code, authorizationCode.UserId);
 
-        _cache.Add(cacheKey, authorizationCode, new TimeSpan(0, 5, 0));
+        await _cache.SetAsync(cacheKey, authorizationCode, new TimeSpan(0, 5, 0));
     }
 }

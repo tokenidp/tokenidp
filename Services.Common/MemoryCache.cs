@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using Services.Common.Interfaces;
-using Services.Common.Model;
 
 namespace Services.Common;
 
@@ -20,77 +18,103 @@ public sealed class MemoryCache : ICache
         _logger = logger;
     }
 
-    /// <summary>
-    /// add object in cache
-    /// </summary>
-    /// <typeparam name="T">object that will add in cache</typeparam>
-    /// <param name="key">cache key</param>
-    /// <param name="value">>value that will add in cache</param>
-    /// <param name="slidingExpiration">set sliding cache expiry time</param>
-    public void Add<T>(string key, T value, TimeSpan? expiration = null) where T : class
+    public Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
     {
-        Delete(key);
+        _logger.LogTrace("Getting or creating cache entry for key {Key}", key);
 
-        // Set cache options.
+        return _cache.GetOrCreateAsync(key, async entry =>
+        {
+            _logger.LogDebug("Cache miss for key {Key}. Creating new entry.", key);
+
+            if (expiration.HasValue)
+            {
+                _logger.LogDebug("Setting expiration for key {Key} to {Expiration}", key, expiration);
+
+                entry.AbsoluteExpirationRelativeToNow = expiration;
+            }
+
+            entry.RegisterPostEvictionCallback(callback: EvictionCallback, state: this);
+            _logger.LogTrace("Registered eviction callback for key {Key}", key);
+
+            try
+            {
+                var value = await factory();
+                _logger.LogTrace("Successfully created value for key {Key}", key);
+                return value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating value for cache key {Key}", key);
+                throw;
+            }
+        });
+    }
+
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
+    {
+        _logger.LogTrace("Setting cache entry for key {Key}", key);
+
         var options = new MemoryCacheEntryOptions()
         {
             // Keep in cache for this time
             AbsoluteExpirationRelativeToNow = expiration ?? defaultExpiration,
         };
 
+        _logger.LogDebug("Setting cache entry for key {Key} with expiration {Expiration}",
+            key, expiration?.ToString() ?? "default");
+
+
         options.RegisterPostEvictionCallback(callback: EvictionCallback, state: this);
+        _logger.LogTrace("Registered eviction callback for key {Key}", key);
 
-        _cache.Set(key, value, options);
+        try
+        {
+            _cache.Set(key, value, options);
+            _logger.LogTrace("Successfully set cache entry for key {Key}", key);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting cache entry for key {Key}", key);
+            throw;
+        }
+
+        return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Get single object from memory
-    /// </summary>
-    /// <typeparam name="T">object that will return</typeparam>
-    /// <param name="key">cache key</param>
-    /// <returns>object</returns>
-    public T GetValue<T>(string key) where T : class
+    public Task<T> GetAsync<T>(string key)
     {
-        return _cache.Get<T>(key);
+        _logger.LogTrace("Attempting to get cache entry for key {Key}", key);
+
+        bool found = _cache.TryGetValue(key, out T value);
+
+        if (found)
+        {
+            _logger.LogDebug("Cache hit for key {Key}", key);
+            _logger.LogTrace("Returning cached value for key {Key}", key);
+        }
+        else
+        {
+            _logger.LogDebug("Cache miss for key {Key}", key);
+        }
+
+        return Task.FromResult(value);
     }
 
-    /// <summary>
-    /// Get list of objects from memory
-    /// </summary>
-    /// <typeparam name="T">object that will return</typeparam>
-    /// <param name="key">cache key</param>
-    /// <returns>list of objects</returns>
-    public IEnumerable<T> GetList<T>(string key) where T : class
+    public Task RemoveAsync(string key)
     {
-        return _cache.Get<IEnumerable<T>>(key);
-    }
+        _logger.LogTrace("Attempting to remove cache entry for key {Key}", key);
 
-    /// <summary>
-    /// Get or create async cache
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="generatorasync"></param>
-    /// <returns></returns>
-    public async Task<T> GetValueAsync<T>(string key, Func<Task<T>> task) where T : class
-    {
-        var cacheEntry = await
-          _cache.GetOrCreateAsync<T>(key, async entry =>
-          {
-              entry.SlidingExpiration = TimeSpan.FromSeconds(15 * 60);
-              return await task();
-          });
-
-        return cacheEntry;
-    }
-
-    /// <summary>
-    /// Delete cache by key
-    /// </summary>
-    /// <param name="key">Cache Key</param>
-    public void Delete(string key)
-    {
-        _cache.Remove(key);
+        try
+        {
+            _cache.Remove(key);
+            _logger.LogDebug("Successfully removed cache entry for key {Key}", key);
+            return Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing cache entry for key {Key}", key);
+            throw;
+        }
     }
 
     /// <summary>
@@ -100,12 +124,32 @@ public sealed class MemoryCache : ICache
     /// <param name="value">Cache Value</param>
     /// <param name="reason">Eviction Reason</param>
     /// <param name="state">Current object state</param>
-    private void EvictionCallback(
-        object key,
+    private void EvictionCallback(object key,
         object value,
         EvictionReason reason,
         object state)
     {
-        _logger.LogDebug("Cache has been expired for the {0} - Reason : {1}", key, reason);
+        _logger.LogDebug("Cache entry evicted. Key: {Key}, Reason: {EvictionReason}",
+            key.ToString(),
+            reason.ToString());
+
+        switch (reason)
+        {
+            case EvictionReason.Expired:
+                _logger.LogTrace("Cache entry naturally expired for key {Key}", key);
+                break;
+            case EvictionReason.Removed:
+                _logger.LogTrace("Cache entry actively removed for key {Key}", key);
+                break;
+            case EvictionReason.Replaced:
+                _logger.LogTrace("Cache entry replaced for key {Key}", key);
+                break;
+            case EvictionReason.TokenExpired:
+                _logger.LogTrace("Cache entry evicted due to token expiration for key {Key}", key);
+                break;
+            case EvictionReason.Capacity:
+                _logger.LogWarning("Cache entry evicted due to capacity pressure for key {Key}", key);
+                break;
+        }
     }
 }

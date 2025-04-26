@@ -1,4 +1,6 @@
 ﻿@page "/mfa"
+@using IDP.Web.Authentication
+@using IDP.Web.Model
 
 @rendermode InteractiveServer
 
@@ -15,7 +17,7 @@
 
             @for (int i = 0; i < 6; i++)
             {
-                int index = i; // Capture the current index for the lambda
+                int index = i;
                 <input type="text"
                        maxlength="1"
                        class="code-input @(IsInvalid ? "invalid" : "")"
@@ -32,12 +34,12 @@
 
         @if (IsInvalid)
         {
-            <div class="validation-message">Invalid verification code. Please try again.</div>
+            <div class="validation-message">@ErrorMessage</div>
         }
 
         <div class="button-container">
-            <button type="submit" class="btn btn-primary">Verify</button>
-            <button type="button" class="btn btn-secondary" @onclick="ResendCode">Resend Code</button>
+            <button type="submit" class="btn btn-primary" disabled="@isLoading">Verify</button>
+            <button type="button" class="btn btn-secondary" @onclick="ResendCode" disabled="@isLoading">Resend Code</button>
         </div>
     </EditForm>
 
@@ -56,10 +58,31 @@
     private bool IsInvalid { get; set; }
     private bool IsResending { get; set; }
     private bool WasResent { get; set; }
+    public string ErrorMessage;
+    private bool isLoading;
+    private Dictionary<string, string> QueryParams = new();
 
     private class MfaModel
     {
         public string[] Digits { get; set; } = new string[6];
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.Uri;
+        var queryParams = new Uri(uri).Query;
+
+        if (!string.IsNullOrEmpty(queryParams))
+        {
+            var parsedParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(queryParams);
+
+            QueryParams = parsedParams.ToDictionary(
+                kvp => kvp.Key,
+                 kvp => kvp.Value is IEnumerable<string> values
+                     ? string.Join(",", values)
+                     : kvp.Value.ToString() ?? ""
+                 );
+        }
     }
 
     private void HandleInput(ChangeEventArgs e, int currentIndex)
@@ -85,7 +108,8 @@
     private void HandleKeyDown(KeyboardEventArgs e, int currentIndex)
     {
         // Handle backspace to move to previous input
-        if (e.Key == "Backspace" && string.IsNullOrEmpty(mfaModel.Digits[currentIndex]) && currentIndex > 0)
+        if (e.Key == "Backspace" && string.IsNullOrEmpty(mfaModel.Digits[currentIndex])
+        && currentIndex > 0)
         {
             FocusPreviousInput(currentIndex);
         }
@@ -119,7 +143,6 @@
         }
     }
 
-
     private void FocusNextInput(int currentIndex)
     {
         // Use JS interop to focus the next input
@@ -146,28 +169,11 @@
             return;
         }
 
-        // Here you would typically call your authentication service
-        // For demonstration, we'll simulate a network call
         try
         {
             IsInvalid = false;
 
-            // Simulate API call
-            await Task.Delay(500);
-
-            // Replace with actual verification logic
-            bool isValid = await VerifyCodeWithServer(code);
-
-            if (isValid)
-            {
-                // Redirect to authorized page
-                Navigation.NavigateTo("/", true);
-
-            }
-            else
-            {
-                IsInvalid = true;
-            }
+            await VerifyCodeWithServer(code);
         }
         catch
         {
@@ -175,12 +181,37 @@
         }
     }
 
-    private async Task<bool> VerifyCodeWithServer(string code)
+    private async Task VerifyCodeWithServer(string code)
     {
-        // Replace with actual server verification
-        // This is just a demo - in production, you'd call your backend API
-        await Task.Delay(300); // Simulate network delay
-        return code == "123456"; // Demo - accepts any 6-digit code in development
+        isLoading = true;
+        ErrorMessage = string.Empty;
+
+        var mfaRequest = new MfaRequest()
+            {
+                CorrelationId = QueryParams["corid"],
+                Code = code,
+                UserId = Convert.ToInt32(QueryParams["uid"])
+            };
+
+        var result = await AuthService.VerifyMfaAsync(mfaRequest);
+
+        if (result.IsSuccess)
+        {
+            isLoading = false;
+
+            var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
+
+            var uri = $"{redirectUri}?code={result?.Value.AuthorizationCode}";
+
+            Navigation.NavigateTo(uri, true);
+        }
+        else
+        {
+            ErrorMessage = result.Value.Error;
+            IsInvalid = true;
+        }
+
+        isLoading = false;
     }
 
     private async Task ResendCode()
@@ -190,10 +221,6 @@
 
         try
         {
-            // Simulate resend API call
-            await Task.Delay(800);
-
-            // Replace with actual resend logic
             await SendNewCodeToUser();
 
             WasResent = true;
@@ -209,7 +236,18 @@
 
     private async Task SendNewCodeToUser()
     {
-        // Replace with actual code sending logic
-        await Task.Delay(300); // Simulate network delay
+        var mfaRequest = new MfaRequest()
+            {
+                CorrelationId = QueryParams["corid"],
+                UserId = Convert.ToInt32(QueryParams["uid"])
+            };
+
+        var result = await AuthService.ResendMfaCodeAsync(mfaRequest);
+
+        if (!result.IsSuccess)
+        {
+            ErrorMessage = result.Value.Error;
+            IsInvalid = true;
+        }
     }
 }

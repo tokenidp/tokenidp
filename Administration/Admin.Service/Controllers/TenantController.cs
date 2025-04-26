@@ -30,7 +30,7 @@ public class TenantController : ApiControllerBase<TenantController>
     {
         if (id <= 0)
         {
-            return BadRequest(ApiError.Failure(string.Empty, string.Empty, "Record Id should be greater than zero."));
+            return BadRequest(ApiError.Failure("Record Id should be greater than zero."));
         }
 
         var response = await Mediator.Send(new GetTenantById { Id = id });
@@ -58,7 +58,7 @@ public class TenantController : ApiControllerBase<TenantController>
     {
         if (id != request.Id)
         {
-            return BadRequest(ApiError.Failure(string.Empty, string.Empty, "Record Ids didn't match."));
+            return BadRequest(ApiError.Failure("Record Ids didn't match."));
         }
 
         request.Id = id;

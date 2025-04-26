@@ -1,6 +1,7 @@
 ﻿using IDP.Service.Application;
 using IDP.Service.Application.TokenService;
 using IDP.Service.Controllers;
+using IDP.Service.Infrastructure;
 using IDP.Service.Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -93,7 +94,7 @@ public class TokenControllerTests
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         var resultValue = Assert.IsType<Result<TokenResponse>>(badRequestResult.Value);
         Assert.False(resultValue.IsSuccess);
-        Assert.Equal("Invalid client.", resultValue.ErrorMessage);
+        Assert.False(resultValue.IsSuccess);
 
         _mockLogger.Verify(x => x.LogWarning(
             "TokenType not found for ClientId: {ClientId}", request.ClientId), Times.Once);

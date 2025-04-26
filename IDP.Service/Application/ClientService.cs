@@ -19,25 +19,22 @@ public class ClientService
         return tokenType;
     }
 
-    public async Task<ClientDto> GetClientScope(string clientId)
+    public async Task<ClientDto> GetClientScopes(string clientId)
     {
-        var client = await _clientRepo.GetClient(clientId);
+        var scopes = await _clientRepo.GetClientScopes(clientId);
 
-        if (client == null)
+        if (string.IsNullOrEmpty(scopes))
         {
             return ClientDto.Create(false, string.Empty);
         }
 
-        var scopes = string.Join(" ", client.ClientScopes
-            .Select(s => s.Scope).ToList());
-
-        return ClientDto.Create(client != null, scopes);
+        return ClientDto.Create(true, scopes);
     }
 
     public async Task<bool> IsValidClient(string clientId)
     {
-        var client = await _clientRepo.GetClient(clientId);
+        var scopes = await _clientRepo.GetClientScopes(clientId);
 
-       return client != null;
+        return !string.IsNullOrEmpty(scopes);
     }
 }

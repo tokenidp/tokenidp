@@ -3,7 +3,7 @@ using System.Text;
 
 namespace IDP.Service.Security;
 
-public static class PkceHelper
+internal static class PkceHelper
 {
     public static (string CodeVerifier, string CodeChallenge) GeneratePkce()
     {

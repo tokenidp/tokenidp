@@ -43,7 +43,7 @@ public class AccessTokenService : ITokenService
         _logger.LogInfo("Generating direct token for {UserName} (UserId: {UserId}, Tenant: {TenantId}, " +
             "Client: {ClientId})", userName, userId, tenantId, clientId);
 
-        List<string> userRoles = await _roleRepo.GetUserRoles(userId);
+        var userRoles = await _roleRepo.GetUserRoles(userId);
 
         if (!userRoles.IsSafe())
         {

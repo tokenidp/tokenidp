@@ -11,7 +11,7 @@ public class PreAuthorization
     public string CodeChallenge { get; private set; }
     public string CodeChallengeMethod { get; private set; } //Default is SHA-256
     public string Scopes { get; private set; }
-    public string MfaCode {  get; private set; }
+    public string MfaCode { get; private set; }
     public DateTime Expiry { get; private set; }
     public bool Is2FAVerified { get; private set; }
     public int CreatedBy { get; private set; }
@@ -38,6 +38,18 @@ public class PreAuthorization
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
         Expiry = expiry;
+        CreatedBy = userId;
+        CreatedOn = DateTime.UtcNow;
+    }
+
+    public void UpdateMfaCode(int userId,
+        string mfaCode,
+        DateTime expiry)
+    {
+        MfaCode = mfaCode;
+        Expiry = expiry;
+        UpdatedOn = DateTime.UtcNow;
+        UpdatedBy = userId;
     }
 
     public void UpdateTwoFactorEnableFlag(bool enabled)

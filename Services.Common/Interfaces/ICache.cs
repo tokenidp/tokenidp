@@ -3,42 +3,36 @@
 public interface ICache
 {
     /// <summary>
+    /// Get or Create object in cache
+    /// </summary>
+    /// <typeparam name="T">Object Type that will get or create in cache</typeparam>
+    /// <param name="key">Cache Key</param>
+    /// <param name="factory">Factory method if object doesn't exist in cache</param>
+    /// <param name="expiration">absolute expiration</param>
+    /// <returns>cached object</returns>
+    Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null);
+
+    /// <summary>
     /// add object in cache
     /// </summary>
     /// <typeparam name="T">object that will add in cache</typeparam>
     /// <param name="key">cache key</param>
-    /// <param name="value">>value that will add in the cache</param>
-    /// <param name="slidingExpiration">set sliding cache expiry time</param>
-    void Add<T>(string key, T value, TimeSpan? expiration = null) where T : class;
-
-    /// <summary>
-    /// Get single object from memory
-    /// </summary>
-    /// <typeparam name="T">object that will return</typeparam>
-    /// <param name="key">cache key</param>
-    /// <returns>object</returns>
-    T GetValue<T>(string key) where T : class;
-
-    /// <summary>
-    /// Get or create async cache
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="key"></param>
-    /// <param name="generatorasync"></param>
+    /// <param name="value">value that will add in the cache</param>
+    /// <param name="expiration">absolute expiration</param>
     /// <returns></returns>
-    Task<T> GetValueAsync<T>(string key, Func<Task<T>> task) where T : class;
+    Task SetAsync<T>(string key, T value, TimeSpan? expiration = null);
 
     /// <summary>
-    /// Get list of objects from memory
+    /// Get cached value
     /// </summary>
-    /// <typeparam name="T">object that will return</typeparam>
+    /// <typeparam name="T">object type that will return</typeparam>
     /// <param name="key">cache key</param>
-    /// <returns>list of objects</returns>
-    IEnumerable<T> GetList<T>(string key) where T : class;
+    /// <returns>cached object</returns>
+    Task<T> GetAsync<T>(string key);
 
     /// <summary>
     /// Delete cache by key
     /// </summary>
     /// <param name="key">Cache Key</param>
-    void Delete(string key);
+    Task RemoveAsync(string key);
 }

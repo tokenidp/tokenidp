@@ -1,10 +1,6 @@
 ﻿namespace IDP.Service.Controllers;
 
-[Route("[controller]")]
-[ApiController]
-[Authorize]
-[ProducesResponseType(typeof(ApiError), (int)HttpStatusCode.InternalServerError)]
-public class UserController : ControllerBase
+public class UserController : ApiControllerBase
 {
     private readonly UserRepo _userService;
     private readonly IAppLogger<UserController> _logger;
@@ -27,6 +23,6 @@ public class UserController : ControllerBase
 
         _logger.LogInfo("GetUserInfo completed for userId: {UserId}", userId);
 
-        return Ok(Result<UserInfo>.Success(response));
+        return OkResult(response);
     }
 }

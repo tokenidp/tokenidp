@@ -1,5 +1,6 @@
 ﻿using IDP.Service.Application;
 using IDP.Service.Controllers;
+using IDP.Service.Infrastructure;
 using IDP.Service.Model;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
@@ -10,13 +11,13 @@ namespace IDP.Tests.UnitTest;
 
 public class UserTest
 {
-    private readonly Mock<UserService> _mockUserService;
+    private readonly Mock<UserRepo> _mockUserService;
     private readonly Mock<IAppLogger<UserController>> _mockLogger;
     private readonly UserController _controller;
 
     public UserTest()
     {
-        _mockUserService = new Mock<UserService>();
+        _mockUserService = new Mock<UserRepo>();
         _mockLogger = new Mock<IAppLogger<UserController>>();
         _controller = new UserController(_mockUserService.Object, _mockLogger.Object);
     }
@@ -26,7 +27,7 @@ public class UserTest
     {
         // Arrange
         const int userId = 123;
-        var expectedUser = UserInfo.Create(1, 1, "nraza", string.Empty, true, default);
+        var expectedUser = UserInfo.Create(1, 1, "nraza", string.Empty, default);
 
         _mockUserService.Setup(x => x.GetUserInfo(userId))
             .ReturnsAsync(expectedUser);

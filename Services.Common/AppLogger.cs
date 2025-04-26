@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Services.Common.Interfaces;
 
 namespace Services.Common;
 
@@ -25,17 +24,21 @@ public class AppLogger<T> : IAppLogger<T> where T : class
 
     public void LogDebug(string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Debug)) return;
+
         _logger.LogDebug(message, args);
     }
 
     public void LogInfo(string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Information)) return;
+
         _logger.LogInformation(message, args);
     }
 
     public void LogTrace<TData>(string message, TData data) where TData : class
     {
-        if (data == null)
+        if (data == null || !_logger.IsEnabled(LogLevel.Trace))
             return;
 
         var json = _jsonHelper.SerializeFormattedObject(data);
@@ -45,12 +48,14 @@ public class AppLogger<T> : IAppLogger<T> where T : class
 
     public void LogTrace(string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Trace)) return;
+
         _logger.LogTrace(message, args);
     }
 
     public void LogWarning<TData>(string message, TData data) where TData : class
     {
-        if (data == null)
+        if (data == null || !_logger.IsEnabled(LogLevel.Warning))
             return;
 
         var json = _jsonHelper.SerializeFormattedObject(data);
@@ -60,12 +65,14 @@ public class AppLogger<T> : IAppLogger<T> where T : class
 
     public void LogWarning(string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Warning)) return;
+
         _logger.LogWarning(message, args);
     }
 
     public void LogError<TData>(string message, TData data) where TData : class
     {
-        if (data == null)
+        if (data == null || !_logger.IsEnabled(LogLevel.Error))
             return;
 
         var json = _jsonHelper.SerializeFormattedObject(data);
@@ -75,11 +82,15 @@ public class AppLogger<T> : IAppLogger<T> where T : class
 
     public void LogError(string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Error)) return;
+
         _logger.LogError(message, args);
     }
 
     public void LogError(Exception exception, string message, params object[] args)
     {
+        if (!_logger.IsEnabled(LogLevel.Error)) return;
+
         _logger.LogError(exception, message, args);
     }
 

@@ -22,6 +22,7 @@ public class AuthRequest
         RedirectUri = redirectUri;
         CodeChallenge = codeChallenge;
         CodeChallengeMethod = codeChallengeMethod;
+        Scopes = scopes;
     }
 
     public static AuthRequest Create(string clientId,

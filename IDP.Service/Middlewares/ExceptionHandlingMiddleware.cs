@@ -82,8 +82,8 @@ public class ExceptionHandlingMiddleware
         context.Response.ContentType = "application/json";
         context.Response.StatusCode = (int)statusCode;
 
-        var response = ApiError.Failure(message, correlationId, statusCode.ToString());
-        var result = _jsonHelper.SerializeObject(response);
+        var response = ApiError.Failure(message, correlationId);
+        var result = _jsonHelper.SerializeObject(Result<ApiError>.Failure(response));
 
         await context.Response.WriteAsync(result);
     }

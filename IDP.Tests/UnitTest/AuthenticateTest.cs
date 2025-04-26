@@ -14,12 +14,15 @@ public class AuthenticateControllerTests
     private readonly Mock<IdentityService> _mockIdentityService;
     private readonly Mock<IAppLogger<AuthenticateController>> _mockLogger;
     private readonly AuthenticateController _controller;
+    private readonly Mock<MfaService> _mfaService;
 
     public AuthenticateControllerTests()
     {
         _mockIdentityService = new Mock<IdentityService>();
         _mockLogger = new Mock<IAppLogger<AuthenticateController>>();
-        _controller = new AuthenticateController(_mockIdentityService.Object, _mockLogger.Object);
+        _mfaService = new Mock<MfaService>();
+        _controller = new AuthenticateController(_mockIdentityService.Object, 
+            _mockLogger.Object, _mfaService.Object);
     }
 
     [Fact]

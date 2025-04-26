@@ -1,4 +1,6 @@
-﻿namespace IDP.Service.Model;
+﻿using System.Text.Json.Serialization;
+
+namespace IDP.Web.Model;
 
 public class ClientDto
 {

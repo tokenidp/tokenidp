@@ -60,7 +60,7 @@ public class ExceptionHandlingMiddleware
 
         var statusCode = HttpStatusCode.InternalServerError;
 
-        var response = ApiError.Failure(correlationId, statusCode.ToString(), message);
+        var response = ApiError.Failure(message, correlationId);
 
         var result = _jsonHelper.SerializeObject(response);
 

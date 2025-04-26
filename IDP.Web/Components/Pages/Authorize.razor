@@ -1,5 +1,6 @@
 ﻿@using IDP.Web.Model
 @using System.ComponentModel.DataAnnotations
+@using IDP.Web.Authentication
 
 @page "/authorize"
 @rendermode InteractiveServer
@@ -47,54 +48,21 @@ else
 
                 <button type="submit" class="btn btn-primary">Login</button>
             </EditForm>
-
-            @*    <div class="form-group">
-                <label for="userName">Username</label>
-                <input type="text" id="userName" @bind="userName" class="form-control" placeholder="Enter your username" required>
-                <div class="invalid-feedback">Please enter your username</div>
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" @bind="password" class="form-control" placeholder="Enter your password" required>
-                <div class="invalid-feedback">Please enter your password</div>
-                <a href="#" class="forgot-password">Forgot password?</a>
-            </div>
-
-            <button id="login-btn" @onclick="async () => await HandleLogin()" class="btn btn-primary">Login</button> *@
-
-            @*  <div class="signup-link">
-                Don't have an account? <a href="#">Sign up</a>
-            </div> *@
         </div>
     </div>
-
-    @*  <div class="login-container">
-        <div class="login-image">
-            <img src="images/professional.svg" alt="Professional Illustration">
-        </div>
-
-        <div class="login-form">
-            <h2>Login</h2>
-            <div>
-                <label for="userName">User Name</label>
-                <input @bind="userName" type="text" class="form-control" placeholder="Enter your username" />
-            </div>
-            <div>
-                <label for="password">Password</label>
-                <input @bind="password" type="password" class="form-control" placeholder="Enter your password" />
-            </div>
-            <button @onclick="async () => await HandleLogin()" class="btn btn-primary">Login</button>
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="error" style="color: red;">@errorMessage</div>
-            }
-        </div>
-    </div> *@
 }
 
 @code {
+
+    private class LoginModel
+    {
+        [Required(ErrorMessage = "Username is required")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; }
+    }
+
     private bool isValidClientId = true;
     private string Scopes = string.Empty;
     private string ErrorMessage = string.Empty;
@@ -117,7 +85,7 @@ else
                      : kvp.Value.ToString() ?? ""
                  );
 
-            var client = await AuthService.GetClient(QueryParams["client_id"]);
+            var client = await AuthService.GetClientAsync(QueryParams["client_id"]);
 
             isValidClientId = client.IsValidClient;
             Scopes = client.Scopes;
@@ -134,24 +102,28 @@ else
                 Password = loginModel.Password,
                 ClientId = QueryParams["client_id"],
                 CodeChallenge = QueryParams["code_challenge"],
-                RedirectUri = QueryParams["redirect_uri"],
-                CodeChallengeMethod = "SHA-256",
+                RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
+                CodeChallengeMethod = QueryParams["code_challenge_method"],
                 Scopes = Scopes
             };
 
         try
         {
-            var authCodeResponse = await AuthService.Authenticate(request);
+            var authCodeResponse = await AuthService.AuthenticateAsync(request);
 
             if (authCodeResponse?.IsSuccess == false)
             {
-                ErrorMessage = authCodeResponse?.ErrorMessage ?? string.Empty;
+                ErrorMessage = authCodeResponse?.Value.Error ?? string.Empty;
                 return;
             }
 
             if (authCodeResponse?.Value.TwoFactorEnabled == true)
             {
-                Navigation.NavigateTo("/mfa", true);
+                var uri = $"/mfa?uid={authCodeResponse?.Value.UserId}&" +
+                $"corid={authCodeResponse?.Value.CorrelationId}&" +
+                $"redirect_uri={QueryParams["redirect_uri"]}";
+                
+                Navigation.NavigateTo(uri, true);
             }
             else
             {
@@ -163,14 +135,5 @@ else
         {
             ErrorMessage = $"An error occurred: {ex.Message}";
         }
-    }
-
-    private class LoginModel
-    {
-        [Required(ErrorMessage = "Username is required")]
-        public string UserName { get; set; }
-
-        [Required(ErrorMessage = "Password is required")]
-        public string Password { get; set; }
     }
 }

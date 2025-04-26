@@ -2,7 +2,7 @@
 
 namespace IDP.Service.Security;
 
-public static class MfaCodeGenerator
+internal static class MfaCodeGenerator
 {
     public static string GenerateMfaCode()
     {

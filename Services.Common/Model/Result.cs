@@ -4,21 +4,14 @@ public class Result<TResult>
 {
     public bool IsSuccess { get; private set; }
     public TResult Value { get; private set; }
-    public string ErrorMessage { get; private set; }
 
-    private Result(TResult value)
+    private Result(TResult value, bool isSuccess)
     {
-        IsSuccess = true;
+        IsSuccess = isSuccess;
         Value = value;
     }
 
-    private Result(string errorMessage)
-    {
-        IsSuccess = false;
-        ErrorMessage = errorMessage;
-    }
+    public static Result<TResult> Success(TResult value) => new(value, true);
 
-    public static Result<TResult> Success(TResult value) => new(value);
-
-    public static Result<TResult> Failure(string error) => new(error);
+    public static Result<TResult> Failure(TResult error) => new(error, false);
 }

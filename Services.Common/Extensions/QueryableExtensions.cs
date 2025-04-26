@@ -53,7 +53,7 @@ public class ProjectionExpression<TSource>
     {
         var key = GetCacheKey<TDest>();
 
-        return ExpressionCache.ContainsKey(key) 
+        return ExpressionCache.ContainsKey(key)
             ? ExpressionCache.GetExpression(key) as Expression<Func<TSource, TDest>> : null;
     }
 
@@ -77,8 +77,8 @@ public class ProjectionExpression<TSource>
         return expression;
     }
 
-    private static MemberAssignment BuildBinding(Expression parameterExpression, 
-        MemberInfo destinationProperty, 
+    private static MemberAssignment BuildBinding(Expression parameterExpression,
+        MemberInfo destinationProperty,
         IEnumerable<PropertyInfo> sourceProperties)
     {
         var sourceProperty = sourceProperties.FirstOrDefault(src => src.Name == destinationProperty.Name);
@@ -100,7 +100,7 @@ public class ProjectionExpression<TSource>
 
                 if (sourceChildProperty != null)
                 {
-                    return Expression.Bind(destinationProperty, 
+                    return Expression.Bind(destinationProperty,
                         Expression.Property(Expression.Property(parameterExpression, sourceProperty), sourceChildProperty));
                 }
             }

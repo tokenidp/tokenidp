@@ -1,9 +1,6 @@
 ﻿namespace IDP.Service.Controllers;
 
-[Route("[controller]")]
-[ApiController]
-[ProducesResponseType(typeof(ApiError), (int)HttpStatusCode.InternalServerError)]
-public class ClientController : ControllerBase
+public class ClientController : ApiControllerBase
 {
     private readonly ClientService _clientService;
     private readonly IAppLogger<ClientController> _logger;
@@ -16,15 +13,16 @@ public class ClientController : ControllerBase
     }
 
     [HttpGet("{clientId}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Result<ClientDto>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> IsValidClient(string clientId)
     {
         _logger.LogInfo("IsValidClient called for clientId: {ClientId}", clientId);
 
-        var response = await _clientService.GetClientScope(clientId);
+        var response = await _clientService.GetClientScopes(clientId);
 
         _logger.LogInfo("IsValidClient result for clientId: {ClientId} is {Result}", clientId, response);
 
-        return Ok(Result<ClientDto>.Success(response));
+        return OkResult(response);
     }
 }

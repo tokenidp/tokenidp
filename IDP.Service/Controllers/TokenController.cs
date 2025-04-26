@@ -1,16 +1,13 @@
 ﻿namespace IDP.Service.Controllers;
 
-[Route("[controller]")]
-[ApiController]
-[ProducesResponseType(typeof(ApiError), (int)HttpStatusCode.InternalServerError)]
-public class TokenController : ControllerBase
+public class TokenController : ApiControllerBase
 {
     private readonly TokenServiceFactory _tokenServiceFactory;
-    private readonly ClientRepo _clientService;
+    private readonly ClientService _clientService;
     private readonly IAppLogger<TokenController> _logger;
 
     public TokenController(TokenServiceFactory tokenServiceFactory,
-         ClientRepo clientService,
+         ClientService clientService,
         IAppLogger<TokenController> appLogger)
     {
         _tokenServiceFactory = tokenServiceFactory;
@@ -19,6 +16,7 @@ public class TokenController : ControllerBase
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(Result<TokenResponse>), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> GetAccessToken(TokenRequest request)
     {
@@ -31,7 +29,7 @@ public class TokenController : ControllerBase
         if (!Enum.IsDefined(typeof(TokenType), tokenType))
         {
             _logger.LogWarning("TokenType not found for ClientId: {ClientId}", request.ClientId);
-            return BadRequest(Result<TokenResponse>.Failure("Invalid client."));
+            return BadRequestResult(ApiError.Failure("Invalid client."));
         }
 
         ITokenService _tokenService = _tokenServiceFactory.GetService(tokenType);
@@ -40,6 +38,6 @@ public class TokenController : ControllerBase
 
         _logger.LogInfo("Token generated for ClientId: {ClientId} with TokenType: {TokenType}", request.ClientId, tokenType);
 
-        return Ok(Result<TokenResponse>.Success(response));
+        return OkResult(response);
     }
 }

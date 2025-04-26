@@ -1,10 +1,6 @@
 ﻿namespace IDP.Service.Controllers;
 
-[Route("[controller]")]
-[ApiController]
-[Authorize]
-[ProducesResponseType(typeof(ApiError), (int)HttpStatusCode.InternalServerError)]
-public class RefreshTokenController : ControllerBase
+public class RefreshTokenController : ApiControllerBase
 {
     private readonly RefreshTokenService _refreshTokenService;
     private readonly IAppLogger<RefreshTokenController> _logger;
@@ -30,7 +26,7 @@ public class RefreshTokenController : ControllerBase
         _logger.LogInfo("Refresh token generated for ClientId: {ClientId}", request.ClientId);
 
 
-        return Ok(Result<TokenResponse>.Success(response));
+        return OkResult(response);
     }
 
     [HttpDelete]
@@ -45,6 +41,6 @@ public class RefreshTokenController : ControllerBase
 
         _logger.LogInfo("Refresh token revoked for IP: {IP}", ipAddress);
 
-        return Ok(Result<object>.Success(new { message = "Refresh token revoked." }));
+        return OkResult(new { message = "Refresh token revoked." });
     }
 }

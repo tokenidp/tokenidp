@@ -2,8 +2,8 @@
 
 public class ClientDto
 {
-    public bool IsValidClient { get; }
-    public string Scopes { get; }
+    public bool IsValidClient { get; private set; }
+    public string Scopes { get; private set; }
 
     private ClientDto(bool isValidClient, string scopes)
     {
@@ -13,9 +13,6 @@ public class ClientDto
 
     public static ClientDto Create(bool isValidClient, string scopes)
     {
-        if (string.IsNullOrWhiteSpace(scopes))
-            throw new ArgumentException("Scopes cannot be null or empty", nameof(scopes));
-
         return new ClientDto(isValidClient, scopes);
     }
 }

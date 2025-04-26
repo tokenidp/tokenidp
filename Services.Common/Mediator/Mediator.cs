@@ -1,71 +1,57 @@
-﻿using System.Collections.Concurrent;
+﻿using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Concurrent;
 
 namespace Services.Common.Mediator;
 
-public class Mediator
+public sealed class Mediator : IMediator
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ConcurrentDictionary<Type, Func<object, Task<object>>> _handlerCache = new();
+    private readonly ConcurrentDictionary<Type, RequestHandlerBase> _handlerCache;
 
     public Mediator(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
+        _handlerCache = new ConcurrentDictionary<Type, RequestHandlerBase>();
     }
 
-    //public async Task<TResponse> Send<TResponse>(IRequest<TResponse> request)
-    //{
-    //    // Resolve or cache handler delegate
-    //    var handlerDelegate = ResolveHandlerDelegate(request);
+    public async Task<TResponse> Send<TRequest, TResponse>(
+        TRequest request,
+        CancellationToken ct = default)
+        where TRequest : IRequest<TResponse>
+    {
+        var handler = GetHandler<TRequest, TResponse>();
 
-    //    // Resolve pipeline behaviors
-    //    var behaviors = ResolvePipelineBehaviors<IRequest<TResponse>, TResponse>();
+        // Get behaviors once per TRequest/TResponse combo
+        var behaviors = _serviceProvider
+            .GetServices<IPipelineBehavior<TRequest, TResponse>>()
+            .Reverse();
 
-    //    // Build the pipeline
-    //    RequestHandlerDelegate<TResponse> next = () => handlerDelegate(request);
+        RequestHandlerDelegate<TResponse> pipeline = () => handler.Handle(request, ct);
 
-    //    foreach (var behavior in behaviors.Reverse())
-    //    {
-    //        var currentBehavior = behavior;
-    //        var currentNext = next;
-    //        next = () => currentBehavior.Handle(request, currentNext);
-    //    }
+        foreach (var behavior in behaviors)
+        {
+            var next = pipeline;
+            pipeline = () => behavior.Handle(request, next, ct);
+        }
 
-    //    // Execute the pipeline
-    //    return await next();
-    //}
+        return await pipeline();
+    }
 
-    //private RequestHandlerDelegate<TResponse> ResolveHandlerDelegate<TResponse>(IRequest<TResponse> request)
-    //{
-    //    // Resolve handler delegate (cached for performance)
-    //    var handlerDelegate = _handlerCache.GetOrAdd(request.GetType(), requestType =>
-    //    {
-    //        var handlerType = typeof(IRequestHandler<,>).MakeGenericType(requestType, typeof(TResponse));
-    //        var method = handlerType.GetMethod("Handle");
-    //        var handlerInstance = _serviceProvider.GetService(handlerType);
+    private IRequestHandler<TRequest, TResponse> GetHandler<TRequest, TResponse>()
+        where TRequest : IRequest<TResponse>
+    {
+        var requestType = typeof(TRequest);
 
-    //        if (handlerInstance == null)
-    //            throw new InvalidOperationException($"No handler found for {requestType}");
+        if (!_handlerCache.TryGetValue(requestType, out var handler))
+        {
+            handler = (RequestHandlerBase)_serviceProvider
+                .GetRequiredService<IRequestHandler<TRequest, TResponse>>();
 
-    //        // Create a strongly typed delegate for handler execution
-    //        var response = new Task<TResponse>(() =>
-    //        {
-    //            var tResponse = (Task<TResponse>)method.Invoke(handlerInstance, new[] { request });
-    //            return tResponse;
-    //        });
-    //    });
+            _handlerCache.TryAdd(requestType, handler);
+        }
 
-    //    return handlerDelegate;
-    //}
+        return (IRequestHandler<TRequest, TResponse>)handler;
+    }
 
-
-
-    //private IEnumerable<IPipelineBehavior<TRequest, TResponse>> ResolvePipelineBehaviors<TRequest, TResponse>()
-    //where TRequest : IRequest<TResponse>
-    //{
-    //    // Resolve all pipeline behaviors for the current request/response types
-    //    return _serviceProvider
-    //        .GetServices<IPipelineBehavior<TRequest, TResponse>>()
-    //        .Reverse()
-    //        .ToList();
-    //}
+    private abstract class RequestHandlerBase { }
 }
