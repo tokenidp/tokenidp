@@ -1,5 +1,3 @@
-using IDP.Service.Infrastructure;
-
 namespace IDP.Tests.Infrastructure;
 
 [Collection("IDP Integration Tests")]

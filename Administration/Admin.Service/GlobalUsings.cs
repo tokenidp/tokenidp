@@ -1,8 +1,4 @@
-﻿global using Identity.Application;
-global using Identity.Application.Common.Interfaces;
-global using Identity.Service.Middlewares;
-global using MediatR;
-global using Microsoft.AspNetCore.Authorization;
+﻿global using Microsoft.AspNetCore.Authorization;
 global using Microsoft.AspNetCore.Builder;
 global using Microsoft.AspNetCore.Hosting;
 global using Microsoft.AspNetCore.Http;

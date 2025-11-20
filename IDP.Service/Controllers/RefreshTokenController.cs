@@ -1,5 +1,6 @@
 ﻿namespace IDP.Service.Controllers;
 
+[Route("refresh-token")]
 public class RefreshTokenController : ApiControllerBase
 {
     private readonly RefreshTokenService _refreshTokenService;

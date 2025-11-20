@@ -1,0 +1,18 @@
+﻿global using IDP.Common.Exceptions;
+global using IDP.Common.Extensions;
+global using IDP.Common.Interfaces;
+global using IDP.Common.Model;
+global using IDP.Core.Domain;
+global using IDP.Core.Domain.ComplexTypes;
+global using IDP.Core.Infrastructure;
+global using IDP.Core.Model;
+global using IDP.Core.Security;
+global using Microsoft.AspNetCore.Builder;
+global using Microsoft.AspNetCore.Http;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Routing;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Microsoft.Extensions.Options;
+global using System.Reflection;
+global using static IDP.Core.Domain.Client;

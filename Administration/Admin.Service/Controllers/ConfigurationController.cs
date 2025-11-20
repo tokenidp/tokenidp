@@ -1,7 +1,4 @@
-﻿using Identity.Application.Common.Models;
-using Identity.Application.Configurations.Commands;
-using Identity.Application.Configurations.Queries;
-using Services.Common.Model;
+﻿using IDP.Core.Admin.Configurations;
 using System.Net;
 
 namespace Identity.Service.Controllers;

@@ -1,60 +1,42 @@
-using IDP.Service.Middlewares;
 using System.Text.Json.Serialization;
 
-namespace IDP.Service;
+var builder = WebApplication.CreateBuilder(args);
 
-public class Program
+// --------------------------------------
+// Services
+// --------------------------------------
+builder.Services.AddAuthorizationCore();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddServices(builder.Configuration);
+builder.Services.AddPersistence(builder.Configuration);
+builder.Services.AddAuthentication(builder.Configuration);
+
+builder.Services.AddControllers().AddJsonOptions(options =>
 {
-    protected Program() { }
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.WriteIndented = true;
+});
 
-    public static async Task Main(string[] args)
-    {
-        var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
 
-        ConfigureServices(builder);
+// --------------------------------------
+// Middleware
+// --------------------------------------
+app.UseHttpsRedirection();
 
-        var app = builder.Build();
+app.UseRouting();
 
-        ConfigureMiddleware(app);
+app.UseCors(policy => policy
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .WithOrigins("https://localhost:7217") // replace with your actual client URL
+    .AllowCredentials()
+);
 
-        await app.RunAsync();
-    }
+app.UseAuthentication();
+app.UseAuthorization();
 
-    private static void ConfigureServices(WebApplicationBuilder builder)
-    {
-        builder.Services.AddAuthorizationCore();
-        builder.Services.AddHttpContextAccessor();
+app.MapControllers();
 
-        builder.Services.AddServices(builder.Configuration);
-        builder.Services.AddPersistence(builder.Configuration);
-        builder.Services.AddAuthentication(builder.Configuration);
-
-        builder.Services.AddControllers().AddJsonOptions(options =>
-        {
-            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-            // Optional: make JSON output more readable in development
-            options.JsonSerializerOptions.WriteIndented = true;
-        });
-    }
-
-    private static void ConfigureMiddleware(WebApplication app)
-    {
-        app.UseHttpsRedirection();
-
-        app.UseMiddleware<ExceptionHandlingMiddleware>();
-        app.UseMiddleware<CorrelationIdMiddleware>();
-
-        app.UseRouting();
-
-        app.UseCors(x => x
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .WithOrigins("https://localhost:7217") // Replace with actual client URL
-            .AllowCredentials());
-
-        app.UseAuthentication();
-        app.UseAuthorization();
-
-        app.MapControllers();
-    }
-}
+await app.RunAsync();

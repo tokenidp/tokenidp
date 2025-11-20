@@ -234,3 +234,90 @@ html, body {
     color: var(--primary-color);
     text-decoration: none;
 }
+
+.external-logins {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.btn-google {
+    background-color: #DB4437;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-microsoft {
+    background-color: #2F2F2F;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-facebook {
+    background-color: #1877F2;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-microsoft:hover {
+    opacity: 0.8;
+}
+
+.btn-google:hover {
+    opacity: 0.8;
+}
+
+.btn-facebook:hover {
+    opacity: 0.8;
+}
+
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #6c757d;
+}
+
+    .divider::before,
+    .divider::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .divider::before {
+        margin-right: 10px;
+    }
+
+    .divider::after {
+        margin-left: 10px;
+    }
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .external-logins {
+        gap: 8px;
+    }
+
+    .btn-google,
+    .btn-microsoft,
+    .btn-facebook {
+        font-size: 14px;
+        padding: 8px;
+    }
+}

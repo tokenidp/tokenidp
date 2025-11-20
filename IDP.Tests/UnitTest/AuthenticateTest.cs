@@ -1,10 +1,5 @@
-﻿using IDP.Service.Application;
-using IDP.Service.Controllers;
-using IDP.Service.Model;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Services.Common.Interfaces;
-using Services.Common.Model;
 
 namespace IDP.Tests.UnitTest;
 
@@ -12,16 +7,16 @@ namespace IDP.Tests.UnitTest;
 public class AuthenticateControllerTests
 {
     private readonly Mock<IdentityService> _mockIdentityService;
-    private readonly Mock<IAppLogger<AuthenticateController>> _mockLogger;
-    private readonly AuthenticateController _controller;
+    private readonly Mock<IAppLogger<AuthenticationController>> _mockLogger;
+    private readonly AuthenticationController _controller;
     private readonly Mock<MfaService> _mfaService;
 
     public AuthenticateControllerTests()
     {
         _mockIdentityService = new Mock<IdentityService>();
-        _mockLogger = new Mock<IAppLogger<AuthenticateController>>();
+        _mockLogger = new Mock<IAppLogger<AuthenticationController>>();
         _mfaService = new Mock<MfaService>();
-        _controller = new AuthenticateController(_mockIdentityService.Object, 
+        _controller = new AuthenticationController(_mockIdentityService.Object,
             _mockLogger.Object, _mfaService.Object);
     }
 

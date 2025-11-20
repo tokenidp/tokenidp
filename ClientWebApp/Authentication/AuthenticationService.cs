@@ -38,7 +38,7 @@ public class AuthenticationService
             await _jwtAuthenticationStateProvider
                 .MarkUserAsAuthenticated(tokenResponse.Value.AccessToken);
 
-            var userInforequest = new HttpRequestMessage(HttpMethod.Get, $"authenticate/userinfo/{tokenResponse.Value.UserId}");
+            var userInforequest = new HttpRequestMessage(HttpMethod.Get, $"user/{tokenResponse.Value.UserId}");
             userInforequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.Value.AccessToken);
 
             var userInfoResponse = await _httpClient.SendAsync(userInforequest);

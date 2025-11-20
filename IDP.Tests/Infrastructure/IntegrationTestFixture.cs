@@ -1,5 +1,3 @@
-using IDP.Service;
-using IDP.Service.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace IDP.Tests.Infrastructure;

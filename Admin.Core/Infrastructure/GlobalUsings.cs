@@ -1,0 +1,15 @@
+﻿global using IDP.Common.Extensions;
+global using IDP.Common.Interfaces;
+global using IDP.Common.Model;
+global using IDP.Domain;
+global using IDP.Domain.Base;
+global using IDP.Domain.ComplexTypes;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.ChangeTracking;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using Newtonsoft.Json;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Threading;
+global using System.Threading.Tasks;

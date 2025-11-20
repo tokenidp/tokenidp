@@ -1,4 +1,4 @@
-﻿using Identity.Application.Identity;
+﻿using IDP.Common.Interfaces;
 
 namespace Identity.Service.Security;
 

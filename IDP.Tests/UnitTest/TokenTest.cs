@@ -1,14 +1,6 @@
-﻿using IDP.Service.Application;
-using IDP.Service.Application.TokenService;
-using IDP.Service.Controllers;
-using IDP.Service.Infrastructure;
-using IDP.Service.Model;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Services.Common.Interfaces;
-using Services.Common.Model;
-using static IDP.Service.Domain.Client;
 
 namespace IDP.Tests.UnitTest;
 

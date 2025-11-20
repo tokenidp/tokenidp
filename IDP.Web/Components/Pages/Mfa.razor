@@ -5,7 +5,7 @@
 @rendermode InteractiveServer
 
 @inject NavigationManager Navigation
-@inject AuthenticationService AuthService
+@inject MfaService MfaService
 @inject IJSRuntime JSRuntime
 
 <div class="mfa-container">
@@ -54,20 +54,21 @@
 </div>
 
 @code {
-    private MfaModel mfaModel = new();
-    private bool IsInvalid { get; set; }
-    private bool IsResending { get; set; }
-    private bool WasResent { get; set; }
-    public string ErrorMessage;
-    private bool isLoading;
-    private Dictionary<string, string> QueryParams = new();
 
-    private class MfaModel
+    private sealed class MfaModel
     {
         public string[] Digits { get; set; } = new string[6];
     }
 
-    protected override async Task OnInitializedAsync()
+    private MfaModel mfaModel = new();
+    private bool IsInvalid { get; set; }
+    private bool IsResending { get; set; }
+    private bool WasResent { get; set; }
+    private string ErrorMessage;
+    private bool isLoading;
+    private Dictionary<string, string> QueryParams = new();
+
+    protected override void OnInitialized()
     {
         var uri = Navigation.Uri;
         var queryParams = new Uri(uri).Query;
@@ -115,7 +116,7 @@
         }
     }
 
-    private async void HandlePaste()
+    private async Task HandlePaste()
     {
         try
         {
@@ -193,7 +194,7 @@
                 UserId = Convert.ToInt32(QueryParams["uid"])
             };
 
-        var result = await AuthService.VerifyMfaAsync(mfaRequest);
+        var result = await MfaService.VerifyMfaAsync(mfaRequest);
 
         if (result.IsSuccess)
         {
@@ -242,7 +243,7 @@
                 UserId = Convert.ToInt32(QueryParams["uid"])
             };
 
-        var result = await AuthService.ResendMfaCodeAsync(mfaRequest);
+        var result = await MfaService.ResendMfaCodeAsync(mfaRequest);
 
         if (!result.IsSuccess)
         {

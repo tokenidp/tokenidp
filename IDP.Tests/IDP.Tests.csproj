@@ -32,7 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IDP.Service\IDP.Service.csproj" />
-    <ProjectReference Include="..\Services.Common\Services.Common.csproj" />
+    <ProjectReference Include="..\Services.Common\IDP.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

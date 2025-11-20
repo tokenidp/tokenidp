@@ -1,7 +1,5 @@
 ﻿using FluentAssertions;
-using IDP.Service.Model;
 using IDP.Tests.Infrastructure;
-using Services.Common.Model;
 using System.Net;
 using System.Net.Http.Json;
 

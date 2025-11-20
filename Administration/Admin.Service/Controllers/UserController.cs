@@ -1,8 +1,4 @@
-﻿using Identity.Application.Common.Models;
-using Identity.Application.Users.Commands;
-using Identity.Application.Users.Queries;
-using Services.Common.Model;
-using System.Net;
+﻿using System.Net;
 
 namespace Identity.Service.Controllers;
 

@@ -1,7 +1,6 @@
 using Identity.Services;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
-using NLog.Web;
 
 namespace Identity.Service;
 

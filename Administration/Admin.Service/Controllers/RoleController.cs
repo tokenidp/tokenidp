@@ -1,7 +1,4 @@
-﻿using Identity.Application.Common.Models;
-using Identity.Application.Roles.Commands;
-using Identity.Application.Roles.Queries;
-using Services.Common.Model;
+﻿using IDP.Core.Admin.Roles;
 using System.Net;
 
 namespace Identity.Service.Controllers;

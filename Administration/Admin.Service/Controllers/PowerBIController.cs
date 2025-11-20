@@ -1,6 +1,4 @@
-﻿using Identity.Application.PowerBI;
-using Services.Common.Model;
-using System.Net;
+﻿using System.Net;
 
 namespace Identity.Service.Controllers;
 

@@ -21,7 +21,7 @@ public class IntrospectionController : ApiControllerBase
         if (request == null || string.IsNullOrWhiteSpace(request.Token))
         {
             _logger.LogWarning("Introspect called with invalid request");
-            return BadRequest("Invalid request");
+            return BadRequest("Invalid request.");
         }
 
         _logger.LogInfo("Introspect called for token (partial): {TokenPartial}",

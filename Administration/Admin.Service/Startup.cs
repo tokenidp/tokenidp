@@ -1,4 +1,3 @@
-using Identity.Infrastructure;
 using Identity.Service.Security;
 
 namespace Identity.Services;

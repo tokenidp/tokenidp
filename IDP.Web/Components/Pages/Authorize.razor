@@ -46,13 +46,32 @@ else
 
             <button type="submit" class="btn btn-primary">Login</button>
         </EditForm>
-    </div>
 
+        <!-- Divider -->
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <!-- External Login Providers -->
+        <div class="external-logins">
+            <button @onclick="@(() => LoginWithProvider("Google"))" class="btn btn-google">
+                <i class="fab fa-google"></i> Continue with Google
+            </button>
+
+            <button @onclick="@(() => LoginWithProvider("Microsoft"))" class="btn btn-microsoft">
+                <i class="fab fa-microsoft"></i> Continue with Microsoft
+            </button>
+
+            <button @onclick="@(() => LoginWithProvider("Facebook"))" class="btn btn-facebook">
+                <i class="fab fa-facebook"></i> Continue with Facebook
+            </button>
+        </div>
+    </div>
 }
 
 @code {
 
-    private class LoginModel
+    private sealed class LoginModel
     {
         [Required(ErrorMessage = "Username is required.")]
         public string UserName { get; set; }
@@ -154,4 +173,10 @@ else
     }
 
     private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display: none;" : "";
+
+
+    private void LoginWithProvider(string provider)
+    {
+        Navigation.NavigateTo($"/forgot-password{oauthParams}");
+    }
 }

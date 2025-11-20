@@ -1,6 +1,4 @@
-﻿using Identity.Application.Identity.Authentication;
-using Services.Common.Model;
-using System.Net;
+﻿using System.Net;
 
 namespace Identity.Service.Controllers;
 

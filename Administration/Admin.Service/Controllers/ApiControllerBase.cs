@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Services.Common.Model;
 
 namespace Identity.Service.Controllers;
 

@@ -8,5 +8,5 @@ public class AuthRequest
     public string RedirectUri { get; set; }
     public string CodeChallenge { get; set; }
     public string Scopes { get; set; }
-    public string CodeChallengeMethod { get; set; } //Default is SHA-256
+    public string CodeChallengeMethod { get; set; } //Default is SHA256
 }
