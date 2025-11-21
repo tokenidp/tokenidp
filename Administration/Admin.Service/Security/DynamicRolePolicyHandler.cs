@@ -1,6 +1,4 @@
-﻿using IDP.Common.Interfaces;
-
-namespace Identity.Service.Security;
+﻿namespace Identity.Service.Security;
 
 public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequirement>
 {

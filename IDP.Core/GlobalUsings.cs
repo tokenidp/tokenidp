@@ -1,10 +1,9 @@
-﻿global using IDP.Common.Exceptions;
-global using IDP.Common.Extensions;
-global using IDP.Common.Interfaces;
-global using IDP.Common.Model;
-global using IDP.Core.Domain;
+﻿global using IDP.Core.Domain;
 global using IDP.Core.Domain.ComplexTypes;
+global using IDP.Core.Exceptions;
+global using IDP.Core.Extensions;
 global using IDP.Core.Infrastructure;
+global using IDP.Core.Interfaces;
 global using IDP.Core.Model;
 global using IDP.Core.Security;
 global using Microsoft.AspNetCore.Builder;

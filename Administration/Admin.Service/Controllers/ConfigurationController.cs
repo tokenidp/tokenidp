@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Configurations;
+﻿using IDP.Core.Admin.Model.Configurations;
 using System.Net;
 
 namespace Identity.Service.Controllers;

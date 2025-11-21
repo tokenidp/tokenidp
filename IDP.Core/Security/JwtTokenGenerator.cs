@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using IDP.Core.Options;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -6,72 +7,70 @@ using System.Text;
 
 namespace IDP.Core.Security;
 
-public class JwtTokenGenerator
+public sealed class JwtTokenGenerator
 {
-    private readonly TokenSetting _jwtSettings;
+    private readonly TokenOption _settings;
+    private readonly JwtSecurityTokenHandler _tokenHandler = new();
 
-    public JwtTokenGenerator(IOptions<TokenSetting> jwtSettings)
+    public JwtTokenGenerator(IOptions<TokenOption> settings)
     {
-        _jwtSettings = jwtSettings.Value;
+        _settings = settings.Value;
     }
 
-    public string GetAccessToken(string jti,
-        string sub,
-        string name,
+    public string CreateAccessToken(
+        string jti,
+        string subject,
+        string displayName,
         string tenantId,
         string audience,
         string scope,
-        string[] roles)
+        IEnumerable<string>? roles)
     {
-        List<Claim> claims = new()
+        var now = DateTime.UtcNow;
+
+        var claims = new List<Claim>(capacity: 8)
         {
-            new Claim(JwtRegisteredClaimNames.Sub, sub),
-            new Claim(JwtRegisteredClaimNames.Jti, jti),
-            new Claim(JwtRegisteredClaimNames.UniqueName, name),
-            new Claim("uid", tenantId),
-            new Claim("scope", scope)
+            new(JwtRegisteredClaimNames.Sub, subject),
+            new(JwtRegisteredClaimNames.Jti, jti),
+            new(JwtRegisteredClaimNames.UniqueName, displayName),
+            new("uid", tenantId),
+            new("scope", scope)
         };
 
-        if (roles?.Any() == true)
+        // Add roles if present
+        if (roles is not null)
         {
-            var roleClaims = new List<Claim>();
-
-            for (int i = 0; i < roles.Length; i++)
+            foreach (var role in roles)
             {
-                roleClaims.Add(new Claim("roles", roles[i]));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
-
-            claims.AddRange(roleClaims);
         }
 
-        var symmetricSecurityKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_jwtSettings.Key));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var signingCredentials = new SigningCredentials(
-            symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _settings.Issuer,
+            Audience = audience,
+            Subject = new ClaimsIdentity(claims),
+            NotBefore = now,
+            Expires = now.AddMinutes(_settings.DurationInMinutes),
+            SigningCredentials = credentials
+        };
 
-        var jwtSecurityToken = new JwtSecurityToken(
-            issuer: _jwtSettings.Issuer,
-            audience: audience,
-            claims: claims.ToArray(),
-            expires: DateTime.UtcNow.AddMinutes(_jwtSettings.DurationInMinutes),
-            signingCredentials: signingCredentials);
+        var token = _tokenHandler.CreateToken(descriptor);
 
-        var token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
-
-        return token;
+        return _tokenHandler.WriteToken(token);
     }
 
-    public static string GetRefreshToken()
+    /// <summary>
+    /// Generates a secure 512-bit refresh token using non-allocating RNG APIs.
+    /// </summary>
+    public static string CreateRefreshToken()
     {
-        string token = string.Empty;
-        using (var randomNumberGenerator = RandomNumberGenerator.Create())
-        {
-            var randomBytes = new byte[64];
-            randomNumberGenerator.GetBytes(randomBytes);
-            token = Convert.ToBase64String(randomBytes);
-        }
-
-        return token;
+        Span<byte> bytes = stackalloc byte[64]; // 512-bit
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes);
     }
 }

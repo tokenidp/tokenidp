@@ -1,3 +1,4 @@
+using IDP.Core.OAuthEndpoints;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,8 @@ var app = builder.Build();
 // Middleware
 // --------------------------------------
 app.UseHttpsRedirection();
+
+app.RegisterEndpointDefinitions();
 
 app.UseRouting();
 

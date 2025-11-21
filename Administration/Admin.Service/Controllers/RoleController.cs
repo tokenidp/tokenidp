@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Roles;
+﻿using IDP.Core.Admin.Model.Roles;
 using System.Net;
 
 namespace Identity.Service.Controllers;

@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Clients;
+﻿using IDP.Core.Admin.Services;
 
 namespace IDP.Core.OAuthEndpoints;
 

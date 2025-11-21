@@ -1,17 +1,19 @@
-﻿using IDP.Core.Admin.Roles;
+﻿using IDP.Core.Admin.Services;
+using IDP.Core.OAuth.Model;
+using IDP.Core.Options;
 
 namespace IDP.Core.TokenServices;
 
 internal class AccessTokenService : ITokenService
 {
     private readonly IAppLogger<AccessTokenService> _logger;
-    private readonly TokenSetting _jwtSettings;
+    private readonly TokenOption _jwtSettings;
     private readonly JwtTokenGenerator _tokenGenerator;
     private readonly TokenValidatorService _tokenValidatorService;
     private readonly RoleService _roleService;
 
     public AccessTokenService(UserManager<User> userManager,
-        IOptions<TokenSetting> jwtSettings,
+        IOptions<TokenOption> jwtSettings,
         JwtTokenGenerator tokenGenerator,
         RoleService roleService,
         IAppLogger<AccessTokenService> appLogger,
@@ -66,7 +68,7 @@ internal class AccessTokenService : ITokenService
         _logger.LogDebug("Creating token (ID: {TokenId}) for {UserId} with roles: {Roles}",
             tokenId, userTokenInfo.UserId, string.Join(",", userTokenInfo.Roles));
 
-        var accessToken = _tokenGenerator.GetAccessToken(
+        var accessToken = _tokenGenerator.CreateAccessToken(
             tokenId,
             userTokenInfo.UserId.ToString(),
             userTokenInfo.UserName,

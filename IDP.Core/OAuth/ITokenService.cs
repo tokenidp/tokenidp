@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.TokenServices;
+﻿using IDP.Core.OAuth.Model;
+
+namespace IDP.Core.TokenServices;
 
 internal interface ITokenService
 {

@@ -1,17 +1,19 @@
-﻿using IDP.Core.Admin.Roles;
+﻿using IDP.Core.Admin.Services;
+using IDP.Core.OAuth.Model;
+using IDP.Core.Options;
 
 namespace IDP.Core.TokenServices;
 
 internal class ReferenceTokenService : ITokenService, IReferenceTokenValidator
 {
     private readonly IAppLogger<ReferenceTokenService> _logger;
-    private readonly TokenSetting _jwtSettings;
+    private readonly TokenOption _jwtSettings;
     private readonly ApplicationDbContext _dbContext;
     private readonly TokenValidatorService _tokenValidatorService;
     private readonly RoleService _roleService;
 
     public ReferenceTokenService(UserManager<User> userManager,
-        IOptions<TokenSetting> jwtSettings,
+        IOptions<TokenOption> jwtSettings,
         ApplicationDbContext dbContext,
         TokenValidatorService tokenValidatorService,
         IAppLogger<ReferenceTokenService> logger,

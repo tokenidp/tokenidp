@@ -1,6 +1,4 @@
-﻿using IDP.Common;
-
-namespace IDP.Core.Infrastructure;
+﻿namespace IDP.Core.Infrastructure;
 
 internal class AuditService
 {

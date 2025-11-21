@@ -1,4 +1,5 @@
-﻿using IDP.Core.TokenServices;
+﻿using IDP.Core.OAuth.Model;
+using IDP.Core.TokenServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IDP.Core.OAuthEndpoints;

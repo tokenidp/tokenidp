@@ -1,5 +1,6 @@
-﻿using IDP.Common.Notifications;
-using IDP.Core.Application;
+﻿using IDP.Core.Application;
+using IDP.Core.Notifications;
+using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices;
 

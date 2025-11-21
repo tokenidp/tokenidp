@@ -1,14 +1,17 @@
-﻿namespace IDP.Core.TokenServices;
+﻿using IDP.Core.OAuth.Model;
+using IDP.Core.Options;
+
+namespace IDP.Core.TokenServices;
 
 internal class RefreshTokenService
 {
-    private readonly TokenSetting _jwtSettings;
+    private readonly TokenOption _jwtSettings;
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
     private readonly IAppLogger<RefreshTokenService> _logger;
 
     protected RefreshTokenService(
-        IOptions<TokenSetting> jwtSettings,
+        IOptions<TokenOption> jwtSettings,
         ApplicationDbContext dbContext,
         ITokenService tokenService,
         IAppLogger<RefreshTokenService> logger)
@@ -23,7 +26,7 @@ internal class RefreshTokenService
     {
         _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}", clientId, ipAddress);
 
-        var newRefreshToken = JwtTokenGenerator.GetRefreshToken();
+        var newRefreshToken = JwtTokenGenerator.CreateRefreshToken();
         _logger.LogDebug("Generated new refresh token (unverified uniqueness)");
 
         var user = await GetUserByRefreshToken(token);
