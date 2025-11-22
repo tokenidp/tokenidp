@@ -2,16 +2,16 @@
 
 namespace IDP.Core.Admin.Model.Roles;
 
-public class RoleSearchDto
+internal class RoleSearchDto
 {
-    public static Expression<Func<RoleSearch, RoleSearchDto>> Projection =>
+    internal static Expression<Func<RoleSearch, RoleSearchDto>> Projection =>
          t => new RoleSearchDto
          {
              Id = t.Id,
              RoleName = t.RoleName,
              TenantName = t.TenantName,
              Active = t.Active,
-             UpdateBy = t.UpdateBy,
+             UpdateBy = t.UpdatedBy,
          };
 
     public int Id { get; set; }

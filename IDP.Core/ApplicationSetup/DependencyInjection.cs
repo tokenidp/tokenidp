@@ -42,8 +42,8 @@ internal static class DependencyInjection
 
         services.AddTransient<Func<TokenType, ITokenService>>(serviceProvider => key =>
         {
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
-#pragma warning disable CS8604 // Possible null reference argument
+            #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
+            #pragma warning disable CS8604 // Possible null reference argument
             ITokenService service = key switch
             {
                 TokenType.ReferenceToken => serviceProvider.GetService<ReferenceTokenService>(),
@@ -66,8 +66,8 @@ internal static class DependencyInjection
 
         services.AddTransient<Func<EmailProviderType, IEmailNotification>>(serviceProvider => key =>
         {
-#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
-#pragma warning disable CS8604 // Possible null reference argument  
+            #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
+            #pragma warning disable CS8604 // Possible null reference argument
             IEmailNotification service = key switch
             {
                 EmailProviderType.SendGrid => serviceProvider.GetService<SendGridEmail>(),

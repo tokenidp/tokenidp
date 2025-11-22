@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Admin.Model.Roles;
 
-public class ClaimDto
+internal class ClaimDto
 {
     public int ClaimId { get; private set; }
     public int? ParentId { get; private set; }

@@ -1,32 +1,18 @@
-using IDP.Core.OAuthEndpoints;
-using System.Text.Json.Serialization;
+using IDP.Core.ApplicationSetup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --------------------------------------
-// Services
-// --------------------------------------
 builder.Services.AddAuthorizationCore();
-builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddServices(builder.Configuration);
-builder.Services.AddPersistence(builder.Configuration);
-builder.Services.AddAuthentication(builder.Configuration);
+builder.AddTokenVaultServices();
 
-builder.Services.AddControllers().AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-    options.JsonSerializerOptions.WriteIndented = true;
-});
 
 var app = builder.Build();
 
-// --------------------------------------
-// Middleware
-// --------------------------------------
+app.UseExceptionHandler("/error");
 app.UseHttpsRedirection();
 
-app.RegisterEndpointDefinitions();
+app.UseTokenVault();
 
 app.UseRouting();
 

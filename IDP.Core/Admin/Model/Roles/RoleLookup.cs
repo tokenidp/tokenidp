@@ -10,7 +10,7 @@ internal class RoleLookup
         Name = name;
     }
 
-    public static Expression<Func<Role, RoleLookup>> Projection =>
+    internal static Expression<Func<Role, RoleLookup>> Projection =>
     u => new RoleLookup(u.Id, u.Name);
 
     public int Id { get; private set; }

@@ -34,13 +34,13 @@ internal class RoleService
         return Result.Success(result);
     }
 
-    public async Task<Result> UpdateRole(CreateUpdateRole request)
+    public async Task<Result> UpdateRole(int id, CreateUpdateRole request)
     {
-        var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Id == request.Id, CancellationToken.None);
+        var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id, CancellationToken.None);
 
         if (role == null)
         {
-            return Result.Failure("NotFound", "Role not found for the Id {0}".FormatString(request.Id));
+            return Result.Failure("NotFound", "Role not found for the Id {0}".FormatString(id));
         }
 
         role.UpdateRole(
@@ -116,9 +116,9 @@ internal class RoleService
         {
             var claimValue = await _dbContext.UserRolePermissions
               .Where(c => c.UserId == userId
-                           && c.ClaimType == claim
-                           && c.ClaimValue == "true")
-              .Select(c => c.ClaimValue)
+                           && c.PermissionType == claim
+                           && c.PermissionValue == "true")
+              .Select(c => c.PermissionValue)
               .FirstOrDefaultAsync();
 
             return !string.IsNullOrEmpty(claimValue);

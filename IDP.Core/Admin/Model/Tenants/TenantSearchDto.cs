@@ -4,7 +4,7 @@ namespace IDP.Core.Admin.Model.Tenants;
 
 internal class TenantSearchDto
 {
-    public TenantSearchDto(int id,
+    internal TenantSearchDto(int id,
         string tenantName,
         string tenantCode,
         string email,
@@ -19,13 +19,13 @@ internal class TenantSearchDto
         UpdateBy = updateBy;
     }
 
-    public static Expression<Func<TenantSearch, TenantSearchDto>> Projection =>
+    internal static Expression<Func<TenantSearch, TenantSearchDto>> Projection =>
        t => new TenantSearchDto(t.Id,
            t.TenantName,
            t.TenantCode,
            t.Email,
            t.Active,
-           t.UpdateBy);
+           t.UpdatedBy);
 
     public int Id { get; set; }
     public string TenantName { get; set; }

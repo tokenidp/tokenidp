@@ -4,7 +4,7 @@ namespace IDP.Core.Admin.Model.Configurations;
 
 internal class ConfigurationSearchDto
 {
-    public static Expression<Func<ConfigurationSearch, ConfigurationSearchDto>> Projection =>
+    internal static Expression<Func<ConfigurationSearch, ConfigurationSearchDto>> Projection =>
        t => new ConfigurationSearchDto
        {
            Id = t.Id,
@@ -12,7 +12,7 @@ internal class ConfigurationSearchDto
            ConfigValue = t.ConfigValue,
            TenantName = t.TenantName,
            UserName = t.UserName,
-           UpdateBy = t.UpdateBy,
+           UpdateBy = t.UpdatedBy,
        };
 
     public int Id { get; set; }

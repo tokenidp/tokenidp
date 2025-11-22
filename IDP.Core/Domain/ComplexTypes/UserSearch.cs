@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain.ComplexTypes;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
-public class UserSearch
+internal partial class UserSearch
 {
     public int Id { get; private set; }
     public int TenantId { get; private set; }
@@ -13,10 +13,23 @@ public class UserSearch
     public string PhoneNumber { get; private set; }
     public string Email { get; private set; }
     public string Roles { get; private set; }
-    public string UpdatedBy { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
 
     private UserSearch()
     {
 
     }
 }
+
+internal partial class UserSearch
+{
+    public string UpdatedBy
+    {
+        get
+        {
+            return string.Format("{0} {1}", FirstName, LastName);
+        }
+    }
+}
+

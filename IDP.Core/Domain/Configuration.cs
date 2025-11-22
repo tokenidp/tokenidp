@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class Configuration : BaseEntity, ITenant, IAggregateRoot
+internal class Configuration : BaseEntity, ITenant, IAggregateRoot
 {
     public int TenantId { get; private set; }
     public string ConfigKey { get; private set; }

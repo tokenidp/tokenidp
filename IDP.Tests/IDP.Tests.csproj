@@ -31,8 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IDP.Service\IDP.Service.csproj" />
-    <ProjectReference Include="..\Services.Common\IDP.Common.csproj" />
+    <ProjectReference Include="..\IDP.Core\IDP.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

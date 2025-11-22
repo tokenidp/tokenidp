@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.OAuthEndpoints;
 
-public static class EndpointDefinitionExtensions
+internal static class EndpointDefinitionExtensions
 {
     public static void RegisterEndpointDefinitions(this WebApplication app)
     {

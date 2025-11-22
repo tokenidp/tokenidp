@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class UserAccessToken
+internal class UserAccessToken
 {
     [Key]
     public int Id { get; private set; }

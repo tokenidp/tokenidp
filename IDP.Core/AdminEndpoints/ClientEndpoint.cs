@@ -1,6 +1,6 @@
 ﻿using IDP.Core.Admin.Services;
 
-namespace IDP.Core.OAuthEndpoints;
+namespace IDP.Core.AdminEndpoints;
 
 internal class ClientEndpoint : IEndpointDefinition
 {

@@ -1,5 +1,5 @@
 ﻿namespace IDP.Core.Domain.Base;
 
-public interface IAggregateRoot
+internal interface IAggregateRoot
 {
 }

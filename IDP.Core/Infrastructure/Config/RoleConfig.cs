@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Infrastructure.Config;
 
-public class RoleConfig : IEntityTypeConfiguration<Role>
+internal class RoleConfig : IEntityTypeConfiguration<Role>
 {
     public void Configure(EntityTypeBuilder<Role> builder)
     {

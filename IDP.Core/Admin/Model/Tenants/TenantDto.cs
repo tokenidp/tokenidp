@@ -4,7 +4,7 @@ namespace IDP.Core.Admin.Model.Tenants;
 
 internal class TenantDto
 {
-    public static Expression<Func<Tenant, TenantDto>> Projection =>
+    internal static Expression<Func<Tenant, TenantDto>> Projection =>
       t => new TenantDto
       {
           Id = t.Id,

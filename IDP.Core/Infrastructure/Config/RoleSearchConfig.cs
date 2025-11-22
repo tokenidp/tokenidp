@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Infrastructure.Config;
 
-public class RoleSearchConfig : IEntityTypeConfiguration<RoleSearch>
+internal class RoleSearchConfig : IEntityTypeConfiguration<RoleSearch>
 {
     public void Configure(EntityTypeBuilder<RoleSearch> builder)
     {

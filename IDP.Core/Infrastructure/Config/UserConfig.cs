@@ -2,7 +2,7 @@
 
 namespace IDP.Core.Infrastructure.Config;
 
-public class UserConfig : IEntityTypeConfiguration<User>
+internal class UserConfig : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {

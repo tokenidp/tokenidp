@@ -2,7 +2,7 @@
 
 namespace IDP.Core.Admin.Model.Users;
 
-public class UserClaim
+internal class UserClaim
 {
     public int UserId { get; private set; }
     public int TenantId { get; private set; }

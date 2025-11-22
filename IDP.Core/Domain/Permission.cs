@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class Permission : BaseEntity, IAggregateRoot
+internal class Permission : BaseEntity, IAggregateRoot
 {
     public int? ParentId { get; private set; }
     public int Sequence { get; private set; }

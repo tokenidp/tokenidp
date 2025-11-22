@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Infrastructure.Config;
 
-public class TenantSearchConfig : IEntityTypeConfiguration<TenantSearch>
+internal class TenantSearchConfig : IEntityTypeConfiguration<TenantSearch>
 {
     public void Configure(EntityTypeBuilder<TenantSearch> builder)
     {

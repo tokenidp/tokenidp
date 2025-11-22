@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Infrastructure.Config;
 
-public class ConfigurationConfig : IEntityTypeConfiguration<Configuration>
+internal class ConfigurationConfig : IEntityTypeConfiguration<Configuration>
 {
     public void Configure(EntityTypeBuilder<Configuration> builder)
     {

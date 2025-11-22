@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain.Base;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public abstract class BaseEntity : IBaseEntity, IAuditable
+internal abstract class BaseEntity : IBaseEntity, IAuditable
 {
     public int Id { get; private set; }
     public int CreatedBy { get; private set; }

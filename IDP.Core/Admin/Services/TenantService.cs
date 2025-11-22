@@ -57,13 +57,13 @@ internal class TenantService
         return Result.Success(result);
     }
 
-    public async Task<Result> UpdateTenant(CreateUpdateTenant request)
+    public async Task<Result> UpdateTenant(int id, CreateUpdateTenant request)
     {
-        var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == request.Id);
+        var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == id);
 
         if (tenant == null)
         {
-            return Result.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(request.Id));
+            return Result.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(id));
         }
 
         tenant.UpdateTenant(request.TenantName,

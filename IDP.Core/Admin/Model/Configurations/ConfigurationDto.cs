@@ -3,9 +3,9 @@
 namespace IDP.Core.Admin.Model.Configurations;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and used for automapper")]
-public class ConfigurationDto
+internal class ConfigurationDto
 {
-    public static Expression<Func<Configuration, ConfigurationDto>> Projection =>
+    internal static Expression<Func<Configuration, ConfigurationDto>> Projection =>
         t => new ConfigurationDto
         {
             Id = t.Id,

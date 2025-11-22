@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot, IAuditable
+internal partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot, IAuditable
 {
     public enum UserStatus
     {
@@ -14,15 +14,12 @@ public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateR
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; }
     public string LastName { get; private set; }
-    public string Address1 { get; private set; }
-    public string Address2 { get; private set; }
-    public string City { get; private set; }
-    public string State { get; private set; }
-    public string Zip { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime CreatedOn { get; private set; }
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedOn { get; private set; }
+    public virtual ICollection<UserAddress> UserAddresses { get; private set; }
+    public virtual ICollection<UserContact> UserContacts { get; private set; }
     public virtual ICollection<UserRole> UserRoles { get; private set; }
     public virtual ICollection<RefreshToken> RefreshTokens { get; private set; }
     public virtual ICollection<AuthorizationCode> AuthorizationCodes { get; private set; }
@@ -106,7 +103,7 @@ public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateR
     }
 }
 
-public partial class User
+internal partial class User
 {
     public string FullName
     {

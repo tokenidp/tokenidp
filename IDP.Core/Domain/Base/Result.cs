@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Domain.Base;
 
-public class Result
+internal class Result
 {
     public int Id { get; private set; }
 

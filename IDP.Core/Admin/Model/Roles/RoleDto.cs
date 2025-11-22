@@ -2,9 +2,9 @@
 
 namespace IDP.Core.Admin.Model.Roles;
 
-public class RoleDto
+internal class RoleDto
 {
-    public static Expression<Func<Role, RoleDto>> Projection =>
+    internal static Expression<Func<Role, RoleDto>> Projection =>
          t => new RoleDto
          {
              Id = t.Id,

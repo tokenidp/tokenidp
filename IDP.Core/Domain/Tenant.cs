@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public partial class Tenant : BaseEntity, IAggregateRoot
+internal partial class Tenant : BaseEntity, IAggregateRoot
 {
     public string TenantName { get; private set; }
     public string TenantCode { get; private set; }

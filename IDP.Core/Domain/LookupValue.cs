@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
-public class LookupValue : BaseEntity
+internal class LookupValue : BaseEntity
 {
 
     public int LookupTypeId { get; private set; }
@@ -11,6 +11,7 @@ public class LookupValue : BaseEntity
     public string UseFor { get; private set; }
     public bool? IsDefault { get; private set; }
     public bool? IsDeleted { get; private set; }
+    public bool? IsCodeEditable { get; private set; }
     public virtual LookupType LookupType { get; private set; }
 
     /// <summary>

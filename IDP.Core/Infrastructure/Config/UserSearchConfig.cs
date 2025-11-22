@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Infrastructure.Config;
 
-public class UserSearchConfig : IEntityTypeConfiguration<UserSearch>
+internal class UserSearchConfig : IEntityTypeConfiguration<UserSearch>
 {
     public void Configure(EntityTypeBuilder<UserSearch> builder)
     {

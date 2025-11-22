@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Admin.Model.Configurations;
 
-public class CreateUpdateConfiguration
+internal class CreateUpdateConfiguration
 {
     public int Id { get; set; }
     public string ConfigKey { get; set; }

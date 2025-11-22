@@ -32,13 +32,13 @@ internal class UserService
         return result.ToApplicationResult(user.Id);
     }
 
-    public async Task<Result> UpdateUser(CreateUpdateUser request)
+    public async Task<Result> UpdateUser(int id, CreateUpdateUser request)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == request.Id);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
-            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(request.Id));
+            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
         }
 
         MapUserUpdate(user, request);
@@ -48,13 +48,13 @@ internal class UserService
         return result.ToApplicationResult(user.Id);
     }
 
-    public async Task<Result> UpdateUserStatus(UpdateUserStatus request)
+    public async Task<Result> UpdateUserStatus(int id, UpdateUserStatus request)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == request.Id);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
-            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(request.Id));
+            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
         }
 
         user.UpdateStatus(request.Status);
@@ -120,9 +120,9 @@ internal class UserService
                 c.ParentId,
                 c.UserId,
                 c.Sequence,
-                c.ClaimType,
-                c.ClaimName,
-                c.ClaimValue,
+                c.PermissionType,
+                c.PermissionName,
+                c.PermissionValue,
                 c.Icon,
                 c.AccessUrl,
                 c.RoleName,

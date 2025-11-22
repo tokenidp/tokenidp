@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class RolePermission : IdentityRoleClaim<int>, IBaseEntity, IAuditable
+internal class RolePermission : IdentityRoleClaim<int>, IBaseEntity, IAuditable
 {
     public int TenantPermissionId { get; private set; }
     public int CreatedBy { get; private set; }

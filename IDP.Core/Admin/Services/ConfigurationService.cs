@@ -30,13 +30,13 @@ internal class ConfigurationService
         return Result.Success(result);
     }
 
-    public async Task<Result> UpdateConfiguration(CreateUpdateConfiguration request)
+    public async Task<Result> UpdateConfiguration(int id, CreateUpdateConfiguration request)
     {
-        var configuration = await _dbContext.Configurations.FirstOrDefaultAsync(c => c.Id == request.Id);
+        var configuration = await _dbContext.Configurations.FirstOrDefaultAsync(c => c.Id == id);
 
         if (configuration == null)
         {
-            return Result.Failure("NotFound", "Configuration not found for the Id {0}".FormatString(request.Id));
+            return Result.Failure("NotFound", "Configuration not found for the Id {0}".FormatString(id));
         }
 
         configuration.UpdateConfiguration(

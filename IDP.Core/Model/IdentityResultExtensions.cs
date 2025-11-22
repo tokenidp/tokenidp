@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Model;
 
-public static class IdentityResultExtensions
+internal static class IdentityResultExtensions
 {
     public static Result ToApplicationResult(this IdentityResult result, int id)
     {

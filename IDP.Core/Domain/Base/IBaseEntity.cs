@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Domain.Base;
 
-public interface IBaseEntity
+internal interface IBaseEntity
 {
     public int CreatedBy { get; }
     public DateTime CreatedOn { get; }

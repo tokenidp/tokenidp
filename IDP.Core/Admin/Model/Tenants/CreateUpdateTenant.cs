@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Admin.Model.Tenants;
 
-public class CreateUpdateTenant
+internal class CreateUpdateTenant
 {
     public int Id { get; set; }
     public required string TenantName { get; set; }

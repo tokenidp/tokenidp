@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Domain;
 
-public class AuditLog : IBaseEntity
+internal class AuditLog : IBaseEntity
 {
     public int Id { get; set; }
     public string TableName { get; private set; }

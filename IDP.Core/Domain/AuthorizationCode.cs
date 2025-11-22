@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class AuthorizationCode
+internal class AuthorizationCode
 {
     [Key]
     public int Id { get; private set; }
@@ -19,7 +19,7 @@ public class AuthorizationCode
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedOn { get; private set; }
 
-    public virtual User AppUser { get; private set; }
+    public virtual User User { get; private set; }
 
     private AuthorizationCode() { }
 

@@ -4,7 +4,7 @@ namespace IDP.Core.Admin.Model.Users;
 
 internal class UserDto
 {
-    public static Expression<Func<User, UserDto>> Projection =>
+    internal static Expression<Func<User, UserDto>> Projection =>
     user => new UserDto()
     {
         Id = user.Id,
@@ -14,12 +14,7 @@ internal class UserDto
         Email = user.Email,
         StatusId = user.StatusId.ToString(),
         UserName = user.UserName,
-        Phone = user.PhoneNumber,
-        Address1 = user.Address1,
-        Address2 = user.Address2,
-        City = user.City,
-        State = user.State,
-        Zip = user.Zip,
+        Phone = user.PhoneNumber,      
         Roles = user.UserRoles.Select(s => s.RoleId).ToArray()
     };
 

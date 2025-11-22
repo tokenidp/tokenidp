@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Admin.Model.Roles;
 
-public class CreateUpdateRole
+internal class CreateUpdateRole
 {
     public int Id { get; set; }
     public int TenantId { get; set; }

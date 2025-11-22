@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Domain;
 
-public class PreAuthorization
+internal class PreAuthorization
 {
     [Key]
     public int Id { get; private set; }
