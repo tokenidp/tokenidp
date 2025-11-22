@@ -11,7 +11,7 @@ internal class RefreshTokenEndpoint : IEndpointDefinition
         var authGroup = app.MapGroup("/refresh-token");
 
         authGroup.MapPost("/", static async (HttpContext httpContext,
-            RefreshTokenRequest request,
+            [FromBody] RefreshTokenRequest request,
             IAppLogger<RefreshTokenEndpoint> _logger,
             RefreshTokenService refreshTokenService) =>
         {
@@ -44,7 +44,7 @@ internal class RefreshTokenEndpoint : IEndpointDefinition
 
             return Results.Ok(new { message = "Refresh token revoked." });
         })
-    .WithName("RefreshTokenRevoked")
-    .WithTags("RefreshTokenRevoked");
+        .WithName("RefreshTokenRevoked")
+        .WithTags("RefreshTokenRevoked");
     }
 }

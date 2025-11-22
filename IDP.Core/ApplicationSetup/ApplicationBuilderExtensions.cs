@@ -18,6 +18,7 @@ public static class ApplicationBuilderExtensions
     public static WebApplication UseTokenVault(this WebApplication app)
     {
         app.RegisterEndpointDefinitions();
+
         return app;
     }
 }

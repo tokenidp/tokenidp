@@ -18,26 +18,31 @@ internal static class DependencyInjection
         services.Configure<ConfigurationOption>(configuration.GetSection("ConfigurationSettings"));
 
         services.AddMemoryCache();
+        services.AddHttpContextAccessor();
 
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
         services.AddSingleton<ICache, MemoryCache>();
         services.AddSingleton<JwtTokenGenerator>();
         services.AddSingleton<JsonHelper>();
 
-        services.AddScoped<IdentityService>();
-        services.AddScoped<AuthenticationUseCase>();
-        services.AddScoped<AccessTokenUseCase>();
-        services.AddScoped<RoleService>();
         services.AddScoped<RoleService>();
         services.AddScoped<ClientService>();
+        services.AddScoped<TenantService>();
+        services.AddScoped<AuditService>();
 
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+        services.AddScoped<IdentityService>();
         services.AddScoped<TokenValidatorService>();
-        services.AddScoped<AccessTokenService>();
-        services.AddScoped<ReferenceTokenService>();
+        
+        services.AddScoped<AccessTokenUseCase>();
+        services.AddScoped<AuthenticationUseCase>();
+        services.AddScoped<MfaService>();
         services.AddScoped<TokenServiceFactory>();
+        services.AddScoped<RefreshTokenService>();
+        services.AddScoped<AccessTokenService>();
+
         services.AddScoped<IReferenceTokenValidator, ReferenceTokenService>();
 
         services.AddTransient<Func<TokenType, ITokenService>>(serviceProvider => key =>
@@ -58,7 +63,7 @@ internal static class DependencyInjection
             return service;
         });
 
-        services.AddScoped<MfaService>();
+
         services.AddScoped<SmtpEmail>();
         services.AddScoped<SendGridEmail>();
         services.AddScoped<EmailProviderFactory>();

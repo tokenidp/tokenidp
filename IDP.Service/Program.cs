@@ -2,10 +2,9 @@ using IDP.Core.ApplicationSetup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthorizationCore();
-
 builder.AddTokenVaultServices();
 
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -25,7 +24,5 @@ app.UseCors(policy => policy
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapControllers();
 
 await app.RunAsync();

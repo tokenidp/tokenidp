@@ -10,7 +10,7 @@ internal class RefreshTokenService
     private readonly ITokenService _tokenService;
     private readonly IAppLogger<RefreshTokenService> _logger;
 
-    protected RefreshTokenService(
+    public RefreshTokenService(
         IOptions<TokenOption> jwtSettings,
         ApplicationDbContext dbContext,
         ITokenService tokenService,
