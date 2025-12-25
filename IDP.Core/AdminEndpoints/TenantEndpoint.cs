@@ -1,6 +1,5 @@
-﻿using IDP.Core.Admin.Model;
-using IDP.Core.Admin.Model.Tenants;
-using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin;
+using IDP.Core.Admin.Tenants;
 
 namespace IDP.Core.AdminEndpoints;
 

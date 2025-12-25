@@ -1,5 +1,9 @@
-﻿using IDP.Core.Admin.Model;
-using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin;
+using IDP.Core.Admin.Clients;
+using IDP.Core.Admin.Configurations;
+using IDP.Core.Admin.Roles;
+using IDP.Core.Admin.Tenants;
+using IDP.Core.Admin.Users;
 using IDP.Core.Application;
 using IDP.Core.Notifications;
 using IDP.Core.Options;
@@ -16,9 +20,11 @@ internal static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<ConfigurationOption>(configuration.GetSection("ConfigurationSettings"));
+        services.Configure<TokenOption>(configuration.GetSection("TokenSettings"));
 
         services.AddMemoryCache();
         services.AddHttpContextAccessor();
+        services.AddCors();
 
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
         services.AddSingleton<ICache, MemoryCache>();
@@ -29,13 +35,14 @@ internal static class DependencyInjection
         services.AddScoped<ClientService>();
         services.AddScoped<TenantService>();
         services.AddScoped<AuditService>();
+        services.AddScoped<ConfigurationService>();
+        services.AddScoped<UserService>();
 
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
 
         services.AddScoped<IdentityService>();
-        services.AddScoped<TokenValidatorService>();
-        
+        services.AddScoped<TokenValidatorService>();   
         services.AddScoped<AccessTokenUseCase>();
         services.AddScoped<AuthenticationUseCase>();
         services.AddScoped<MfaService>();
@@ -52,6 +59,7 @@ internal static class DependencyInjection
             ITokenService service = key switch
             {
                 TokenType.ReferenceToken => serviceProvider.GetService<ReferenceTokenService>(),
+                TokenType.JWT => serviceProvider.GetService<AccessTokenService>(),
                 _ => serviceProvider.GetService<AccessTokenService>()
             };
 

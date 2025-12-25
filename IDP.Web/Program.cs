@@ -1,3 +1,4 @@
+using IDP.Web;
 using IDP.Web.Authentication;
 using IDP.Web.Components;
 
@@ -13,6 +14,8 @@ builder.Services.AddHttpClient("IDPClient", client =>
 });
 
 builder.Services.AddScoped<AuthenticationService>();
+builder.Services.AddScoped<MfaService>();
+builder.Services.AddScoped<LoadService>();
 
 var app = builder.Build();
 
@@ -25,7 +28,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 
 app.UseAntiforgery();
 

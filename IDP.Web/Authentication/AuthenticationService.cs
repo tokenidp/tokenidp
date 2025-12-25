@@ -17,7 +17,7 @@ public class AuthenticationService : BaseService<AuthenticationService>
         try
         {
             using var response = await _httpClient.PostAsJsonAsync(
-                "authenticate",
+                "auth/login",
                 request,
                 cancellationToken);
 

@@ -22,7 +22,7 @@ public class SmtpEmail : IEmailNotification
         {
             _logger.LogInfo("Preparing to send email to {Recipient}", request.Recipient);
 
-            string htmlContent = null;
+            string htmlContent = string.Empty;
             if (!string.IsNullOrEmpty(request.HtmlContent) && request.Tokens != null)
             {
                 _logger.LogDebug("Replacing tokens in HTML content");

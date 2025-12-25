@@ -1,11 +1,8 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="login-container">
-    <div class="login-image">
-        <div class="image-wrapper">
-            <img src="images/professional.svg" alt="Professional Illustration" class="illustration">
-            <p class="image-caption">Streamline your workflow with our secure platform</p>
-        </div>
+<CascadingValue Value="this">
+    <div class="main-layout">
+        <GlobalProgressIndicator />
+        @Body
     </div>
-    @Body
-</div>
+</CascadingValue>

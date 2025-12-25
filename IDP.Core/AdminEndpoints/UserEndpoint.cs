@@ -1,7 +1,5 @@
-﻿using IDP.Core.Admin.Model;
-using IDP.Core.Admin.Model.Tenants;
-using IDP.Core.Admin.Model.Users;
-using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin;
+using IDP.Core.Admin.Users;
 
 namespace IDP.Core.AdminEndpoints;
 
@@ -9,7 +7,8 @@ internal class UserEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/user");
+        var authGroup = app.MapGroup("/user")
+            .RequireAuthorization();
 
         authGroup.MapPost("/list", async (SearchData data,
             IAppLogger<UserEndpoint> _logger,
@@ -42,7 +41,7 @@ internal class UserEndpoint : IEndpointDefinition
         })
         .WithName("UserById")
         .WithTags("UserById");
-
+      
         authGroup.MapPost("/", async (CreateUpdateUser user,
             IAppLogger<UserEndpoint> _logger,
             UserService userService) =>
@@ -98,7 +97,7 @@ internal class UserEndpoint : IEndpointDefinition
 
             return Results.Ok(response);
         })
-        .WithName("UserInfo")
-        .WithTags("UserInfo");
+        .WithName("UserClaims")
+        .WithTags("UserClaims");
     }
 }

@@ -1,5 +1,6 @@
 ﻿using IDP.Core.OAuth.Model;
 using IDP.Core.Options;
+using static IDP.Core.Domain.Client;
 
 namespace IDP.Core.TokenServices;
 
@@ -7,18 +8,18 @@ internal class RefreshTokenService
 {
     private readonly TokenOption _jwtSettings;
     private readonly ApplicationDbContext _dbContext;
-    private readonly ITokenService _tokenService;
+    private readonly TokenServiceFactory _tokenServiceFactory;
     private readonly IAppLogger<RefreshTokenService> _logger;
 
     public RefreshTokenService(
         IOptions<TokenOption> jwtSettings,
         ApplicationDbContext dbContext,
-        ITokenService tokenService,
+        TokenServiceFactory tokenServiceFactory,
         IAppLogger<RefreshTokenService> logger)
     {
         _jwtSettings = jwtSettings.Value;
         _dbContext = dbContext;
-        _tokenService = tokenService;
+        _tokenServiceFactory = tokenServiceFactory;
         _logger = logger;
     }
 
@@ -50,6 +51,7 @@ internal class RefreshTokenService
 
         _logger.LogInfo("Successfully saved new refresh token for user {UserId}", user.Id);
 
+        ITokenService _tokenService = _tokenServiceFactory.GetService(TokenType.JWT);
         var response = await _tokenService.GenerateToken(user.Id, user.TenantId, user.UserName, clientId);
         _logger.LogDebug("Generated new access token via token service for user {UserId}", user.Id);
 

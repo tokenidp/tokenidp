@@ -8,6 +8,7 @@
 
 <PageTitle>Authorize</PageTitle>
 
+@inject LoadService LoadService
 @inject NavigationManager Navigation
 @inject AuthenticationService AuthService
 @inject IJSRuntime JSRuntime
@@ -18,11 +19,9 @@
 }
 else
 {
-    <div class="login-form">
-        <div class="form-header">
-            <h2>Welcome Back</h2>
-            <p>Please enter your credentials to login</p>
-        </div>
+    <div class="login-card">
+        <div class="login-title">Welcome Back</div>
+        <div class="login-sub">Please enter your credentials to login</div>
 
         <div class="alert-danger" id="general-error" style="@GetErrorDisplayStyle()">
             @ErrorMessage
@@ -31,41 +30,27 @@ else
         <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
             <DataAnnotationsValidator />
 
-            <div class="form-group">
-                <label for="username">Username</label>
-                <InputText @bind-Value="loginModel.UserName" id="username" class="form-control" />
-                <ValidationMessage For="@(() => loginModel.UserName)" />
-            </div>
+            <label for="username" class="form-label">Username</label>
+            <InputText @bind-Value="loginModel.UserName" id="username" class="form-control mb-3" />
+            <ValidationMessage For="@(() => loginModel.UserName)" />
 
-            <div class="form-group">
-                <label for="password">Password</label>
-                <InputText @bind-Value="loginModel.Password" id="password" type="password" class="form-control" />
-                <ValidationMessage For="@(() => loginModel.Password)" />
-                <a @onclick="GoToForgotPassword" class="forgot-password" style="cursor: pointer;">Forgot password?</a>
-            </div>
+            <label for="password" class="form-label">Password</label>
+            <InputText @bind-Value="loginModel.Password" id="password" type="password" class="form-control" />
+            <ValidationMessage For="@(() => loginModel.Password)" />
+            <a @onclick="GoToForgotPassword" class="forgot-link">Forgot password?</a>
 
-            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="submit" class="btn btn-primary w-100 mt-4">Login</button>
         </EditForm>
 
         <!-- Divider -->
-        <div class="divider">
-            <span>OR</span>
-        </div>
+        <div class="divider">OR</div>
 
         <!-- External Login Providers -->
-        <div class="external-logins">
-            <button @onclick="@(() => LoginWithProvider("Google"))" class="btn btn-google">
-                <i class="fab fa-google"></i> Continue with Google
-            </button>
-
-            <button @onclick="@(() => LoginWithProvider("Microsoft"))" class="btn btn-microsoft">
-                <i class="fab fa-microsoft"></i> Continue with Microsoft
-            </button>
-
-            <button @onclick="@(() => LoginWithProvider("Facebook"))" class="btn btn-facebook">
-                <i class="fab fa-facebook"></i> Continue with Facebook
-            </button>
-        </div>
+        <button class="btn btn-google w-100 mb-2">
+            <span>🔴</span> Continue with Google
+        </button>
+        <button class="btn btn-microsoft w-100 mb-2">⚫ Continue with Microsoft</button>
+        <button class="btn btn-facebook w-100">🔵 Continue with Facebook</button>
     </div>
 }
 
@@ -127,20 +112,24 @@ else
         ErrorMessage = string.Empty;
 
         AuthRequest request = new()
-            {
-                UserName = loginModel.UserName,
-                Password = loginModel.Password,
-                ClientId = QueryParams["client_id"],
-                CodeChallenge = QueryParams["code_challenge"],
-                RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
-                CodeChallengeMethod = QueryParams["code_challenge_method"],
-                Scopes = Scopes
-            };
+        {
+            UserName = loginModel.UserName,
+            Password = loginModel.Password,
+            ClientId = QueryParams["client_id"],
+            CodeChallenge = QueryParams["code_challenge"],
+            RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
+            CodeChallengeMethod = QueryParams["code_challenge_method"],
+            Scopes = Scopes
+        };
 
         try
         {
+            LoadService.ShowLoader();
+
             var authCodeResponse = await AuthService.AuthenticateAsync(request);
 
+            await Task.Delay(2000);
+         
             if (authCodeResponse?.IsSuccess == false)
             {
                 ErrorMessage = authCodeResponse?.Value.Error ?? string.Empty;
@@ -153,7 +142,7 @@ else
                 $"corid={authCodeResponse?.Value.CorrelationId}&" +
                 $"redirect_uri={QueryParams["redirect_uri"]}";
 
-                Navigation.NavigateTo(uri, true);
+                Navigation.NavigateTo(uri);
             }
             else
             {
@@ -164,6 +153,10 @@ else
         catch (Exception ex)
         {
             ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            LoadService.HideLoader();
         }
     }
 

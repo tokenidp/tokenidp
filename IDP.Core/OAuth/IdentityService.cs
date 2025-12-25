@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin.Tenants;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices;

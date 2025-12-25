@@ -102,7 +102,7 @@ internal class ApplicationDbContext : IdentityDbContext<
     {
         SetAuditFields();
 
-        _auditService.CreateAuditLog(this);
+        //_auditService.CreateAuditLog(this);
 
         var result = await base.SaveChangesAsync(cancellationToken);
 

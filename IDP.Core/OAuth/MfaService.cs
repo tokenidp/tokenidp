@@ -102,8 +102,8 @@ internal class MfaService
 
         var tokens = new Dictionary<string, string>
         {
-            { "{{MFA_CODE}}", mfaCode },
-            { "{{NAME}}", user.FullName }
+            { "<%NAME%>", user.FullName},
+            { "<%MFA_CODE%>",  mfaCode}
         };
 
         var notificationRequest = NotificationRequest.Create(user.Email,
@@ -128,7 +128,7 @@ internal class MfaService
                         <body style='font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333;'>
                             <div style='max-width: 600px; margin: 0 auto;'>
                                 <h2 style='color: #2563eb; margin-bottom: 16px;'>Your Verification Code</h2>
-                                <p>Hi {{NAME}},</p>
+                                <p>Hi <%NAME%>,</p>
                                 <p>Use the following code to verify your identity:</p>
                                 <div style='
                                     font-size: 24px;
@@ -137,7 +137,7 @@ internal class MfaService
                                     margin: 20px 0;
                                     padding: 10px 0;
                                     letter-spacing: 2px;
-                                '>{{MFA_CODE}}</div>
+                                '><%MFA_CODE%></div>
                                 <p>This code expires in <strong style='color: #dc2626;'>10 minutes</strong>. Do not share it with anyone.</p>
                                 <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
                                     <p>If you didn't request this, please ignore this email.</p>

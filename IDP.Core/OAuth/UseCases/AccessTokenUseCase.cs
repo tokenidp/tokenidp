@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin.Clients;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices.UseCases;
@@ -40,6 +40,6 @@ internal class AccessTokenUseCase
 
         _logger.LogInfo("Token generated for ClientId: {ClientId} with TokenType: {TokenType}", request.ClientId, tokenType);
 
-        return Results.Ok(response);
+        return Results.Ok(ApiResult<TokenResponse>.Success(response));
     }
 }

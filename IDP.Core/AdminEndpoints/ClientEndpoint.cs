@@ -1,4 +1,4 @@
-﻿using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin.Clients;
 
 namespace IDP.Core.AdminEndpoints;
 
@@ -18,7 +18,7 @@ internal class ClientEndpoint : IEndpointDefinition
 
             _logger.LogInfo("IsValidClient result for clientId: {ClientId} is {Result}", clientId, response);
 
-            return Results.Ok(response);
+            return Results.Ok(ApiResult<ClientValidationResult>.Success(response));
         })
         .WithName("Client")
         .WithTags("Client");

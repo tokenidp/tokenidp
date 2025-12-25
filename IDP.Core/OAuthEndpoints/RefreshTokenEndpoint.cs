@@ -24,7 +24,7 @@ internal class RefreshTokenEndpoint : IEndpointDefinition
 
             _logger.LogInfo("Refresh token generated for ClientId: {ClientId}", request.ClientId);
 
-            return Results.Ok(response);
+            return Results.Ok(ApiResult<TokenResponse>.Success(response));
         })
         .WithName("RefreshToken")
         .WithTags("RefreshToken");

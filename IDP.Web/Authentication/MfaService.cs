@@ -31,7 +31,7 @@ namespace IDP.Web.Authentication
                     "application/json");
 
                 using var response = await _httpClient.PostAsync(
-                    "authenticate/resend-mfa",
+                    "auth/resend-mfa",
                     content,
                     cancellationToken);
 
@@ -98,7 +98,7 @@ namespace IDP.Web.Authentication
                     "application/json");
 
                 using var response = await _httpClient.PostAsync(
-                    "authenticate/verify-mfa",
+                    "auth/verify-mfa",
                     content,
                     cancellationToken);
 

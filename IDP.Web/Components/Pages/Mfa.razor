@@ -7,12 +7,13 @@
 @inject NavigationManager Navigation
 @inject MfaService MfaService
 @inject IJSRuntime JSRuntime
+@inject LoadService LoadService
 
 <div class="mfa-container">
     <h2>Multi-Factor Authentication</h2>
     <p>Please enter the 6-digit verification code sent to your email.</p>
 
-    <EditForm Model="@mfaModel" OnValidSubmit="@VerifyCode">
+    <EditForm Model="@mfaModel" OnValidSubmit="@VerifyCode" autocomplete="off">
         <div class="code-input-container">
 
             @for (int i = 0; i < 6; i++)
@@ -25,9 +26,13 @@
                        @oninput="@(e => HandleInput(e, index))"
                        @onkeydown="@(e => HandleKeyDown(e, index))"
                        @onfocus="ClearError"
-                       @onclick="@(() => HandlePaste())"
-                       autocomplete="one-time-code"
+                       @onpaste="@(e => HandlePaste())"
+                       autocomplete="off"
                        inputmode="numeric"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       spellcheck="false"
+                       name="@($"otp-digit-{i}")"
                        pattern="[0-9]*" />
             }
         </div>
@@ -174,17 +179,24 @@
         {
             IsInvalid = false;
 
+            isLoading = true;
+            LoadService.ShowLoader();
+
             await VerifyCodeWithServer(code);
         }
         catch
         {
             IsInvalid = true;
         }
+        finally
+        {
+            isLoading = false;
+            LoadService.HideLoader();
+        }
     }
 
     private async Task VerifyCodeWithServer(string code)
     {
-        isLoading = true;
         ErrorMessage = string.Empty;
 
         var mfaRequest = new MfaRequest()
@@ -196,23 +208,18 @@
 
         var result = await MfaService.VerifyMfaAsync(mfaRequest);
 
-        if (result.IsSuccess)
+        if (result?.IsSuccess == true)
         {
-            isLoading = false;
-
             var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
 
             var uri = $"{redirectUri}?code={result?.Value.AuthorizationCode}";
 
             Navigation.NavigateTo(uri, true);
-        }
-        else
-        {
-            ErrorMessage = result.Value.Error;
-            IsInvalid = true;
+            return;
         }
 
-        isLoading = false;
+        ErrorMessage = result?.Value.Error ?? "Unable to verify the code. Please try again.";
+        IsInvalid = true;
     }
 
     private async Task ResendCode()
@@ -222,20 +229,26 @@
 
         try
         {
-            await SendNewCodeToUser();
+            LoadService.ShowLoader();
 
-            WasResent = true;
+            var resent = await SendNewCodeToUser();
+
+            WasResent = resent;
 
             // Clear the form
-            mfaModel = new MfaModel();
+            if (resent)
+            {
+                mfaModel = new MfaModel();
+            }
         }
         finally
         {
             IsResending = false;
+            LoadService.HideLoader();
         }
     }
 
-    private async Task SendNewCodeToUser()
+    private async Task<bool> SendNewCodeToUser()
     {
         var mfaRequest = new MfaRequest()
             {
@@ -245,10 +258,13 @@
 
         var result = await MfaService.ResendMfaCodeAsync(mfaRequest);
 
-        if (!result.IsSuccess)
+        if (result?.IsSuccess != true)
         {
-            ErrorMessage = result.Value.Error;
+            ErrorMessage = result?.Value.Error ?? "Unable to resend the code. Please try again.";
             IsInvalid = true;
+            return false;
         }
+
+        return true;
     }
 }

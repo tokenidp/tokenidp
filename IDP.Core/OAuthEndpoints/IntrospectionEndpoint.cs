@@ -28,7 +28,7 @@ internal class IntrospectionEndpoint : IEndpointDefinition
 
             _logger.LogInfo("Introspect completed. Active: {IsActive}", response.Active);
 
-            return Results.Ok(response);
+            return Results.Ok(ApiResult<IntrospectionResponse>.Success(response));
         })
         .WithName("Introspection")
         .WithTags("Introspection");

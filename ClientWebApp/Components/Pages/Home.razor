@@ -62,6 +62,7 @@
             $"client_id={clientId}&" +
             $"redirect_uri={encodedRedirectUri}&" +
             $"response_type=code&" +
+            $"scope=openid profile email&" +
             $"code_challenge={codeChallenge}&" +
             $"code_challenge_method=SHA256";
 

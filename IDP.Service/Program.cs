@@ -2,7 +2,7 @@ using IDP.Core.ApplicationSetup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddTokenVaultServices();
+builder.AddTokenTresorServices();
 
 builder.Services.AddAuthorization();
 
@@ -11,7 +11,7 @@ var app = builder.Build();
 app.UseExceptionHandler("/error");
 app.UseHttpsRedirection();
 
-app.UseTokenVault();
+app.UseTokenTresor();
 
 app.UseRouting();
 

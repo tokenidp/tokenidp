@@ -1,6 +1,5 @@
-﻿using IDP.Core.Admin.Model;
-using IDP.Core.Admin.Model.Configurations;
-using IDP.Core.Admin.Services;
+﻿using IDP.Core.Admin;
+using IDP.Core.Admin.Configurations;
 
 namespace IDP.Core.AdminEndpoints;
 

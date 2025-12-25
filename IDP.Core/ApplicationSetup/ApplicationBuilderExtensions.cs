@@ -5,7 +5,7 @@ namespace IDP.Core.ApplicationSetup;
 
 public static class ApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddTokenVaultServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddTokenTresorServices(this WebApplicationBuilder builder)
     {
         builder.Services.AddServices(builder.Configuration);
         builder.Services.AddPersistence(builder.Configuration);
@@ -15,8 +15,8 @@ public static class ApplicationBuilderExtensions
         return builder;
     }
 
-    public static WebApplication UseTokenVault(this WebApplication app)
-    {
+    public static WebApplication UseTokenTresor(this WebApplication app)
+    { 
         app.RegisterEndpointDefinitions();
 
         return app;

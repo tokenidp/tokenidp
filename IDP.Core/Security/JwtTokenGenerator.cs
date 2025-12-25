@@ -17,22 +17,33 @@ public sealed class JwtTokenGenerator
         _settings = settings.Value;
     }
 
+    /// <summary>
+    /// Create Access Tokens
+    /// </summary>
+    /// <param name="tokenId">Jti claim</param>
+    /// <param name="userId">Sub claim</param>
+    /// <param name="userName">UniqueName claim</param>
+    /// <param name="tenantId">uid claim</param>
+    /// <param name="clientId">Audience</param>
+    /// <param name="scope">OpenID Connect scopes (profile email openid)</param>
+    /// <param name="roles">User roles</param>
+    /// <returns>Access Token</returns>
     public string CreateAccessToken(
-        string jti,
-        string subject,
-        string displayName,
+        string tokenId,
+        string userId,
+        string userName,
         string tenantId,
-        string audience,
+        string clientId,
         string scope,
         IEnumerable<string>? roles)
     {
         var now = DateTime.UtcNow;
 
-        var claims = new List<Claim>(capacity: 8)
+        var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, subject),
-            new(JwtRegisteredClaimNames.Jti, jti),
-            new(JwtRegisteredClaimNames.UniqueName, displayName),
+            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Jti, tokenId),
+            new(JwtRegisteredClaimNames.UniqueName, userName),
             new("uid", tenantId),
             new("scope", scope)
         };
@@ -52,8 +63,56 @@ public sealed class JwtTokenGenerator
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _settings.Issuer,
-            Audience = audience,
+            Audience = clientId,
             Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
+            NotBefore = now,
+            Expires = now.AddMinutes(_settings.DurationInMinutes),
+            SigningCredentials = credentials
+        };
+
+        var token = _tokenHandler.CreateToken(descriptor);
+
+        return _tokenHandler.WriteToken(token);
+    }
+
+    /// <summary>
+    /// Create IDs Tokens
+    /// </summary>
+    /// <param name="tokenId">Jti claim</param>
+    /// <param name="userId">Sub claim</param>
+    /// <param name="userName">UniqueName claim</param>
+    /// <param name="tenantId">uid claim</param>
+    /// <param name="clientId">Audience</param>
+    /// <param name="scope">OpenID Connect scopes (profile email openid)</param>
+    /// <param name="roles">User roles</param>
+    /// <returns>ID Token</returns>
+    public string CreateIDToken(
+        string tokenId,
+        string userId,
+        string userName,
+        string tenantId,
+        string clientId)
+    {
+        var now = DateTime.UtcNow;
+
+        var claims = new List<Claim>(capacity: 8)
+        {
+            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Jti, tokenId),
+            new(JwtRegisteredClaimNames.UniqueName, userName),
+            new("uid", tenantId),
+        };
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _settings.Issuer,
+            Audience = clientId,
+            Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
             NotBefore = now,
             Expires = now.AddMinutes(_settings.DurationInMinutes),
             SigningCredentials = credentials

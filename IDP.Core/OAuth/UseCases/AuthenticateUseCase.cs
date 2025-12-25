@@ -35,7 +35,7 @@ internal class AuthenticationUseCase
 
             _logger.LogInfo("Authenticate completed for user: {Username}", request.UserName);
 
-            return Results.Ok(response);
+            return Results.Ok(ApiResult<AuthResponse>.Success(response));
         }
 
         response = await _identityService.GenerateAuthorizationCode(request, response.UserId.Value);
@@ -57,7 +57,7 @@ internal class AuthenticationUseCase
 
         authResponse = await _identityService.GenerateAuthorizationCode(authRequest, request.UserId);
 
-        return Results.Ok(authResponse);
+        return Results.Ok(ApiResult<AuthResponse>.Success(authResponse));
     }
 
     public async Task<IResult> ResendMfaCode(MfaRequest request)
@@ -80,6 +80,6 @@ internal class AuthenticationUseCase
             return Results.Json(errorResult, statusCode: StatusCodes.Status401Unauthorized);
         }
 
-        return Results.Ok(response);
+        return Results.Ok(ApiResult<AuthResponse>.Success(response));
     }
 }
