@@ -17,7 +17,7 @@ internal class ConfigurationDto
 
     public int Id { get; set; }
     public int TenantId { get; private set; }
-    public string ConfigKey { get; private set; }
-    public string ConfigValue { get; private set; }
+    public required string ConfigKey { get; set; }
+    public required string ConfigValue { get; set; }
     public bool? IsDisplay { get; private set; }
 }

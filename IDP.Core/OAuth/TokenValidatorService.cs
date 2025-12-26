@@ -1,5 +1,7 @@
 ﻿using IDP.Core.Admin.Clients;
 using IDP.Core.Admin.Roles;
+using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices;
@@ -25,7 +27,7 @@ internal class TokenValidatorService
         _authorizationRepo = authorizationRepo;
     }
 
-    public async Task<UserTokenInfo> ValidatePkceAndAuthorizeAsync(TokenRequest tokenRequest, string ipAddress)
+    public async Task<UserTokenInfo> ValidateAsync(TokenRequest tokenRequest, string ipAddress)
     {
         _logger.LogInfo("Token request received for ClientId: {ClientId} with Code: {Code}",
             tokenRequest.ClientId, tokenRequest.Code.SubstringSafe(0, 5));

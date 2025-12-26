@@ -1,4 +1,5 @@
-﻿using IDP.Core.Options;
+﻿using IDP.Core.Common.Interfaces;
+using IDP.Core.Options;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace IDP.Core;

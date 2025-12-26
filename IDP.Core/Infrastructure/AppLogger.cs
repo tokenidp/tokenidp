@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using IDP.Core.Common.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace IDP.Core;
 

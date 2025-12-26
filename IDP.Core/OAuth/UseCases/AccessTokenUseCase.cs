@@ -1,4 +1,6 @@
 ﻿using IDP.Core.Admin.Clients;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Common.Model;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices.UseCases;

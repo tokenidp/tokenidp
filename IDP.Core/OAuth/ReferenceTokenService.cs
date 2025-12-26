@@ -1,4 +1,6 @@
 ﻿using IDP.Core.Admin.Roles;
+using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
 using IDP.Core.OAuth.Model;
 using IDP.Core.Options;
 
@@ -30,7 +32,7 @@ internal class ReferenceTokenService : ITokenService, IReferenceTokenValidator
     {
         _logger.LogInfo("Starting PKCE token generation for request from {IPAddress}", ipAddress);
 
-        var response = await _tokenValidatorService.ValidatePkceAndAuthorizeAsync(tokenRequest, ipAddress);
+        var response = await _tokenValidatorService.ValidateAsync(tokenRequest, ipAddress);
         _logger.LogDebug("PKCE validation successful for user {UserId}", response.UserId);
 
         var tokenResponse = await CreateToken(response);

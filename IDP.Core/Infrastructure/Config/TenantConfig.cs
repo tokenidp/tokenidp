@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.Infrastructure.Config;
+﻿using IDP.Core.Domain.AggregateRoots.Tenants;
+
+namespace IDP.Core.Infrastructure.Config;
 
 internal class TenantConfig : IEntityTypeConfiguration<Tenant>
 {

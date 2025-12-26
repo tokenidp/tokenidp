@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using IDP.Core.Common.Interfaces;
+using IDP.Core.Domain.AggregateRoots.Clients;
+using IDP.Core.Domain.AggregateRoots.Roles;
+using IDP.Core.Domain.AggregateRoots.Tenants;
+using IDP.Core.Domain.AggregateRoots.Users;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Core.Infrastructure;
 

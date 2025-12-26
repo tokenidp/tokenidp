@@ -1,9 +1,9 @@
-﻿using IDP.Core.Options;
+﻿using IDP.Core.Common.Interfaces;
+using IDP.Core.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace IDP.Core.Security;
 
@@ -11,15 +11,24 @@ public sealed class JwtTokenGenerator
 {
     private readonly TokenOption _settings;
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
+    private readonly SecurityKey _signingKey;
+    private readonly SigningCredentials _signingCredentials;
+    private readonly ICurrentUserService _currentUserService;
 
-    public JwtTokenGenerator(IOptions<TokenOption> settings)
+    public JwtTokenGenerator(IOptions<TokenOption> settings, 
+        ICurrentUserService currentUserService)
     {
         _settings = settings.Value;
+        var keyMaterial = GetKeyMaterial(_settings);
+        _signingKey = CreateSigningKey(keyMaterial);
+        _signingCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.RsaSha256);
+        _currentUserService = currentUserService;
     }
 
     /// <summary>
     /// Create Access Tokens
     /// </summary>
+    /// <param name="tokenExpiryInMinutes">Set minutes here for token expiry i.e. 60</param>
     /// <param name="tokenId">Jti claim</param>
     /// <param name="userId">Sub claim</param>
     /// <param name="userName">UniqueName claim</param>
@@ -29,6 +38,7 @@ public sealed class JwtTokenGenerator
     /// <param name="roles">User roles</param>
     /// <returns>Access Token</returns>
     public string CreateAccessToken(
+        double tokenExpiryInMinutes,
         string tokenId,
         string userId,
         string userName,
@@ -37,8 +47,6 @@ public sealed class JwtTokenGenerator
         string scope,
         IEnumerable<string>? roles)
     {
-        var now = DateTime.UtcNow;
-
         var claims = new List<Claim>()
         {
             new(JwtRegisteredClaimNames.Sub, userId),
@@ -57,28 +65,13 @@ public sealed class JwtTokenGenerator
             }
         }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var descriptor = new SecurityTokenDescriptor
-        {
-            Issuer = _settings.Issuer,
-            Audience = clientId,
-            Subject = new ClaimsIdentity(claims),
-            IssuedAt = now,
-            NotBefore = now,
-            Expires = now.AddMinutes(_settings.DurationInMinutes),
-            SigningCredentials = credentials
-        };
-
-        var token = _tokenHandler.CreateToken(descriptor);
-
-        return _tokenHandler.WriteToken(token);
+        return CreateToken(claims, clientId, tokenExpiryInMinutes);
     }
 
     /// <summary>
-    /// Create IDs Tokens
+    /// Create ID Tokens
     /// </summary>
+    /// <param name="tokenExpiryInMinutes">Set minutes here for token expiry i.e. 60</param>
     /// <param name="tokenId">Jti claim</param>
     /// <param name="userId">Sub claim</param>
     /// <param name="userName">UniqueName claim</param>
@@ -88,39 +81,68 @@ public sealed class JwtTokenGenerator
     /// <param name="roles">User roles</param>
     /// <returns>ID Token</returns>
     public string CreateIDToken(
+        double tokenExpiryInMinutes,
         string tokenId,
         string userId,
         string userName,
-        string tenantId,
         string clientId)
     {
-        var now = DateTime.UtcNow;
+        return CreateIDToken(
+            tokenExpiryInMinutes,
+            tokenId,
+            userId,
+            clientId,
+            name: null,
+            email: null,
+            emailVerified: null,
+            phoneNumber: null,
+            picture: null);
+    }
 
-        var claims = new List<Claim>(capacity: 8)
+    /// <summary>
+    /// Create ID Token with OIDC-standard claims.
+    /// </summary>
+    /// <param name="tokenExpiryInMinutes">Set minutes here for token expiry i.e. 60</param>
+    /// <param name="tokenId">Jti claim (optional)</param>
+    /// <param name="userId">Sub claim</param>
+    /// <param name="clientId">Audience</param>
+    /// <param name="name">Name claim</param>
+    /// <param name="email">Email claim</param>
+    /// <param name="emailVerified">Email verified claim</param>
+    /// <param name="phoneNumber">Phone number claim</param>
+    /// <param name="picture">Picture URL claim</param>
+    /// <returns>ID Token</returns>
+    public string CreateIDToken(
+        double tokenExpiryInMinutes,
+        string? tokenId,
+        string userId,
+        string clientId,
+        string? name,
+        string? email,
+        bool? emailVerified,
+        string? phoneNumber,
+        string? picture)
+    {
+        var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, userId),
-            new(JwtRegisteredClaimNames.Jti, tokenId),
-            new(JwtRegisteredClaimNames.UniqueName, userName),
-            new("uid", tenantId),
+            new(JwtRegisteredClaimNames.Sub, userId)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-        var descriptor = new SecurityTokenDescriptor
+        if (!string.IsNullOrWhiteSpace(tokenId))
         {
-            Issuer = _settings.Issuer,
-            Audience = clientId,
-            Subject = new ClaimsIdentity(claims),
-            IssuedAt = now,
-            NotBefore = now,
-            Expires = now.AddMinutes(_settings.DurationInMinutes),
-            SigningCredentials = credentials
-        };
+            claims.Add(new Claim(JwtRegisteredClaimNames.Jti, tokenId));
+        }
 
-        var token = _tokenHandler.CreateToken(descriptor);
+        AddIfPresent(claims, JwtRegisteredClaimNames.Name, name);
+        AddIfPresent(claims, JwtRegisteredClaimNames.Email, email);
+        if (emailVerified is not null)
+        {
+            claims.Add(new Claim("email_verified", emailVerified.Value ? "true" : "false"));
+        }
+        AddIfPresent(claims, JwtRegisteredClaimNames.PhoneNumber, phoneNumber);
+        AddIfPresent(claims, JwtRegisteredClaimNames.Picture, picture);
 
-        return _tokenHandler.WriteToken(token);
+        return CreateToken(claims, clientId, tokenExpiryInMinutes);
     }
 
     /// <summary>
@@ -131,5 +153,80 @@ public sealed class JwtTokenGenerator
         Span<byte> bytes = stackalloc byte[64]; // 512-bit
         RandomNumberGenerator.Fill(bytes);
         return Convert.ToBase64String(bytes);
+    }
+
+    private string CreateToken(IEnumerable<Claim> claims, string clientId, double tokenExpiryInMinutes)
+    {
+        var now = DateTime.UtcNow;
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _currentUserService.BaseUrl,
+            Audience = clientId,
+            Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
+            NotBefore = now,
+            Expires = now.AddMinutes(tokenExpiryInMinutes),
+            SigningCredentials = _signingCredentials
+        };
+
+        var token = _tokenHandler.CreateToken(descriptor);
+
+        return _tokenHandler.WriteToken(token);
+    }
+
+    private static void AddIfPresent(ICollection<Claim> claims, string claimType, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            claims.Add(new Claim(claimType, value));
+        }
+    }
+
+    private static SecurityKey CreateSigningKey(string keyMaterial)
+    {
+        if (string.IsNullOrWhiteSpace(keyMaterial))
+        {
+            throw new InvalidOperationException("Token signing key is missing.");
+        }
+
+        var rsa = RSA.Create();
+
+        if (keyMaterial.Contains("BEGIN", StringComparison.Ordinal))
+        {
+            rsa.ImportFromPem(keyMaterial);
+            return new RsaSecurityKey(rsa);
+        }
+
+        try
+        {
+            var keyBytes = Convert.FromBase64String(keyMaterial);
+            rsa.ImportRSAPrivateKey(keyBytes, out _);
+            return new RsaSecurityKey(rsa);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("Token signing key must be PEM or base64-encoded RSA private key.", ex);
+        }
+    }
+
+    private static string GetKeyMaterial(TokenOption settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.KeyPath))
+        {
+            if (!File.Exists(settings.KeyPath))
+            {
+                throw new FileNotFoundException("Token signing key file was not found.", settings.KeyPath);
+            }
+
+            return File.ReadAllText(settings.KeyPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(settings.Key))
+        {
+            return settings.Key;
+        }
+
+        throw new InvalidOperationException("Token signing key is missing.");
     }
 }

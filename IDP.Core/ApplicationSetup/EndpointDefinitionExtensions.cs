@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.OAuthEndpoints;
+﻿using IDP.Core.Common.Interfaces;
+
+namespace IDP.Core.OAuthEndpoints;
 
 internal static class EndpointDefinitionExtensions
 {

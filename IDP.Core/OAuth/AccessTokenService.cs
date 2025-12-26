@@ -1,4 +1,6 @@
 ﻿using IDP.Core.Admin.Roles;
+using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
 using IDP.Core.OAuth.Model;
 using IDP.Core.Options;
 
@@ -30,7 +32,7 @@ internal class AccessTokenService : ITokenService
     {
         _logger.LogInfo("Generating token for request from {IPAddress}", ipAddress);
 
-        var userInfo = await _tokenValidatorService.ValidatePkceAndAuthorizeAsync(tokenRequest, ipAddress);
+        var userInfo = await _tokenValidatorService.ValidateAsync(tokenRequest, ipAddress);
         _logger.LogDebug("User validation successful for {UserId}", userInfo.UserId);
 
         var token = CreateToken(userInfo);

@@ -1,4 +1,8 @@
-﻿namespace IDP.Core.Infrastructure;
+﻿using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Domain.AggregateRoots.Users;
+
+namespace IDP.Core.Infrastructure;
 
 internal class AuthorizationRepo
 {

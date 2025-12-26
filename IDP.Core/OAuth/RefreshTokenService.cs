@@ -1,6 +1,7 @@
-﻿using IDP.Core.OAuth.Model;
+﻿using IDP.Core.Common.Interfaces;
+using IDP.Core.OAuth.Model;
 using IDP.Core.Options;
-using static IDP.Core.Domain.Client;
+using static IDP.Core.Domain.AggregateRoots.Clients.Client;
 
 namespace IDP.Core.TokenServices;
 

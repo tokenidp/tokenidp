@@ -1,4 +1,6 @@
 ﻿using IDP.Core.Admin.Tenants;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Domain.AggregateRoots.Users;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices;

@@ -1,5 +1,7 @@
 ﻿using IDP.Core.Application;
-using IDP.Core.Notifications;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Common.Notifications;
+using IDP.Core.Domain.AggregateRoots.Users;
 using IDP.Core.OAuth.Model;
 
 namespace IDP.Core.TokenServices;

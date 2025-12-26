@@ -1,4 +1,8 @@
-﻿namespace IDP.Core.Application;
+﻿using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Domain.AggregateRoots.Users;
+
+namespace IDP.Core.Application;
 
 internal class PreAuthorizationRepo
 {

@@ -1,4 +1,4 @@
-﻿using IDP.Core.Notifications;
+﻿using IDP.Core.Common.Notifications;
 
 namespace IDP.Core.Admin;
 

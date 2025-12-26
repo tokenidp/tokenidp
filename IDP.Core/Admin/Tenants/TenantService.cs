@@ -1,4 +1,10 @@
-﻿namespace IDP.Core.Admin.Tenants;
+﻿using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Common.Model;
+using IDP.Core.Domain.AggregateRoots.Roles;
+using IDP.Core.Domain.AggregateRoots.Tenants;
+
+namespace IDP.Core.Admin.Tenants;
 
 internal class TenantService
 {

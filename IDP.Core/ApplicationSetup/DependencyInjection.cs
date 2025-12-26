@@ -5,7 +5,9 @@ using IDP.Core.Admin.Roles;
 using IDP.Core.Admin.Tenants;
 using IDP.Core.Admin.Users;
 using IDP.Core.Application;
-using IDP.Core.Notifications;
+using IDP.Core.Common.Interfaces;
+using IDP.Core.Common.Notifications;
+using IDP.Core.Domain.AggregateRoots.Roles;
 using IDP.Core.Options;
 using IDP.Core.TokenServices;
 using IDP.Core.TokenServices.UseCases;
@@ -17,10 +19,24 @@ namespace IDP.Core.ApplicationSetup;
 internal static class DependencyInjection
 {
     public static void AddServices(this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Action<TokenOption>? configureToken)
     {
         services.Configure<ConfigurationOption>(configuration.GetSection("ConfigurationSettings"));
-        services.Configure<TokenOption>(configuration.GetSection("TokenSettings"));
+        var tokenSection = configuration.GetSection("TokenSettings");
+        if (tokenSection.Exists())
+        {
+            services.Configure<TokenOption>(tokenSection);
+        }
+        else
+        {
+            services.AddOptions<TokenOption>();
+        }
+
+        if (configureToken is not null)
+        {
+            services.PostConfigure(configureToken);
+        }
 
         services.AddMemoryCache();
         services.AddHttpContextAccessor();
@@ -70,7 +86,6 @@ internal static class DependencyInjection
 
             return service;
         });
-
 
         services.AddScoped<SmtpEmail>();
         services.AddScoped<SendGridEmail>();

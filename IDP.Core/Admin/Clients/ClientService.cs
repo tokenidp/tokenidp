@@ -1,4 +1,7 @@
-﻿namespace IDP.Core.Admin.Clients;
+﻿using IDP.Core.Common.Extensions;
+using IDP.Core.Common.Interfaces;
+
+namespace IDP.Core.Admin.Clients;
 
 internal class ClientService
 {
@@ -23,12 +26,10 @@ internal class ClientService
 
         var tokenType = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-
             return await _dbContext.Clients
            .Where(s => s.ClientId == clientId)
            .Select(s => s.AccessTokenType)
            .FirstOrDefaultAsync();
-
         });
 
         _logger.LogDebug("Retrieved token type {TokenType} for client {ClientId}",
@@ -45,7 +46,6 @@ internal class ClientService
 
         var scopes = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-
             var client = await _dbContext.Clients.Include(c => c.ClientScopes)
             .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive);
 
@@ -53,7 +53,6 @@ internal class ClientService
 
             return string.Join(" ", client?.ClientScopes?
             .Select(s => s.Scope) ?? Enumerable.Empty<string>());
-
         });
 
         _logger.LogDebug("Retrieved client {ClientId}", clientId.Substring(0, 5));
