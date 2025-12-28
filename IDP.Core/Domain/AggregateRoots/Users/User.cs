@@ -1,10 +1,6 @@
-﻿using IDP.Core.Domain.AggregateRoots.Tenants;
-using IDP.Core.Domain.AggregateRoots.Users;
+﻿namespace IDP.Core.Domain;
 
-namespace IDP.Core.Domain;
-
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-internal partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot, IAuditable
+internal partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot
 {
     public enum UserStatus
     {
@@ -24,8 +20,10 @@ internal partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregat
     public virtual ICollection<UserAddress> UserAddresses { get; private set; }
     public virtual ICollection<UserContact> UserContacts { get; private set; }
     public virtual ICollection<UserRole> UserRoles { get; private set; }
-    public virtual ICollection<RefreshToken> RefreshTokens { get; private set; }
-    public virtual ICollection<AuthorizationCode> AuthorizationCodes { get; private set; }
+    public virtual ICollection<UserRefreshToken> RefreshTokens { get; private set; }
+    public virtual ICollection<UserAuthorizationCode> UserAuthorizationCodes { get; private set; }
+    public virtual ICollection<UserPreAuthorization> UserPreAuthorizations { get; private set; }
+
     public virtual Tenant Tenant { get; private set; }
 
     public User() : base() { }

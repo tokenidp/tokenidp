@@ -1,7 +1,5 @@
 ﻿using IDP.Core.Admin.Tenants;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Domain.AggregateRoots.Users;
-using IDP.Core.OAuth.Model;
+using IDP.Core.OAuth;
 
 namespace IDP.Core.TokenServices;
 
@@ -10,20 +8,20 @@ internal class IdentityService
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IAppLogger<IdentityService> _logger;
-    private readonly AuthorizationRepo _authorizationRepo;
+    private readonly AuthorizationService _authorizationService;
     private readonly TenantService _tenantService;
 
     public IdentityService(UserManager<User> userManager,
         SignInManager<User> signInManager,
         IAppLogger<IdentityService> logger,
         TenantService tenantService,
-        AuthorizationRepo authorizationRepo)
+        AuthorizationService authorizationService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _logger = logger;
         _tenantService = tenantService;
-        _authorizationRepo = authorizationRepo;
+        _authorizationService = authorizationService;
     }
 
     public async Task<AuthResponse> Authenticate(AuthRequest request)
@@ -64,7 +62,7 @@ internal class IdentityService
         var code = Guid.NewGuid().ToString();
         _logger.LogDebug("Generated authorization code: {Code}", code);
 
-        AuthorizationCode authorizationCode = new(
+        UserAuthorizationCode authorizationCode = new(
             code,
             request.CodeChallenge,
             request.CodeChallengeMethod,
@@ -74,7 +72,7 @@ internal class IdentityService
             request.RedirectUri,
             request.Scopes);
 
-        await _authorizationRepo.SaveAuthorization(authorizationCode);
+        await _authorizationService.SaveAuthorization(authorizationCode);
 
         _logger.LogInfo("Saved authorization code for user {UserId} (Client: {ClientId})",
             userId, request.ClientId);

@@ -1,7 +1,4 @@
 ﻿using IDP.Core.Admin.Roles;
-using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Admin.Users;
 
@@ -99,8 +96,6 @@ internal class UserService
 
         return users;
     }
-
-
 
     public async Task<UserPermission> GetUserPermissions(int userId)
     {

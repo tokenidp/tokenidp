@@ -1,4 +1,4 @@
-﻿namespace IDP.Core.Domain;
+﻿namespace IDP.Core.Domain.AggregateRoots.Lookups;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
 internal class LookupType : BaseEntity, ITenant, IAggregateRoot
@@ -8,7 +8,7 @@ internal class LookupType : BaseEntity, ITenant, IAggregateRoot
     public string LookupTypeName { get; private set; }
     public string? LookupTypeDescription { get; private set; }
     public bool? IsDisplay { get; private set; }
-    public string? UseFor {  get; private set; }
+    public string? UseFor { get; private set; }
     public virtual ICollection<LookupValue> LookupValues { get; private set; }
 
     /// <summary>

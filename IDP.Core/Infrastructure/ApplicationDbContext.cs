@@ -1,8 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.Domain.AggregateRoots.Clients;
-using IDP.Core.Domain.AggregateRoots.Roles;
-using IDP.Core.Domain.AggregateRoots.Tenants;
-using IDP.Core.Domain.AggregateRoots.Users;
+﻿using IDP.Core.Domain.AggregateRoots;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Core.Infrastructure;
@@ -32,11 +28,13 @@ internal class ApplicationDbContext : IdentityDbContext<
     public DbSet<TenantPermission> TenantPermissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
-    public DbSet<PreAuthorization> PreAuthorizations { get; set; }
-    public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
+    public DbSet<UserRefreshToken> RefreshTokens { get; set; }
+    public DbSet<UserPreAuthorization> PreAuthorizations { get; set; }
+    public DbSet<UserAuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<ClientScope> ClientScopes { get; set; }
+    public DbSet<ClientSecret> ClientSecrets { get; set; }
+    public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
     public DbSet<UserAccessToken> UserAccessToken { get; set; }
     public DbSet<LookupType> LookupTypes { get; set; }
     public DbSet<LookupValue> LookupValues { get; set; }
@@ -60,11 +58,11 @@ internal class ApplicationDbContext : IdentityDbContext<
 
         builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
 
-        builder.Entity<PreAuthorization>().ToTable("PreAuthorizations");
+        builder.Entity<UserPreAuthorization>().ToTable("PreAuthorizations");
 
-        builder.Entity<AuthorizationCode>().ToTable("AuthorizationCodes");
+        builder.Entity<UserAuthorizationCode>().ToTable("AuthorizationCodes");
 
-        builder.Entity<RefreshToken>().ToTable("RefreshTokens");
+        builder.Entity<UserRefreshToken>().ToTable("RefreshTokens");
 
         builder.Entity<Client>(ur =>
         {

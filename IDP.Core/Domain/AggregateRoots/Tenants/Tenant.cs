@@ -1,7 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots.Clients;
-using IDP.Core.Domain.AggregateRoots.Roles;
-
-namespace IDP.Core.Domain.AggregateRoots.Tenants;
+﻿namespace IDP.Core.Domain.AggregateRoots.Tenants;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 internal partial class Tenant : BaseEntity, IAggregateRoot

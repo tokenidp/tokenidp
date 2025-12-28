@@ -1,7 +1,4 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 using System.Net;
 using System.Text;
 

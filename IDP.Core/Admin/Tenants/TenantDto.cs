@@ -1,5 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots.Tenants;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 namespace IDP.Core.Admin.Tenants;
 

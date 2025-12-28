@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Domain.AggregateRoots.Users;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-internal class AuthorizationCode
+internal class UserAuthorizationCode
 {
     [Key]
     public int Id { get; private set; }
@@ -21,9 +21,9 @@ internal class AuthorizationCode
 
     public virtual User User { get; private set; }
 
-    private AuthorizationCode() { }
+    private UserAuthorizationCode() { }
 
-    public AuthorizationCode(string code,
+    public UserAuthorizationCode(string code,
         string codeChallenge,
         string codeChallengeMethod,
         string clientId,
@@ -44,10 +44,10 @@ internal class AuthorizationCode
         CodeChallengeMethod = codeChallengeMethod;
     }
 
-    public void UpdateIsUsed(bool isUsed, int userId)
+    public void UpdateIsUsed(bool isUsed)
     {
         IsUsed = isUsed;
-        UpdatedBy = userId;
+        UpdatedBy = UserId;
         UpdatedOn = DateTime.UtcNow;
     }
 }

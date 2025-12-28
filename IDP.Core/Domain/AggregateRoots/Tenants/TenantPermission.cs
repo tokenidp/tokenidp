@@ -1,5 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots.Roles;
-using IDP.Core.Domain.AggregateRoots.Tenants;
+﻿using IDP.Core.Domain.AggregateRoots;
 
 namespace IDP.Core.Domain;
 

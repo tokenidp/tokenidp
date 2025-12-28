@@ -1,6 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.Options;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 
 namespace IDP.Core;
 
@@ -11,11 +9,10 @@ public sealed class MemoryCache : ICache
     private readonly TimeSpan defaultExpiration;
 
     public MemoryCache(IMemoryCache cache,
-        IOptions<ConfigurationOption> options,
         IAppLogger<MemoryCache> logger)
     {
         _cache = cache;
-        defaultExpiration = new(0, options.Value.DefautlCacheExpiryInMinutes, 0);
+        defaultExpiration = new(0, 30, 0);
         _logger = logger;
     }
 

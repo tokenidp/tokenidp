@@ -1,7 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots.Tenants;
-using IDP.Core.Domain.AggregateRoots.Users;
-
-namespace IDP.Core.Domain.AggregateRoots.Roles;
+﻿namespace IDP.Core.Domain.AggregateRoots.Roles;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 internal class Role : IdentityRole<int>, IBaseEntity, ITenant, IAggregateRoot, IAuditable

@@ -1,7 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
-using IDP.Core.OAuth.Model;
-using IDP.Core.TokenServices;
+﻿using IDP.Core.OAuth;
 
 namespace IDP.Core.Endpoints.OAuthEndpoints;
 
@@ -13,7 +10,7 @@ internal class IntrospectionEndpoint : IEndpointDefinition
 
         authGroup.MapPost("/", async (IntrospectionRequest request,
             IAppLogger<IntrospectionEndpoint> _logger,
-            IReferenceTokenValidator referenceTokenValidator) =>
+            IntrospectionValidatorService referenceTokenValidator) =>
         {
             _logger.LogInfo("Introspect process started.");
 

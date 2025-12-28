@@ -1,18 +1,20 @@
 ﻿using IDP.Core.Admin;
 using IDP.Core.Admin.Clients;
 using IDP.Core.Admin.Configurations;
+using IDP.Core.Admin.Lookups;
 using IDP.Core.Admin.Roles;
 using IDP.Core.Admin.Tenants;
 using IDP.Core.Admin.Users;
-using IDP.Core.Application;
-using IDP.Core.Common.Interfaces;
 using IDP.Core.Common.Notifications;
-using IDP.Core.Domain.AggregateRoots.Roles;
+using IDP.Core.OAuth;
+using IDP.Core.OAuth.TokenServices;
 using IDP.Core.Options;
 using IDP.Core.TokenServices;
-using IDP.Core.TokenServices.UseCases;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace IDP.Core.ApplicationSetup;
 
@@ -22,8 +24,144 @@ internal static class DependencyInjection
         IConfiguration configuration,
         Action<TokenOption>? configureToken)
     {
-        services.Configure<ConfigurationOption>(configuration.GetSection("ConfigurationSettings"));
-        var tokenSection = configuration.GetSection("TokenSettings");
+        ConfigureTokenOptions(services, configuration, configureToken);
+        AddInfrastructure(services);
+        AddAdminServices(services);
+        AddTokenServices(services);
+        AddEmailServices(services);
+    }
+
+    public static void AddPersistence(this IServiceCollection services,
+        IConfiguration configuration,
+        string connectionStringName)
+    {
+        services.AddDbContext<ApplicationDbContext>(options =>
+                  options.UseSqlServer(
+                      configuration.GetConnectionString(connectionStringName)));
+
+        services.AddIdentity<User, Role>()
+            .AddEntityFrameworkStores<ApplicationDbContext>();
+    }
+
+    private static void AddInfrastructure(IServiceCollection services)
+    {
+        services.AddMemoryCache();
+        services.AddHttpContextAccessor();
+        services.AddCors();
+
+        services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
+        services.AddSingleton<ICache, MemoryCache>();
+        services.AddSingleton<JwtTokenGenerator>();
+        services.AddSingleton<JsonHelper>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+    }
+
+    private static void AddAdminServices(IServiceCollection services)
+    {
+        services.AddScoped<RoleService>();
+        services.AddScoped<ClientService>();
+        services.AddScoped<TenantService>();
+        services.AddScoped<AuditService>();
+        services.AddScoped<ConfigurationService>();
+        services.AddScoped<UserService>();
+        services.AddScoped<LookupService>();
+    }
+
+    private static void AddTokenServices(IServiceCollection services)
+    {
+        services.AddScoped<IdentityService>();
+        services.AddScoped<TokenValidatorService>();
+        services.AddScoped<TokenUseCase>();
+        services.AddScoped<TokenService>();
+        services.AddScoped<AuthenticationUseCase>();
+        services.AddScoped<RevokeTokenService>();
+        services.AddScoped<MfaService>();
+        services.AddScoped<TokenGrantFactory>();
+        services.AddScoped<RefreshTokenGrantHandler>();
+        services.AddScoped<AuthorizationCodeGrantHandler>();
+        services.AddScoped<ClientCredentialGrantHandler>();
+        services.AddScoped<IntrospectionValidatorService>();
+        services.AddScoped<AuthorizationService>();
+        services.AddScoped<PreAuthorizationService>();
+
+        services.AddTransient<Func<GrantType, ITokenGrantHandler>>(serviceProvider => key =>
+        {
+            return key switch
+            {
+                GrantType.authorization_code => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>(),
+                GrantType.refresh_token => serviceProvider.GetRequiredService<RefreshTokenGrantHandler>(),
+                GrantType.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
+                _ => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>()
+            };
+        });
+    }
+
+    private static void AddEmailServices(IServiceCollection services)
+    {
+        services.AddScoped<SmtpEmail>();
+        services.AddScoped<SendGridEmail>();
+        services.AddScoped<EmailProviderFactory>();
+        services.AddScoped<IEmailSetting, EmailSetting>();
+
+        services.AddTransient<Func<EmailProviderType, IEmailNotification>>(serviceProvider => key =>
+        {
+            return key switch
+            {
+                EmailProviderType.SendGrid => serviceProvider.GetRequiredService<SendGridEmail>(),
+                _ => serviceProvider.GetRequiredService<SmtpEmail>()
+            };
+        });
+    }
+
+    public static void AddAuthentication(this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        ConfigureTokenOptions(services, configuration, null);
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+       .AddJwtBearer();
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<TokenOption>, IHttpContextAccessor>((options, tokenOptions, httpContextAccessor) =>
+            {
+                var token = tokenOptions.Value;
+                var keyMaterial = ResolveKeyMaterial(token);
+                var signingKey = CreateSigningKey(keyMaterial);
+
+                options.SaveToken = false;
+                options.RequireHttpsMetadata = false;
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = signingKey,
+                    ValidateIssuer = true,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero,
+                    IssuerValidator = (issuer, securityToken, validationParameters) =>
+                    {
+                        var expected = ResolveIssuer(token, httpContextAccessor);
+                        if (!string.Equals(issuer, expected, StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new SecurityTokenInvalidIssuerException(
+                                $"Issuer '{issuer}' is invalid. Expected '{expected}'.");
+                        }
+
+                        return issuer;
+                    }
+                };
+            });
+    }
+
+    private static void ConfigureTokenOptions(
+        IServiceCollection services,
+        IConfiguration configuration,
+        Action<TokenOption>? configureToken)
+    {
+        var tokenSection = configuration.GetSection("TokenOptions");
         if (tokenSection.Exists())
         {
             services.Configure<TokenOption>(tokenSection);
@@ -37,135 +175,64 @@ internal static class DependencyInjection
         {
             services.PostConfigure(configureToken);
         }
-
-        services.AddMemoryCache();
-        services.AddHttpContextAccessor();
-        services.AddCors();
-
-        services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-        services.AddSingleton<ICache, MemoryCache>();
-        services.AddSingleton<JwtTokenGenerator>();
-        services.AddSingleton<JsonHelper>();
-
-        services.AddScoped<RoleService>();
-        services.AddScoped<ClientService>();
-        services.AddScoped<TenantService>();
-        services.AddScoped<AuditService>();
-        services.AddScoped<ConfigurationService>();
-        services.AddScoped<UserService>();
-
-        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-        services.AddScoped<IdentityService>();
-        services.AddScoped<TokenValidatorService>();   
-        services.AddScoped<AccessTokenUseCase>();
-        services.AddScoped<AuthenticationUseCase>();
-        services.AddScoped<MfaService>();
-        services.AddScoped<TokenServiceFactory>();
-        services.AddScoped<RefreshTokenService>();
-        services.AddScoped<AccessTokenService>();
-
-        services.AddScoped<IReferenceTokenValidator, ReferenceTokenService>();
-
-        services.AddTransient<Func<TokenType, ITokenService>>(serviceProvider => key =>
-        {
-            #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
-            #pragma warning disable CS8604 // Possible null reference argument
-            ITokenService service = key switch
-            {
-                TokenType.ReferenceToken => serviceProvider.GetService<ReferenceTokenService>(),
-                TokenType.JWT => serviceProvider.GetService<AccessTokenService>(),
-                _ => serviceProvider.GetService<AccessTokenService>()
-            };
-
-            if (service == null)
-            {
-                throw new InvalidOperationException($"Service for key '{key}' is not registered.");
-            }
-
-            return service;
-        });
-
-        services.AddScoped<SmtpEmail>();
-        services.AddScoped<SendGridEmail>();
-        services.AddScoped<EmailProviderFactory>();
-        services.AddScoped<IEmailSetting, EmailSetting>();
-
-        services.AddTransient<Func<EmailProviderType, IEmailNotification>>(serviceProvider => key =>
-        {
-            #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type
-            #pragma warning disable CS8604 // Possible null reference argument
-            IEmailNotification service = key switch
-            {
-                EmailProviderType.SendGrid => serviceProvider.GetService<SendGridEmail>(),
-                _ => serviceProvider.GetService<SmtpEmail>()
-            };
-
-            if (service == null)
-            {
-                throw new InvalidOperationException($"Service for key '{key}' is not registered.");
-            }
-
-            return service;
-        });
     }
 
-    public static void AddPersistence(this IServiceCollection services,
-        IConfiguration configuration)
+    private static string ResolveKeyMaterial(TokenOption settings)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-                  options.UseSqlServer(
-                      configuration.GetConnectionString("Identity_DB")));
+        if (!string.IsNullOrWhiteSpace(settings.KeyPath))
+        {
+            if (!File.Exists(settings.KeyPath))
+            {
+                throw new FileNotFoundException("Token signing key file was not found.", settings.KeyPath);
+            }
 
-        services.AddIdentity<User, Role>()
-            .AddEntityFrameworkStores<ApplicationDbContext>();
+            return File.ReadAllText(settings.KeyPath);
+        }
 
-        services.AddScoped<AuthorizationRepo>();
-        services.AddScoped<PreAuthorizationRepo>();
-        services.AddScoped<LookupRepo>();
+        if (!string.IsNullOrWhiteSpace(settings.Key))
+        {
+            return settings.Key;
+        }
+
+        throw new InvalidOperationException("Token signing key is missing.");
     }
 
-    //public static void AddAuthentication(this IServiceCollection services,
-    //    IConfiguration configuration)
-    //{
-    //    services.Configure<TokenOption>(configuration.GetSection("TokenSettings"));
+    private static SecurityKey CreateSigningKey(string keyMaterial)
+    {
+        var rsa = RSA.Create();
 
-    //    services.AddAuthentication(options =>
-    //    {
-    //        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    //        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    //        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-    //    })
-    //   .AddJwtBearer(options =>
-    //   {
-    //       options.SaveToken = false;
-    //       options.RequireHttpsMetadata = false;
-    //       options.TokenValidationParameters = new TokenValidationParameters()
-    //       {
-    //           ValidateIssuerSigningKey = true,
-    //           ValidateIssuer = true,
-    //           ValidateAudience = true,
-    //           ValidateLifetime = true,
-    //           ClockSkew = TimeSpan.Zero,
-    //           ValidAudience = configuration["TokenSettings:Audience"],
-    //           ValidIssuer = configuration["TokenSettings:Issuer"],
-    //           IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["TokenSettings:Key"]))
-    //       };
-    //   });
+        if (keyMaterial.Contains("BEGIN", StringComparison.Ordinal))
+        {
+            rsa.ImportFromPem(keyMaterial);
+            return new RsaSecurityKey(rsa);
+        }
 
-    //    // services.AddAuthentication("Bearer")
-    //    //.AddOAuth2Introspection("Bearer", options =>
-    //    //{
-    //    //    options.Authority = "https://authserver.com";
-    //    //    options.ClientId = "your-client-id";
-    //    //    options.ClientSecret = "your-client-secret";
-    //    //});
+        try
+        {
+            var keyBytes = Convert.FromBase64String(keyMaterial);
+            rsa.ImportRSAPrivateKey(keyBytes, out _);
+            return new RsaSecurityKey(rsa);
+        }
+        catch (FormatException ex)
+        {
+            throw new InvalidOperationException("Token signing key must be PEM or base64-encoded RSA private key.", ex);
+        }
+    }
 
-    //    //services.AddAuthorization(options =>
-    //    //{
-    //    //    options.AddPolicy("Profile", policy =>
-    //    //        policy.RequireClaim("scope", "Profile"));
-    //    //});
-    //}
+    private static string ResolveIssuer(TokenOption settings, IHttpContextAccessor httpContextAccessor)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.Issuer))
+        {
+            return settings.Issuer.TrimEnd('/');
+        }
+
+        var request = httpContextAccessor.HttpContext?.Request;
+        if (request is null)
+        {
+            throw new InvalidOperationException("Token issuer is missing and no HTTP request is available to infer it.");
+        }
+
+        var baseUrl = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}";
+        return baseUrl.TrimEnd('/');
+    }
 }

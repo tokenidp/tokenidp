@@ -1,7 +1,5 @@
 ﻿using IDP.Core.Admin;
 using IDP.Core.Admin.Users;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Endpoints.AdminEndpoints;
 
@@ -43,7 +41,7 @@ internal class UserEndpoint : IEndpointDefinition
         })
         .WithName("UserById")
         .WithTags("UserById");
-      
+
         authGroup.MapPost("/", async (CreateUpdateUser user,
             IAppLogger<UserEndpoint> _logger,
             UserService userService) =>
@@ -93,7 +91,7 @@ internal class UserEndpoint : IEndpointDefinition
         {
             _logger.LogInfo("GetUserInfo called for userId: {UserId}", userId);
 
-            var response = await userService.GetUserClaims(userId);
+            var response = await userService.GetUserPermissions(userId);
 
             _logger.LogInfo("GetUserInfo completed for userId: {UserId}", userId);
 

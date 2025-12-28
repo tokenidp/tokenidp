@@ -63,6 +63,7 @@ public class AuthenticationService : BaseService<AuthenticationService>
             if (response?.Value == null)
             {
                 _logger.LogWarning("Client {ClientId} not found", clientId);
+
                 throw new NotFoundException($"Client {clientId} not found");
             }
 

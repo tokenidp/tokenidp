@@ -1,5 +1,4 @@
-﻿using IDP.Core.Common.Model;
-using System.Linq.Dynamic.Core;
+﻿using System.Linq.Dynamic.Core;
 using System.Text;
 
 namespace IDP.Core.Common.Extensions;

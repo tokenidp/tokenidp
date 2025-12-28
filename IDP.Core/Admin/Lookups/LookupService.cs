@@ -1,14 +1,11 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
+﻿namespace IDP.Core.Admin.Lookups;
 
-namespace IDP.Core.Infrastructure;
-
-internal class LookupRepo
+internal class LookupService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
 
-    public LookupRepo(ApplicationDbContext applicationDbContext, ICache cache)
+    public LookupService(ApplicationDbContext applicationDbContext, ICache cache)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;

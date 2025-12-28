@@ -9,9 +9,9 @@ internal class UserInfo
     public string GivenName { get; private set; }
     public string MiddleName { get; private set; }
     public string NickName { get; private set; }
-    public string FamilyName {  get; private set; }
+    public string FamilyName { get; private set; }
     public string PreferredUserName { get; private set; }
-    public string Profile {  get; private set; }
+    public string Profile { get; private set; }
     public string Picture { get; private set; }
     public string Website { get; private set; }
     public string PhoneNumber { get; private set; }

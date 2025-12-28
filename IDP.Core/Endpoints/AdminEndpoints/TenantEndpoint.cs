@@ -1,7 +1,5 @@
 ﻿using IDP.Core.Admin;
 using IDP.Core.Admin.Tenants;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Endpoints.AdminEndpoints;
 

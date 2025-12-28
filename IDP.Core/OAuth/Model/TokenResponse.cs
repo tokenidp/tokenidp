@@ -13,18 +13,23 @@ public class TokenResponse
 
     }
 
-    public static TokenResponse Create(int userId, string token,
+    public static TokenResponse Create(
+        int userId,
+        string token,
         DateTime expiry,
-        string refreshToken = "",
-        string idToken = "")
+        string idToken)
     {
         return new TokenResponse()
         {
             UserId = userId,
             AccessToken = token,
             IDToken = idToken,
-            RefreshToken = refreshToken,
             Expiry = expiry
         };
+    }
+
+    public void AddRefreshToken(string refreshToken)
+    {
+        RefreshToken = refreshToken;
     }
 }

@@ -2,10 +2,16 @@
 
 public class TokenRequest
 {
-    public int UserId { get; set; }
-    public string ClientId { get; set; }
-    public string GrantType { get; set; } // always authorization_code
-    public string Code { get; set; }
-    public string CodeVerifier { get; set; }
-    public string RedirectUri { get; set; }
+    public required string GrantType { get; init; }
+    public required string ClientId { get; init; }
+
+    public string? Code { get; init; }
+    public string? CodeVerifier { get; init; }
+    public string? RedirectUri { get; init; }
+
+    public string? RefreshToken { get; init; }
+    public string? DeviceCode { get; init; }
+
+    public string? Scope { get; init; }
+    public string? IpAddress { get; set; }
 }

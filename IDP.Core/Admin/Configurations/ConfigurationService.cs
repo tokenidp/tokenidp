@@ -1,8 +1,4 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
-
-namespace IDP.Core.Admin.Configurations;
+﻿namespace IDP.Core.Admin.Configurations;
 
 internal class ConfigurationService
 {

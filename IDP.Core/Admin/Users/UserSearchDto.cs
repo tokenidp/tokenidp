@@ -3,9 +3,10 @@
 namespace IDP.Core.Admin.Users;
 
 internal class UserSearchDto
-{ 
+{
     internal static Expression<Func<UserSearch, UserSearchDto>> Projection =>
-        user => new UserSearchDto() {
+        user => new UserSearchDto()
+        {
             Id = user.Id,
             TenantId = user.TenantId,
             FullName = user.FullName,

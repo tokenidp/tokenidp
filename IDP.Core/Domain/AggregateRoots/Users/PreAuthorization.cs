@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.Domain.AggregateRoots.Users;
 
-internal class PreAuthorization
+internal class UserPreAuthorization
 {
     [Key]
     public int Id { get; private set; }
@@ -18,8 +18,9 @@ internal class PreAuthorization
     public DateTime CreatedOn { get; private set; }
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedOn { get; private set; }
+    public virtual User User { get; private set; }
 
-    public PreAuthorization(int userId,
+    public UserPreAuthorization(int userId,
         string mfaCode,
         string correlationId,
         string clientId,

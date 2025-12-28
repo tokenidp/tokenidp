@@ -1,6 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using System.Runtime;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
 namespace IDP.Core;
 
@@ -32,7 +30,7 @@ internal class CurrentUserService : ICurrentUserService
             }
 
             return $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}".TrimEnd('/');
-        }       
+        }
     }
 
     public string[] GetRoles()

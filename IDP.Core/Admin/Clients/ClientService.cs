@@ -1,7 +1,4 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-
-namespace IDP.Core.Admin.Clients;
+﻿namespace IDP.Core.Admin.Clients;
 
 internal class ClientService
 {
@@ -18,52 +15,35 @@ internal class ClientService
         _cache = cache;
     }
 
-    public async Task<TokenType> GetClientTokenType(string clientId)
+    public async Task<ClientShortDto> GetClient(string clientId)
     {
-        _logger.LogDebug("Retrieving token type for client: {ClientId}", clientId.Substring(0, 5));
-
-        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("token", clientId);
-
-        var tokenType = await _cache.GetOrCreateAsync(cacheKey, async () =>
-        {
-            return await _dbContext.Clients
-           .Where(s => s.ClientId == clientId)
-           .Select(s => s.AccessTokenType)
-           .FirstOrDefaultAsync();
-        });
-
-        _logger.LogDebug("Retrieved token type {TokenType} for client {ClientId}",
-                        tokenType, clientId.Substring(0, 5));
-
-        return tokenType;
-    }
-
-    public async Task<ClientValidationResult> GetClientScopes(string clientId)
-    {
-        _logger.LogDebug("GetClient client: {ClientId}", clientId.Substring(0, 5));
+        _logger.LogDebug("GetClient client: {ClientId}", clientId);
 
         var cacheKey = CacheKeys.CLIENT.FormatCacheKey(clientId);
 
-        var scopes = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            var client = await _dbContext.Clients.Include(c => c.ClientScopes)
-            .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive);
+            var client = await _dbContext.Clients
+            .Where(x => x.ClientId == clientId && x.IsActive)
+            .Select(ClientShortDto.Projection)
+            .FirstOrDefaultAsync();
 
-            _logger.LogDebug("Cached token type for {CacheKey}", cacheKey.Substring(0, 7));
+            _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
-            return string.Join(" ", client?.ClientScopes?
-            .Select(s => s.Scope) ?? Enumerable.Empty<string>());
+            return client;
         });
 
-        _logger.LogDebug("Retrieved client {ClientId}", clientId.Substring(0, 5));
+        _logger.LogDebug("Retrieved client {ClientId}", clientId);
 
-        return ClientValidationResult.Create(true, scopes);
+        return clientDto ?? throw new NotFoundException("Client not found.");
     }
 
-    public async Task<bool> IsValidClient(string clientId)
+    public async Task<ClientValidationResult> IsValidClient(string clientId)
     {
-        var clientDto = await GetClientScopes(clientId);
+        _logger.LogDebug("IsValidClient: Checking is valid client for client: {ClientId}", clientId);
 
-        return !string.IsNullOrEmpty(clientDto?.Scopes);
+        var clientDto = await GetClient(clientId);
+
+        return ClientValidationResult.Create(clientDto != null);
     }
 }

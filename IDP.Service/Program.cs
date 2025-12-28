@@ -2,7 +2,7 @@ using IDP.Core.ApplicationSetup;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddTokenTresorServices();
+builder.AddTokenTresorServices("Identity_DB");
 
 builder.Services.AddAuthorization();
 

@@ -1,4 +1,5 @@
 ﻿using IDP.Core.OAuthEndpoints;
+using IDP.Core.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -6,7 +7,15 @@ namespace IDP.Core.ApplicationSetup;
 
 public static class ApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddTokenTresorServices(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddTokenTresorServices(
+        this WebApplicationBuilder builder,
+        string connectionStringName)
+        => AddTokenTresorServices(builder, connectionStringName, null);
+
+    public static WebApplicationBuilder AddTokenTresorServices(
+        this WebApplicationBuilder builder,
+        string connectionStringName,
+        Action<TokenOption>? configureToken)
     {
         builder.Services.AddServices(builder.Configuration, options =>
         {
@@ -14,7 +23,7 @@ public static class ApplicationBuilderExtensions
             {
                 if (string.IsNullOrWhiteSpace(options.Key) && string.IsNullOrWhiteSpace(options.KeyPath))
                 {
-                    options.Key = TokenKeyDefaults.DevelopmentKey;
+                    options.Key = TokenKeyDefault.DevelopmentKey;
                 }
                 return;
             }
@@ -25,15 +34,18 @@ public static class ApplicationBuilderExtensions
                     "Token signing key is required in production. Provide TokenSettings:KeyPath or TokenSettings:Key.");
             }
 
-            if (string.Equals(options.Key, TokenKeyDefaults.DevelopmentKey, StringComparison.Ordinal))
+            if (string.Equals(options.Key, TokenKeyDefault.DevelopmentKey, StringComparison.Ordinal))
             {
                 throw new InvalidOperationException("Development signing key cannot be used in production.");
             }
         });
 
-        builder.Services.AddPersistence(builder.Configuration);
+        if (configureToken is not null)
+        {
+            builder.Services.PostConfigure(configureToken);
+        }
 
-        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddPersistence(builder.Configuration, connectionStringName);
 
         return builder;
     }

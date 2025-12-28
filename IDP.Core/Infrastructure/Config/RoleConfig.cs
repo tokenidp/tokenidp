@@ -1,6 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots.Roles;
-
-namespace IDP.Core.Infrastructure.Config;
+﻿namespace IDP.Core.Infrastructure.Config;
 
 internal class RoleConfig : IEntityTypeConfiguration<Role>
 {

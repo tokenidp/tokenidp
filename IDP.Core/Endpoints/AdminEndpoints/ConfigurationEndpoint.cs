@@ -1,7 +1,5 @@
 ﻿using IDP.Core.Admin;
 using IDP.Core.Admin.Configurations;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Endpoints.AdminEndpoints;
 
@@ -57,7 +55,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         authGroup.MapPut("/{id}", async (int id, CreateUpdateConfiguration configuration,
             IAppLogger<ConfigurationEndpoint> _logger,
             ConfigurationService configurationService) =>
-        { 
+        {
             if (id != configuration.Id)
             {
                 return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));

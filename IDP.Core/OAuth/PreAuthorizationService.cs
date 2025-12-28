@@ -1,26 +1,22 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Domain.AggregateRoots.Users;
+﻿namespace IDP.Core.OAuth;
 
-namespace IDP.Core.Application;
-
-internal class PreAuthorizationRepo
+internal class PreAuthorizationService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
 
-    public PreAuthorizationRepo(ApplicationDbContext applicationDbContext,
+    public PreAuthorizationService(ApplicationDbContext applicationDbContext,
         ICache cache)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;
     }
 
-    public async Task<PreAuthorization> GetPreAuthorization(string correlationId, int userId)
+    public async Task<UserPreAuthorization> GetPreAuthorization(string correlationId, int userId)
     {
         var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId, userId);
 
-        var preAuthorization = await _cache.GetAsync<PreAuthorization>(cacheKey);
+        var preAuthorization = await _cache.GetAsync<UserPreAuthorization>(cacheKey);
 
         if (preAuthorization == null)
         {
@@ -34,7 +30,7 @@ internal class PreAuthorizationRepo
         return preAuthorization;
     }
 
-    public async Task AddPreAuthorization(PreAuthorization preAuthorization)
+    public async Task AddPreAuthorization(UserPreAuthorization preAuthorization)
     {
         _applicationDbContext.PreAuthorizations.Add(preAuthorization);
         await _applicationDbContext.SaveChangesAsync();
@@ -45,7 +41,7 @@ internal class PreAuthorizationRepo
         await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
     }
 
-    public async Task UpdatePreAuthorization(PreAuthorization preAuthorization)
+    public async Task UpdatePreAuthorization(UserPreAuthorization preAuthorization)
     {
         _applicationDbContext.PreAuthorizations.Update(preAuthorization);
         await _applicationDbContext.SaveChangesAsync();

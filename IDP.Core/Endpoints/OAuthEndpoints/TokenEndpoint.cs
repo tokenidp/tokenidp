@@ -1,6 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.OAuth.Model;
-using IDP.Core.TokenServices.UseCases;
+﻿using IDP.Core.OAuth.TokenServices;
 
 namespace IDP.Core.Endpoints.OAuthEndpoints;
 
@@ -12,11 +10,13 @@ internal class TokenEndpoint : IEndpointDefinition
 
         authGroup.MapPost("/", static async (HttpContext httpContext,
             TokenRequest request,
-            AccessTokenUseCase accessTokenUseCase) =>
+            TokenUseCase accessTokenUseCase) =>
         {
             string ipAddress = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-            var result = await accessTokenUseCase.GetAccessToken(request, ipAddress);
+            request.IpAddress = ipAddress;
+
+            var result = await accessTokenUseCase.GetAccessToken(request);
 
             return result;
         })

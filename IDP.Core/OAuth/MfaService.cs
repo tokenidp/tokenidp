@@ -1,8 +1,5 @@
-﻿using IDP.Core.Application;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Notifications;
-using IDP.Core.Domain.AggregateRoots.Users;
-using IDP.Core.OAuth.Model;
+﻿using IDP.Core.Common.Notifications;
+using IDP.Core.OAuth;
 
 namespace IDP.Core.TokenServices;
 
@@ -10,14 +7,13 @@ internal class MfaService
 {
     private readonly UserManager<User> _userManager;
     private readonly IAppLogger<MfaService> _logger;
-    private readonly PreAuthorizationRepo _preAuthorizationRepo;
+    private readonly PreAuthorizationService _preAuthorizationRepo;
     private readonly IEmailSetting _emailSetting;
     private readonly EmailProviderFactory _emailProviderFactory;
 
     public MfaService(IAppLogger<MfaService> logger,
         IEmailSetting emailSetting,
-        PreAuthorizationRepo preAuthorizationRepo,
-        AuthorizationRepo authorizationRepo,
+        PreAuthorizationService preAuthorizationRepo,
         UserManager<User> userManager,
         EmailProviderFactory emailProviderFactory)
     {
@@ -35,7 +31,7 @@ internal class MfaService
 
         var mfaCode = MfaCodeGenerator.GenerateMfaCode();
 
-        PreAuthorization preAuthorization = new(userId,
+        UserPreAuthorization preAuthorization = new(userId,
             mfaCode,
             correlationId,
             request.ClientId,

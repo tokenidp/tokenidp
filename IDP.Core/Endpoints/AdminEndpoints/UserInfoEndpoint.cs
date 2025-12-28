@@ -1,6 +1,4 @@
 ﻿using IDP.Core.Admin.Users;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Endpoints.AdminEndpoints;
 

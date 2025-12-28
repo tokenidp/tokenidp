@@ -1,6 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.OAuth.Model;
-using IDP.Core.TokenServices.UseCases;
+﻿using IDP.Core.OAuth;
 
 namespace IDP.Core.Endpoints.OAuthEndpoints;
 

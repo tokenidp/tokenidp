@@ -3,16 +3,14 @@
 internal class ClientValidationResult
 {
     public bool IsValidClient { get; private set; }
-    public string Scopes { get; private set; }
 
-    private ClientValidationResult(bool isValidClient, string scopes)
+    private ClientValidationResult(bool isValidClient)
     {
         IsValidClient = isValidClient;
-        Scopes = scopes;
     }
 
-    public static ClientValidationResult Create(bool isValidClient, string scopes)
+    public static ClientValidationResult Create(bool isValidClient)
     {
-        return new ClientValidationResult(isValidClient, scopes);
+        return new ClientValidationResult(isValidClient);
     }
 }

@@ -2,8 +2,6 @@
 
 internal class UserAddress : BaseEntity
 {
-    [Key]
-    public long Id { get; private set; }
     [Required]
     public long UserId { get; private set; }
     [Required]

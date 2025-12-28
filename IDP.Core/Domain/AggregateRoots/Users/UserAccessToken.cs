@@ -7,7 +7,8 @@ internal class UserAccessToken
     public int Id { get; private set; }
     public int UserId { get; private set; }
     public int TenantId { get; private set; }
-    public string TokenId { get; private set; }
+    public string ReferenceToken { get; private set; }
+    public string AccessToken { get; private set; }
     public string ClientId { get; private set; }
     public string Scopes { get; private set; }
     public DateTime ExpiresAt { get; private set; }
@@ -34,7 +35,7 @@ internal class UserAccessToken
         UserId = userId;
         TenantId = tenantId;
         ClientId = clientId;
-        TokenId = tokenId;
+        ReferenceToken = tokenId;
         Scopes = scopes;
         ExpiresAt = expiresAt;
         IssuedAt = issuedAt;

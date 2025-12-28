@@ -1,29 +1,25 @@
-﻿using IDP.Core.Common.Extensions;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Domain.AggregateRoots.Users;
+﻿namespace IDP.Core.OAuth;
 
-namespace IDP.Core.Infrastructure;
-
-internal class AuthorizationRepo
+internal class AuthorizationService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
-    private readonly IAppLogger<AuthorizationRepo> _logger;
+    private readonly IAppLogger<AuthorizationService> _logger;
 
-    public AuthorizationRepo(ApplicationDbContext applicationDbContext,
+    public AuthorizationService(ApplicationDbContext applicationDbContext,
         ICache cache,
-        IAppLogger<AuthorizationRepo> logger)
+        IAppLogger<AuthorizationService> logger)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;
         _logger = logger;
     }
 
-    public async Task<AuthorizationCode> ValidateAuthorizationCode(string code, int userId)
+    public async Task<UserAuthorizationCode> ValidateAuthorizationCode(string code)
     {
-        var cacheKey = CacheKeys.AUTHORIZATION.FormatCacheKey(code, userId);
+        var cacheKey = CacheKeys.AUTHORIZATION.FormatCacheKey(code);
 
-        var authorizationCode = await _cache.GetAsync<AuthorizationCode>(cacheKey);
+        var authorizationCode = await _cache.GetAsync<UserAuthorizationCode>(cacheKey);
 
         if (authorizationCode == null)
         {
@@ -33,25 +29,27 @@ internal class AuthorizationRepo
 
         if (authorizationCode == null)
         {
-            _logger.LogWarning("Authorization code not found or expired for UserId: {UserId}", userId);
+            _logger.LogWarning("Authorization code {code} not found or expired.", code);
+
             throw new UnauthorizedAccessException("Authorization Code not found.");
         }
 
         _logger.LogInfo("Authorization code found for UserId: {UserId}", authorizationCode.UserId);
 
-        authorizationCode.UpdateIsUsed(true, userId);
+        authorizationCode.UpdateIsUsed(true);
 
         await _applicationDbContext.SaveChangesAsync();
         return authorizationCode;
     }
 
-    public async Task SaveAuthorization(AuthorizationCode authorizationCode)
+    public async Task SaveAuthorization(UserAuthorizationCode authorizationCode)
     {
         _applicationDbContext.AuthorizationCodes.Add(authorizationCode);
+
         await _applicationDbContext.SaveChangesAsync();
 
         var cacheKey = CacheKeys.AUTHORIZATION
-            .FormatCacheKey(authorizationCode.Code, authorizationCode.UserId);
+            .FormatCacheKey(authorizationCode.Code);
 
         await _cache.SetAsync(cacheKey, authorizationCode, new TimeSpan(0, 5, 0));
     }

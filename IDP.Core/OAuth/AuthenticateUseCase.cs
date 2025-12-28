@@ -1,8 +1,6 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
-using IDP.Core.OAuth.Model;
+﻿using IDP.Core.TokenServices;
 
-namespace IDP.Core.TokenServices.UseCases;
+namespace IDP.Core.OAuth;
 
 internal class AuthenticationUseCase
 {

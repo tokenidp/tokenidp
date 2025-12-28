@@ -1,6 +1,4 @@
-﻿using IDP.Core.Common.Model;
-
-namespace IDP.Core.Admin;
+﻿namespace IDP.Core.Admin;
 
 internal class SearchData : PageInfo
 {

@@ -1,4 +1,4 @@
-﻿namespace IDP.Core.Domain;
+﻿namespace IDP.Core.Domain.AggregateRoots;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 internal class Permission : BaseEntity, IAggregateRoot

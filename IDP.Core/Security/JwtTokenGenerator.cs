@@ -1,5 +1,4 @@
-﻿using IDP.Core.Common.Interfaces;
-using IDP.Core.Options;
+﻿using IDP.Core.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,7 +14,7 @@ public sealed class JwtTokenGenerator
     private readonly SigningCredentials _signingCredentials;
     private readonly ICurrentUserService _currentUserService;
 
-    public JwtTokenGenerator(IOptions<TokenOption> settings, 
+    public JwtTokenGenerator(IOptions<TokenOption> settings,
         ICurrentUserService currentUserService)
     {
         _settings = settings.Value;
@@ -38,13 +37,13 @@ public sealed class JwtTokenGenerator
     /// <param name="roles">User roles</param>
     /// <returns>Access Token</returns>
     public string CreateAccessToken(
-        double tokenExpiryInMinutes,
+        DateTime expireAt,
         string tokenId,
         string userId,
         string userName,
         string tenantId,
-        string clientId,
-        string scope,
+        string[] audiences,
+        string[] scopes,
         IEnumerable<string>? roles)
     {
         var claims = new List<Claim>()
@@ -53,7 +52,7 @@ public sealed class JwtTokenGenerator
             new(JwtRegisteredClaimNames.Jti, tokenId),
             new(JwtRegisteredClaimNames.UniqueName, userName),
             new("uid", tenantId),
-            new("scope", scope)
+            new("scope", string.Join(" ",scopes))
         };
 
         // Add roles if present
@@ -65,7 +64,7 @@ public sealed class JwtTokenGenerator
             }
         }
 
-        return CreateToken(claims, clientId, tokenExpiryInMinutes);
+        return CreateToken(claims, audiences, expireAt);
     }
 
     /// <summary>
@@ -81,17 +80,17 @@ public sealed class JwtTokenGenerator
     /// <param name="roles">User roles</param>
     /// <returns>ID Token</returns>
     public string CreateIDToken(
-        double tokenExpiryInMinutes,
+        DateTime expireAt,
         string tokenId,
         string userId,
         string userName,
-        string clientId)
+        string[] audiences)
     {
         return CreateIDToken(
-            tokenExpiryInMinutes,
+            expireAt,
             tokenId,
             userId,
-            clientId,
+            audiences,
             name: null,
             email: null,
             emailVerified: null,
@@ -113,10 +112,10 @@ public sealed class JwtTokenGenerator
     /// <param name="picture">Picture URL claim</param>
     /// <returns>ID Token</returns>
     public string CreateIDToken(
-        double tokenExpiryInMinutes,
+        DateTime expireAt,
         string? tokenId,
         string userId,
-        string clientId,
+        string[] audiences,
         string? name,
         string? email,
         bool? emailVerified,
@@ -142,7 +141,7 @@ public sealed class JwtTokenGenerator
         AddIfPresent(claims, JwtRegisteredClaimNames.PhoneNumber, phoneNumber);
         AddIfPresent(claims, JwtRegisteredClaimNames.Picture, picture);
 
-        return CreateToken(claims, clientId, tokenExpiryInMinutes);
+        return CreateToken(claims, audiences, expireAt);
     }
 
     /// <summary>
@@ -155,18 +154,18 @@ public sealed class JwtTokenGenerator
         return Convert.ToBase64String(bytes);
     }
 
-    private string CreateToken(IEnumerable<Claim> claims, string clientId, double tokenExpiryInMinutes)
+    private string CreateToken(IEnumerable<Claim> claims, string[] audiences, DateTime expireAt)
     {
         var now = DateTime.UtcNow;
 
         var descriptor = new SecurityTokenDescriptor
         {
             Issuer = _currentUserService.BaseUrl,
-            Audience = clientId,
+            Audience = audiences[0],
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
             NotBefore = now,
-            Expires = now.AddMinutes(tokenExpiryInMinutes),
+            Expires = expireAt,
             SigningCredentials = _signingCredentials
         };
 

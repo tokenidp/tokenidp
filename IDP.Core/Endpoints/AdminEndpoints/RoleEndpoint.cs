@@ -1,11 +1,9 @@
 ﻿using IDP.Core.Admin;
 using IDP.Core.Admin.Roles;
-using IDP.Core.Common.Interfaces;
-using IDP.Core.Common.Model;
 
 namespace IDP.Core.Endpoints.AdminEndpoints;
 
-internal class RoleEndpoint: IEndpointDefinition
+internal class RoleEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {

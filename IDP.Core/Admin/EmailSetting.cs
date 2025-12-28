@@ -1,13 +1,14 @@
-﻿using IDP.Core.Common.Notifications;
+﻿using IDP.Core.Admin.Lookups;
+using IDP.Core.Common.Notifications;
 
 namespace IDP.Core.Admin;
 
 internal class EmailSetting : IEmailSetting
 {
-    private readonly LookupRepo _lookupService;
+    private readonly LookupService _lookupService;
     private IEnumerable<LookupValue>? _settings;
 
-    public EmailSetting(LookupRepo lookupService)
+    public EmailSetting(LookupService lookupService)
     {
         _lookupService = lookupService;
     }

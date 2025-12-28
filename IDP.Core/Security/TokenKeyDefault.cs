@@ -1,7 +1,7 @@
 ﻿namespace IDP.Core.Security;
 
 
-internal static class TokenKeyDefaults
+internal static class TokenKeyDefault
 {
     internal const string DevelopmentKey = """
             -----BEGIN PRIVATE KEY-----

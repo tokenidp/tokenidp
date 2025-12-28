@@ -1,12 +1,12 @@
 namespace IDP.Core.Domain;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-internal partial class RefreshToken
+internal partial class UserRefreshToken
 {
     [Key]
     public int Id { get; private set; }
     public int UserId { get; private set; }
-    public string Token { get; private set; }
+    public string RefreshToken { get; private set; }
     public DateTime Expires { get; private set; }
     public string CreatedByIp { get; private set; }
     public DateTime? Revoked { get; private set; }
@@ -15,15 +15,15 @@ internal partial class RefreshToken
     public DateTime CreatedOn { get; private set; }
     public int CreatedBy { get; private set; }
     public virtual User User { get; private set; }
-    private RefreshToken() { }
+    private UserRefreshToken() { }
 
-    public RefreshToken(int userId,
+    public UserRefreshToken(int userId,
         string token,
         string ipAddress,
-        double expiry)
+        int expiry)
     {
         UserId = userId;
-        Token = token;
+        RefreshToken = token;
         CreatedByIp = ipAddress;
         Expires = DateTime.UtcNow.AddDays(expiry);
         CreatedBy = userId;
@@ -39,7 +39,7 @@ internal partial class RefreshToken
     }
 }
 
-internal partial class RefreshToken
+internal partial class UserRefreshToken
 {
     public bool IsExpired => DateTime.UtcNow >= Expires;
     public bool IsRevoked => Revoked != null;
