@@ -8,14 +8,14 @@ internal class IdentityService
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
     private readonly IAppLogger<IdentityService> _logger;
-    private readonly AuthorizationService _authorizationService;
+    private readonly AuthorizationCodeService _authorizationService;
     private readonly TenantService _tenantService;
 
     public IdentityService(UserManager<User> userManager,
         SignInManager<User> signInManager,
         IAppLogger<IdentityService> logger,
         TenantService tenantService,
-        AuthorizationService authorizationService)
+        AuthorizationCodeService authorizationService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
@@ -55,28 +55,5 @@ internal class IdentityService
         var twoFactorEnabled = twoFactorEnabledOnTenant && user.TwoFactorEnabled;
 
         return AuthResponse.Success(user.Id, twoFactorEnabled);
-    }
-
-    public async Task<AuthResponse> GenerateAuthorizationCode(AuthRequest request, int userId)
-    {
-        var code = Guid.NewGuid().ToString();
-        _logger.LogDebug("Generated authorization code: {Code}", code);
-
-        UserAuthorizationCode authorizationCode = new(
-            code,
-            request.CodeChallenge,
-            request.CodeChallengeMethod,
-            request.ClientId,
-            userId,
-            DateTime.UtcNow.AddMinutes(5),
-            request.RedirectUri,
-            request.Scopes);
-
-        await _authorizationService.SaveAuthorization(authorizationCode);
-
-        _logger.LogInfo("Saved authorization code for user {UserId} (Client: {ClientId})",
-            userId, request.ClientId);
-
-        return AuthResponse.Success(code);
     }
 }

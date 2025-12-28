@@ -9,13 +9,13 @@ internal class TokenValidatorService
     private readonly RoleService _roleService;
     private readonly IAppLogger<TokenValidatorService> _logger;
     private readonly ClientService _clientService;
-    private readonly AuthorizationService _authorizationService;
+    private readonly AuthorizationCodeService _authorizationService;
 
     public TokenValidatorService(UserManager<User> userManager,
         RoleService roleService,
         ClientService clientService,
         IAppLogger<TokenValidatorService> logger,
-        AuthorizationService authorizationService)
+        AuthorizationCodeService authorizationService)
     {
         _userManager = userManager;
         _roleService = roleService;
@@ -98,7 +98,7 @@ internal class TokenValidatorService
             client.AccessTokenType,
             client.Scopes,
             client.Audiences,
-            client.ClientSecretExpiry,
+            client.ClientSecretExpiry ?? 0,
             client.AccessTokenLifetime,
             client.RefreshTokenExpiration,
             distinctRoles);

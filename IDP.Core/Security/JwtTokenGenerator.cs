@@ -134,10 +134,12 @@ public sealed class JwtTokenGenerator
 
         AddIfPresent(claims, JwtRegisteredClaimNames.Name, name);
         AddIfPresent(claims, JwtRegisteredClaimNames.Email, email);
+
         if (emailVerified is not null)
         {
             claims.Add(new Claim("email_verified", emailVerified.Value ? "true" : "false"));
         }
+
         AddIfPresent(claims, JwtRegisteredClaimNames.PhoneNumber, phoneNumber);
         AddIfPresent(claims, JwtRegisteredClaimNames.Picture, picture);
 

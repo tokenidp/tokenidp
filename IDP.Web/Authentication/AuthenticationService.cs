@@ -57,7 +57,7 @@ public class AuthenticationService : BaseService<AuthenticationService>
         try
         {
             var response = await _httpClient.GetFromJsonAsync<Result<ClientDto>>(
-                $"client/{clientId}",
+                $"checkclient/{clientId}",
                 cancellationToken);
 
             if (response?.Value == null)

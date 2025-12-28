@@ -33,6 +33,7 @@ internal class ApplicationDbContext : IdentityDbContext<
     public DbSet<UserAuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<ClientScope> ClientScopes { get; set; }
+    public DbSet<ClientAudience> ClientAudiences { get; set; }
     public DbSet<ClientSecret> ClientSecrets { get; set; }
     public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
     public DbSet<UserAccessToken> UserAccessToken { get; set; }

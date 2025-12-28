@@ -14,13 +14,13 @@ internal class Client
     public string ClientId { get; private set; }
     public string ClientName { get; private set; }
     public string? Description { get; private set; }
-    public string? ClientType { get; private set; }
+    public string ClientType { get; private set; }
     public TokenType AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; }
-    public string LogoutRedirectUri { get; private set; }
+    public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
-    public int ClientSecretExpiry { get; private set; }
+    public int? ClientSecretExpiry { get; private set; }
     public bool TwoFactorEnabled { get; private set; }
     public int TwoFactorCodeExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }

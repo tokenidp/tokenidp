@@ -2,19 +2,22 @@
 
 namespace IDP.Core.OAuth;
 
-internal class AuthenticationUseCase
+internal class AuthorizationCodeUseCase
 {
     private readonly IdentityService _identityService;
     private readonly MfaService _mfaService;
-    private readonly IAppLogger<AuthenticationUseCase> _logger;
+    private readonly AuthorizationCodeService _authorizationCodeService;
+    private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
 
-    public AuthenticationUseCase(IdentityService identityService,
-        IAppLogger<AuthenticationUseCase> appLogger,
-        MfaService mfaService)
+    public AuthorizationCodeUseCase(IdentityService identityService,
+        IAppLogger<AuthorizationCodeUseCase> appLogger,
+        MfaService mfaService,
+        AuthorizationCodeService authorizationCodeService)
     {
         _identityService = identityService;
         _logger = appLogger;
         _mfaService = mfaService;
+        _authorizationCodeService = authorizationCodeService;
     }
 
     public async Task<IResult> Authenticate(AuthRequest request)
@@ -38,7 +41,7 @@ internal class AuthenticationUseCase
             return Results.Ok(ApiResult<AuthResponse>.Success(response));
         }
 
-        response = await _identityService.GenerateAuthorizationCode(request, response.UserId.Value);
+        response = await _authorizationCodeService.GenerateAuthorizationCode(request, response.UserId.Value);
 
         return Results.Ok(response);
     }
@@ -55,31 +58,8 @@ internal class AuthenticationUseCase
             return Results.Json(errorResult, statusCode: StatusCodes.Status401Unauthorized);
         }
 
-        authResponse = await _identityService.GenerateAuthorizationCode(authRequest, request.UserId);
+        authResponse = await _authorizationCodeService.GenerateAuthorizationCode(authRequest, request.UserId);
 
         return Results.Ok(ApiResult<AuthResponse>.Success(authResponse));
-    }
-
-    public async Task<IResult> ResendMfaCode(MfaRequest request)
-    {
-        if (string.IsNullOrEmpty(request.CorrelationId))
-        {
-            var errorResult = ApiResult<ApiError>.Failure(
-                            ApiError.Failure("Correlation Id cannot be empty."));
-
-            return Results.Json(errorResult, statusCode: StatusCodes.Status400BadRequest);
-        }
-
-        var response = await _mfaService.ResendMfaCode(request);
-
-        if (!response.IsSuccess)
-        {
-            var errorResult = ApiResult<ApiError>.Failure(
-                            ApiError.Failure(response.Error));
-
-            return Results.Json(errorResult, statusCode: StatusCodes.Status401Unauthorized);
-        }
-
-        return Results.Ok(ApiResult<AuthResponse>.Success(response));
     }
 }

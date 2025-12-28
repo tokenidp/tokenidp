@@ -1,18 +1,43 @@
-﻿namespace IDP.Core.OAuth;
+﻿using Microsoft.AspNetCore.Authorization;
 
-internal class AuthorizationService
+namespace IDP.Core.OAuth;
+
+internal class AuthorizationCodeService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
-    private readonly IAppLogger<AuthorizationService> _logger;
+    private readonly IAppLogger<AuthorizationCodeService> _logger;
 
-    public AuthorizationService(ApplicationDbContext applicationDbContext,
+    public AuthorizationCodeService(ApplicationDbContext applicationDbContext,
         ICache cache,
-        IAppLogger<AuthorizationService> logger)
+        IAppLogger<AuthorizationCodeService> logger)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;
         _logger = logger;
+    }
+
+    public async Task<AuthResponse> GenerateAuthorizationCode(AuthRequest request, int userId)
+    {
+        var code = Guid.NewGuid().ToString();
+        _logger.LogDebug("Generated authorization code: {Code}", code);
+
+        UserAuthorizationCode authorizationCode = new(
+            code,
+            request.CodeChallenge,
+            request.CodeChallengeMethod,
+            request.ClientId,
+            userId,
+            DateTime.UtcNow.AddMinutes(5),
+            request.RedirectUri,
+            request.Scopes);
+
+        await SaveAuthorization(authorizationCode);
+
+        _logger.LogInfo("Saved authorization code for user {UserId} (Client: {ClientId})",
+            userId, request.ClientId);
+
+        return AuthResponse.Success(code);
     }
 
     public async Task<UserAuthorizationCode> ValidateAuthorizationCode(string code)
@@ -42,7 +67,7 @@ internal class AuthorizationService
         return authorizationCode;
     }
 
-    public async Task SaveAuthorization(UserAuthorizationCode authorizationCode)
+    private async Task SaveAuthorization(UserAuthorizationCode authorizationCode)
     {
         _applicationDbContext.AuthorizationCodes.Add(authorizationCode);
 

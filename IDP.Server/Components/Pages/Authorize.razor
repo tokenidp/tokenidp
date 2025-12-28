@@ -1,0 +1,175 @@
+﻿@using IDP.Server.Model
+@using System.ComponentModel.DataAnnotations
+@using IDP.Server.Authentication
+@using System.Collections.Concurrent
+
+@page "/authorize"
+@rendermode InteractiveServer
+
+<PageTitle>Authorize</PageTitle>
+
+@inject LoadService LoadService
+@inject NavigationManager Navigation
+@inject AuthenticationService AuthService
+@inject IJSRuntime JSRuntime
+
+@if (!isValidClientId)
+{
+    <p style="color: red;">Invalid Client ID. Please check the Client ID and try again.</p>
+}
+else
+{
+    <div class="login-card">
+        <div class="login-title">Welcome Back</div>
+        <div class="login-sub">Please enter your credentials to login</div>
+
+        <div class="alert-danger" id="general-error" style="@GetErrorDisplayStyle()">
+            @ErrorMessage
+        </div>
+
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <label for="username" class="form-label">Username</label>
+            <InputText @bind-Value="loginModel.UserName" id="username" class="form-control mb-3" />
+            <ValidationMessage For="@(() => loginModel.UserName)" />
+
+            <label for="password" class="form-label">Password</label>
+            <InputText @bind-Value="loginModel.Password" id="password" type="password" class="form-control" />
+            <ValidationMessage For="@(() => loginModel.Password)" />
+            <a @onclick="GoToForgotPassword" class="forgot-link">Forgot password?</a>
+
+            <button type="submit" class="btn btn-primary w-100 mt-4">Login</button>
+        </EditForm>
+
+        <!-- Divider -->
+        <div class="divider">OR</div>
+
+        <!-- External Login Providers -->
+        <button class="btn btn-google w-100 mb-2">
+            <span>🔴</span> Continue with Google
+        </button>
+        <button class="btn btn-microsoft w-100 mb-2">⚫ Continue with Microsoft</button>
+        <button class="btn btn-facebook w-100">🔵 Continue with Facebook</button>
+    </div>
+}
+
+@code {
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; }
+    }
+
+    private bool isValidClientId = true;
+    private string Scopes = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string oauthParams = string.Empty;
+    private readonly LoginModel loginModel = new();
+    private Dictionary<string, string> QueryParams = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = Navigation.Uri;
+
+        oauthParams = new Uri(uri).Query;
+
+        if (!string.IsNullOrEmpty(oauthParams))
+        {
+            var parsedParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(oauthParams);
+
+            QueryParams = parsedParams.ToDictionary(
+                kvp => kvp.Key,
+                 kvp => kvp.Value is IEnumerable<string> values
+                     ? string.Join(",", values)
+                     : kvp.Value.ToString() ?? ""
+                 );
+
+            var client = await AuthService.GetClientAsync(QueryParams["client_id"]);
+
+            isValidClientId = client.IsValidClient;
+            Scopes = client.Scopes;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await InitializeJs();
+    }
+
+    private async Task InitializeJs()
+    {
+        await JSRuntime.InvokeVoidAsync("initializeLoginButton");
+    }
+
+    private async Task HandleLogin()
+    {
+        ErrorMessage = string.Empty;
+
+        AuthRequest request = new()
+        {
+            UserName = loginModel.UserName,
+            Password = loginModel.Password,
+            ClientId = QueryParams["client_id"],
+            CodeChallenge = QueryParams["code_challenge"],
+            RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
+            CodeChallengeMethod = QueryParams["code_challenge_method"],
+            Scopes = Scopes
+        };
+
+        try
+        {
+            LoadService.ShowLoader();
+
+            var authCodeResponse = await AuthService.AuthenticateAsync(request);
+
+            await Task.Delay(2000);
+         
+            if (authCodeResponse?.IsSuccess == false)
+            {
+                ErrorMessage = authCodeResponse?.Value.Error ?? string.Empty;
+                return;
+            }
+
+            if (authCodeResponse?.Value.TwoFactorEnabled == true)
+            {
+                var uri = $"/mfa?uid={authCodeResponse?.Value.UserId}&" +
+                $"corid={authCodeResponse?.Value.CorrelationId}&" +
+                $"redirect_uri={QueryParams["redirect_uri"]}";
+
+                Navigation.NavigateTo(uri);
+            }
+            else
+            {
+                var uri = $"{request.RedirectUri}?code={authCodeResponse?.Value.AuthorizationCode}";
+                Navigation.NavigateTo(uri, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            LoadService.HideLoader();
+        }
+    }
+
+    private void GoToForgotPassword()
+    {
+        Navigation.NavigateTo($"/forgot-password{oauthParams}");
+    }
+
+    private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display: none;" : "";
+
+
+    private void LoginWithProvider(string provider)
+    {
+        Navigation.NavigateTo($"/forgot-password{oauthParams}");
+    }
+}

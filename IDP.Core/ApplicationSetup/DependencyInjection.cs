@@ -50,9 +50,9 @@ internal static class DependencyInjection
         services.AddCors();
 
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-        services.AddSingleton<ICache, MemoryCache>();
-        services.AddSingleton<JwtTokenGenerator>();
+        services.AddSingleton<ICache, MemoryCache>();      
         services.AddSingleton<JsonHelper>();
+        services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
     }
 
@@ -73,7 +73,7 @@ internal static class DependencyInjection
         services.AddScoped<TokenValidatorService>();
         services.AddScoped<TokenUseCase>();
         services.AddScoped<TokenService>();
-        services.AddScoped<AuthenticationUseCase>();
+        services.AddScoped<AuthorizationCodeUseCase>();
         services.AddScoped<RevokeTokenService>();
         services.AddScoped<MfaService>();
         services.AddScoped<TokenGrantFactory>();
@@ -81,7 +81,7 @@ internal static class DependencyInjection
         services.AddScoped<AuthorizationCodeGrantHandler>();
         services.AddScoped<ClientCredentialGrantHandler>();
         services.AddScoped<IntrospectionValidatorService>();
-        services.AddScoped<AuthorizationService>();
+        services.AddScoped<AuthorizationCodeService>();
         services.AddScoped<PreAuthorizationService>();
 
         services.AddTransient<Func<GrantType, ITokenGrantHandler>>(serviceProvider => key =>

@@ -8,7 +8,6 @@ internal class ClientGrantType : BaseEntity
         authorization_code,
         refresh_token,
         client_credentials,
-        password,
         device_code,
         ciba
     }

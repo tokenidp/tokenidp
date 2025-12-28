@@ -15,7 +15,28 @@ internal class TokenService
         _dbContext = dbContext;
     }
 
-    public TokenResponse CreateAccessToken(TokenInfo tokenInfo)
+    public async Task<TokenResponse> CreateToken(TokenInfo tokenInfo)
+    {
+        switch (tokenInfo.AccessTokenType)
+        {
+            case TokenType.JWT:
+                return CreateAccessToken(tokenInfo);
+
+            case TokenType.ReferenceToken:
+                return await CreateReferenceToken(tokenInfo);
+
+            default:
+                _logger.LogError(
+                    "Unsupported token type {TokenType} for client {ClientId}",
+                    tokenInfo.AccessTokenType,
+                    tokenInfo.ClientId);
+
+                throw new InvalidOperationException(
+                    $"Unsupported token type '{tokenInfo.AccessTokenType}' for client '{tokenInfo.ClientId}'.");
+        }
+    }
+
+    private TokenResponse CreateAccessToken(TokenInfo tokenInfo)
     {
         var tokenId = Guid.NewGuid().ToString();
 
@@ -34,13 +55,14 @@ internal class TokenService
             tokenInfo.Scopes,
             tokenInfo.Roles);
 
-
         _logger.LogDebug("Token will expire at {ExpirationTime}", expiresAt);
 
-        return TokenResponse.Create(tokenInfo.UserId, accessToken, expiresAt, string.Empty);
+        var idToken = CreateIDToken(tokenInfo);
+
+        return TokenResponse.Create(tokenInfo.UserId, accessToken, expiresAt, idToken);
     }
 
-    public async Task<TokenResponse> CreateReferenceToken(TokenInfo tokenInfo)
+    private async Task<TokenResponse> CreateReferenceToken(TokenInfo tokenInfo)
     {
         var token = Guid.NewGuid().ToString();
 
@@ -67,6 +89,29 @@ internal class TokenService
         _logger.LogDebug("Access token saved to database with ID: {TokenId}",
             $"{token.SubstringSafe(0, 5)}...");
 
-        return TokenResponse.Create(tokenInfo.UserId, token, expiresAt, string.Empty);
+        var idToken = CreateIDToken(tokenInfo);
+
+        return TokenResponse.Create(tokenInfo.UserId, token, expiresAt, idToken);
+    }
+
+    private string CreateIDToken(TokenInfo tokenInfo)
+    {
+        var tokenId = Guid.NewGuid().ToString();
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(tokenInfo.AccessTokenLifetime);
+
+        _logger.LogDebug("Creating id token (ID: {TokenId}) for {UserId} ",
+            tokenId, tokenInfo.UserId);
+
+        var idToken = _tokenGenerator.CreateIDToken(
+            expiresAt,
+            tokenId,
+            tokenInfo.UserId.ToString(),
+            tokenInfo.UserName,
+            new[] { tokenInfo.ClientId });
+
+        _logger.LogDebug("Token will expire at {ExpirationTime}", expiresAt);
+
+        return idToken;
     }
 }

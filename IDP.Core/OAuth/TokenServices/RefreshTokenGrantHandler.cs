@@ -58,7 +58,7 @@ internal class RefreshTokenGrantHandler : ITokenGrantHandler
 
         await _dbContext.SaveChangesAsync();
 
-        var token = _tokenService.CreateAccessToken(tokenInfo);
+        var token = await _tokenService.CreateToken(tokenInfo);
 
         token.AddRefreshToken(newRefreshToken);
 

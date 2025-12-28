@@ -23,7 +23,7 @@ internal class AuthorizationCodeGrantHandler : ITokenGrantHandler
 
         _logger.LogDebug("User validation successful for {UserId}", tokenInfo.UserId);
 
-        var token = _tokenService.CreateAccessToken(tokenInfo);
+        var token = await _tokenService.CreateToken(tokenInfo);
 
         _logger.LogInfo("Token generated successfully for {UserId}", tokenInfo.UserId);
 

@@ -51,26 +51,6 @@ internal class MfaService
         return AuthResponse.Success(userId, correlationId, true);
     }
 
-    public async Task<AuthResponse> ResendMfaCode(MfaRequest request)
-    {
-        _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
-
-        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
-
-        var preAuthorization = await _preAuthorizationRepo
-            .GetPreAuthorization(request.CorrelationId, request.UserId);
-
-        preAuthorization.UpdateMfaCode(request.UserId, mfaCode, DateTime.UtcNow.AddMinutes(5));
-
-        await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
-
-        _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
-
-        await SendNotification(request.UserId, mfaCode);
-
-        return AuthResponse.Success(request.UserId, request.CorrelationId, true);
-    }
-
     public async Task<(AuthRequest, AuthResponse)> VerifyMfaRequest(MfaRequest request)
     {
         var preAuthorization = await _preAuthorizationRepo
@@ -90,6 +70,35 @@ internal class MfaService
             preAuthorization.Scopes);
 
         return (authRequest, default);
+    }
+
+    public async Task<IResult> ResendMfaCode(MfaRequest request)
+    {
+        if (string.IsNullOrEmpty(request.CorrelationId))
+        {
+            var errorResult = ApiResult<ApiError>.Failure(
+                            ApiError.Failure("Correlation Id cannot be empty."));
+
+            return Results.Json(errorResult, statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
+
+        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
+
+        var preAuthorization = await _preAuthorizationRepo
+            .GetPreAuthorization(request.CorrelationId, request.UserId);
+
+        preAuthorization.UpdateMfaCode(request.UserId, mfaCode, DateTime.UtcNow.AddMinutes(5));
+
+        await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
+
+        _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
+
+        await SendNotification(request.UserId, mfaCode);
+
+        return Results.Ok(ApiResult<AuthResponse>
+            .Success(AuthResponse.Success(request.UserId, request.CorrelationId, true)));
     }
 
     private async Task SendNotification(int userId, string mfaCode)

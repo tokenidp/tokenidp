@@ -23,16 +23,17 @@ internal class ClientShortDto
         TimeWindow = client.TimeWindow,
         QueueLimit = client.QueueLimit,
         EnableITracking = client.EnableITracking,
-        Scopes = client.ClientScopes.Select(s => s.Scope).ToArray(),
-        GrantTypes = client.ClientGrantTypes.Select(s => s.AllowedGrantType.ToString()).ToArray(),
-        Secrets = client.ClientSecrets.Where(s => s.ExpiresAt > DateTime.UtcNow || s.IsRevoked != true)
-        .Select(s => s.SecretHash).ToArray(),
-        Audiences = client.ClientAudiences.Where(s => s.IsActive != false)
-        .Select(s => s.Name).ToArray()
+        Scopes = client.ClientScopes.Select(s => s.Scope).ToArray()
+        //GrantTypes = client.ClientGrantTypes.Select(s => s.AllowedGrantType.ToString()).ToArray(),
+        //Secrets = client.ClientSecrets.Where(s => s.ExpiresAt > DateTime.UtcNow || s.IsRevoked != true)
+        //.Select(s => s.SecretHash).ToArray(),
+        //Audiences = client.ClientAudiences.Where(s => s.IsActive != false)
+        //.Select(s => s.Name).ToArray()
     };
 
     public int Id { get; set; }
     public string ClientId { get; private set; } = string.Empty;
+    public string ClientType { get; private set; }
     public TokenType AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;
@@ -40,7 +41,7 @@ internal class ClientShortDto
     public bool IsActive { get; private set; }
     public bool TwoFactorEnabled { get; private set; }
     public int TwoFactorCodeExpiry { get; private set; }
-    public int ClientSecretExpiry { get; private set; }
+    public int? ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
