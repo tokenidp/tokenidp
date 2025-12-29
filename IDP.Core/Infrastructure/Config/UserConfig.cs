@@ -1,4 +1,4 @@
-﻿using static IDP.Core.Domain.User;
+﻿using static IDP.Domain.User;
 
 namespace IDP.Core.Infrastructure.Config;
 

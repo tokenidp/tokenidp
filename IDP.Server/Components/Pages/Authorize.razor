@@ -1,6 +1,6 @@
-﻿@using IDP.Server.Model
+﻿@using IDP.Core.Model
 @using System.ComponentModel.DataAnnotations
-@using IDP.Server.Authentication
+@using IDP.Core.OAuth
 @using System.Collections.Concurrent
 
 @page "/authorize"
@@ -10,7 +10,7 @@
 
 @inject LoadService LoadService
 @inject NavigationManager Navigation
-@inject AuthenticationService AuthService
+@inject IAuthorizationCodeUseCase AuthService
 @inject IJSRuntime JSRuntime
 
 @if (!isValidClientId)
@@ -66,9 +66,10 @@ else
     }
 
     private bool isValidClientId = true;
-    private string Scopes = string.Empty;
+    private string allowedScopes = string.Empty;
     private string ErrorMessage = string.Empty;
     private string oauthParams = string.Empty;
+    private string requestedScopes = string.Empty;
     private readonly LoginModel loginModel = new();
     private Dictionary<string, string> QueryParams = new();
 
@@ -90,10 +91,19 @@ else
                      : kvp.Value.ToString() ?? ""
                  );
 
-            var client = await AuthService.GetClientAsync(QueryParams["client_id"]);
+            var client = await AuthService.ValidateClient(QueryParams["client_id"]);
 
             isValidClientId = client.IsValidClient;
-            Scopes = client.Scopes;
+
+            var allowedScopes = client.Scopes.ToHashSet(StringComparer.Ordinal);
+
+            QueryParams.TryGetValue("scope", out var requestedScopes);
+
+            var requestedScopesHashSet = (requestedScopes ?? string.Empty)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.Ordinal);
+
+            var invalidScopes = requestedScopesHashSet.Except(allowedScopes).ToArray();
         }
     }
 
@@ -119,34 +129,34 @@ else
             CodeChallenge = QueryParams["code_challenge"],
             RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
             CodeChallengeMethod = QueryParams["code_challenge_method"],
-            Scopes = Scopes
+            Scopes = requestedScopes
         };
 
         try
         {
             LoadService.ShowLoader();
 
-            var authCodeResponse = await AuthService.AuthenticateAsync(request);
+            var authCodeResponse = await AuthService.Authenticate(request);
 
             await Task.Delay(2000);
          
             if (authCodeResponse?.IsSuccess == false)
             {
-                ErrorMessage = authCodeResponse?.Value.Error ?? string.Empty;
+                ErrorMessage = authCodeResponse?.Error ?? string.Empty;
                 return;
             }
 
-            if (authCodeResponse?.Value.TwoFactorEnabled == true)
+            if (authCodeResponse?.TwoFactorEnabled == true)
             {
-                var uri = $"/mfa?uid={authCodeResponse?.Value.UserId}&" +
-                $"corid={authCodeResponse?.Value.CorrelationId}&" +
+                var uri = $"/mfa?uid={authCodeResponse?.UserId}&" +
+                $"corid={authCodeResponse?.CorrelationId}&" +
                 $"redirect_uri={QueryParams["redirect_uri"]}";
 
                 Navigation.NavigateTo(uri);
             }
             else
             {
-                var uri = $"{request.RedirectUri}?code={authCodeResponse?.Value.AuthorizationCode}";
+                var uri = $"{request.RedirectUri}?code={authCodeResponse?.AuthorizationCode}";
                 Navigation.NavigateTo(uri, true);
             }
         }
@@ -166,7 +176,6 @@ else
     }
 
     private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display: none;" : "";
-
 
     private void LoginWithProvider(string provider)
     {

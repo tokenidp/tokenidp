@@ -1,15 +1,9 @@
-﻿using IDP.Core.Admin;
-using IDP.Core.Admin.Clients;
-using IDP.Core.Admin.Configurations;
-using IDP.Core.Admin.Lookups;
-using IDP.Core.Admin.Roles;
-using IDP.Core.Admin.Tenants;
-using IDP.Core.Admin.Users;
-using IDP.Core.Common.Notifications;
+﻿using IDP.Common.Notifications;
 using IDP.Core.OAuth;
-using IDP.Core.OAuth.TokenServices;
+using IDP.Core.OAuth.DomainServices;
+using IDP.Core.OAuth.TokenHandlers;
 using IDP.Core.Options;
-using IDP.Core.TokenServices;
+using IDP.Core.TokenHandlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +21,7 @@ internal static class DependencyInjection
         ConfigureTokenOptions(services, configuration, configureToken);
         AddInfrastructure(services);
         AddAdminServices(services);
-        AddTokenServices(services);
+        AddTokenHandlers(services);
         AddEmailServices(services);
     }
 
@@ -57,23 +51,34 @@ internal static class DependencyInjection
     }
 
     private static void AddAdminServices(IServiceCollection services)
-    {
-        services.AddScoped<RoleService>();
+    {      
+        services.AddScoped<AuditService>();
+        services.AddScoped<LookupService>();
         services.AddScoped<ClientService>();
         services.AddScoped<TenantService>();
-        services.AddScoped<AuditService>();
-        services.AddScoped<ConfigurationService>();
-        services.AddScoped<UserService>();
-        services.AddScoped<LookupService>();
+        services.AddScoped<RoleService>();
     }
 
-    private static void AddTokenServices(IServiceCollection services)
+    private static void AddAuthorizationUseCases(this IServiceCollection services)
+    {
+        services.AddScoped<IAuthorizationCodeUseCase>(sp =>
+            new AuthorizationCodeUseCase(
+                sp.GetRequiredService<IdentityService>(),
+                sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
+                sp.GetRequiredService<MfaService>(),
+                sp.GetRequiredService<AuthorizationCodeService>(),
+                sp.GetRequiredService<ClientService>()));
+
+    }
+
+
+    private static void AddTokenHandlers(IServiceCollection services)
     {
         services.AddScoped<IdentityService>();
         services.AddScoped<TokenValidatorService>();
         services.AddScoped<TokenUseCase>();
         services.AddScoped<TokenService>();
-        services.AddScoped<AuthorizationCodeUseCase>();
+        services.AddAuthorizationUseCases();
         services.AddScoped<RevokeTokenService>();
         services.AddScoped<MfaService>();
         services.AddScoped<TokenGrantFactory>();

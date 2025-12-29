@@ -1,4 +1,4 @@
-﻿using IDP.Core.Domain.AggregateRoots;
+﻿using IDP.Domain.AggregateRoots;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Core.Infrastructure;

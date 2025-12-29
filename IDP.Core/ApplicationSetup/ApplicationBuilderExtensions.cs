@@ -1,5 +1,4 @@
-﻿using IDP.Core.OAuthEndpoints;
-using IDP.Core.Options;
+﻿using IDP.Core.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

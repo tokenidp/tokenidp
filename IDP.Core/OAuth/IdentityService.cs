@@ -1,7 +1,8 @@
-﻿using IDP.Core.Admin.Tenants;
+﻿using IDP.Core.Model;
 using IDP.Core.OAuth;
+using IDP.Core.OAuth.DomainServices;
 
-namespace IDP.Core.TokenServices;
+namespace IDP.Core.TokenHandlers;
 
 internal class IdentityService
 {
@@ -24,7 +25,7 @@ internal class IdentityService
         _authorizationService = authorizationService;
     }
 
-    public async Task<AuthResponse> Authenticate(AuthRequest request)
+    internal async Task<AuthResponse> Authenticate(AuthRequest request)
     {
         _logger.LogInfo("Authentication attempt for user: {UserName}", request.UserName);
 

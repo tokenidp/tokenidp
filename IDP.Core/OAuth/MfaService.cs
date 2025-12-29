@@ -1,7 +1,8 @@
-﻿using IDP.Core.Common.Notifications;
+﻿using IDP.Common.Notifications;
+using IDP.Core.Model;
 using IDP.Core.OAuth;
 
-namespace IDP.Core.TokenServices;
+namespace IDP.Core.TokenHandlers;
 
 internal class MfaService
 {

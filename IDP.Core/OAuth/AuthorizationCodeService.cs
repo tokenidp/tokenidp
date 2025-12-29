@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using IDP.Core.Model;
 
 namespace IDP.Core.OAuth;
 

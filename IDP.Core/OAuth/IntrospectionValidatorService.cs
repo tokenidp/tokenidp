@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.OAuth;
+﻿using IDP.Core.Model;
+
+namespace IDP.Core.OAuth;
 
 internal class IntrospectionValidatorService
 {
