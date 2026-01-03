@@ -2,6 +2,8 @@
 @using System.ComponentModel.DataAnnotations
 @using IDP.Core.OAuth
 @using System.Collections.Concurrent
+@using Microsoft.Extensions.Logging
+
 
 @page "/authorize"
 @rendermode InteractiveServer
@@ -12,10 +14,11 @@
 @inject NavigationManager Navigation
 @inject IAuthorizationCodeUseCase AuthService
 @inject IJSRuntime JSRuntime
+@inject ILogger<Authorize> logger
 
-@if (!isValidClientId)
+@if (!isRequestValid)
 {
-    <p style="color: red;">Invalid Client ID. Please check the Client ID and try again.</p>
+    <p style="color: red;">@requestErrorMessage</p>
 }
 else
 {
@@ -65,11 +68,17 @@ else
         public string Password { get; set; }
     }
 
-    private bool isValidClientId = true;
-    private string allowedScopes = string.Empty;
+    private bool isRequestValid = true;
+    private string requestErrorMessage = string.Empty;
     private string ErrorMessage = string.Empty;
     private string oauthParams = string.Empty;
     private string requestedScopes = string.Empty;
+    private string clientId = string.Empty;
+    private string redirectUri = string.Empty;
+    private string codeChallenge = string.Empty;
+    private string codeChallengeMethod = string.Empty;
+    private string responseType = string.Empty;
+    private string state = string.Empty;
     private readonly LoginModel loginModel = new();
     private Dictionary<string, string> QueryParams = new();
 
@@ -91,25 +100,83 @@ else
                      : kvp.Value.ToString() ?? ""
                  );
 
-            var client = await AuthService.ValidateClient(QueryParams["client_id"]);
+            QueryParams.TryGetValue("state", out state);
 
-            isValidClientId = client.IsValidClient;
+            if (!QueryParams.TryGetValue("client_id", out clientId) || string.IsNullOrWhiteSpace(clientId))
+            {
+                SetRequestError("invalid_request", "Missing client_id.");
+                return;
+            }
 
-            var allowedScopes = client.Scopes.ToHashSet(StringComparer.Ordinal);
+            var client = await AuthService.ValidateClient(clientId);
 
-            QueryParams.TryGetValue("scope", out var requestedScopes);
+            if (!client.IsValidClient)
+            {
+                SetRequestError("unauthorized_client", "Invalid client_id.", allowRedirect: false);
+                return;
+            }
 
-            var requestedScopesHashSet = (requestedScopes ?? string.Empty)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .ToHashSet(StringComparer.Ordinal);
+            if (!QueryParams.TryGetValue("redirect_uri", out redirectUri) || string.IsNullOrWhiteSpace(redirectUri))
+            {
+                SetRequestError("invalid_request", "Missing redirect_uri.");
+                return;
+            }
+
+            if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out _))
+            {
+                SetRequestError("invalid_request", "Invalid redirect_uri.");
+                return;
+            }
+
+            QueryParams.TryGetValue("response_type", out responseType);
+            if (!string.Equals(responseType, "code", StringComparison.Ordinal))
+            {
+                SetRequestError("unsupported_response_type", "response_type must be 'code'.");
+                return;
+            }
+
+            QueryParams.TryGetValue("scope", out requestedScopes);
+            if (string.IsNullOrWhiteSpace(requestedScopes))
+            {
+                SetRequestError("invalid_request", "Missing scope.");
+                return;
+            }
+
+            var allowedScopes = client.Scopes
+                .ToHashSet(StringComparer.Ordinal);
+
+            var requestedScopesHashSet = requestedScopes
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .ToHashSet(StringComparer.Ordinal);
 
             var invalidScopes = requestedScopesHashSet.Except(allowedScopes).ToArray();
+            if (invalidScopes.Length > 0)
+            {
+                SetRequestError("invalid_scope", $"Invalid scope: {string.Join(" ", invalidScopes)}.");
+                return;
+            }
+
+            if (!requestedScopesHashSet.Contains("openid"))
+            {
+                SetRequestError("invalid_scope", "Missing 'openid' scope.");
+                return;
+            }
+
+            QueryParams.TryGetValue("code_challenge", out codeChallenge);
+            QueryParams.TryGetValue("code_challenge_method", out codeChallengeMethod);
+        }
+        else
+        {
+            SetRequestError("invalid_request", "Missing authorization parameters.");
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await InitializeJs();
+        if (firstRender)
+        {
+            await InitializeJs();
+        }
     }
 
     private async Task InitializeJs()
@@ -125,10 +192,10 @@ else
         {
             UserName = loginModel.UserName,
             Password = loginModel.Password,
-            ClientId = QueryParams["client_id"],
-            CodeChallenge = QueryParams["code_challenge"],
-            RedirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]),
-            CodeChallengeMethod = QueryParams["code_challenge_method"],
+            ClientId = clientId,
+            CodeChallenge = codeChallenge,
+            RedirectUri = redirectUri,
+            CodeChallengeMethod = codeChallengeMethod,
             Scopes = requestedScopes
         };
 
@@ -139,7 +206,7 @@ else
             var authCodeResponse = await AuthService.Authenticate(request);
 
             await Task.Delay(2000);
-         
+
             if (authCodeResponse?.IsSuccess == false)
             {
                 ErrorMessage = authCodeResponse?.Error ?? string.Empty;
@@ -150,13 +217,23 @@ else
             {
                 var uri = $"/mfa?uid={authCodeResponse?.UserId}&" +
                 $"corid={authCodeResponse?.CorrelationId}&" +
-                $"redirect_uri={QueryParams["redirect_uri"]}";
+                $"redirect_uri={redirectUri}";
 
                 Navigation.NavigateTo(uri);
             }
             else
             {
-                var uri = $"{request.RedirectUri}?code={authCodeResponse?.AuthorizationCode}";
+                var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
+                {
+                    ["code"] = authCodeResponse?.AuthorizationCode
+                };
+
+                if (!string.IsNullOrWhiteSpace(state))
+                {
+                    parameters["state"] = state;
+                }
+
+                var uri = BuildRedirectUri(request.RedirectUri, parameters);
                 Navigation.NavigateTo(uri, true);
             }
         }
@@ -180,5 +257,38 @@ else
     private void LoginWithProvider(string provider)
     {
         Navigation.NavigateTo($"/forgot-password{oauthParams}");
+    }
+
+    private void SetRequestError(string error, string description, bool allowRedirect = true)
+    {
+        isRequestValid = false;
+        requestErrorMessage = description;
+
+        if (!allowRedirect)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(redirectUri) && Uri.TryCreate(redirectUri, UriKind.Absolute, out _))
+        {
+            var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["error"] = error,
+                ["error_description"] = description
+            };
+
+            if (!string.IsNullOrWhiteSpace(state))
+            {
+                parameters["state"] = state;
+            }
+
+            var uri = BuildRedirectUri(redirectUri, parameters);
+            Navigation.NavigateTo(uri, true);
+        }
+    }
+
+    private static string BuildRedirectUri(string baseUri, IDictionary<string, string?> parameters)
+    {
+        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(baseUri, parameters);
     }
 }

@@ -41,4 +41,14 @@ internal class TokenInfo
             Audiences = audience
         };
     }
+
+    public void AddAuthorizedScopes(string scope)
+    {
+        if(scope == null)
+        {
+            return;
+        }
+
+        Scopes = scope.Split(' ');
+    }
 }

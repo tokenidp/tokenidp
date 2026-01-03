@@ -3,6 +3,7 @@
 public class ClientValidationResult
 {
     public bool IsValidClient { get; private set; }
+    public string RedirectUri { get; private set; }
     public string[] Scopes { get; private set; }
 
     private ClientValidationResult(bool isValidClient, string[] scopes)

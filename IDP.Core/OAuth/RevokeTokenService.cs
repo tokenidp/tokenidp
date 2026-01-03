@@ -2,7 +2,7 @@
 
 namespace IDP.Core.OAuth;
 
-internal class RevokeTokenService
+internal sealed class RevokeTokenService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly IAppLogger<RevokeTokenService> _logger;

@@ -4,17 +4,17 @@ using IDP.Core.OAuth.DomainServices;
 
 namespace IDP.Core.TokenHandlers;
 
-internal class IdentityService
+internal sealed class AuthenticationService
 {
     private readonly UserManager<User> _userManager;
     private readonly SignInManager<User> _signInManager;
-    private readonly IAppLogger<IdentityService> _logger;
+    private readonly IAppLogger<AuthenticationService> _logger;
     private readonly AuthorizationCodeService _authorizationService;
     private readonly TenantService _tenantService;
 
-    public IdentityService(UserManager<User> userManager,
+    public AuthenticationService(UserManager<User> userManager,
         SignInManager<User> signInManager,
-        IAppLogger<IdentityService> logger,
+        IAppLogger<AuthenticationService> logger,
         TenantService tenantService,
         AuthorizationCodeService authorizationService)
     {

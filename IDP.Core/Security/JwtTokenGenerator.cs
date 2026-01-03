@@ -1,4 +1,4 @@
-﻿using IDP.Core.Options;
+﻿using IDP.Common.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -91,11 +91,10 @@ public sealed class JwtTokenGenerator
             tokenId,
             userId,
             audiences,
-            name: null,
+            name: userName,
             email: null,
             emailVerified: null,
-            phoneNumber: null,
-            picture: null);
+            phoneNumber: null);
     }
 
     /// <summary>
@@ -119,8 +118,7 @@ public sealed class JwtTokenGenerator
         string? name,
         string? email,
         bool? emailVerified,
-        string? phoneNumber,
-        string? picture)
+        string? phoneNumber)
     {
         var claims = new List<Claim>()
         {
@@ -141,9 +139,23 @@ public sealed class JwtTokenGenerator
         }
 
         AddIfPresent(claims, JwtRegisteredClaimNames.PhoneNumber, phoneNumber);
-        AddIfPresent(claims, JwtRegisteredClaimNames.Picture, picture);
 
-        return CreateToken(claims, audiences, expireAt);
+        var now = DateTime.UtcNow;
+
+        var descriptor = new SecurityTokenDescriptor
+        {
+            Issuer = _currentUserService.BaseUrl,
+            Audience = audiences[0],
+            Subject = new ClaimsIdentity(claims),
+            IssuedAt = now,
+            NotBefore = now,
+            Expires = expireAt,
+            SigningCredentials = _signingCredentials
+        };
+
+        var token = _tokenHandler.CreateToken(descriptor);
+
+        return _tokenHandler.WriteToken(token);
     }
 
     /// <summary>
@@ -162,14 +174,25 @@ public sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = _currentUserService.BaseUrl,
-            Audience = audiences[0],
+            Issuer = _currentUserService.BaseUrl,         
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
             NotBefore = now,
             Expires = expireAt,
             SigningCredentials = _signingCredentials
         };
+
+        if (audiences.Length == 1)
+        {
+            descriptor.Audience = audiences[0];
+        }
+        else if (audiences.Length > 1)
+        {
+            foreach (var aud in audiences)
+            {
+                descriptor.Audiences.Add(aud);
+            }
+        }
 
         var token = _tokenHandler.CreateToken(descriptor);
 

@@ -2,7 +2,7 @@
 
 namespace IDP.Core.OAuth;
 
-internal class IntrospectionValidatorService
+internal sealed class IntrospectionValidatorService
 {
     private readonly IAppLogger<RevokeTokenService> _logger;
     private readonly ApplicationDbContext _dbContext;

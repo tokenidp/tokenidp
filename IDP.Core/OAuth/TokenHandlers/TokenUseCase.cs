@@ -2,7 +2,7 @@
 
 namespace IDP.Core.OAuth.TokenHandlers;
 
-internal class TokenUseCase
+internal sealed class TokenUseCase
 {
     private readonly TokenGrantFactory _tokenGrantFactory;
     private readonly TokenValidatorService _tokenValidatorService;

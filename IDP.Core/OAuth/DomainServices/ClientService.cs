@@ -2,7 +2,7 @@
 
 namespace IDP.Core.OAuth.DomainServices;
 
-internal class ClientService
+internal sealed class ClientService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ICache _cache;

@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.OAuth;
 
-internal class PreAuthorizationService
+internal sealed class PreAuthorizationService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;

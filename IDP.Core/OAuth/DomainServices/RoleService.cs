@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.OAuth.DomainServices;
 
-internal class RoleService
+internal sealed class RoleService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ICache _cache;

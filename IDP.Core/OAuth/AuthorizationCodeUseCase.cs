@@ -4,15 +4,15 @@ using IDP.Core.TokenHandlers;
 
 namespace IDP.Core.OAuth;
 
-internal class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
+internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 {
-    private readonly IdentityService _identityService;
+    private readonly AuthenticationService _identityService;
     private readonly MfaService _mfaService;
     private readonly ClientService _clientService;
     private readonly AuthorizationCodeService _authorizationCodeService;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
 
-    internal AuthorizationCodeUseCase(IdentityService identityService,
+    internal AuthorizationCodeUseCase(AuthenticationService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
         MfaService mfaService,
         AuthorizationCodeService authorizationCodeService,

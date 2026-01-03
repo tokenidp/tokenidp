@@ -4,7 +4,7 @@ using IDP.Core.OAuth;
 
 namespace IDP.Core.TokenHandlers;
 
-internal class MfaService
+internal sealed class MfaService
 {
     private readonly UserManager<User> _userManager;
     private readonly IAppLogger<MfaService> _logger;

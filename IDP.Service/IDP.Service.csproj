@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IDP.Core\IDP.Core.csproj" />
+    <ProjectReference Include="..\IDP.Server\IDP.Server.csproj" />
   </ItemGroup>
 
 </Project>

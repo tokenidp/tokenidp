@@ -1,6 +1,6 @@
 ﻿namespace IDP.Core.OAuth.TokenHandlers;
 
-internal class TokenGrantFactory
+internal sealed class TokenGrantFactory
 {
     private readonly Func<GrantType, ITokenGrantHandler> _tokenGrantHandler;
 

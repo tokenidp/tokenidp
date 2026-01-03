@@ -3,7 +3,7 @@ using IDP.Core.OAuth.DomainServices;
 
 namespace IDP.Core.OAuth.TokenHandlers;
 
-internal class TokenValidatorService
+internal sealed class TokenValidatorService
 {
     private readonly UserManager<User> _userManager;
     private readonly RoleService _roleService;
@@ -51,7 +51,11 @@ internal class TokenValidatorService
             throw new NotFoundException("Client not found.");
         }
 
-        return await ValidateTokenInfoAsync(tokenRequest.ClientId, authorizationCode.UserId);
+        var tokenInfo = await ValidateTokenInfoAsync(tokenRequest.ClientId, authorizationCode.UserId);
+
+        tokenInfo.AddAuthorizedScopes(authorizationCode.Scopes);
+
+        return tokenInfo;       
     }
 
     public async Task<TokenInfo> ValidateTokenInfoAsync(string clientId, int userId)

@@ -1,14 +1,16 @@
 ﻿using IDP.Common.Notifications;
+using IDP.Common.Options;
 using IDP.Core.OAuth;
 using IDP.Core.OAuth.DomainServices;
 using IDP.Core.OAuth.TokenHandlers;
-using IDP.Core.Options;
 using IDP.Core.TokenHandlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace IDP.Core.ApplicationSetup;
 
@@ -20,7 +22,7 @@ internal static class DependencyInjection
     {
         ConfigureTokenOptions(services, configuration, configureToken);
         AddInfrastructure(services);
-        AddAdminServices(services);
+        AddDomainServices(services);
         AddTokenHandlers(services);
         AddEmailServices(services);
     }
@@ -44,26 +46,27 @@ internal static class DependencyInjection
         services.AddCors();
 
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-        services.AddSingleton<ICache, MemoryCache>();      
+        services.AddSingleton<ICache, MemoryCache>();
         services.AddSingleton<JsonHelper>();
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
     }
 
-    private static void AddAdminServices(IServiceCollection services)
-    {      
+    private static void AddDomainServices(IServiceCollection services)
+    {
         services.AddScoped<AuditService>();
         services.AddScoped<LookupService>();
         services.AddScoped<ClientService>();
         services.AddScoped<TenantService>();
         services.AddScoped<RoleService>();
+        services.AddScoped<UserInfoService>();
     }
 
     private static void AddAuthorizationUseCases(this IServiceCollection services)
     {
         services.AddScoped<IAuthorizationCodeUseCase>(sp =>
             new AuthorizationCodeUseCase(
-                sp.GetRequiredService<IdentityService>(),
+                sp.GetRequiredService<AuthenticationService>(),
                 sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
                 sp.GetRequiredService<MfaService>(),
                 sp.GetRequiredService<AuthorizationCodeService>(),
@@ -74,7 +77,6 @@ internal static class DependencyInjection
 
     private static void AddTokenHandlers(IServiceCollection services)
     {
-        services.AddScoped<IdentityService>();
         services.AddScoped<TokenValidatorService>();
         services.AddScoped<TokenUseCase>();
         services.AddScoped<TokenService>();
@@ -131,11 +133,12 @@ internal static class DependencyInjection
         })
        .AddJwtBearer();
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<TokenOption>, IHttpContextAccessor>((options, tokenOptions, httpContextAccessor) =>
+            .Configure<IOptions<TokenOption>, IHttpContextAccessor, IHostEnvironment>(
+            (options, tokenOptions, httpContextAccessor, environment) =>
             {
                 var token = tokenOptions.Value;
-                var keyMaterial = ResolveKeyMaterial(token);
-                var signingKey = CreateSigningKey(keyMaterial);
+                var signingKey = ResolveSigningKey(token, environment);
+                var audience = ResolveAudience(token, configuration);
 
                 options.SaveToken = false;
                 options.RequireHttpsMetadata = false;
@@ -145,6 +148,8 @@ internal static class DependencyInjection
                     IssuerSigningKey = signingKey,
                     ValidateIssuer = true,
                     ValidateLifetime = true,
+                    ValidateAudience = true,
+                    ValidAudience = audience,
                     ClockSkew = TimeSpan.Zero,
                     IssuerValidator = (issuer, securityToken, validationParameters) =>
                     {
@@ -158,6 +163,7 @@ internal static class DependencyInjection
                         return issuer;
                     }
                 };
+
             });
     }
 
@@ -202,6 +208,25 @@ internal static class DependencyInjection
         throw new InvalidOperationException("Token signing key is missing.");
     }
 
+    private static SecurityKey ResolveSigningKey(TokenOption settings, IHostEnvironment environment)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.CertificateThumbprint) ||
+            !string.IsNullOrWhiteSpace(settings.CertificateSubjectName))
+        {
+            var certificate = LoadCertificate(settings);
+            return new X509SecurityKey(certificate);
+        }
+
+        if (environment.IsProduction())
+        {
+            throw new InvalidOperationException(
+                "Token signing certificate is required in production. Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
+        }
+
+        var keyMaterial = ResolveKeyMaterial(settings);
+        return CreateSigningKey(keyMaterial);
+    }
+
     private static SecurityKey CreateSigningKey(string keyMaterial)
     {
         var rsa = RSA.Create();
@@ -224,6 +249,66 @@ internal static class DependencyInjection
         }
     }
 
+    private static X509Certificate2 LoadCertificate(TokenOption settings)
+    {
+        var storeName = Enum.TryParse(settings.CertificateStoreName, true, out StoreName parsedStore)
+            ? parsedStore
+            : StoreName.My;
+
+        var storeLocation = Enum.TryParse(settings.CertificateStoreLocation, true, out StoreLocation parsedLocation)
+            ? parsedLocation
+            : StoreLocation.CurrentUser;
+
+        using var store = new X509Store(storeName, storeLocation);
+
+        store.Open(OpenFlags.ReadOnly);
+
+        X509Certificate2Collection matches;
+
+        var thumbprint = settings.CertificateThumbprint?.Replace(" ", string.Empty);
+
+        if (!string.IsNullOrWhiteSpace(thumbprint))
+        {
+            matches = store.Certificates
+                .Find(X509FindType.FindByThumbprint, thumbprint, validOnly: false);
+
+            if (matches.Count == 0)
+            {
+                throw new InvalidOperationException($"Certificate with thumbprint '{thumbprint}' was not found.");
+            }
+
+            return matches[0];
+        }
+
+        var subjectName = settings.CertificateSubjectName?.Trim();
+
+        if (string.IsNullOrWhiteSpace(subjectName))
+        {
+            throw new InvalidOperationException("Certificate thumbprint or subject name is required.");
+        }
+
+        matches = store.Certificates
+            .Find(X509FindType.FindBySubjectName, subjectName, validOnly: false);
+
+        if (matches.Count == 0)
+        {
+            throw new InvalidOperationException($"Certificate with subject name '{subjectName}' was not found.");
+        }
+
+        var candidate = matches
+            .OfType<X509Certificate2>()
+            .Where(cert => cert.HasPrivateKey)
+            .OrderByDescending(cert => cert.NotAfter)
+            .FirstOrDefault();
+
+        if (candidate is null)
+        {
+            throw new InvalidOperationException($"No certificate with subject name '{subjectName}' has a private key.");
+        }
+
+        return candidate;
+    }
+
     private static string ResolveIssuer(TokenOption settings, IHttpContextAccessor httpContextAccessor)
     {
         if (!string.IsNullOrWhiteSpace(settings.Issuer))
@@ -232,12 +317,31 @@ internal static class DependencyInjection
         }
 
         var request = httpContextAccessor.HttpContext?.Request;
+
         if (request is null)
         {
             throw new InvalidOperationException("Token issuer is missing and no HTTP request is available to infer it.");
         }
 
         var baseUrl = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}";
+
         return baseUrl.TrimEnd('/');
+    }
+
+    private static string ResolveAudience(TokenOption settings, IConfiguration configuration)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.Audience))
+        {
+            return settings.Audience;
+        }
+
+        var configuredAudience = configuration["TokenOptions:Audience"];
+
+        if (!string.IsNullOrWhiteSpace(configuredAudience))
+        {
+            return configuredAudience;
+        }
+
+        throw new InvalidOperationException("Token audience is required.");
     }
 }

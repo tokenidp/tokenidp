@@ -2,7 +2,7 @@
 
 namespace IDP.Core.OAuth;
 
-internal class AuthorizationCodeService
+internal sealed class AuthorizationCodeService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
@@ -52,11 +52,12 @@ internal class AuthorizationCodeService
                 .FirstOrDefaultAsync(x => x.Code == code && x.Expiry > DateTime.UtcNow && !x.IsUsed);
         }
 
-        if (authorizationCode == null)
+        if (authorizationCode == null || authorizationCode.Expiry <= DateTime.UtcNow 
+            || authorizationCode.IsUsed || authorizationCode.Code != code)
         {
             _logger.LogWarning("Authorization code {code} not found or expired.", code);
 
-            throw new UnauthorizedAccessException("Authorization Code not found.");
+            throw new UnauthorizedAccessException("Authorization code {code} not found or expired.");
         }
 
         _logger.LogInfo("Authorization code found for UserId: {UserId}", authorizationCode.UserId);
@@ -64,6 +65,9 @@ internal class AuthorizationCodeService
         authorizationCode.UpdateIsUsed(true);
 
         await _applicationDbContext.SaveChangesAsync();
+
+        await  _cache.RemoveAsync(cacheKey);
+
         return authorizationCode;
     }
 

@@ -14,4 +14,6 @@ public class TokenRequest
 
     public string? Scope { get; init; }
     public string? IpAddress { get; set; }
+
+    public string? ClientSecret { get; set; }
 }
