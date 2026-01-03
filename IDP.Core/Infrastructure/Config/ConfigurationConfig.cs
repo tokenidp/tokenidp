@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.Infrastructure.Config;
+﻿using IDP.Domain.AggregateRoots;
+
+namespace IDP.Core.Infrastructure.Config;
 
 internal class ConfigurationConfig : IEntityTypeConfiguration<Configuration>
 {

@@ -6,10 +6,10 @@ namespace IDP.Core.TokenHandlers;
 
 internal sealed class MfaService
 {
-    private readonly UserManager<User> _userManager;
-    private readonly IAppLogger<MfaService> _logger;
-    private readonly PreAuthorizationService _preAuthorizationRepo;
     private readonly IEmailSetting _emailSetting;
+    private readonly IAppLogger<MfaService> _logger;
+    private readonly UserManager<User> _userManager;
+    private readonly PreAuthorizationService _preAuthorizationRepo;
     private readonly EmailProviderFactory _emailProviderFactory;
 
     public MfaService(IAppLogger<MfaService> logger,

@@ -12,7 +12,7 @@ internal class ClientDto
         ClientId = client.ClientId,
         ClientName = client.ClientName,
         Description = client.Description,
-        AccessTokenType = client.AccessTokenType,
+        AccessTokenType = client.TokenType,
         RedirectUri = client.RedirectUri,
         LogoutRedirectUri = client.LogoutRedirectUri,
         IsActive = client.IsActive,
@@ -32,7 +32,7 @@ internal class ClientDto
     public string ClientId { get; private set; } = string.Empty;
     public string ClientName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
-    public TokenType AccessTokenType { get; private set; }
+    public TokenTypes AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;
     public string? LogoutRedirectUri { get; private set; }

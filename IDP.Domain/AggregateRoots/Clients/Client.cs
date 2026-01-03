@@ -1,21 +1,35 @@
 ﻿namespace IDP.Domain.AggregateRoots.Clients;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class Client
+public class Client : BaseEntity, IAggregateRoot, ITenant
 {
-    public enum TokenType
+    public enum TokenTypes
     {
         JWT,
         ReferenceToken
     }
 
-    [Key]
-    public int Id { get; private set; }
+    public enum ClientTypes
+    {
+        Public,
+        Confidential
+    }
+
+    public enum AppTypes
+    {
+        SPA,
+        Mobile,
+        Desktop,
+        WebApp,
+        Backend
+    }
+
     public string ClientId { get; private set; }
     public string ClientName { get; private set; }
     public string? Description { get; private set; }
-    public string ClientType { get; private set; }
-    public TokenType AccessTokenType { get; private set; }
+    public ClientTypes ClientType { get; private set; }
+    public AppTypes AppType { get; private set; }
+    public TokenTypes TokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; }
     public string? LogoutRedirectUri { get; private set; }

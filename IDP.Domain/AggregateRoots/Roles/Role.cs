@@ -2,7 +2,7 @@
 namespace IDP.Domain.AggregateRoots.Roles;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class Role : IdentityRole<int>, IBaseEntity, ITenant, IAggregateRoot, IAuditable
+public class Role : IdentityRole<int>, IBaseEntity, ITenant, IAggregateRoot
 {
     public int TenantId { get; private set; }
     public string RoleDescription { get; private set; }

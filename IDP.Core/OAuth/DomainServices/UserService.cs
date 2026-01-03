@@ -4,11 +4,11 @@ using System.Text.Json;
 
 namespace IDP.Core;
 
-internal sealed class UserInfoService
+internal sealed class UserService
 {
     private HashSet<string> _supportedScopes;
 
-    public UserInfoService()
+    public UserService()
     {
         _supportedScopes = new HashSet<string>( DefaultScopes.DefaultSupportedScopes,
             StringComparer.Ordinal);

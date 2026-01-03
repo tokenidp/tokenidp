@@ -9,7 +9,7 @@ internal class ClientShortDto
     {
         TenantId = client.TenantId,
         ClientId = client.ClientId,
-        AccessTokenType = client.AccessTokenType,
+        AccessTokenType = client.TokenType,
         RedirectUri = client.RedirectUri,
         LogoutRedirectUri = client.LogoutRedirectUri,
         IsActive = client.IsActive,
@@ -34,7 +34,7 @@ internal class ClientShortDto
     public int Id { get; set; }
     public string ClientId { get; private set; } = string.Empty;
     public string ClientType { get; private set; }
-    public TokenType AccessTokenType { get; private set; }
+    public TokenTypes AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;
     public string? LogoutRedirectUri { get; private set; }

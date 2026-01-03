@@ -1,4 +1,4 @@
-﻿namespace IDP.Domain.AggregateRoots.Tenants;
+﻿namespace IDP.Domain.AggregateRoots;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 public class Configuration : BaseEntity, ITenant, IAggregateRoot

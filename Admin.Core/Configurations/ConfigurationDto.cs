@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using IDP.Domain.AggregateRoots;
+using System.Linq.Expressions;
 
 namespace Admin.Core.Configurations;
 

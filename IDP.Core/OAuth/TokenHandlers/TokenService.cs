@@ -21,10 +21,10 @@ internal sealed class TokenService
     {
         switch (tokenInfo.AccessTokenType)
         {
-            case TokenType.JWT:
+            case TokenTypes.JWT:
                 return CreateAccessToken(tokenInfo);
 
-            case TokenType.ReferenceToken:
+            case TokenTypes.ReferenceToken:
                 return await CreateReferenceToken(tokenInfo);
 
             default:

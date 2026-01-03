@@ -6,7 +6,7 @@ internal class TokenInfo
     public int TenantId { get; private set; }
     public string UserName { get; private set; } = string.Empty;
     public string ClientId { get; private set; } = string.Empty;
-    public TokenType AccessTokenType { get; private set; }
+    public TokenTypes AccessTokenType { get; private set; }
     public int ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
@@ -18,7 +18,7 @@ internal class TokenInfo
         int tenantId,
         string userName,
         string clientId,
-        TokenType accessTokenType,
+        TokenTypes accessTokenType,
         string[] scope,
         string[] audience,
         int clientSecretExpiry,

@@ -9,7 +9,7 @@ internal class UserInfoEndpoint : IEndpointDefinition
             .RequireAuthorization();
 
         authGroup.MapGet("/", static async (HttpContext httpContext,
-            UserInfoService userInfoService) =>
+            UserService userInfoService) =>
         {
             await userInfoService.HandleAsync(httpContext, httpContext.RequestAborted);
             return Results.Empty;

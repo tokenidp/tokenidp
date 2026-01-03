@@ -35,6 +35,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
     private Dictionary<string, object?> BuildDiscoveryDocument(IConfiguration configuration, HttpContext http)
     {
         var issuer = ResolveIssuer(configuration, http);
+
         var jwksUri = $"{issuer}{JwksPath}";
 
         return new Dictionary<string, object?>
@@ -43,25 +44,31 @@ internal class DiscoveryEndpoints : IEndpointDefinition
             ["jwks_uri"] = jwksUri,
             ["authorization_endpoint"] = $"{issuer}/authorize",
             ["token_endpoint"] = $"{issuer}/token",
-            ["response_types_supported"] = new[] { "code", "token", "id_token", "code token", "code id_token" },
+            ["introspect_endpoint"] = $"{issuer}/introspect",
+            ["revoke_token_endpoint"] = $"{issuer}/revoke",
+            ["userinfo_endpoint"] = $"{issuer}/userinfo",
+            ["response_types_supported"] = new[] { "code" },
             ["subject_types_supported"] = new[] { "public" },
             ["id_token_signing_alg_values_supported"] = new[] { "RS256" },
             ["token_endpoint_auth_methods_supported"] = new[] { "client_secret_basic", "client_secret_post" },
-            ["grant_types_supported"] = new[] { "authorization_code", "client_credentials", "refresh_token" },
-            ["scopes_supported"] = new[] { "openid", "profile", "email", "address", "phone", "offline_access" }
+            ["grant_types_supported"] = new[] { "authorization_code", "client_credentials", "refresh_token", "device_code", "ciba" },
+            ["scopes_supported"] = new[] { "openid", "profile", "email", "phone", "offline_access" }
         };
     }
 
     private string ResolveIssuer(IConfiguration configuration, HttpContext http)
     {
         var issuer = configuration["TokenOptions:Issuer"];
+
         if (!string.IsNullOrWhiteSpace(issuer))
         {
             return issuer.TrimEnd('/');
         }
 
         var request = http.Request;
+
         var baseUrl = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}";
+
         return baseUrl.TrimEnd('/');
     }
 
@@ -88,12 +95,14 @@ internal class DiscoveryEndpoints : IEndpointDefinition
 
         if (environment.IsProduction())
         {
-            throw new InvalidOperationException("Token signing certificate is required in production. Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
+            throw new InvalidOperationException("Token signing certificate is required in production." +
+                " Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
         }
 
         var keyMaterial = ResolveKeyMaterialFromConfig(configuration);
 
         using var rsaKey = RSA.Create();
+
         if (keyMaterial.Contains("BEGIN", StringComparison.Ordinal))
         {
             rsaKey.ImportFromPem(keyMaterial);
@@ -101,6 +110,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         else
         {
             var keyBytes = Convert.FromBase64String(keyMaterial);
+
             rsaKey.ImportRSAPrivateKey(keyBytes, out _);
         }
 
@@ -118,8 +128,11 @@ internal class DiscoveryEndpoints : IEndpointDefinition
     private Dictionary<string, object> CreateJwkFromRsa(RSA rsa)
     {
         var parameters = rsa.ExportParameters(false);
+
         var n = Base64UrlEncode(parameters.Modulus!);
+
         var e = Base64UrlEncode(parameters.Exponent!);
+
         var kid = ComputeKid(n, e);
 
         return new Dictionary<string, object>
@@ -137,8 +150,11 @@ internal class DiscoveryEndpoints : IEndpointDefinition
     {
         // compute a key id as base64url(sha256(n || e))
         var bytes = System.Text.Encoding.UTF8.GetBytes(n + "." + e);
+
         using var sha = SHA256.Create();
+
         var hash = sha.ComputeHash(bytes);
+
         return Base64UrlEncode(hash);
     }
 
@@ -153,6 +169,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
     private async Task WriteJsonAsync(HttpContext http, object payload)
     {
         http.Response.ContentType = "application/json; charset=utf-8";
+
         await http.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));
     }
 

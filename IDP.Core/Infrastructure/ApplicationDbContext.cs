@@ -67,10 +67,10 @@ internal class ApplicationDbContext : IdentityDbContext<
 
         builder.Entity<Client>(ur =>
         {
-            ur.ToTable("Clients").Property(p => p.AccessTokenType)
+            ur.ToTable("Clients").Property(p => p.TokenType)
                .HasConversion(
                 v => v.ToString(),
-                v => (TokenType)Enum.Parse(typeof(TokenType), v));
+                v => (TokenTypes)Enum.Parse(typeof(TokenTypes), v));
         });
 
         builder.Entity<ClientScope>().ToTable("ClientScopes");

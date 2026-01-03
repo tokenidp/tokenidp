@@ -59,7 +59,7 @@ internal static class DependencyInjection
         services.AddScoped<ClientService>();
         services.AddScoped<TenantService>();
         services.AddScoped<RoleService>();
-        services.AddScoped<UserInfoService>();
+        services.AddScoped<UserService>();
     }
 
     private static void AddAuthorizationUseCases(this IServiceCollection services)
