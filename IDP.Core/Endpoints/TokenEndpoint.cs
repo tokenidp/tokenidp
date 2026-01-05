@@ -9,7 +9,7 @@ internal class TokenEndpoint : IEndpointDefinition
     {
         var authGroup = app.MapGroup("/token");
 
-        authGroup.MapPost("/", static async (HttpContext httpContext,
+        authGroup.MapPost("", static async (HttpContext httpContext,
             TokenRequest request,
             TokenUseCase accessTokenUseCase) =>
         {

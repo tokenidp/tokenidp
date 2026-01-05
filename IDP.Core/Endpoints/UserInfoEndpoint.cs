@@ -1,4 +1,7 @@
 ﻿
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+
 namespace IDP.Core.Endpoints;
 
 internal class UserInfoEndpoint : IEndpointDefinition
@@ -6,13 +9,15 @@ internal class UserInfoEndpoint : IEndpointDefinition
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
         var authGroup = app.MapGroup("/userinfo")
-            .RequireAuthorization();
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+        });
 
-        authGroup.MapGet("/", static async (HttpContext httpContext,
+        authGroup.MapGet("", static async (HttpContext httpContext,
             UserService userInfoService) =>
         {
-            await userInfoService.HandleAsync(httpContext, httpContext.RequestAborted);
-            return Results.Empty;
+            return await userInfoService.HandleAsync(httpContext, httpContext.RequestAborted);
         })
         .WithName("UserInfo")
         .WithTags("UserInfo");

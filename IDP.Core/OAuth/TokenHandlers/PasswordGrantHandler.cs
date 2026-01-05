@@ -1,4 +1,5 @@
 ﻿using IDP.Core.Model;
+using IDP.Core.OAuth.Interfaces;
 
 namespace IDP.Core.OAuth.TokenHandlers;
 

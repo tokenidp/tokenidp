@@ -1,6 +1,6 @@
 ﻿using Admin.Core.OAuthEndpoints;
-using Admin.Core.Options;
 using IDP.Common;
+using IDP.Common.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 

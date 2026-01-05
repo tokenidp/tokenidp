@@ -59,21 +59,43 @@ internal class ApplicationDbContext : IdentityDbContext<
 
         builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
 
-        builder.Entity<UserPreAuthorization>().ToTable("PreAuthorizations");
+        builder.Entity<UserPreAuthorization>().ToTable("UserPreAuthorizations");
 
-        builder.Entity<UserAuthorizationCode>().ToTable("AuthorizationCodes");
+        builder.Entity<UserAuthorizationCode>().ToTable("UserAuthorizationCodes");
 
-        builder.Entity<UserRefreshToken>().ToTable("RefreshTokens");
+        builder.Entity<UserRefreshToken>().ToTable("UserRefreshTokens");
 
-        builder.Entity<Client>(ur =>
+        builder.Entity<Client>(entity =>
         {
-            ur.ToTable("Clients").Property(p => p.TokenType)
-               .HasConversion(
-                v => v.ToString(),
-                v => (TokenTypes)Enum.Parse(typeof(TokenTypes), v));
+            entity.ToTable("Clients");
+
+            entity.Property(p => p.TokenType)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<TokenTypes>(v));
+
+            entity.Property(p => p.ClientType)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<ClientTypes>(v));
+
+            entity.Property(p => p.AppType)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<AppTypes>(v));
         });
 
         builder.Entity<ClientScope>().ToTable("ClientScopes");
+
+        builder.Entity<ClientGrantType>(entity =>
+        {
+            entity.ToTable("ClientGrantTypes");
+
+            entity.Property(p => p.AllowedGrantType)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<GrantTypes>(v));
+        });
 
         builder.Entity<UserAccessToken>().ToTable("UserAccessTokens");
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace IDP.Core;
+namespace IDP.Core.Infrastructure;
 
-public class AppLogger<T> : IAppLogger<T> where T : class
+internal class AppLogger<T> : IAppLogger<T> where T : class
 {
     /// <summary>
     /// Trace = 0, Debug = 1, Information = 2, Warning = 3, Error = 4, Critical = 5, and None = 6.

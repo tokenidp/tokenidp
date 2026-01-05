@@ -38,16 +38,23 @@ public class AuthenticationService
             await _jwtAuthenticationStateProvider
                 .MarkUserAsAuthenticated(tokenResponse.Value.AccessToken);
 
-            var userInforequest = new HttpRequestMessage(HttpMethod.Get, $"user/{tokenResponse.Value.UserId}");
+            var userInforequest = new HttpRequestMessage(HttpMethod.Get, "userinfo");
             userInforequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.Value.AccessToken);
 
             var userInfoResponse = await _httpClient.SendAsync(userInforequest);
 
             if (userInfoResponse.IsSuccessStatusCode)
             {
-                var userInfo = await userInfoResponse.Content.ReadFromJsonAsync<Result<UserInfo>>();
+                try
+                {
+                    var userInfo = await userInfoResponse.Content.ReadFromJsonAsync<Dictionary<string, JsonElement>>();
 
-                return userInfo?.Value.UserName;
+                    return userInfo["name"].GetString();
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
             }
             else
             {

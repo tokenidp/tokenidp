@@ -36,6 +36,7 @@
         if (firstRender)
         {
             userName = await AuthService.ExchangeCodeForToken(authCode);
+
             StateHasChanged();
         }
     }

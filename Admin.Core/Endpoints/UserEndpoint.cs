@@ -8,7 +8,8 @@ internal class UserEndpoint : IEndpointDefinition
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
         var authGroup = app.MapGroup("/user")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
             IAppLogger<UserEndpoint> _logger,

@@ -1,6 +1,4 @@
-﻿using Admin.Core;
-
-namespace Admin.Core.Roles;
+﻿namespace Admin.Core.Roles;
 
 internal class RoleService
 {
@@ -19,6 +17,8 @@ internal class RoleService
 
     public async Task<Result> CreateRole(CreateUpdateRole request)
     {
+        _logger.LogDebug("Creating role for tenant {TenantId}", request.TenantId);
+
         Role appRole = new(
             request.TenantId,
             request.Name,
@@ -30,15 +30,20 @@ internal class RoleService
 
         var result = await _dbContext.SaveChangesAsync();
 
+        _logger.LogInfo("Role created with Id {RoleId}", appRole.Id);
+
         return Result.Success(result);
     }
 
     public async Task<Result> UpdateRole(int id, CreateUpdateRole request)
     {
+        _logger.LogDebug("Updating role {RoleId}", id);
+
         var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Id == id, CancellationToken.None);
 
         if (role == null)
         {
+            _logger.LogWarning("Role not found for update: {RoleId}", id);
             return Result.Failure("NotFound", "Role not found for the Id {0}".FormatString(id));
         }
 
@@ -52,15 +57,20 @@ internal class RoleService
 
         var result = await _dbContext.SaveChangesAsync();
 
+        _logger.LogInfo("Role updated {RoleId}", id);
+
         return Result.Success(result);
     }
 
     public async Task<Result> DeleteRole(int roleId)
     {
+        _logger.LogDebug("Deleting role {RoleId}", roleId);
+
         var role = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Id == roleId);
 
         if (role == null)
         {
+            _logger.LogWarning("Role not found for delete: {RoleId}", roleId);
             return Result.Failure("NotFound", "Role not found for the Id {0}".FormatString(roleId));
         }
 
@@ -70,27 +80,41 @@ internal class RoleService
 
         var result = await _dbContext.SaveChangesAsync();
 
+        _logger.LogInfo("Role deleted {RoleId}", roleId);
+
         return Result.Success(result);
     }
 
     public async Task<RoleDto> GetRoleById(int id)
     {
+        _logger.LogDebug("Fetching role {RoleId}", id);
+
         var role = await _dbContext.Roles
             .Where(u => u.Id == id)
             .Select(RoleDto.Projection)
             .FirstOrDefaultAsync();
+
+        if (role == null)
+        {
+            _logger.LogWarning("Role not found: {RoleId}", id);
+        }
 
         return role;
     }
 
     public async Task<PaginatedList<RoleSearchDto>> GerRoles(SearchData request)
     {
+        _logger.LogDebug("Fetching roles list. Page {PageNumber} Size {PageSize}",
+            request.PageNumber, request.PageSize);
+
         var roles = await _dbContext.RolesSearch
            .AsNoTracking()
            .Select(RoleSearchDto.Projection)
            .ApplyFilter(request.SearchCriterias)
            .ApplySort(request.SortColumn, request.SortOrder)
            .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+
+        _logger.LogDebug("Fetched {Count} roles", roles.TotalCount);
 
         return roles;
     }

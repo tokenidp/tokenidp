@@ -4,15 +4,19 @@ internal class LookupService
 {
     private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
+    private readonly IAppLogger<LookupService> _logger;
 
-    public LookupService(ApplicationDbContext applicationDbContext, ICache cache)
+    public LookupService(ApplicationDbContext applicationDbContext, ICache cache, IAppLogger<LookupService> logger)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<LookupValue>> GeTenantLookupsByType(int tenantId, string type)
     {
+        _logger.LogDebug("Fetching lookup values for tenant {TenantId} and type {Type}", tenantId, type);
+
         var cacheKey = CacheKeys.LOOKUP.FormatCacheKey(type, tenantId);
 
         var lookupValues = await _cache.GetOrCreateAsync(cacheKey, async () =>
@@ -24,6 +28,8 @@ internal class LookupService
                           select lv).ToListAsync();
 
         }, new TimeSpan(0, 45, 0));
+
+        _logger.LogDebug("Lookup values fetched for tenant {TenantId} and type {Type}", tenantId, type);
 
         return lookupValues;
     }

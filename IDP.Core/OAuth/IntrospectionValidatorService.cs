@@ -14,7 +14,7 @@ internal sealed class IntrospectionValidatorService
         _dbContext = dbContext;
     }
 
-    public async Task<IntrospectionResponse> ValidateReferenceToken(string referenceToken)
+    internal async Task<IntrospectionResponse> ValidateReferenceToken(string referenceToken)
     {
         _logger.LogDebug("Validating reference token: {TokenId}", referenceToken);
 

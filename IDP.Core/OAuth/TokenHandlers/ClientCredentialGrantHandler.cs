@@ -1,5 +1,6 @@
 ﻿using IDP.Core.Model;
 using IDP.Core.OAuth.DomainServices;
+using IDP.Core.OAuth.Interfaces;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;

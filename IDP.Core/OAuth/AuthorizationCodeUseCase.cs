@@ -1,20 +1,20 @@
 ﻿using IDP.Core.Model;
 using IDP.Core.OAuth.DomainServices;
-using IDP.Core.TokenHandlers;
+using IDP.Core.OAuth.Interfaces;
 
 namespace IDP.Core.OAuth;
 
 internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 {
-    private readonly AuthenticationService _identityService;
-    private readonly MfaService _mfaService;
+    private readonly IdentityService _identityService;
     private readonly ClientService _clientService;
     private readonly AuthorizationCodeService _authorizationCodeService;
+    private readonly IMfaService _mfaService;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
 
-    internal AuthorizationCodeUseCase(AuthenticationService identityService,
+    internal AuthorizationCodeUseCase(IdentityService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
-        MfaService mfaService,
+        IMfaService mfaService,
         AuthorizationCodeService authorizationCodeService,
         ClientService clientService)
     {
@@ -30,7 +30,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         var response = await _identityService.Authenticate(request);
 
         if (!response.IsSuccess)
-        {        
+        {
             return response;
         }
 

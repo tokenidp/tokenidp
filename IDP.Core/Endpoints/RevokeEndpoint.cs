@@ -10,7 +10,7 @@ internal class RevokeEndpoint : IEndpointDefinition
     {
         var authGroup = app.MapGroup("/revoke");
 
-        authGroup.MapDelete("/", static async (HttpContext httpContext,
+        authGroup.MapDelete("", static async (HttpContext httpContext,
         [FromBody] RevokeTokenRequest request,
         IAppLogger<RevokeEndpoint> _logger,
         RevokeTokenService revokeTokenService) =>

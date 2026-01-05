@@ -4,7 +4,7 @@ namespace IDP.Core.Security;
 
 internal static class MfaCodeGenerator
 {
-    public static string GenerateMfaCode()
+    internal static string GenerateMfaCode()
     {
         string code;
         do

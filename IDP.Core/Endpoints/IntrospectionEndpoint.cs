@@ -9,7 +9,7 @@ internal class IntrospectionEndpoint : IEndpointDefinition
     {
         var authGroup = app.MapGroup("/introspect");
 
-        authGroup.MapPost("/", async (IntrospectionRequest request,
+        authGroup.MapPost("", async (IntrospectionRequest request,
             IAppLogger<IntrospectionEndpoint> _logger,
             IntrospectionValidatorService referenceTokenValidator) =>
         {

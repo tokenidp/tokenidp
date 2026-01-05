@@ -1,4 +1,5 @@
 ﻿using IDP.Common.Options;
+using IDP.Core.Middlewares;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -23,7 +24,7 @@ public static class ApplicationBuilderExtensions
             throw new ArgumentException("Token audience is required.", nameof(audience));
         }
 
-        builder.Services.AddServices(builder.Configuration, options =>
+        builder.Services.AddServices(builder.Configuration, builder.Environment, options =>
         {
             options.Audience = audience;
 
@@ -64,6 +65,8 @@ public static class ApplicationBuilderExtensions
 
     public static WebApplication UseTokenTresor(this WebApplication app)
     {
+        app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<CorrelationIdMiddleware>();
         app.RegisterEndpointDefinitions();
 
         return app;

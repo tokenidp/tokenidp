@@ -1,6 +1,5 @@
 ﻿using IDP.Core.Model;
-using IDP.Core.OAuth;
-using IDP.Core.TokenHandlers;
+using IDP.Core.OAuth.Interfaces;
 
 namespace IDP.Core.Endpoints;
 
@@ -12,30 +11,38 @@ internal class MfaEndpoint : IEndpointDefinition
 
         authGroup.MapPost("/verify", async (MfaRequest request,
             IAppLogger<MfaEndpoint> _logger,
-            IAuthorizationCodeUseCase authenticationUseCase) =>
+            IMfaService mfaService) =>
         {
             _logger.LogInfo("Mfa verification code started for user: {UserId}", request.UserId);
 
-            var response = await authenticationUseCase.VerifyCode(request);
+            var (authRequest, authResponse) = await mfaService.VerifyMfaRequest(request);
 
             _logger.LogInfo("Mfa completed for user: {UserId}", request.UserId);
 
-            return response;
+            return ApiResult<AuthResponse>.Success(authResponse);
         })
         .WithName("VerifyMfa")
         .WithTags("VerifyMfa");
 
         authGroup.MapPost("/resend", async (MfaRequest request,
             IAppLogger<MfaEndpoint> _logger,
-            MfaService mfaService) =>
+            IMfaService mfaService) =>
         {
             _logger.LogInfo("Resend Mfa Code process started for user: {UserId}", request.UserId);
+
+            if (string.IsNullOrEmpty(request.CorrelationId))
+            {
+                var errorResult = ApiResult<ApiError>.Failure(
+                                ApiError.Failure("Correlation Id cannot be empty."));
+
+                return Results.BadRequest(errorResult);
+            }
 
             var response = await mfaService.ResendMfaCode(request);
 
             _logger.LogInfo("Resend Mfa Code process completed for user: {UserId}", request.UserId);
 
-            return response;
+            return Results.Ok(ApiResult<AuthResponse>.Success(response));
         })
         .WithName("ResendMfa")
         .WithTags("ResendMfa");

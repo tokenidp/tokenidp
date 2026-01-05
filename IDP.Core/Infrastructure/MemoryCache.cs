@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 
-namespace IDP.Core;
+namespace IDP.Core.Infrastructure;
 
-public sealed class MemoryCache : ICache
+internal sealed class MemoryCache : ICache
 {
     private readonly IMemoryCache _cache;
     private readonly IAppLogger<MemoryCache> _logger;

@@ -2,9 +2,10 @@
 using IDP.Common.Options;
 using IDP.Core.OAuth;
 using IDP.Core.OAuth.DomainServices;
+using IDP.Core.OAuth.Interfaces;
 using IDP.Core.OAuth.TokenHandlers;
-using IDP.Core.TokenHandlers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -18,12 +19,14 @@ internal static class DependencyInjection
 {
     public static void AddServices(this IServiceCollection services,
         IConfiguration configuration,
+        IWebHostEnvironment environment,
         Action<TokenOption>? configureToken)
     {
         ConfigureTokenOptions(services, configuration, configureToken);
         AddInfrastructure(services);
         AddDomainServices(services);
         AddTokenHandlers(services);
+        AddAuthentication(services, configuration, environment);
         AddEmailServices(services);
     }
 
@@ -50,6 +53,17 @@ internal static class DependencyInjection
         services.AddSingleton<JsonHelper>();
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+
+        //services.AddHttpClient("IDPClient", (serviceProvider, client) =>
+        //{
+        //    var tokenOptions = serviceProvider.GetRequiredService<IOptions<TokenOption>>().Value;
+        //    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        //    var issuer = ResolveIssuer(tokenOptions, httpContextAccessor);
+        //    client.BaseAddress = new Uri(issuer);
+        //});
+
+        //services.AddScoped<AuthenticationService>();
+        services.AddScoped<LoadService>();
     }
 
     private static void AddDomainServices(IServiceCollection services)
@@ -66,23 +80,35 @@ internal static class DependencyInjection
     {
         services.AddScoped<IAuthorizationCodeUseCase>(sp =>
             new AuthorizationCodeUseCase(
-                sp.GetRequiredService<AuthenticationService>(),
+                sp.GetRequiredService<IdentityService>(),
                 sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
-                sp.GetRequiredService<MfaService>(),
+                sp.GetRequiredService<IMfaService>(),
                 sp.GetRequiredService<AuthorizationCodeService>(),
                 sp.GetRequiredService<ClientService>()));
 
     }
 
+    private static void AddMfaServices(this IServiceCollection services)
+    {
+        services.AddScoped<IMfaService>(sp =>
+            new MfaService(
+                sp.GetRequiredService<IAppLogger<MfaService>>(),
+                sp.GetRequiredService<IEmailSetting>(),
+                sp.GetRequiredService<PreAuthorizationService>(),
+                sp.GetRequiredService<UserManager<User>>(),
+                sp.GetRequiredService<EmailProviderFactory>()));
+
+    }
 
     private static void AddTokenHandlers(IServiceCollection services)
     {
+        services.AddAuthorizationUseCases();
+        services.AddMfaServices();
         services.AddScoped<TokenValidatorService>();
         services.AddScoped<TokenUseCase>();
         services.AddScoped<TokenService>();
-        services.AddAuthorizationUseCases();
         services.AddScoped<RevokeTokenService>();
-        services.AddScoped<MfaService>();
+        services.AddScoped<IdentityService>();
         services.AddScoped<TokenGrantFactory>();
         services.AddScoped<RefreshTokenGrantHandler>();
         services.AddScoped<AuthorizationCodeGrantHandler>();
@@ -91,13 +117,13 @@ internal static class DependencyInjection
         services.AddScoped<AuthorizationCodeService>();
         services.AddScoped<PreAuthorizationService>();
 
-        services.AddTransient<Func<GrantType, ITokenGrantHandler>>(serviceProvider => key =>
+        services.AddTransient<Func<GrantTypes, ITokenGrantHandler>>(serviceProvider => key =>
         {
             return key switch
             {
-                GrantType.authorization_code => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>(),
-                GrantType.refresh_token => serviceProvider.GetRequiredService<RefreshTokenGrantHandler>(),
-                GrantType.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
+                GrantTypes.authorization_code => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>(),
+                GrantTypes.refresh_token => serviceProvider.GetRequiredService<RefreshTokenGrantHandler>(),
+                GrantTypes.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
                 _ => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>()
             };
         });
@@ -120,40 +146,37 @@ internal static class DependencyInjection
         });
     }
 
-    public static void AddAuthentication(this IServiceCollection services,
-        IConfiguration configuration)
+    private static void AddAuthentication(IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
         ConfigureTokenOptions(services, configuration, null);
 
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-       .AddJwtBearer();
-        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-            .Configure<IOptions<TokenOption>, IHttpContextAccessor, IHostEnvironment>(
-            (options, tokenOptions, httpContextAccessor, environment) =>
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                var token = tokenOptions.Value;
-                var signingKey = ResolveSigningKey(token, environment);
-                var audience = ResolveAudience(token, configuration);
+                using var sp = services.BuildServiceProvider();
 
+                var tokenOptions = sp.GetRequiredService<IOptions<TokenOption>>().Value;
+                var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
+
+                var signingKey = ResolveSigningKey(tokenOptions, environment);
+                var audience = ResolveAudience(tokenOptions, configuration);
+
+                options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.SaveToken = false;
-                options.RequireHttpsMetadata = false;
-                options.TokenValidationParameters = new TokenValidationParameters()
+
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = signingKey,
                     ValidateIssuer = true,
-                    ValidateLifetime = true,
                     ValidateAudience = true,
+                    ValidateLifetime = true,
                     ValidAudience = audience,
                     ClockSkew = TimeSpan.Zero,
-                    IssuerValidator = (issuer, securityToken, validationParameters) =>
+                    IssuerValidator = (issuer, token, parameters) =>
                     {
-                        var expected = ResolveIssuer(token, httpContextAccessor);
+                        var expected = ResolveIssuer(tokenOptions, httpContextAccessor);
                         if (!string.Equals(issuer, expected, StringComparison.OrdinalIgnoreCase))
                         {
                             throw new SecurityTokenInvalidIssuerException(
@@ -163,7 +186,6 @@ internal static class DependencyInjection
                         return issuer;
                     }
                 };
-
             });
     }
 

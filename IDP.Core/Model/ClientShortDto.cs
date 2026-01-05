@@ -9,7 +9,7 @@ internal class ClientShortDto
     {
         TenantId = client.TenantId,
         ClientId = client.ClientId,
-        AccessTokenType = client.TokenType,
+        TokenType = client.TokenType,
         RedirectUri = client.RedirectUri,
         LogoutRedirectUri = client.LogoutRedirectUri,
         IsActive = client.IsActive,
@@ -23,19 +23,19 @@ internal class ClientShortDto
         TimeWindow = client.TimeWindow,
         QueueLimit = client.QueueLimit,
         EnableITracking = client.EnableITracking,
-        Scopes = client.ClientScopes.Select(s => s.Scope).ToArray()
-        //GrantTypes = client.ClientGrantTypes.Select(s => s.AllowedGrantType.ToString()).ToArray(),
-        //Secrets = client.ClientSecrets.Where(s => s.ExpiresAt > DateTime.UtcNow || s.IsRevoked != true)
-        //.Select(s => s.SecretHash).ToArray(),
-        //Audiences = client.ClientAudiences.Where(s => s.IsActive != false)
-        //.Select(s => s.Name).ToArray()
+        Scopes = client.ClientScopes.Select(s => s.Scope).ToArray(),
+        GrantTypes = client.ClientGrantTypes.Select(s => s.AllowedGrantType).ToArray(),
+        Secrets = client.ClientSecrets.Where(s => s.ExpiresAt > DateTime.UtcNow || s.IsRevoked != true)
+        .Select(s => s.SecretHash).ToArray(),
+        Audiences = client.ClientAudiences.Where(s => s.IsActive != false)
+        .Select(s => s.Name).ToArray()
     };
 
     public int Id { get; set; }
-    public string ClientId { get; private set; } = string.Empty;
-    public string ClientType { get; private set; }
-    public TokenTypes AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
+    public string ClientId { get; private set; } = string.Empty;
+    public ClientTypes ClientType { get; private set; }
+    public TokenTypes TokenType { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;
     public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
@@ -50,7 +50,7 @@ internal class ClientShortDto
     public int? QueueLimit { get; private set; }
     public bool? EnableITracking { get; private set; }
     public string[] Scopes { get; private set; }
-    public string[] GrantTypes { get; private set; }
+    public GrantTypes[] GrantTypes { get; private set; }
     public string[] Secrets { get; private set; }
     public string[] Audiences { get; private set; }
 }

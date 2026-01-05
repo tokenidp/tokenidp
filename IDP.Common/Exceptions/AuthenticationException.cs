@@ -1,4 +1,4 @@
-﻿namespace IDP.Server;
+﻿namespace IDP.Common;
 
 public class AuthenticationException : Exception
 {

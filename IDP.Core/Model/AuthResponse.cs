@@ -4,7 +4,7 @@ public class AuthResponse
 {
     public bool IsSuccess { get; private set; }
     public string Error { get; private set; }
-    public string CorrelationId { get; set; }
+    public string CorrelationId { get; private set; }
     public string AuthorizationCode { get; private set; }
     public int? UserId { get; private set; }
     public bool? TwoFactorEnabled { get; private set; }
@@ -43,8 +43,7 @@ public class AuthResponse
         return new AuthResponse(code);
     }
 
-    public static AuthResponse Success(int userId,
-        bool twoFactorEnabled)
+    public static AuthResponse Success(int userId, bool twoFactorEnabled)
     {
         return new AuthResponse(userId, twoFactorEnabled);
     }

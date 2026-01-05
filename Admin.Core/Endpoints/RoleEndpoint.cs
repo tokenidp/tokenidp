@@ -6,7 +6,9 @@ internal class RoleEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/Role");
+        var authGroup = app.MapGroup("/Role")
+            .RequireAuthorization()
+            .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
             IAppLogger<RoleEndpoint> _logger,
@@ -66,5 +68,21 @@ internal class RoleEndpoint : IEndpointDefinition
         })
         .WithName("UpdateRole")
         .WithTags("UpdateRole");
+
+        authGroup.MapDelete("/{id}", async (int id,
+            IAppLogger<RoleEndpoint> _logger,
+            RoleService roleService) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+            }
+
+            await roleService.DeleteRole(id);
+
+            return Results.NoContent();
+        })
+        .WithName("DeleteRole")
+        .WithTags("DeleteRole");
     }
 }

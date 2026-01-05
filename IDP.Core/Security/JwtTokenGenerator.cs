@@ -6,7 +6,7 @@ using System.Security.Cryptography;
 
 namespace IDP.Core.Security;
 
-public sealed class JwtTokenGenerator
+internal sealed class JwtTokenGenerator
 {
     private readonly TokenOption _settings;
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
@@ -36,7 +36,7 @@ public sealed class JwtTokenGenerator
     /// <param name="scope">OpenID Connect scopes (profile email openid)</param>
     /// <param name="roles">User roles</param>
     /// <returns>Access Token</returns>
-    public string CreateAccessToken(
+    internal string CreateAccessToken(
         DateTime expireAt,
         string tokenId,
         string userId,
@@ -79,7 +79,7 @@ public sealed class JwtTokenGenerator
     /// <param name="scope">OpenID Connect scopes (profile email openid)</param>
     /// <param name="roles">User roles</param>
     /// <returns>ID Token</returns>
-    public string CreateIDToken(
+    internal string CreateIDToken(
         DateTime expireAt,
         string tokenId,
         string userId,
@@ -110,7 +110,7 @@ public sealed class JwtTokenGenerator
     /// <param name="phoneNumber">Phone number claim</param>
     /// <param name="picture">Picture URL claim</param>
     /// <returns>ID Token</returns>
-    public string CreateIDToken(
+    internal string CreateIDToken(
         DateTime expireAt,
         string? tokenId,
         string userId,
@@ -161,7 +161,7 @@ public sealed class JwtTokenGenerator
     /// <summary>
     /// Generates a secure 512-bit refresh token using non-allocating RNG APIs.
     /// </summary>
-    public static string CreateRefreshToken()
+    internal static string CreateRefreshToken()
     {
         Span<byte> bytes = stackalloc byte[64]; // 512-bit
         RandomNumberGenerator.Fill(bytes);
@@ -174,7 +174,7 @@ public sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = _currentUserService.BaseUrl,         
+            Issuer = _currentUserService.BaseUrl,
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
             NotBefore = now,

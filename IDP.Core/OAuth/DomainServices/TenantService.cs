@@ -11,7 +11,7 @@ internal sealed class TenantService
         _cache = cache;
     }
 
-    public async Task<bool> CheckTwoFactorEnabled(int tenantId)
+    internal async Task<bool> CheckTwoFactorEnabled(int tenantId)
     {
         var cacheKey = CacheKeys.TENANT.FormatCacheKey("TwoFactor", tenantId);
 

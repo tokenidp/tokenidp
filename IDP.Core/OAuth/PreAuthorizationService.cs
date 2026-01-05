@@ -12,7 +12,7 @@ internal sealed class PreAuthorizationService
         _cache = cache;
     }
 
-    public async Task<UserPreAuthorization> GetPreAuthorization(string correlationId, int userId)
+    internal async Task<UserPreAuthorization> GetPreAuthorization(string correlationId, int userId)
     {
         var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId, userId);
 
@@ -30,7 +30,7 @@ internal sealed class PreAuthorizationService
         return preAuthorization;
     }
 
-    public async Task AddPreAuthorization(UserPreAuthorization preAuthorization)
+    internal async Task AddPreAuthorization(UserPreAuthorization preAuthorization)
     {
         _applicationDbContext.PreAuthorizations.Add(preAuthorization);
         await _applicationDbContext.SaveChangesAsync();
@@ -41,7 +41,7 @@ internal sealed class PreAuthorizationService
         await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
     }
 
-    public async Task UpdatePreAuthorization(UserPreAuthorization preAuthorization)
+    internal async Task UpdatePreAuthorization(UserPreAuthorization preAuthorization)
     {
         _applicationDbContext.PreAuthorizations.Update(preAuthorization);
         await _applicationDbContext.SaveChangesAsync();

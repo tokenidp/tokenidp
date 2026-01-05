@@ -1,4 +1,5 @@
 ﻿using IDP.Core.Model;
+using IDP.Core.OAuth.Interfaces;
 
 namespace IDP.Core.OAuth.TokenHandlers;
 
@@ -36,10 +37,10 @@ internal sealed class AuthorizationCodeGrantHandler : ITokenGrantHandler
 
         string refreshToken = string.Empty;
 
-        if(includeRefreshToken)
+        if (includeRefreshToken)
         {
-            refreshToken = await _tokenService.CreateRefreshToken(tokenInfo.UserId, 
-                tokenRequest.IpAddress, 
+            refreshToken = await _tokenService.CreateRefreshToken(tokenInfo.UserId,
+                tokenRequest.IpAddress,
                 tokenInfo.RefreshTokenExpiration);
         }
 

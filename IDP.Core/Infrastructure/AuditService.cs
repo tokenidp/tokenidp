@@ -13,7 +13,7 @@ internal class AuditService
         _jsonHelper = jsonHelper;
     }
 
-    public void CreateAuditLog(ApplicationDbContext context)
+    internal void CreateAuditLog(ApplicationDbContext context)
     {
         var entries = context.ChangeTracker.Entries()
             .Where(e => e.State == EntityState.Added ||

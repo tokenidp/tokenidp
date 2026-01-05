@@ -1,5 +1,4 @@
-﻿using IDP.Common.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.Extensions.Caching.Memory;
 
 namespace Admin.Core;
 

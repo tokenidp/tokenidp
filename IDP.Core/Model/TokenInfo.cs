@@ -44,7 +44,7 @@ internal class TokenInfo
 
     public void AddAuthorizedScopes(string scope)
     {
-        if(scope == null)
+        if (scope == null)
         {
             return;
         }

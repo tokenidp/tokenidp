@@ -6,7 +6,9 @@ internal class ConfigurationEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/configuration");
+        var authGroup = app.MapGroup("/configuration")
+            .RequireAuthorization()
+            .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
             IAppLogger<ConfigurationEndpoint> _logger,

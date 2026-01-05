@@ -11,7 +11,7 @@ internal class LookupService
         _cache = cache;
     }
 
-    public async Task<IEnumerable<LookupValue>> GeTenantLookupsByType(int tenantId, string type)
+    internal async Task<IEnumerable<LookupValue>> GeTenantLookupsByType(int tenantId, string type)
     {
         var cacheKey = CacheKeys.LOOKUP.FormatCacheKey(type, tenantId);
 

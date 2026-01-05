@@ -1,4 +1,5 @@
 ﻿using IDP.Core.Model;
+using IDP.Core.OAuth.Interfaces;
 
 namespace IDP.Core.OAuth.TokenHandlers;
 
@@ -17,7 +18,7 @@ internal sealed class TokenUseCase
         _logger = logger;
     }
 
-    public async Task<IResult> GetAccessToken(TokenRequest request)
+    internal async Task<IResult> GetAccessToken(TokenRequest request)
     {
         _logger.LogInfo("GetAccessToken called for ClientId: {ClientId} from IP: {IP}", request.ClientId, request.IpAddress);
 
@@ -29,7 +30,7 @@ internal sealed class TokenUseCase
             return Results.BadRequest(errorResult);
         }
 
-        Enum.TryParse<GrantType>(request.GrantType, ignoreCase: true, out var parsedGrantType);
+        Enum.TryParse<GrantTypes>(request.GrantType, ignoreCase: true, out var parsedGrantType);
 
         ITokenGrantHandler tokenGrantHandler = _tokenGrantFactory.GetService(parsedGrantType);
 

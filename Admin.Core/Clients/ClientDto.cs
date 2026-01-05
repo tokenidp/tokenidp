@@ -12,10 +12,13 @@ internal class ClientDto
         ClientId = client.ClientId,
         ClientName = client.ClientName,
         Description = client.Description,
+        ClientType = client.ClientType,
+        AppType = client.AppType,
         AccessTokenType = client.TokenType,
         RedirectUri = client.RedirectUri,
         LogoutRedirectUri = client.LogoutRedirectUri,
         IsActive = client.IsActive,
+        ClientSecretExpiry = client.ClientSecretExpiry,
         TwoFactorEnabled = client.TwoFactorEnabled,
         TwoFactorCodeExpiry = client.TwoFactorCodeExpiry,
         AccessTokenLifetime = client.AccessTokenLifetime,
@@ -32,11 +35,14 @@ internal class ClientDto
     public string ClientId { get; private set; } = string.Empty;
     public string ClientName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public ClientTypes ClientType { get; private set; }
+    public AppTypes AppType { get; private set; }
     public TokenTypes AccessTokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;
     public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
+    public int? ClientSecretExpiry { get; private set; }
     public bool TwoFactorEnabled { get; private set; }
     public int TwoFactorCodeExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }

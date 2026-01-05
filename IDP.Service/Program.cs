@@ -1,5 +1,4 @@
 using IDP.Core.ApplicationSetup;
-using IDP.Server;
 using IDP.Server.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,12 +20,12 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<LoadService>();
-
 var app = builder.Build();
 
 app.UseExceptionHandler("/error");
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseRouting();
 
@@ -39,8 +38,6 @@ app.UseCors(policy => policy
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseStaticFiles();
 
 app.UseAntiforgery();
 

@@ -17,7 +17,7 @@ internal sealed class TokenService
         _dbContext = dbContext;
     }
 
-    public async Task<TokenResponse> CreateToken(TokenInfo tokenInfo)
+    internal async Task<TokenResponse> CreateToken(TokenInfo tokenInfo)
     {
         switch (tokenInfo.AccessTokenType)
         {
@@ -38,7 +38,7 @@ internal sealed class TokenService
         }
     }
 
-    public async Task<string> CreateRefreshToken(int userId, string ipAddress, int tokenExpiry)
+    internal async Task<string> CreateRefreshToken(int userId, string ipAddress, int tokenExpiry)
     {
         var newRefreshToken = JwtTokenGenerator.CreateRefreshToken();
 

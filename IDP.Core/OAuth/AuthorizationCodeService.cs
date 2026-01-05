@@ -17,7 +17,7 @@ internal sealed class AuthorizationCodeService
         _logger = logger;
     }
 
-    public async Task<AuthResponse> GenerateAuthorizationCode(AuthRequest request, int userId)
+    internal async Task<AuthResponse> GenerateAuthorizationCode(AuthRequest request, int userId)
     {
         var code = Guid.NewGuid().ToString();
         _logger.LogDebug("Generated authorization code: {Code}", code);
@@ -40,7 +40,7 @@ internal sealed class AuthorizationCodeService
         return AuthResponse.Success(code);
     }
 
-    public async Task<UserAuthorizationCode> ValidateAuthorizationCode(string code)
+    internal async Task<UserAuthorizationCode> ValidateAuthorizationCode(string code)
     {
         var cacheKey = CacheKeys.AUTHORIZATION.FormatCacheKey(code);
 
@@ -52,7 +52,7 @@ internal sealed class AuthorizationCodeService
                 .FirstOrDefaultAsync(x => x.Code == code && x.Expiry > DateTime.UtcNow && !x.IsUsed);
         }
 
-        if (authorizationCode == null || authorizationCode.Expiry <= DateTime.UtcNow 
+        if (authorizationCode == null || authorizationCode.Expiry <= DateTime.UtcNow
             || authorizationCode.IsUsed || authorizationCode.Code != code)
         {
             _logger.LogWarning("Authorization code {code} not found or expired.", code);
@@ -66,7 +66,7 @@ internal sealed class AuthorizationCodeService
 
         await _applicationDbContext.SaveChangesAsync();
 
-        await  _cache.RemoveAsync(cacheKey);
+        await _cache.RemoveAsync(cacheKey);
 
         return authorizationCode;
     }

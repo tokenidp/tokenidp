@@ -3,7 +3,7 @@
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 public class ClientGrantType : BaseEntity
 {
-    public enum GrantType
+    public enum GrantTypes
     {
         authorization_code,
         refresh_token,
@@ -13,7 +13,7 @@ public class ClientGrantType : BaseEntity
     }
 
     public int ClientId { get; private set; }
-    public GrantType AllowedGrantType { get; private set; }
+    public GrantTypes AllowedGrantType { get; private set; }
 
     public virtual Client Client { get; private set; }
 

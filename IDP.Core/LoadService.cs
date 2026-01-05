@@ -1,4 +1,4 @@
-﻿namespace IDP.Server;
+﻿namespace IDP.Core;
 
 public class LoadService
 {

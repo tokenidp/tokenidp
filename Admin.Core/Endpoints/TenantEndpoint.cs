@@ -6,7 +6,9 @@ internal class TenantEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/Tenant");
+        var authGroup = app.MapGroup("/Tenant")
+            .RequireAuthorization()
+            .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
             IAppLogger<TenantEndpoint> _logger,

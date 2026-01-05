@@ -1,5 +1,4 @@
-﻿using Admin.Core;
-using Admin.Core.Roles;
+﻿using Admin.Core.Roles;
 using IDP.Common.Exceptions;
 
 namespace Admin.Core.Users;
@@ -24,20 +23,26 @@ internal class UserService
 
     public async Task<Result> CreateUser(CreateUpdateUser request)
     {
+        _logger.LogDebug("Creating user {UserName} for tenant {TenantId}", request.UserName, request.TenantId);
 
         var user = CreateNewUser(request);
 
         var result = await _userManager.CreateAsync(user, request.Password);
+
+        _logger.LogInfo("User created with Id {UserId}", user.Id);
 
         return result.ToApplicationResult(user.Id);
     }
 
     public async Task<Result> UpdateUser(int id, CreateUpdateUser request)
     {
+        _logger.LogDebug("Updating user {UserId}", id);
+
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
+            _logger.LogWarning("User not found for update: {UserId}", id);
             return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
         }
 
@@ -45,15 +50,20 @@ internal class UserService
 
         var result = await _userManager.UpdateAsync(user);
 
+        _logger.LogInfo("User updated {UserId}", id);
+
         return result.ToApplicationResult(user.Id);
     }
 
     public async Task<Result> UpdateUserStatus(int id, UpdateUserStatus request)
     {
+        _logger.LogDebug("Updating user status for {UserId}", id);
+
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id);
 
         if (user == null)
         {
+            _logger.LogWarning("User not found for status update: {UserId}", id);
             return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
         }
 
@@ -61,21 +71,32 @@ internal class UserService
 
         var result = await _userManager.UpdateAsync(user);
 
+        _logger.LogInfo("User status updated {UserId}", id);
+
         return result.ToApplicationResult(user.Id);
     }
 
     public async Task<UserDto?> GetUserById(int userId)
     {
+        _logger.LogDebug("Fetching user {UserId}", userId);
+
         var user = await _dbContext.Users
             .Where(u => u.Id == userId)
             .Select(UserDto.Projection)
             .FirstOrDefaultAsync();
+
+        if (user == null)
+        {
+            _logger.LogWarning("User not found: {UserId}", userId);
+        }
 
         return user;
     }
 
     public async Task<UserLookups?> GetUserLookups()
     {
+        _logger.LogDebug("Fetching user lookups for tenant {TenantId}", _currentUserService.TenantId);
+
         UserLookups userLookups = new();
 
         var roles = await _dbContext.Roles
@@ -84,17 +105,24 @@ internal class UserService
            .ToListAsync();
 
         userLookups.RolesLookup = roles;
+
+        _logger.LogDebug("User lookups fetched for tenant {TenantId}", _currentUserService.TenantId);
         return userLookups;
     }
 
     public async Task<PaginatedList<UserSearchDto>> GetUsers(SearchData request)
     {
+        _logger.LogDebug("Fetching users list. Page {PageNumber} Size {PageSize}",
+            request.PageNumber, request.PageSize);
+
         var users = await _dbContext.UsersSearch
            .AsNoTracking()
            .Select(UserSearchDto.Projection)
            .ApplyFilter(request.SearchCriterias)
            .ApplySort(request.SortColumn, request.SortOrder)
            .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+
+        _logger.LogDebug("Fetched {Count} users", users.TotalCount);
 
         return users;
     }

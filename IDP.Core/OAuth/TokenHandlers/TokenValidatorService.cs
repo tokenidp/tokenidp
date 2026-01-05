@@ -24,7 +24,7 @@ internal sealed class TokenValidatorService
         _authorizationService = authorizationService;
     }
 
-    public async Task<TokenInfo> ValidateAuthorizationCodeAsync(TokenRequest tokenRequest)
+    internal async Task<TokenInfo> ValidateAuthorizationCodeAsync(TokenRequest tokenRequest)
     {
         _logger.LogInfo("Token request received for ClientId: {ClientId} with Code: {Code}",
             tokenRequest.ClientId, tokenRequest.Code);
@@ -55,10 +55,10 @@ internal sealed class TokenValidatorService
 
         tokenInfo.AddAuthorizedScopes(authorizationCode.Scopes);
 
-        return tokenInfo;       
+        return tokenInfo;
     }
 
-    public async Task<TokenInfo> ValidateTokenInfoAsync(string clientId, int userId)
+    internal async Task<TokenInfo> ValidateTokenInfoAsync(string clientId, int userId)
     {
         _logger.LogInfo("Generating user info for token for user:{userId}", userId);
 
@@ -99,7 +99,7 @@ internal sealed class TokenValidatorService
             user.TenantId,
             user.UserName,
             clientId,
-            client.AccessTokenType,
+            client.TokenType,
             client.Scopes,
             client.Audiences,
             client.ClientSecretExpiry ?? 0,
@@ -110,7 +110,7 @@ internal sealed class TokenValidatorService
         return userInfo;
     }
 
-    public async Task<bool> ValidateGrantType(string grantType, string clientId)
+    internal async Task<bool> ValidateGrantType(string grantType, string clientId)
     {
         _logger.LogInfo("Validate Grant type {GrantType} for client:{ClientId}", grantType, clientId);
 
@@ -123,14 +123,21 @@ internal sealed class TokenValidatorService
             throw new NotFoundException("Client not found.");
         }
 
-        if (!Enum.IsDefined(typeof(GrantType), grantType))
+        if (client.GrantTypes == null || client.GrantTypes.Length == 0)
+        {
+            _logger.LogWarning("Client grant types not found.");
+
+            throw new NotFoundException("Client grant types not found.");
+        }
+
+        if (!Enum.IsDefined(typeof(GrantTypes), grantType))
         {
             _logger.LogWarning("Grant type not found for Client: {ClientId}", clientId);
 
             throw new NotFoundException("Grant type not found.");
         }
 
-        if (client.GrantTypes.Contains(grantType))
+        if (client.GrantTypes.Any(gt => gt.ToString() == grantType))
         {
             return true;
         }

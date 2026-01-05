@@ -1,11 +1,13 @@
 ﻿@page "/mfa"
-@using IDP.Server.Authentication
-@using IDP.Server.Model
+@using IDP.Core
+@using IDP.Core.Model
+@using IDP.Core.OAuth.Interfaces
 
 @rendermode InteractiveServer
 
 @inject NavigationManager Navigation
-@inject MfaService MfaService
+@inject IMfaService MfaService
+@inject IAuthorizationCodeUseCase AuthService
 @inject IJSRuntime JSRuntime
 @inject LoadService LoadService
 
@@ -200,25 +202,25 @@
         ErrorMessage = string.Empty;
 
         var mfaRequest = new MfaRequest()
-            {
-                CorrelationId = QueryParams["corid"],
-                Code = code,
-                UserId = Convert.ToInt32(QueryParams["uid"])
-            };
+        {
+            CorrelationId = QueryParams["corid"],
+            Code = code,
+            UserId = Convert.ToInt32(QueryParams["uid"])
+        };
 
-        var result = await MfaService.VerifyMfaAsync(mfaRequest);
+        var result = await AuthService.VerifyCode(mfaRequest);
 
         if (result?.IsSuccess == true)
         {
             var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
 
-            var uri = $"{redirectUri}?code={result?.Value.AuthorizationCode}";
+            var uri = $"{redirectUri}?code={result?.AuthorizationCode}";
 
             Navigation.NavigateTo(uri, true);
             return;
         }
 
-        ErrorMessage = result?.Value.Error ?? "Unable to verify the code. Please try again.";
+        ErrorMessage = result?.Error ?? "Unable to verify the code. Please try again.";
         IsInvalid = true;
     }
 
@@ -251,16 +253,23 @@
     private async Task<bool> SendNewCodeToUser()
     {
         var mfaRequest = new MfaRequest()
-            {
-                CorrelationId = QueryParams["corid"],
-                UserId = Convert.ToInt32(QueryParams["uid"])
-            };
+        {
+            CorrelationId = QueryParams["corid"],
+            UserId = Convert.ToInt32(QueryParams["uid"])
+        };
 
-        var result = await MfaService.ResendMfaCodeAsync(mfaRequest);
+        if (string.IsNullOrEmpty(mfaRequest.CorrelationId))
+        {
+            ErrorMessage = "Correlation Id cannot be empty.";
+            IsInvalid = true;
+            return false;
+        }
+
+        var result = await MfaService.ResendMfaCode(mfaRequest);
 
         if (result?.IsSuccess != true)
         {
-            ErrorMessage = result?.Value.Error ?? "Unable to resend the code. Please try again.";
+            ErrorMessage = result?.Error ?? "Unable to resend the code. Please try again.";
             IsInvalid = true;
             return false;
         }

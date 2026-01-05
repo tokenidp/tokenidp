@@ -55,4 +55,94 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
     {
 
     }
+
+    public Client(int tenantId,
+        string clientId,
+        string clientName,
+        string? description,
+        ClientTypes clientType,
+        AppTypes appType,
+        TokenTypes tokenType,
+        string redirectUri,
+        string? logoutRedirectUri,
+        bool isActive,
+        int? clientSecretExpiry,
+        bool twoFactorEnabled,
+        int twoFactorCodeExpiry,
+        int accessTokenLifetime,
+        int authorizationCodeLifetime,
+        int refreshTokenExpiration,
+        int? permitLimit,
+        TimeSpan? timeWindow,
+        int? queueLimit,
+        bool? enableITracking)
+    {
+        TenantId = tenantId;
+        ClientId = clientId;
+        ClientName = clientName;
+        Description = description;
+        ClientType = clientType;
+        AppType = appType;
+        TokenType = tokenType;
+        RedirectUri = redirectUri;
+        LogoutRedirectUri = logoutRedirectUri;
+        IsActive = isActive;
+        ClientSecretExpiry = clientSecretExpiry;
+        TwoFactorEnabled = twoFactorEnabled;
+        TwoFactorCodeExpiry = twoFactorCodeExpiry;
+        AccessTokenLifetime = accessTokenLifetime;
+        AuthorizationCodeLifetime = authorizationCodeLifetime;
+        RefreshTokenExpiration = refreshTokenExpiration;
+        PermitLimit = permitLimit;
+        TimeWindow = timeWindow;
+        QueueLimit = queueLimit;
+        EnableITracking = enableITracking;
+
+        ClientScopes = new List<ClientScope>();
+        ClientGrantTypes = new List<ClientGrantType>();
+        ClientSecrets = new List<ClientSecret>();
+        ClientAudiences = new List<ClientAudience>();
+    }
+
+    public void UpdateClient(
+        string clientId,
+        string clientName,
+        string? description,
+        ClientTypes clientType,
+        AppTypes appType,
+        TokenTypes tokenType,
+        string redirectUri,
+        string? logoutRedirectUri,
+        bool isActive,
+        int? clientSecretExpiry,
+        bool twoFactorEnabled,
+        int twoFactorCodeExpiry,
+        int accessTokenLifetime,
+        int authorizationCodeLifetime,
+        int refreshTokenExpiration,
+        int? permitLimit,
+        TimeSpan? timeWindow,
+        int? queueLimit,
+        bool? enableITracking)
+    {
+        ClientId = clientId;
+        ClientName = clientName;
+        Description = description;
+        ClientType = clientType;
+        AppType = appType;
+        TokenType = tokenType;
+        RedirectUri = redirectUri;
+        LogoutRedirectUri = logoutRedirectUri;
+        IsActive = isActive;
+        ClientSecretExpiry = clientSecretExpiry;
+        TwoFactorEnabled = twoFactorEnabled;
+        TwoFactorCodeExpiry = twoFactorCodeExpiry;
+        AccessTokenLifetime = accessTokenLifetime;
+        AuthorizationCodeLifetime = authorizationCodeLifetime;
+        RefreshTokenExpiration = refreshTokenExpiration;
+        PermitLimit = permitLimit;
+        TimeWindow = timeWindow;
+        QueueLimit = queueLimit;
+        EnableITracking = enableITracking;
+    }
 }

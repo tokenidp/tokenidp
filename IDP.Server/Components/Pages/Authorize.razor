@@ -1,9 +1,10 @@
-﻿@using IDP.Core.Model
+﻿@using System.Collections.Concurrent
 @using System.ComponentModel.DataAnnotations
+@using IDP.Core
+@using IDP.Core.Model
 @using IDP.Core.OAuth
-@using System.Collections.Concurrent
+@using IDP.Core.OAuth.Interfaces
 @using Microsoft.Extensions.Logging
-
 
 @page "/authorize"
 @rendermode InteractiveServer
@@ -12,7 +13,7 @@
 
 @inject LoadService LoadService
 @inject NavigationManager Navigation
-@inject IAuthorizationCodeUseCase AuthService
+@inject IAuthorizationCodeUseCase AuthUseCase
 @inject IJSRuntime JSRuntime
 @inject ILogger<Authorize> logger
 
@@ -108,7 +109,7 @@ else
                 return;
             }
 
-            var client = await AuthService.ValidateClient(clientId);
+            var client = await AuthUseCase.ValidateClient(clientId);
 
             if (!client.IsValidClient)
             {
@@ -203,7 +204,7 @@ else
         {
             LoadService.ShowLoader();
 
-            var authCodeResponse = await AuthService.Authenticate(request);
+            var authCodeResponse = await AuthUseCase.Authenticate(request);
 
             await Task.Delay(2000);
 

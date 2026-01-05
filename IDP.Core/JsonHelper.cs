@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace IDP.Core;
 
-public class JsonHelper
+internal class JsonHelper
 {
     private readonly JsonSerializerOptions _defaultOptions = new()
     {
@@ -12,19 +12,19 @@ public class JsonHelper
         Converters = { new PrivateSetterConverterFactory() }
     };
 
-    public T DeserializeObject<T>(string value, JsonSerializerOptions options = null)
+    internal T DeserializeObject<T>(string value, JsonSerializerOptions options = null)
     {
         options ??= _defaultOptions;
         return JsonSerializer.Deserialize<T>(value, options);
     }
 
-    public string SerializeObject(object value, JsonSerializerOptions options = null)
+    internal string SerializeObject(object value, JsonSerializerOptions options = null)
     {
         options ??= _defaultOptions;
         return JsonSerializer.Serialize(value, options);
     }
 
-    public string SerializeFormattedObject(object value)
+    internal string SerializeFormattedObject(object value)
     {
         var formattedOptions = new JsonSerializerOptions(_defaultOptions)
         {
@@ -33,7 +33,7 @@ public class JsonHelper
         return JsonSerializer.Serialize(value, formattedOptions);
     }
 
-    public Dictionary<string, T> DeserializeDynamicObject<T>(string value, JsonSerializerOptions options = null)
+    internal Dictionary<string, T> DeserializeDynamicObject<T>(string value, JsonSerializerOptions options = null)
     {
         options ??= _defaultOptions;
         var keyValues = new Dictionary<string, T>();
@@ -49,7 +49,7 @@ public class JsonHelper
     }
 }
 
-public class PrivateSetterConverterFactory : JsonConverterFactory
+internal class PrivateSetterConverterFactory : JsonConverterFactory
 {
     public override bool CanConvert(Type typeToConvert)
     {
@@ -64,7 +64,7 @@ public class PrivateSetterConverterFactory : JsonConverterFactory
     }
 }
 
-public class PrivateSetterConverter<T> : JsonConverter<T>
+internal class PrivateSetterConverter<T> : JsonConverter<T>
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {

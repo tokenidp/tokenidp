@@ -1,37 +1,31 @@
 ﻿using IDP.Core.Model;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace IDP.Core;
 
 internal sealed class UserService
 {
+    private readonly UserManager<User> _userManager;
+    private readonly IAppLogger<UserService> _logger;
+
     private HashSet<string> _supportedScopes;
 
-    public UserService()
+    public UserService(UserManager<User> userManager, IAppLogger<UserService> logger)
     {
-        _supportedScopes = new HashSet<string>( DefaultScopes.DefaultSupportedScopes,
+        _supportedScopes = new HashSet<string>(DefaultScopes.DefaultSupportedScopes,
             StringComparer.Ordinal);
+
+        _userManager = userManager;
+        _logger = logger;
     }
 
-    public async Task HandleAsync(HttpContext httpContext, 
-        CancellationToken cancellationToken = default)
+    internal async Task<IResult> HandleAsync(HttpContext httpContext, CancellationToken cancellationToken = default)
     {
-        if (httpContext.User?.Identity?.IsAuthenticated != true)
-        {
-            await WriteErrorAsync(
-                httpContext,
-                StatusCodes.Status401Unauthorized,
-                "invalid_token",
-                "Missing or invalid access token.",
-                cancellationToken);
-            return;
-        }
-
         var principal = httpContext.User;
 
         var scopes = ExtractScopes(principal);
         var scopeValidation = ValidateScopes(scopes);
+
         if (!scopeValidation.IsValid)
         {
             await WriteErrorAsync(
@@ -41,10 +35,12 @@ internal sealed class UserService
                 scopeValidation.Description,
                 cancellationToken,
                 scopeValidation.Scope);
-            return;
+
+            return Results.BadRequest(scopeValidation.Description);
         }
 
         var subject = GetRequiredClaim(principal, "sub", ClaimTypes.NameIdentifier);
+
         if (string.IsNullOrWhiteSpace(subject))
         {
             await WriteErrorAsync(
@@ -53,15 +49,13 @@ internal sealed class UserService
                 "invalid_token",
                 "Missing subject claim.",
                 cancellationToken);
-            return;
+
+            return Results.BadRequest("Missing subject claim.");
         }
 
-        var payload = BuildUserInfoResponse(principal, scopes, subject);
+        var payload = await BuildUserInfoResponse(scopes, subject);
 
-        httpContext.Response.StatusCode = StatusCodes.Status200OK;
-        httpContext.Response.Headers.CacheControl = "no-store";
-        httpContext.Response.Headers.Pragma = "no-cache";
-        await httpContext.Response.WriteAsJsonAsync(payload, cancellationToken: cancellationToken);
+        return Results.Ok(payload);
     }
 
     private HashSet<string> ExtractScopes(ClaimsPrincipal principal)
@@ -81,7 +75,7 @@ internal sealed class UserService
         return scopes;
     }
 
-    private static void AddScopes(HashSet<string> scopes, string value)
+    private void AddScopes(HashSet<string> scopes, string value)
     {
         foreach (var scope in value.Split([' ', ','], StringSplitOptions.RemoveEmptyEntries))
         {
@@ -119,7 +113,7 @@ internal sealed class UserService
         return ScopeValidationResult.Valid();
     }
 
-    private static string? GetRequiredClaim(
+    private string? GetRequiredClaim(
         ClaimsPrincipal principal,
         string claimType,
         string fallbackClaimType)
@@ -128,144 +122,51 @@ internal sealed class UserService
             ?? principal.FindFirst(fallbackClaimType)?.Value;
     }
 
-    private static Dictionary<string, object?> BuildUserInfoResponse(
-        ClaimsPrincipal principal,
-        HashSet<string> scopes,
-        string subject)
+    private async Task<Dictionary<string, object?>> BuildUserInfoResponse(HashSet<string> scopes, string subject)
     {
         var payload = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             ["sub"] = subject
         };
 
+        var user = await _userManager.FindByIdAsync(subject);
+
+        if (user == null)
+        {
+            _logger.LogWarning("User not found with username or email: {UserId}", subject);
+
+            throw new NotFoundException(string.Format("User not found with username or email: {UserId}", subject));
+        }
+
         if (scopes.Contains("profile"))
         {
-            AddStringClaim(payload, principal, "name", "name");
-            AddStringClaim(payload, principal, "given_name", "given_name");
-            AddStringClaim(payload, principal, "family_name", "family_name");
-            AddStringClaim(payload, principal, "middle_name", "middle_name");
-            AddStringClaim(payload, principal, "nickname", "nickname");
-            AddStringClaim(payload, principal, "preferred_username", "preferred_username");
-            AddStringClaim(payload, principal, "profile", "profile");
-            AddStringClaim(payload, principal, "picture", "picture");
-            AddStringClaim(payload, principal, "website", "website");
-            AddDateClaim(payload, principal, "updated_at", "updated_at");
+            payload["name"] = user.FullName;
+            payload["given_name"] = user.FirstName;
+            payload["family_name"] = user.LastName;
+            payload["middle_name"] = user.NormalizedUserName;
+            payload["preferred_username"] = user.UserName;
+            payload["profile"] = string.Empty;
+            payload["picture"] = string.Empty;
+            payload["website"] = string.Empty;
+            payload["updated_at"] = user.UpdatedOn;
         }
 
         if (scopes.Contains("email"))
         {
-            AddStringClaim(payload, principal, "email", "email");
-            AddBooleanClaim(payload, principal, "email_verified", "email_verified");
+            payload["email"] = user.Email;
+            payload["email_verified"] = user.EmailConfirmed;
         }
 
         if (scopes.Contains("phone"))
         {
-            AddStringClaim(payload, principal, "phone_number", "phone_number");
-            AddBooleanClaim(payload, principal, "phone_number_verified", "phone_number_verified");
+            payload["phone_number"] = user.PhoneNumber;
+            payload["phone_number_verified"] = user.PhoneNumberConfirmed;
         }
 
         return payload;
     }
 
-    private static void AddStringClaim(
-        IDictionary<string, object?> payload,
-        ClaimsPrincipal principal,
-        string claimType,
-        string fieldName)
-    {
-        var value = principal.FindFirst(claimType)?.Value;
-        if (!string.IsNullOrWhiteSpace(value))
-        {
-            payload[fieldName] = value;
-        }
-    }
-
-    private static void AddBooleanClaim(
-        IDictionary<string, object?> payload,
-        ClaimsPrincipal principal,
-        string claimType,
-        string fieldName)
-    {
-        var value = principal.FindFirst(claimType)?.Value;
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return;
-        }
-
-        if (bool.TryParse(value, out var parsed))
-        {
-            payload[fieldName] = parsed;
-        }
-        else
-        {
-            payload[fieldName] = value;
-        }
-    }
-
-    private static void AddDateClaim(
-        IDictionary<string, object?> payload,
-        ClaimsPrincipal principal,
-        string claimType,
-        string fieldName)
-    {
-        var value = principal.FindFirst(claimType)?.Value;
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return;
-        }
-
-        if (long.TryParse(value, out var epoch))
-        {
-            payload[fieldName] = epoch;
-            return;
-        }
-
-        if (DateTimeOffset.TryParse(value, out var date))
-        {
-            payload[fieldName] = date.ToUnixTimeSeconds();
-            return;
-        }
-
-        payload[fieldName] = value;
-    }
-
-    private static void AddAddressClaim(
-        IDictionary<string, object?> payload,
-        ClaimsPrincipal principal,
-        string claimType,
-        string fieldName)
-    {
-        var value = principal.FindFirst(claimType)?.Value;
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return;
-        }
-
-        if (TryParseJson(value, out var element))
-        {
-            payload[fieldName] = element;
-            return;
-        }
-
-        payload[fieldName] = value;
-    }
-
-    private static bool TryParseJson(string value, out JsonElement element)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(value);
-            element = document.RootElement.Clone();
-            return true;
-        }
-        catch (JsonException)
-        {
-            element = default;
-            return false;
-        }
-    }
-
-    private static async Task WriteErrorAsync(
+    private async Task WriteErrorAsync(
         HttpContext httpContext,
         int statusCode,
         string error,
@@ -290,7 +191,7 @@ internal sealed class UserService
             cancellationToken: cancellationToken);
     }
 
-    private static string BuildAuthenticateHeader(
+    private string BuildAuthenticateHeader(
         string error,
         string description,
         string? scope)

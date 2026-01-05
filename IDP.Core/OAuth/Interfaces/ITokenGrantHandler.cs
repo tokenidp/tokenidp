@@ -1,7 +1,6 @@
-﻿
-using IDP.Core.Model;
+﻿using IDP.Core.Model;
 
-namespace IDP.Core.OAuth.TokenHandlers;
+namespace IDP.Core.OAuth.Interfaces;
 
 internal interface ITokenGrantHandler
 {

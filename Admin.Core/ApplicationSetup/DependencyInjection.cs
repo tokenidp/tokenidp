@@ -1,12 +1,11 @@
 ﻿using Admin.Core.Clients;
 using Admin.Core.Configurations;
 using Admin.Core.Lookups;
-using Admin.Core.Options;
 using Admin.Core.Roles;
 using Admin.Core.Tenants;
 using Admin.Core.Users;
+using IDP.Common.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -43,7 +42,7 @@ internal static class DependencyInjection
         services.AddCors();
 
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
-        services.AddSingleton<ICache, MemoryCache>();      
+        services.AddSingleton<ICache, MemoryCache>();
         services.AddSingleton<JsonHelper>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
     }

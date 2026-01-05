@@ -15,7 +15,7 @@ internal sealed class RevokeTokenService
         _logger = logger;
     }
 
-    public async Task RevokeToken(RevokeTokenRequest request)
+    internal async Task RevokeToken(RevokeTokenRequest request)
     {
         var existingRefreshToken = await _dbContext.RefreshTokens.Where(t => t.RefreshToken == request.RefreshToken)
             .FirstOrDefaultAsync();

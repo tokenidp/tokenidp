@@ -1,5 +1,4 @@
-﻿using IDP.Common.Interfaces;
-using IDP.Domain.AggregateRoots;
+﻿using IDP.Domain.AggregateRoots;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Admin.Core.Infrastructure;

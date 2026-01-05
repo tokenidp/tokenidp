@@ -1,4 +1,4 @@
-﻿namespace Admin.Core.Users;
+﻿namespace IDP.Core.Model;
 
 internal class UserInfo
 {

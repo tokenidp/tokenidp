@@ -17,7 +17,7 @@ internal sealed class ClientService
         _cache = cache;
     }
 
-    public async Task<ClientShortDto> GetClient(string clientId)
+    internal async Task<ClientShortDto> GetClient(string clientId)
     {
         _logger.LogDebug("GetClient client: {ClientId}", clientId);
 
@@ -40,7 +40,7 @@ internal sealed class ClientService
         return clientDto ?? throw new NotFoundException("Client not found.");
     }
 
-    public async Task<ClientValidationResult> ValidateClient(string clientId)
+    internal async Task<ClientValidationResult> ValidateClient(string clientId)
     {
         _logger.LogDebug("IsValidClient: Checking is valid client for client: {ClientId}", clientId);
 

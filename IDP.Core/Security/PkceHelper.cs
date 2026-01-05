@@ -24,7 +24,7 @@ internal static class PkceHelper
         return (codeVerifier, codeChallenge);
     }
 
-    public static string CalculateCodeChallenge(string codeVerifier)
+    internal static string CalculateCodeChallenge(string codeVerifier)
     {
         using (var sha256 = SHA256.Create())
         {

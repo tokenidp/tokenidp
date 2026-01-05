@@ -7,7 +7,8 @@ internal class UserInfoEndpoint : IEndpointDefinition
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
         var authGroup = app.MapGroup("/userinfo")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapGet("/{id}", async (int id,
             IAppLogger<UserEndpoint> _logger,

@@ -1,10 +1,10 @@
 ﻿using IDP.Common.Notifications;
 using IDP.Core.Model;
-using IDP.Core.OAuth;
+using IDP.Core.OAuth.Interfaces;
 
-namespace IDP.Core.TokenHandlers;
+namespace IDP.Core.OAuth;
 
-internal sealed class MfaService
+internal sealed class MfaService : IMfaService
 {
     private readonly IEmailSetting _emailSetting;
     private readonly IAppLogger<MfaService> _logger;
@@ -52,7 +52,7 @@ internal sealed class MfaService
         return AuthResponse.Success(userId, correlationId, true);
     }
 
-    public async Task<(AuthRequest, AuthResponse)> VerifyMfaRequest(MfaRequest request)
+    public async Task<(AuthRequest?, AuthResponse)> VerifyMfaRequest(MfaRequest request)
     {
         var preAuthorization = await _preAuthorizationRepo
             .GetPreAuthorization(request.CorrelationId, request.UserId);
@@ -64,25 +64,19 @@ internal sealed class MfaService
             return (default, AuthResponse.Failure(message));
         }
 
+        var authResponse = AuthResponse.Success(preAuthorization.UserId, preAuthorization.CorrelationId, true);
+
         var authRequest = AuthRequest.Create(preAuthorization.ClientId,
             preAuthorization.RedirectUri,
             preAuthorization.CodeChallenge,
             preAuthorization.CodeChallengeMethod,
             preAuthorization.Scopes);
 
-        return (authRequest, default);
+        return (authRequest, authResponse);
     }
 
-    public async Task<IResult> ResendMfaCode(MfaRequest request)
+    public async Task<AuthResponse> ResendMfaCode(MfaRequest request)
     {
-        if (string.IsNullOrEmpty(request.CorrelationId))
-        {
-            var errorResult = ApiResult<ApiError>.Failure(
-                            ApiError.Failure("Correlation Id cannot be empty."));
-
-            return Results.Json(errorResult, statusCode: StatusCodes.Status400BadRequest);
-        }
-
         _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
 
         var mfaCode = MfaCodeGenerator.GenerateMfaCode();
@@ -98,8 +92,7 @@ internal sealed class MfaService
 
         await SendNotification(request.UserId, mfaCode);
 
-        return Results.Ok(ApiResult<AuthResponse>
-            .Success(AuthResponse.Success(request.UserId, request.CorrelationId, true)));
+        return AuthResponse.Success(request.UserId, request.CorrelationId, true);
     }
 
     private async Task SendNotification(int userId, string mfaCode)

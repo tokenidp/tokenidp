@@ -15,7 +15,7 @@ internal sealed class RoleService
         _cache = cache;
     }
 
-    public async Task<IEnumerable<string>> GetUserRoles(int userId)
+    internal async Task<IEnumerable<string>> GetUserRoles(int userId)
     {
         var userRoles = await (from ur in _dbContext.UserRoles
                                join r in _dbContext.Roles on ur.RoleId equals r.Id
