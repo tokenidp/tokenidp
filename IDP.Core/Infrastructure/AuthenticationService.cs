@@ -1,6 +1,5 @@
 using IDP.Common;
 using IDP.Core.Model;
-using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -10,13 +9,13 @@ public class AuthenticationService : IDisposable
 {
 
     protected readonly HttpClient _httpClient;
-    protected readonly ILogger<AuthenticationService> _logger;
+    protected readonly IAppLogger<AuthenticationService> _logger;
 
     private bool _disposed;
 
     public AuthenticationService(
         IHttpClientFactory httpClientFactory,
-        ILogger<AuthenticationService> logger)
+        IAppLogger<AuthenticationService> logger)
     {
         _httpClient = httpClientFactory.CreateClient("IDPClient");
         _logger = logger;
@@ -49,7 +48,7 @@ public class AuthenticationService : IDisposable
             var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>(
                 cancellationToken: cancellationToken);
 
-            _logger.LogInformation("Authentication successful for {Username}", request.UserName);
+            _logger.LogInfo("Authentication successful for {Username}", request.UserName);
 
             return result ?? AuthResponseDto.Failure("Null response received");
         }
@@ -104,7 +103,7 @@ public class AuthenticationService : IDisposable
         if (disposing)
         {
             _httpClient?.Dispose();
-            _logger.LogInformation("AuthenticationService disposed");
+            _logger.LogInfo("AuthenticationService disposed");
         }
 
         _disposed = true;
