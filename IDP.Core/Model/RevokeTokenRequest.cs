@@ -2,7 +2,8 @@
 
 public class RevokeTokenRequest
 {
-    public string RefreshToken { get; set; }
+    public int UserId { get; set; }
+    public string Token { get; set; }
     public string ReasonRevoked { get; set; }
     public string IpAddress { get; set; }
 }

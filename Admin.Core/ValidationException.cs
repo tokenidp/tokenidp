@@ -1,6 +1,6 @@
 ﻿using FluentValidation.Results;
 
-namespace IDP.Common.Exceptions;
+namespace IDP.Foundation.Exceptions;
 
 public class ValidationException : Exception
 {

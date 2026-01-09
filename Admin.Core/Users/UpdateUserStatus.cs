@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using static IDP.Domain.User;
 
 namespace Admin.Core.Users;
 

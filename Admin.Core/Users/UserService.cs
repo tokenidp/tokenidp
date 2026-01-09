@@ -1,5 +1,5 @@
 ﻿using Admin.Core.Roles;
-using IDP.Common.Exceptions;
+using IDP.Foundation.Exceptions;
 
 namespace Admin.Core.Users;
 
@@ -7,12 +7,12 @@ internal class UserService
 {
     private readonly UserManager<User> _userManager;
     private readonly ICurrentUserService _currentUserService;
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<UserService> _logger;
 
     public UserService(ICurrentUserService currentUserService,
         UserManager<User> userManager,
-        ApplicationDbContext applicationDbContext,
+        IApplicationDbContext applicationDbContext,
         IAppLogger<UserService> logger)
     {
         _currentUserService = currentUserService;
@@ -127,14 +127,14 @@ internal class UserService
         return users;
     }
 
-    public async Task<UserPermission> GetUserPermissions(int userId)
+    public async Task<UserPermission> GetUserPermissions()
     {
-        _logger.LogDebug("Fetching user info for: {UserId}", userId);
+        _logger.LogDebug("Fetching user info for: {UserId}", _currentUserService.UserId);
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var user = await _userManager.FindByIdAsync(_currentUserService.UserId.ToString());
         if (user == null)
         {
-            _logger.LogWarning("User not found: {UserId}", userId);
+            _logger.LogWarning("User not found: {UserId}", _currentUserService.UserId);
             throw new NotFoundException("User not found.");
         }
 
@@ -142,13 +142,13 @@ internal class UserService
             user.UserName ?? string.Empty, user.TenantId);
 
         var claims = await _dbContext.UserRolePermissions
-            .Where(c => c.UserId == userId)
+            .Where(c => c.UserId == _currentUserService.UserId)
             .Select(c => new PermissionDto(
                 c.Id,
                 c.ParentId,
                 c.UserId,
                 c.Sequence,
-                c.PermissionType,
+                c.Permissionkey,
                 c.PermissionName,
                 c.PermissionValue,
                 c.Icon,
@@ -159,19 +159,19 @@ internal class UserService
 
         if (!claims.IsSafe())
         {
-            _logger.LogWarning("No claims found for user {UserId}", userId);
+            _logger.LogWarning("No claims found for user {UserId}", _currentUserService.UserId);
             throw new NotFoundException("Claims not found.");
         }
 
         _logger.LogDebug("Found {ClaimCount} claims for user {UserId}",
-            claims.Count, userId);
+            claims.Count, _currentUserService.UserId);
 
         var tenant = await _dbContext.Tenants
             .FirstOrDefaultAsync(t => t.Id == user.TenantId);
 
         if (tenant == null)
         {
-            _logger.LogWarning("Tenant not found for user {UserId}", userId);
+            _logger.LogWarning("Tenant not found for user {UserId}", _currentUserService.UserId);
         }
 
         var userInfo = UserPermission.Create(
@@ -181,7 +181,7 @@ internal class UserService
             tenant?.HomePageUrl ?? string.Empty,
             claims);
 
-        _logger.LogInfo("Successfully compiled user info for {UserId}", userId);
+        _logger.LogInfo("Successfully compiled user info for {UserId}", _currentUserService.UserId);
 
         return userInfo;
     }

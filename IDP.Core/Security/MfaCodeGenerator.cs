@@ -18,7 +18,18 @@ internal static class MfaCodeGenerator
 
     private static bool IsWeakCode(string code)
     {
-        if (code is "000000" or "123456" or "654321" or "111111" or "222222" or "333333" or "444444" or "555555" or "666666" or "777777" or "888888" or "999999")
+        if (code is "000000"
+            or "123456"
+            or "654321"
+            or "111111"
+            or "222222"
+            or "333333"
+            or "444444"
+            or "555555"
+            or "666666"
+            or "777777"
+            or "888888"
+            or "999999")
         {
             return true;
         }

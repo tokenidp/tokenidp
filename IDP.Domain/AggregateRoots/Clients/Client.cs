@@ -1,29 +1,9 @@
-﻿namespace IDP.Domain.AggregateRoots.Clients;
+﻿using IDP.Domain.Specifications;
 
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
+namespace IDP.Domain.AggregateRoots.Clients;
+
 public class Client : BaseEntity, IAggregateRoot, ITenant
 {
-    public enum TokenTypes
-    {
-        JWT,
-        ReferenceToken
-    }
-
-    public enum ClientTypes
-    {
-        Public,
-        Confidential
-    }
-
-    public enum AppTypes
-    {
-        SPA,
-        Mobile,
-        Desktop,
-        WebApp,
-        Backend
-    }
-
     public string ClientId { get; private set; }
     public string ClientName { get; private set; }
     public string? Description { get; private set; }
@@ -35,8 +15,6 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
     public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
     public int? ClientSecretExpiry { get; private set; }
-    public bool TwoFactorEnabled { get; private set; }
-    public int TwoFactorCodeExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
@@ -67,8 +45,6 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         string? logoutRedirectUri,
         bool isActive,
         int? clientSecretExpiry,
-        bool twoFactorEnabled,
-        int twoFactorCodeExpiry,
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
@@ -88,8 +64,6 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         LogoutRedirectUri = logoutRedirectUri;
         IsActive = isActive;
         ClientSecretExpiry = clientSecretExpiry;
-        TwoFactorEnabled = twoFactorEnabled;
-        TwoFactorCodeExpiry = twoFactorCodeExpiry;
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;
@@ -115,8 +89,6 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         string? logoutRedirectUri,
         bool isActive,
         int? clientSecretExpiry,
-        bool twoFactorEnabled,
-        int twoFactorCodeExpiry,
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
@@ -135,8 +107,6 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         LogoutRedirectUri = logoutRedirectUri;
         IsActive = isActive;
         ClientSecretExpiry = clientSecretExpiry;
-        TwoFactorEnabled = twoFactorEnabled;
-        TwoFactorCodeExpiry = twoFactorCodeExpiry;
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;

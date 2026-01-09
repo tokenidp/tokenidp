@@ -4,8 +4,12 @@ internal static class IdentityResultExtensions
 {
     public static Result ToApplicationResult(this IdentityResult result, int id)
     {
-        return result.Succeeded
-            ? Result.Success(id)
-            : Result.Failure(result.Errors.ToDictionary(e => e.Code, e => e.Description));
+        if (result.Succeeded)
+            return Result.Success(id);
+
+        var errors = result.Errors
+            .Select(e => new DomainError(e.Code, e.Description));
+
+        return Result.Failure(errors);
     }
 }

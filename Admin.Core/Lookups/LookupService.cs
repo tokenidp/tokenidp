@@ -2,11 +2,11 @@
 
 internal class LookupService
 {
-    private readonly ApplicationDbContext _applicationDbContext;
+    private readonly IApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
     private readonly IAppLogger<LookupService> _logger;
 
-    public LookupService(ApplicationDbContext applicationDbContext, ICache cache, IAppLogger<LookupService> logger)
+    public LookupService(IApplicationDbContext applicationDbContext, ICache cache, IAppLogger<LookupService> logger)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;

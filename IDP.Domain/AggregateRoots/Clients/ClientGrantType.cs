@@ -1,17 +1,9 @@
-﻿namespace IDP.Domain.AggregateRoots.Clients;
+﻿using IDP.Domain.Specifications;
 
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
+namespace IDP.Domain.AggregateRoots.Clients;
+
 public class ClientGrantType : BaseEntity
 {
-    public enum GrantTypes
-    {
-        authorization_code,
-        refresh_token,
-        client_credentials,
-        device_code,
-        ciba
-    }
-
     public int ClientId { get; private set; }
     public GrantTypes AllowedGrantType { get; private set; }
 

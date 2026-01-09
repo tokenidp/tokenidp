@@ -19,8 +19,6 @@ internal class ClientDto
         LogoutRedirectUri = client.LogoutRedirectUri,
         IsActive = client.IsActive,
         ClientSecretExpiry = client.ClientSecretExpiry,
-        TwoFactorEnabled = client.TwoFactorEnabled,
-        TwoFactorCodeExpiry = client.TwoFactorCodeExpiry,
         AccessTokenLifetime = client.AccessTokenLifetime,
         AuthorizationCodeLifetime = client.AuthorizationCodeLifetime,
         RefreshTokenExpiration = client.RefreshTokenExpiration,
@@ -43,8 +41,6 @@ internal class ClientDto
     public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
     public int? ClientSecretExpiry { get; private set; }
-    public bool TwoFactorEnabled { get; private set; }
-    public int TwoFactorCodeExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }

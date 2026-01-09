@@ -1,6 +1,4 @@
-﻿using IDP.Core.Model;
-using IDP.Core.OAuth;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace IDP.Core.Endpoints;
 
@@ -20,7 +18,7 @@ internal class RevokeEndpoint : IEndpointDefinition
             request.IpAddress = ipAddress;
 
             _logger.LogInfo("RevokeToken called from IP: {IP}, Reason: {Token}",
-                ipAddress, request.RefreshToken);
+                ipAddress, request.Token);
 
             await revokeTokenService.RevokeToken(request);
 

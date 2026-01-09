@@ -1,14 +1,9 @@
-﻿namespace IDP.Domain;
+﻿using IDP.Domain.Specifications;
+
+namespace IDP.Domain.AggregateRoots.Users;
 
 public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot
 {
-    public enum UserStatus
-    {
-        Active,
-        Inactive,
-        Terminate
-    }
-
     public int TenantId { get; private set; }
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; }
@@ -20,9 +15,6 @@ public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateR
     public virtual ICollection<UserAddress> UserAddresses { get; private set; }
     public virtual ICollection<UserContact> UserContacts { get; private set; }
     public virtual ICollection<UserRole> UserRoles { get; private set; }
-    public virtual ICollection<UserRefreshToken> RefreshTokens { get; private set; }
-    public virtual ICollection<UserAuthorizationCode> UserAuthorizationCodes { get; private set; }
-    public virtual ICollection<UserPreAuthorization> UserPreAuthorizations { get; private set; }
 
     public virtual Tenant Tenant { get; private set; }
 

@@ -2,12 +2,12 @@
 
 internal class RoleService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext _dbContext;
     private readonly ICache _cache;
     private readonly IAppLogger<RoleService> _logger;
 
     public RoleService(IAppLogger<RoleService> logger,
-        ApplicationDbContext dbContext,
+        IApplicationDbContext dbContext,
         ICache cache)
     {
         _logger = logger;
@@ -139,7 +139,7 @@ internal class RoleService
         {
             var claimValue = await _dbContext.UserRolePermissions
               .Where(c => c.UserId == userId
-                           && c.PermissionType == claim
+                           && c.Permissionkey == claim
                            && c.PermissionValue == "true")
               .Select(c => c.PermissionValue)
               .FirstOrDefaultAsync();

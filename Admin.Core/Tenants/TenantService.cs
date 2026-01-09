@@ -2,11 +2,11 @@
 
 internal class TenantService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IApplicationDbContext _dbContext;
     private readonly ICache _cache;
     private readonly IAppLogger<TenantService> _logger;
 
-    public TenantService(ApplicationDbContext dbContext, ICache cache, IAppLogger<TenantService> logger)
+    public TenantService(IApplicationDbContext dbContext, ICache cache, IAppLogger<TenantService> logger)
     {
         _dbContext = dbContext;
         _cache = cache;

@@ -86,15 +86,11 @@ internal class UserEndpoint : IEndpointDefinition
         .WithName("UpdateUserStatus")
         .WithTags("UpdateUserStatus");
 
-        authGroup.MapGet("/userclaims/{userId}", async (int userId,
+        authGroup.MapGet("/userclaims", async (
             IAppLogger<UserEndpoint> _logger,
             UserService userService) =>
         {
-            _logger.LogInfo("GetUserInfo called for userId: {UserId}", userId);
-
-            var response = await userService.GetUserPermissions(userId);
-
-            _logger.LogInfo("GetUserInfo completed for userId: {UserId}", userId);
+            var response = await userService.GetUserPermissions();
 
             return Results.Ok(response);
         })

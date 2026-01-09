@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
 namespace IDP.Core.Endpoints;
@@ -15,9 +14,9 @@ internal class UserInfoEndpoint : IEndpointDefinition
         });
 
         authGroup.MapGet("", static async (HttpContext httpContext,
-            UserService userInfoService) =>
+            UserInfoService userInfoService) =>
         {
-            return await userInfoService.HandleAsync(httpContext, httpContext.RequestAborted);
+            return await userInfoService.HandleAsync(httpContext.RequestAborted);
         })
         .WithName("UserInfo")
         .WithTags("UserInfo");

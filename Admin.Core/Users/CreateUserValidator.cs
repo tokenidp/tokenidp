@@ -4,9 +4,9 @@ namespace Admin.Core.Users;
 
 internal class CreateUserValidator : AbstractValidator<CreateUpdateUser>
 {
-    private readonly ApplicationDbContext _context;
+    private readonly IApplicationDbContext _context;
 
-    public CreateUserValidator(ApplicationDbContext context)
+    public CreateUserValidator(IApplicationDbContext context)
     {
         _context = context;
 

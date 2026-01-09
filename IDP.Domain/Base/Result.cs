@@ -2,37 +2,35 @@
 
 public class Result
 {
-    public int Id { get; private set; }
+    public int Id { get; }
+    public IReadOnlyCollection<DomainError> Errors { get; }
 
-    public Dictionary<string, string> Errors { get; private set; }
-
-    public Result(int id)
+    private Result(int id)
     {
         Id = id;
+        Errors = Array.Empty<DomainError>();
     }
 
-    public Result(Dictionary<string, string> errors)
+    private Result(IEnumerable<DomainError> errors)
     {
-        Errors = errors;
+        Errors = errors.ToList();
     }
 
-    public static Result Success(int id)
-    {
-        return new Result(id);
-    }
+    public bool IsSuccess => !Errors.Any();
 
-    public static Result Failure(string code, string message)
-    {
-        var errors = new Dictionary<string, string>
-        {
-            { code, message }
-        };
+    public static Result Success(int id) => new(id);
 
-        return new Result(errors);
-    }
+    public static Result Failure(string code, string message) =>
+        new(new[] { new DomainError(code, message) });
 
-    public static Result Failure(Dictionary<string, string> errors)
-    {
-        return new Result(errors);
-    }
+    public static Result Failure(IEnumerable<DomainError> errors) =>
+        new(errors);
 }
+
+public sealed record DomainError(string Code, string Message)
+{
+    public static DomainError None => new(string.Empty, string.Empty);
+
+    public bool IsNone => string.IsNullOrWhiteSpace(Code);
+}
+

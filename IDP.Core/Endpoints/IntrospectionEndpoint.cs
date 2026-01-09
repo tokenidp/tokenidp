@@ -1,7 +1,4 @@
-﻿using IDP.Core.Model;
-using IDP.Core.OAuth;
-
-namespace IDP.Core.Endpoints;
+﻿namespace IDP.Core.Endpoints;
 
 internal class IntrospectionEndpoint : IEndpointDefinition
 {

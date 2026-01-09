@@ -1,4 +1,4 @@
-using IDP.Core.ApplicationSetup;
+using IDP.Server.ApplicationSetup;
 using IDP.Server.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,7 +32,7 @@ app.UseRouting();
 app.UseCors(policy => policy
     .AllowAnyMethod()
     .AllowAnyHeader()
-    .WithOrigins("https://localhost:7217") // replace with your actual client URL
+    .WithOrigins("http://localhost:3000") // replace with your actual client URL
     .AllowCredentials()
 );
 

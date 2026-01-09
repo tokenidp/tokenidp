@@ -1,4 +1,4 @@
-﻿using IDP.Common.Options;
+﻿using IDP.Foundation.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

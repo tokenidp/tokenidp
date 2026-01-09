@@ -1,15 +1,13 @@
-﻿
-
-namespace Admin.Core.Clients;
+﻿namespace Admin.Core.Clients;
 
 internal class ClientService
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly ICache _cache;
     private readonly IAppLogger<ClientService> _logger;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IApplicationDbContext _dbContext;
+    private readonly ICache _cache;
 
-    public ClientService(ApplicationDbContext dbContext,
+    public ClientService(IApplicationDbContext dbContext,
         IAppLogger<ClientService> logger,
         ICache cache,
         ICurrentUserService currentUserService)
@@ -110,8 +108,6 @@ internal class ClientService
             request.LogoutRedirectUri,
             request.IsActive,
             request.ClientSecretExpiry,
-            request.TwoFactorEnabled,
-            request.TwoFactorCodeExpiry,
             request.AccessTokenLifetime,
             request.AuthorizationCodeLifetime,
             request.RefreshTokenExpiration,
@@ -134,8 +130,6 @@ internal class ClientService
             request.LogoutRedirectUri,
             request.IsActive,
             request.ClientSecretExpiry,
-            request.TwoFactorEnabled,
-            request.TwoFactorCodeExpiry,
             request.AccessTokenLifetime,
             request.AuthorizationCodeLifetime,
             request.RefreshTokenExpiration,

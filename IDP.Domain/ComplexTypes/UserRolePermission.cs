@@ -7,7 +7,7 @@ public class UserRolePermission
     public int? ParentId { get; private set; }
     public int UserId { get; private set; }
     public int Sequence { get; private set; }
-    public string PermissionType { get; private set; }
+    public string Permissionkey { get; private set; }
     public string PermissionName { get; private set; }
     public string PermissionValue { get; private set; }
     public string Icon { get; private set; }

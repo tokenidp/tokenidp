@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IDP.Common\IDP.Common.csproj" />
-    <ProjectReference Include="..\IDP.Domain\IDP.Domain.csproj" />
+    <ProjectReference Include="..\IDP.Foundation\IDP.Foundation.csproj" />
   </ItemGroup>
 
 </Project>
