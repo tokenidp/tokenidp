@@ -1,6 +1,6 @@
-﻿namespace IDP.Core.TokenHandlers;
+﻿namespace IDP.Core.GrantHandlers;
 
-internal class PasswordGrantHandler : ITokenGrantHandler
+internal class DeviceCodeGrantHandler : ITokenGrantHandler
 {
     public Task<TokenResponse> HandleAsync(TokenRequest request)
     {

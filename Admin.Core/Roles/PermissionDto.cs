@@ -2,15 +2,16 @@
 
 internal class PermissionDto
 {
-    public int PermissionId { get; private set; }
+    public int Id { get; private set; }
     public int? ParentId { get; private set; }
     public int UserId { get; private set; }
     public int Sequence { get; private set; }
     public string PermissionType { get; private set; }
     public string PermissionName { get; private set; }
     public string PermissionValue { get; private set; }
-    public string Icon { get; private set; }
-    public string Url { get; private set; }
+    public string PermissionKey { get; private set; }
+    public string? Icon { get; private set; }
+    public string? Url { get; private set; }
     public string RoleName { get; private set; }
     public string ControlType { get; private set; }
 
@@ -21,18 +22,20 @@ internal class PermissionDto
         string permissionType,
         string permissionName,
         string permissionValue,
+        string permissionKey,
         string icon,
         string url,
         string roleName,
         string controlType)
     {
-        PermissionId = permissionId;
+        Id = permissionId;
         ParentId = parentId;
         UserId = userId;
         Sequence = sequence;
         PermissionType = permissionType;
         PermissionName = permissionName;
         PermissionValue = permissionValue;
+        PermissionKey = permissionKey;
         Icon = icon;
         Url = url;
         RoleName = roleName;

@@ -1,4 +1,6 @@
 ﻿using Admin.Core.Roles;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Admin.Core.Endpoints;
 
@@ -6,8 +8,11 @@ internal class RoleEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/Role")
-            .RequireAuthorization()
+        var authGroup = app.MapGroup("/admin/role")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
@@ -16,7 +21,7 @@ internal class RoleEndpoint : IEndpointDefinition
         {
             var response = await roleService.GerRoles(data);
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Roles")
         .WithTags("Roles");
@@ -27,17 +32,13 @@ internal class RoleEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
             var response = await roleService.GetRoleById(id);
 
-            if (response == null)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("RoleById")
         .WithTags("RoleById");
@@ -48,7 +49,9 @@ internal class RoleEndpoint : IEndpointDefinition
         {
             var response = await roleService.CreateRole(role);
 
-            return Results.Created($"role/{role.Name}", Result.Success(response.Id));
+            var location = response.IsSuccess ? $"role/{role.Name}" : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateRole")
         .WithTags("CreateRole");
@@ -59,12 +62,13 @@ internal class RoleEndpoint : IEndpointDefinition
         {
             if (id != role.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await roleService.UpdateRole(id, role);
+            var response = await roleService.UpdateRole(id, role);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateRole")
         .WithTags("UpdateRole");
@@ -75,14 +79,27 @@ internal class RoleEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            await roleService.DeleteRole(id);
+            var response = await roleService.DeleteRole(id);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("DeleteRole")
         .WithTags("DeleteRole");
+
+
+        authGroup.MapPut("/{id}/permissions", async (int id, RolePermissionsUpdateRequest request,
+            IAppLogger<RoleEndpoint> _logger,
+            RoleService roleService) =>
+        {
+            var response = await roleService.UpdateRolePermissions(id, request);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .WithName("UpdateRolePermissions")
+        .WithTags("RolePermissions");
     }
 }

@@ -18,7 +18,7 @@ internal class ClientService
         _currentUserService = currentUserService;
     }
 
-    public async Task<Result> CreateClient(CreateUpdateClient request)
+    public async Task<ApiResult<int>> CreateClient(CreateUpdateClient request)
     {
         _logger.LogDebug("Creating client for tenant {TenantId}", request.TenantId);
 
@@ -30,10 +30,10 @@ internal class ClientService
 
         _logger.LogInfo("Client created with Id {ClientId}", client.Id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<Result> UpdateClient(int id, CreateUpdateClient request)
+    public async Task<ApiResult<int>> UpdateClient(int id, CreateUpdateClient request)
     {
         _logger.LogDebug("Updating client {ClientId}", id);
 
@@ -42,7 +42,8 @@ internal class ClientService
         if (client == null)
         {
             _logger.LogWarning("Client not found for update: {ClientId}", id);
-            return Result.Failure("NotFound", "Client not found for the Id {0}".FormatString(id));
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "Client not found for the Id {0}".FormatString(id)));
         }
 
         MapClientUpdate(client, request);
@@ -53,10 +54,10 @@ internal class ClientService
 
         _logger.LogInfo("Client updated {ClientId}", id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<ClientDto?> GetClientById(int clientId)
+    public async Task<ApiResult<ClientDto>> GetClientById(int clientId)
     {
         _logger.LogDebug("Fetching client {ClientId}", clientId);
 
@@ -68,12 +69,14 @@ internal class ClientService
         if (client == null)
         {
             _logger.LogWarning("Client not found: {ClientId}", clientId);
+            return ApiResult<ClientDto>.Failure(ApiError.Failure("NotFound",
+                "Client not found for the Id {0}".FormatString(clientId)));
         }
 
-        return client;
+        return ApiResult<ClientDto>.Success(client);
     }
 
-    public async Task<PaginatedList<ClientDto>> GetClients(SearchData request)
+    public async Task<ApiResult<PaginatedList<ClientDto>>> GetClients(SearchData request)
     {
         _logger.LogDebug("Fetching clients list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
@@ -87,7 +90,7 @@ internal class ClientService
 
         _logger.LogDebug("Fetched {Count} clients", clients.TotalCount);
 
-        return clients;
+        return ApiResult<PaginatedList<ClientDto>>.Success(clients);
     }
 
     private Client CreateNewClient(CreateUpdateClient request)

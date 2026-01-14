@@ -4,7 +4,7 @@ namespace IDP.Core;
 
 public static class EndpointDefinitionExtensions
 {
-    public static void RegisterEndpoints(this WebApplication app)
+    public static void RegisterIDPEndpoints(this WebApplication app)
     {
         var definitions = typeof(IEndpointDefinition)
             .Assembly

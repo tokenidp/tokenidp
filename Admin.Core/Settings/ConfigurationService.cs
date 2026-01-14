@@ -17,7 +17,7 @@ internal class ConfigurationService
         _logger = logger;
     }
 
-    public async Task<Result> CreateConfiguration(CreateUpdateConfiguration request)
+    public async Task<ApiResult<int>> CreateConfiguration(CreateUpdateConfiguration request)
     {
         _logger.LogDebug("Creating configuration {ConfigKey} for tenant {TenantId}",
             request.ConfigKey, _currentUserService.TenantId);
@@ -34,10 +34,10 @@ internal class ConfigurationService
 
         _logger.LogInfo("Configuration created with Id {ConfigId}", configuration.Id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<Result> UpdateConfiguration(int id, CreateUpdateConfiguration request)
+    public async Task<ApiResult<int>> UpdateConfiguration(int id, CreateUpdateConfiguration request)
     {
         _logger.LogDebug("Updating configuration {ConfigId}", id);
 
@@ -46,7 +46,8 @@ internal class ConfigurationService
         if (configuration == null)
         {
             _logger.LogWarning("Configuration not found for update: {ConfigId}", id);
-            return Result.Failure("NotFound", "Configuration not found for the Id {0}".FormatString(id));
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "Configuration not found for the Id {0}".FormatString(id)));
         }
 
         configuration.UpdateConfiguration(
@@ -60,10 +61,10 @@ internal class ConfigurationService
 
         _logger.LogInfo("Configuration updated {ConfigId}", id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<ConfigurationDto> GerConfigurationById(int configId)
+    public async Task<ApiResult<ConfigurationDto>> GerConfigurationById(int configId)
     {
         _logger.LogDebug("Fetching configuration {ConfigId}", configId);
 
@@ -75,12 +76,14 @@ internal class ConfigurationService
         if (configuration == null)
         {
             _logger.LogWarning("Configuration not found: {ConfigId}", configId);
+            return ApiResult<ConfigurationDto>.Failure(ApiError.Failure("NotFound",
+                "Configuration not found for the Id {0}".FormatString(configId)));
         }
 
-        return configuration;
+        return ApiResult<ConfigurationDto>.Success(configuration);
     }
 
-    public async Task<PaginatedList<ConfigurationSearchDto>> GetConfigurations(SearchData request)
+    public async Task<ApiResult<PaginatedList<ConfigurationSearchDto>>> GetConfigurations(SearchData request)
     {
         _logger.LogDebug("Fetching configurations list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
@@ -94,7 +97,7 @@ internal class ConfigurationService
 
         _logger.LogDebug("Fetched {Count} configurations", configurations.TotalCount);
 
-        return configurations;
+        return ApiResult<PaginatedList<ConfigurationSearchDto>>.Success(configurations);
     }
 
 }

@@ -1,4 +1,6 @@
 ﻿using Admin.Core.Users;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace Admin.Core.Endpoints;
@@ -7,8 +9,11 @@ internal class UserEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/user")
-            .RequireAuthorization()
+        var authGroup = app.MapGroup("/admin/user")
+            .RequireAuthorization(new AuthorizeAttribute
+             {
+                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+             })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
@@ -17,7 +22,7 @@ internal class UserEndpoint : IEndpointDefinition
         {
             var response = await userService.GetUsers(data);
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Users")
         .WithTags("Users");
@@ -28,17 +33,13 @@ internal class UserEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
             var response = await userService.GetUserById(id);
 
-            if (response == null)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("UserById")
         .WithTags("UserById");
@@ -49,7 +50,9 @@ internal class UserEndpoint : IEndpointDefinition
         {
             var response = await userService.CreateUser(user);
 
-            return Results.Created($"user/{response.Id}", Result.Success(response.Id));
+            var location = response.IsSuccess ? $"user/{response.Value}" : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateUser")
         .WithTags("CreateUser");
@@ -60,12 +63,13 @@ internal class UserEndpoint : IEndpointDefinition
         {
             if (id != user.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await userService.UpdateUser(id, user);
+            var response = await userService.UpdateUser(id, user);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateUser")
         .WithTags("UpdateUser");
@@ -76,12 +80,13 @@ internal class UserEndpoint : IEndpointDefinition
         {
             if (id != user.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await userService.UpdateUserStatus(id, user);
+            var response = await userService.UpdateUserStatus(id, user);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateUserStatus")
         .WithTags("UpdateUserStatus");
@@ -92,7 +97,7 @@ internal class UserEndpoint : IEndpointDefinition
         {
             var response = await userService.GetUserPermissions();
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("UserClaims")
         .WithTags("UserClaims");

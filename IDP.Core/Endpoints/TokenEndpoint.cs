@@ -1,4 +1,4 @@
-﻿using IDP.Core.TokenHandlers;
+﻿using IDP.Core.GrantHandlers;
 
 namespace IDP.Core.Endpoints;
 

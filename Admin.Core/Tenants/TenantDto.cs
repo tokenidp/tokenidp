@@ -14,7 +14,7 @@ internal class TenantDto
           TenantName = t.TenantName,
           TenantCode = t.TenantCode,
           Theme = t.Theme,
-          Logo = t.Logo,
+          Logo = t.LogoUrl,
       };
 
     public int Id { get; set; }

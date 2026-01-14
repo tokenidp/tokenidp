@@ -1,4 +1,6 @@
 ﻿using Admin.Core.Configurations;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Admin.Core.Endpoints;
 
@@ -6,8 +8,11 @@ internal class ConfigurationEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/configuration")
-            .RequireAuthorization()
+        var authGroup = app.MapGroup("/admin/configuration")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
@@ -16,7 +21,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         {
             var response = await configurationService.GetConfigurations(data);
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Configurations")
         .WithTags("Configurations");
@@ -27,17 +32,13 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
             var response = await configurationService.GerConfigurationById(id);
 
-            if (response == null)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("ConfigById")
         .WithTags("ConfigById");
@@ -48,7 +49,9 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         {
             var response = await configurationService.CreateConfiguration(configuration);
 
-            return Results.Created($"configuration/{configuration.ConfigKey}", Result.Success(response.Id));
+            var location = response.IsSuccess ? $"configuration/{configuration.ConfigKey}" : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateConfig")
         .WithTags("CreateConfig");
@@ -59,12 +62,13 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         {
             if (id != configuration.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await configurationService.UpdateConfiguration(id, configuration);
+            var response = await configurationService.UpdateConfiguration(id, configuration);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateConfig")
         .WithTags("UpdateConfig");

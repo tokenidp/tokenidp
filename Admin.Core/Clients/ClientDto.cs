@@ -8,24 +8,13 @@ internal class ClientDto
     client => new ClientDto()
     {
         Id = client.Id,
-        TenantId = client.TenantId,
         ClientId = client.ClientId,
         ClientName = client.ClientName,
         Description = client.Description,
         ClientType = client.ClientType,
         AppType = client.AppType,
         AccessTokenType = client.TokenType,
-        RedirectUri = client.RedirectUri,
-        LogoutRedirectUri = client.LogoutRedirectUri,
-        IsActive = client.IsActive,
-        ClientSecretExpiry = client.ClientSecretExpiry,
-        AccessTokenLifetime = client.AccessTokenLifetime,
-        AuthorizationCodeLifetime = client.AuthorizationCodeLifetime,
-        RefreshTokenExpiration = client.RefreshTokenExpiration,
-        PermitLimit = client.PermitLimit,
-        TimeWindow = client.TimeWindow,
-        QueueLimit = client.QueueLimit,
-        EnableITracking = client.EnableITracking
+        IsActive = client.IsActive      
     };
 
 
@@ -36,18 +25,7 @@ internal class ClientDto
     public ClientTypes ClientType { get; private set; }
     public AppTypes AppType { get; private set; }
     public TokenTypes AccessTokenType { get; private set; }
-    public int TenantId { get; private set; }
-    public string RedirectUri { get; private set; } = string.Empty;
-    public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
-    public int? ClientSecretExpiry { get; private set; }
-    public int AccessTokenLifetime { get; private set; }
-    public int AuthorizationCodeLifetime { get; private set; }
-    public int RefreshTokenExpiration { get; private set; }
-    public int? PermitLimit { get; private set; }
-    public TimeSpan? TimeWindow { get; private set; }
-    public int? QueueLimit { get; private set; }
-    public bool? EnableITracking { get; private set; }
 }
 
 

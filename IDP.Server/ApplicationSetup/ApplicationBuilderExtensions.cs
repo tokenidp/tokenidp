@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Text.Json.Serialization;
 
 namespace IDP.Server.ApplicationSetup;
 
@@ -84,6 +85,11 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddAuthentication(builder.Configuration, builder.Environment);
 
+        builder.Services.ConfigureHttpJsonOptions(options => {
+            options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        });
+
         return builder;
     }
 
@@ -93,7 +99,7 @@ public static class ApplicationBuilderExtensions
 
         app.UseMiddleware<CorrelationIdMiddleware>();
 
-        app.RegisterEndpoints();
+        app.RegisterIDPEndpoints();
 
         app.RegisterAdminEndpoints();
 

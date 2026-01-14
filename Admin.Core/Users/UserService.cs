@@ -1,5 +1,4 @@
 ﻿using Admin.Core.Roles;
-using IDP.Foundation.Exceptions;
 
 namespace Admin.Core.Users;
 
@@ -21,7 +20,7 @@ internal class UserService
         _logger = logger;
     }
 
-    public async Task<Result> CreateUser(CreateUpdateUser request)
+    public async Task<ApiResult<int>> CreateUser(CreateUpdateUser request)
     {
         _logger.LogDebug("Creating user {UserName} for tenant {TenantId}", request.UserName, request.TenantId);
 
@@ -31,10 +30,10 @@ internal class UserService
 
         _logger.LogInfo("User created with Id {UserId}", user.Id);
 
-        return result.ToApplicationResult(user.Id);
+        return result.ToApiResult(user.Id);
     }
 
-    public async Task<Result> UpdateUser(int id, CreateUpdateUser request)
+    public async Task<ApiResult<int>> UpdateUser(int id, CreateUpdateUser request)
     {
         _logger.LogDebug("Updating user {UserId}", id);
 
@@ -43,7 +42,8 @@ internal class UserService
         if (user == null)
         {
             _logger.LogWarning("User not found for update: {UserId}", id);
-            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "User not found for the Id {0}".FormatString(id)));
         }
 
         MapUserUpdate(user, request);
@@ -52,10 +52,10 @@ internal class UserService
 
         _logger.LogInfo("User updated {UserId}", id);
 
-        return result.ToApplicationResult(user.Id);
+        return result.ToApiResult(user.Id);
     }
 
-    public async Task<Result> UpdateUserStatus(int id, UpdateUserStatus request)
+    public async Task<ApiResult<int>> UpdateUserStatus(int id, UpdateUserStatus request)
     {
         _logger.LogDebug("Updating user status for {UserId}", id);
 
@@ -64,7 +64,8 @@ internal class UserService
         if (user == null)
         {
             _logger.LogWarning("User not found for status update: {UserId}", id);
-            return Result.Failure("NotFound", "User not found for the Id {0}".FormatString(id));
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "User not found for the Id {0}".FormatString(id)));
         }
 
         user.UpdateStatus(request.Status);
@@ -73,10 +74,10 @@ internal class UserService
 
         _logger.LogInfo("User status updated {UserId}", id);
 
-        return result.ToApplicationResult(user.Id);
+        return result.ToApiResult(user.Id);
     }
 
-    public async Task<UserDto?> GetUserById(int userId)
+    public async Task<ApiResult<UserDto>> GetUserById(int userId)
     {
         _logger.LogDebug("Fetching user {UserId}", userId);
 
@@ -88,12 +89,14 @@ internal class UserService
         if (user == null)
         {
             _logger.LogWarning("User not found: {UserId}", userId);
+            return ApiResult<UserDto>.Failure(ApiError.Failure("NotFound",
+                "User not found for the Id {0}".FormatString(userId)));
         }
 
-        return user;
+        return ApiResult<UserDto>.Success(user);
     }
 
-    public async Task<UserLookups?> GetUserLookups()
+    public async Task<ApiResult<UserLookups>> GetUserLookups()
     {
         _logger.LogDebug("Fetching user lookups for tenant {TenantId}", _currentUserService.TenantId);
 
@@ -107,10 +110,10 @@ internal class UserService
         userLookups.RolesLookup = roles;
 
         _logger.LogDebug("User lookups fetched for tenant {TenantId}", _currentUserService.TenantId);
-        return userLookups;
+        return ApiResult<UserLookups>.Success(userLookups);
     }
 
-    public async Task<PaginatedList<UserSearchDto>> GetUsers(SearchData request)
+    public async Task<ApiResult<PaginatedList<UserSearchDto>>> GetUsers(SearchData request)
     {
         _logger.LogDebug("Fetching users list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
@@ -124,24 +127,25 @@ internal class UserService
 
         _logger.LogDebug("Fetched {Count} users", users.TotalCount);
 
-        return users;
+        return ApiResult<PaginatedList<UserSearchDto>>.Success(users);
     }
 
-    public async Task<UserPermission> GetUserPermissions()
+    public async Task<ApiResult<UserPermission>> GetUserPermissions()
     {
         _logger.LogDebug("Fetching user info for: {UserId}", _currentUserService.UserId);
 
         var user = await _userManager.FindByIdAsync(_currentUserService.UserId.ToString());
+
         if (user == null)
         {
             _logger.LogWarning("User not found: {UserId}", _currentUserService.UserId);
-            throw new NotFoundException("User not found.");
+            return ApiResult<UserPermission>.Failure(ApiError.Failure("NotFound", "User not found."));
         }
 
         _logger.LogDebug("Found user {UserName} (Tenant: {TenantId})",
             user.UserName ?? string.Empty, user.TenantId);
 
-        var claims = await _dbContext.UserRolePermissions
+        var permissions = await _dbContext.UserRolePermissions
             .Where(c => c.UserId == _currentUserService.UserId)
             .Select(c => new PermissionDto(
                 c.Id,
@@ -151,23 +155,23 @@ internal class UserService
                 c.Permissionkey,
                 c.PermissionName,
                 c.PermissionValue,
+                c.Permissionkey,
                 c.Icon,
                 c.AccessUrl,
                 c.RoleName,
                 c.ControlType))
             .ToListAsync();
 
-        if (!claims.IsSafe())
+        if (!permissions.IsSafe())
         {
             _logger.LogWarning("No claims found for user {UserId}", _currentUserService.UserId);
-            throw new NotFoundException("Claims not found.");
+            return ApiResult<UserPermission>.Failure(ApiError.Failure("NotFound", "Claims not found."));
         }
 
         _logger.LogDebug("Found {ClaimCount} claims for user {UserId}",
-            claims.Count, _currentUserService.UserId);
+            permissions.Count, _currentUserService.UserId);
 
-        var tenant = await _dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.Id == user.TenantId);
+        var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == user.TenantId);
 
         if (tenant == null)
         {
@@ -179,11 +183,11 @@ internal class UserService
             user.TenantId,
             user.FullName,
             tenant?.HomePageUrl ?? string.Empty,
-            claims);
+            permissions);
 
         _logger.LogInfo("Successfully compiled user info for {UserId}", _currentUserService.UserId);
 
-        return userInfo;
+        return ApiResult<UserPermission>.Success(userInfo);
     }
 
     private User CreateNewUser(CreateUpdateUser request)

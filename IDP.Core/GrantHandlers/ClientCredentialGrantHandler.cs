@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace IDP.Core.TokenHandlers;
+namespace IDP.Core.GrantHandlers;
 
 internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 {

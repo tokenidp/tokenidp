@@ -1,6 +1,6 @@
-﻿namespace IDP.Core.TokenHandlers;
+﻿namespace IDP.Core.GrantHandlers;
 
-internal class CibaGrantHandler : ITokenGrantHandler
+internal class PasswordGrantHandler : ITokenGrantHandler
 {
     public Task<TokenResponse> HandleAsync(TokenRequest request)
     {

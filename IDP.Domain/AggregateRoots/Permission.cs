@@ -5,7 +5,7 @@ public class Permission : BaseEntity, IAggregateRoot
 {
     public int? ParentId { get; private set; }
     public int Sequence { get; private set; }
-    public string PermissionType { get; private set; }
+    public string Permissionkey { get; private set; }
     public string PermissionName { get; private set; }
     public string AccessUrl { get; private set; }
     public string Icon { get; private set; }
@@ -17,7 +17,7 @@ public class Permission : BaseEntity, IAggregateRoot
 
     private Permission() { }
 
-    public Permission(int parentId,
+    public Permission(int? parentId,
         string claimType,
         string claimName,
         string accessUrl,
@@ -26,7 +26,7 @@ public class Permission : BaseEntity, IAggregateRoot
         bool isActive)
     {
         ParentId = parentId;
-        PermissionType = claimType;
+        Permissionkey = claimType;
         PermissionName = claimName;
         AccessUrl = accessUrl;
         ControlType = controlType;
@@ -41,7 +41,7 @@ public class Permission : BaseEntity, IAggregateRoot
         bool isActive)
     {
         ParentId = parentId;
-        PermissionType = claimType;
+        Permissionkey = claimType;
         PermissionName = claimName;
         IsEditable = isEditable;
         IsActive = isActive;

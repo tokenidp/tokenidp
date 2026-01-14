@@ -10,8 +10,8 @@ public class UserRolePermission
     public string Permissionkey { get; private set; }
     public string PermissionName { get; private set; }
     public string PermissionValue { get; private set; }
-    public string Icon { get; private set; }
-    public string AccessUrl { get; private set; }
+    public string? Icon { get; private set; }
+    public string? AccessUrl { get; private set; }
     public string RoleName { get; private set; }
     public string ControlType { get; private set; }
 

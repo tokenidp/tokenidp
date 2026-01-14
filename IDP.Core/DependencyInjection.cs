@@ -1,5 +1,5 @@
 ﻿using IDP.Core.OAuth;
-using IDP.Core.TokenHandlers;
+using IDP.Core.GrantHandlers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,7 +11,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         AddDomainServices(services);
-        AddTokenHandlers(services);
+        AddGrantHandlers(services);
     }
 
     private static void AddDomainServices(IServiceCollection services)
@@ -44,7 +44,7 @@ public static class DependencyInjection
 
     }
 
-    private static void AddTokenHandlers(IServiceCollection services)
+    private static void AddGrantHandlers(IServiceCollection services)
     {
         services.AddScoped<JwtTokenGenerator>();
         services.AddAuthorizationUseCases();

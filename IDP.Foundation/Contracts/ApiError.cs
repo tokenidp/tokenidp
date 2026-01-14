@@ -2,6 +2,7 @@
 
 public class ApiError
 {
+    public string Code { get; private set; }
     public string CorrelationId { get; private set; }
     public int UserId { get; private set; }
     public string IPAddress { get; private set; }
@@ -15,14 +16,16 @@ public class ApiError
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Error message cannot be null or empty.", nameof(message));
 
+        Code = string.Empty;
         Error = message;
     }
 
-    private ApiError(string message, string correlationId)
+    private ApiError(string code, string message, string correlationId = "")
     {
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Error message cannot be null or empty.", nameof(message));
 
+        Code = string.Empty;
         Error = message;
         CorrelationId = correlationId;
     }
@@ -36,6 +39,7 @@ public class ApiError
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Error message cannot be null or empty.", nameof(message));
 
+        Code = string.Empty;
         Error = message;
         CorrelationId = correlationId;
         UserId = userId;
@@ -47,7 +51,9 @@ public class ApiError
         string correlationId,
         string help)
     {
+        Code = string.Empty;
         Errors = errors ?? throw new ArgumentNullException(nameof(errors), "Errors cannot be null.");
+        CorrelationId = correlationId;
         Help = help ?? "Refer to the documentation for further assistance.";
     }
 
@@ -56,9 +62,9 @@ public class ApiError
         return new ApiError(message);
     }
 
-    public static ApiError Failure(string message, string correlationId)
+    public static ApiError Failure(string code, string message, string correlationId = "")
     {
-        return new ApiError(message, correlationId);
+        return new ApiError(code, message, correlationId);
     }
 
     public static ApiError Failure(string message,

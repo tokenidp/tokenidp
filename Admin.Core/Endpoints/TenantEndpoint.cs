@@ -1,4 +1,6 @@
 ﻿using Admin.Core.Tenants;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Admin.Core.Endpoints;
 
@@ -6,8 +8,11 @@ internal class TenantEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/Tenant")
-            .RequireAuthorization()
+        var authGroup = app.MapGroup("/admin/Tenant")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
@@ -16,7 +21,7 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             var response = await tenantService.GetTenants(data);
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Tenants")
         .WithTags("Tenants");
@@ -27,17 +32,13 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
             var response = await tenantService.GetTenantById(id);
 
-            if (response == null)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("TenantById")
         .WithTags("TenantById");
@@ -48,7 +49,9 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             var response = await tenantService.CreateTenant(tenant);
 
-            return Results.Created($"tenant/{tenant.TenantName}", Result.Success(response.Id));
+            var location = response.IsSuccess ? $"tenant/{tenant.TenantName}" : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateTenant")
         .WithTags("CreateTenant");
@@ -59,12 +62,13 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             if (id != tenant.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await tenantService.UpdateTenant(id, tenant);
+            var response = await tenantService.UpdateTenant(id, tenant);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateTenant")
         .WithTags("UpdateTenant");

@@ -13,7 +13,7 @@ internal class LookupService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<LookupValue>> GeTenantLookupsByType(int tenantId, string type)
+    public async Task<ApiResult<IEnumerable<LookupValue>>> GeTenantLookupsByType(int tenantId, string type)
     {
         _logger.LogDebug("Fetching lookup values for tenant {TenantId} and type {Type}", tenantId, type);
 
@@ -31,6 +31,6 @@ internal class LookupService
 
         _logger.LogDebug("Lookup values fetched for tenant {TenantId} and type {Type}", tenantId, type);
 
-        return lookupValues;
+        return ApiResult<IEnumerable<LookupValue>>.Success(lookupValues);
     }
 }

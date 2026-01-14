@@ -2,14 +2,16 @@
 
 internal static class IdentityResultExtensions
 {
-    public static Result ToApplicationResult(this IdentityResult result, int id)
+    public static ApiResult<int> ToApiResult(this IdentityResult result, int id)
     {
         if (result.Succeeded)
-            return Result.Success(id);
+            return ApiResult<int>.Success(id);
 
         var errors = result.Errors
-            .Select(e => new DomainError(e.Code, e.Description));
+            .ToDictionary(e => e.Code, e => e.Description);
 
-        return Result.Failure(errors);
+        var apiError = ApiError.Failure(errors, string.Empty, "Identity validation failed.");
+
+        return ApiResult<int>.Failure(apiError);
     }
 }

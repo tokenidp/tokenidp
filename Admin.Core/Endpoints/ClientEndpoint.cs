@@ -1,4 +1,6 @@
 using Admin.Core.Clients;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Admin.Core.Endpoints;
 
@@ -6,8 +8,11 @@ internal class ClientEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/client")
-            .RequireAuthorization()
+        var authGroup = app.MapGroup("/admin/client")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
@@ -16,7 +21,7 @@ internal class ClientEndpoint : IEndpointDefinition
         {
             var response = await clientService.GetClients(data);
 
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Clients")
         .WithTags("Clients");
@@ -27,17 +32,13 @@ internal class ClientEndpoint : IEndpointDefinition
         {
             if (id <= 0)
             {
-                return Results.BadRequest(ApiError.Failure("Record Id should be greater than zero."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
             }
 
             var response = await clientService.GetClientById(id);
 
-            if (response == null)
-            {
-                return Results.NotFound();
-            }
-
-            return Results.Ok(response);
+            return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("ClientById")
         .WithTags("ClientById");
@@ -48,7 +49,9 @@ internal class ClientEndpoint : IEndpointDefinition
         {
             var response = await clientService.CreateClient(client);
 
-            return Results.Created($"client/{response.Id}", Result.Success(response.Id));
+            var location = response.IsSuccess ? $"client/{response.Value}" : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateClient")
         .WithTags("CreateClient");
@@ -59,12 +62,13 @@ internal class ClientEndpoint : IEndpointDefinition
         {
             if (id != client.Id)
             {
-                return Results.BadRequest(ApiError.Failure("Record Ids didn't match."));
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
             }
 
-            await clientService.UpdateClient(id, client);
+            var response = await clientService.UpdateClient(id, client);
 
-            return Results.NoContent();
+            return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateClient")
         .WithTags("UpdateClient");

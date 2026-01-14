@@ -3,15 +3,22 @@
 public class ApiResult<TResult>
 {
     public bool IsSuccess { get; private set; }
-    public TResult Value { get; private set; }
+    public TResult? Value { get; private set; }
+    public ApiError? Error { get; private set; }
 
-    private ApiResult(TResult value, bool isSuccess)
+    private ApiResult(TResult value)
     {
-        IsSuccess = isSuccess;
+        IsSuccess = true;
         Value = value;
     }
 
-    public static ApiResult<TResult> Success(TResult value) => new(value, true);
+    private ApiResult(ApiError error)
+    {
+        IsSuccess = false;
+        Error = error;
+    }
 
-    public static ApiResult<TResult> Failure(TResult error) => new(error, false);
+    public static ApiResult<TResult> Success(TResult value) => new(value);
+
+    public static ApiResult<TResult> Failure(ApiError error) => new(error);
 }

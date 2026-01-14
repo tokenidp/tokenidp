@@ -27,6 +27,6 @@ internal sealed class TenantStore : ITenantStore
 
         }, new TimeSpan(0, 15, 0));
 
-        return hasTwoFactorEnabled;
+        return hasTwoFactorEnabled ?? false;
     }
 }

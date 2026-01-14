@@ -24,7 +24,8 @@ internal sealed class EndpointValidationFilter : IEndpointFilter
             var correlationId = _currentUserService.CorrelationId;
             _logger.LogWarning("Validation failed. CorrelationId: {CorrelationId}", correlationId);
 
-            return Results.BadRequest(ApiError.Failure(errors, correlationId));
+            return Results.BadRequest(ApiResult<ApiError>.Failure(
+                ApiError.Failure(errors, correlationId)));
         }
 
         return await next(context);

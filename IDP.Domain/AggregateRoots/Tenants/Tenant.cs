@@ -1,14 +1,17 @@
 ﻿namespace IDP.Domain.AggregateRoots.Tenants;
 
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
 public partial class Tenant : BaseEntity, IAggregateRoot
 {
     public string TenantName { get; private set; }
     public string TenantCode { get; private set; }
     public string? Email { get; private set; }
     public string? Theme { get; private set; }
-    public string? Logo { get; private set; }
-    public bool TwoFactorEnabled { get; private set; }
+    public string? LogoUrl { get; private set; }
+    public string? PrimaryColor { get; private set; }
+    public string? DefaultLanguage { get; private set; }
+    public string? LoginText { get; private set; }
+    public bool? TwoFactorEnabled { get; private set; }
+    public int? TwoFactorCodeExpiry { get; private set; }
     public string? HomePageUrl { get; private set; }
     public bool? IsActive { get; private set; }
     public virtual ICollection<Client> Clients { get; private set; }
@@ -31,7 +34,7 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         TenantCode = tenantCode;
         Email = email;
         Theme = theme;
-        Logo = logo;
+        LogoUrl = logo;
         HomePageUrl = landingPage;
         IsActive = isActive;
 
@@ -50,7 +53,7 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         TenantName = tenantName;
         Email = email;
         Theme = theme;
-        Logo = logo;
+        LogoUrl = logo;
         HomePageUrl = landingPage;
         IsActive = isActive;
     }

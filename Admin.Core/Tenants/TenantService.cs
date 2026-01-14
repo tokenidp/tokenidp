@@ -13,7 +13,7 @@ internal class TenantService
         _logger = logger;
     }
 
-    public async Task<Result> CreateTenant(CreateUpdateTenant request)
+    public async Task<ApiResult<int>> CreateTenant(CreateUpdateTenant request)
     {
         _logger.LogDebug("Creating tenant {TenantName}", request.TenantName);
 
@@ -38,7 +38,7 @@ internal class TenantService
 
         foreach (var claim in claims)
         {
-            tenant.AddTenantClaims(claim.Id, claim.PermissionType);
+            tenant.AddTenantClaims(claim.Id, claim.Permissionkey);
         }
 
         foreach (var configuration in configurations)
@@ -57,10 +57,10 @@ internal class TenantService
 
         _logger.LogInfo("Tenant created with Id {TenantId}", tenant.Id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<Result> UpdateTenant(int id, CreateUpdateTenant request)
+    public async Task<ApiResult<int>> UpdateTenant(int id, CreateUpdateTenant request)
     {
         _logger.LogDebug("Updating tenant {TenantId}", id);
 
@@ -69,7 +69,8 @@ internal class TenantService
         if (tenant == null)
         {
             _logger.LogWarning("Tenant not found for update: {TenantId}", id);
-            return Result.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(id));
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "Tenant not found for the Id {0}".FormatString(id)));
         }
 
         tenant.UpdateTenant(request.TenantName,
@@ -85,10 +86,10 @@ internal class TenantService
 
         _logger.LogInfo("Tenant updated {TenantId}", id);
 
-        return Result.Success(result);
+        return ApiResult<int>.Success(result);
     }
 
-    public async Task<TenantDto?> GetTenantById(int tenantId)
+    public async Task<ApiResult<TenantDto>> GetTenantById(int tenantId)
     {
         _logger.LogDebug("Fetching tenant {TenantId}", tenantId);
 
@@ -100,12 +101,14 @@ internal class TenantService
         if (tenant == null)
         {
             _logger.LogWarning("Tenant not found: {TenantId}", tenantId);
+            return ApiResult<TenantDto>.Failure(ApiError.Failure("NotFound",
+                "Tenant not found for the Id {0}".FormatString(tenantId)));
         }
 
-        return tenant;
+        return ApiResult<TenantDto>.Success(tenant);
     }
 
-    public async Task<PaginatedList<TenantSearchDto>> GetTenants(SearchData request)
+    public async Task<ApiResult<PaginatedList<TenantSearchDto>>> GetTenants(SearchData request)
     {
         _logger.LogDebug("Fetching tenants list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
@@ -119,10 +122,10 @@ internal class TenantService
 
         _logger.LogDebug("Fetched {Count} tenants", users.TotalCount);
 
-        return users;
+        return ApiResult<PaginatedList<TenantSearchDto>>.Success(users);
     }
 
-    public async Task<bool> CheckTwoFactorEnabled(int tenantId)
+    public async Task<ApiResult<bool>> CheckTwoFactorEnabled(int tenantId)
     {
         _logger.LogDebug("Checking two-factor status for tenant {TenantId}", tenantId);
 
@@ -138,7 +141,7 @@ internal class TenantService
 
         _logger.LogDebug("Two-factor status resolved for tenant {TenantId}", tenantId);
 
-        return hasTwoFactorEnabled;
+        return ApiResult<bool>.Success(hasTwoFactorEnabled ?? false);
     }
 
     private async Task AddRolePermissions(Tenant tenant)
