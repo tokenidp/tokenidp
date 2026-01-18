@@ -1,4 +1,6 @@
-﻿namespace IDP.Domain.AggregateRoots.Tenants;
+﻿using IDP.Domain.AggregateRoots.Permissions;
+
+namespace IDP.Domain.AggregateRoots.Tenants;
 
 public partial class Tenant : BaseEntity, IAggregateRoot
 {
@@ -18,7 +20,7 @@ public partial class Tenant : BaseEntity, IAggregateRoot
     public virtual ICollection<Configuration> Configurations { get; private set; }
     public virtual ICollection<User> Users { get; private set; }
     public virtual ICollection<Role> Roles { get; private set; }
-    public virtual ICollection<TenantPermission> TenantPermissions { get; private set; }
+    public virtual ICollection<Permission> Permissions { get; private set; }
 
     private Tenant() { }
 
@@ -39,7 +41,7 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         IsActive = isActive;
 
         Roles = new List<Role>();
-        TenantPermissions = new List<TenantPermission>();
+        Permissions = new List<Permission>();
         Configurations = new List<Configuration>();
     }
 
@@ -71,15 +73,8 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         Roles.Add(appRole);
     }
 
-    public void AddTenantClaims(int appClaimId, string claimType)
-    {
-        TenantPermission appClaimTenant = new(appClaimId, claimType);
-        TenantPermissions.Add(appClaimTenant);
-    }
-
     public void AddTenantConfigurations(string configKey,
         string configValue,
-        bool? isDisplay,
         bool isDefaultforTenant)
     {
         Configuration appConfiguration = new
@@ -87,7 +82,6 @@ public partial class Tenant : BaseEntity, IAggregateRoot
                 default,
                 configKey,
                 configValue,
-                isDisplay,
                 isDefaultforTenant
             );
 

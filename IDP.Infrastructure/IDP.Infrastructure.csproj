@@ -17,4 +17,8 @@
     <ProjectReference Include="..\IDP.Foundation\IDP.Foundation.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Scripts\" />
+  </ItemGroup>
+
 </Project>

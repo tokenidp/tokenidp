@@ -13,8 +13,8 @@ namespace IDP.Server.ApplicationSetup;
 
 internal static class AuthenticationDI
 {
-    internal static void AddAuthentication(this IServiceCollection services, 
-        IConfiguration configuration, 
+    internal static void AddAuthentication(this IServiceCollection services,
+        IConfiguration configuration,
         IHostEnvironment environment)
     {
         services

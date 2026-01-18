@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core;
+﻿namespace Admin.Core;
 
 internal static class QueryableExtensions
 {
@@ -54,39 +52,69 @@ internal static class QueryableExtensions
         {
             var member = Expression.PropertyOrField(parameter, c.ColumnName);
             Expression condition;
+            var memberType = member.Type;
+            var enumType = Nullable.GetUnderlyingType(memberType) ?? (memberType.IsEnum ? memberType : null);
 
-            switch (c.ColumnType)
+            if (enumType != null)
             {
-                case SearchColumnType.String:
-                    var containsMethod = typeof(string)
-                        .GetMethod(nameof(string.Contains), new[] { typeof(string) })!;
-                    condition = Expression.Call(
-                        member,
-                        containsMethod,
-                        Expression.Constant(c.Value));
-                    break;
+                switch (c.ColumnType)
+                {
+                    case SearchColumnType.String:
+                        if (!Enum.TryParse(enumType, c.Value, true, out var enumValue))
+                            continue;
+                        var enumConstant = Expression.Constant(enumValue);
+                        condition = Expression.Equal(
+                            member,
+                            memberType == enumType ? enumConstant : Expression.Convert(enumConstant, memberType));
+                        break;
+                    case SearchColumnType.Integer:
+                        if (!int.TryParse(c.Value, out var enumInt))
+                            continue;
+                        var enumFromInt = Enum.ToObject(enumType, enumInt);
+                        var enumIntConstant = Expression.Constant(enumFromInt);
+                        condition = Expression.Equal(
+                            member,
+                            memberType == enumType ? enumIntConstant : Expression.Convert(enumIntConstant, memberType));
+                        break;
+                    default:
+                        continue;
+                }
+            }
+            else
+            {
+                switch (c.ColumnType)
+                {
+                    case SearchColumnType.String:
+                        var containsMethod = typeof(string)
+                            .GetMethod(nameof(string.Contains), new[] { typeof(string) })!;
+                        condition = Expression.Call(
+                            member,
+                            containsMethod,
+                            Expression.Constant(c.Value));
+                        break;
 
-                case SearchColumnType.Date:
-                    var dateValue = DateTime.Parse(c.Value);
-                    condition = Expression.Equal(
-                        member,
-                        Expression.Constant(dateValue));
-                    break;
+                    case SearchColumnType.Date:
+                        var dateValue = DateTime.Parse(c.Value);
+                        condition = Expression.Equal(
+                            member,
+                            Expression.Constant(dateValue));
+                        break;
 
-                case SearchColumnType.Integer:
-                    condition = Expression.Equal(
-                        member,
-                        Expression.Constant(int.Parse(c.Value)));
-                    break;
+                    case SearchColumnType.Integer:
+                        condition = Expression.Equal(
+                            member,
+                            Expression.Constant(int.Parse(c.Value)));
+                        break;
 
-                case SearchColumnType.Decimal:
-                    condition = Expression.Equal(
-                        member,
-                        Expression.Constant(decimal.Parse(c.Value)));
-                    break;
+                    case SearchColumnType.Decimal:
+                        condition = Expression.Equal(
+                            member,
+                            Expression.Constant(decimal.Parse(c.Value)));
+                        break;
 
-                default:
-                    continue;
+                    default:
+                        continue;
+                }
             }
 
             combined = combined == null

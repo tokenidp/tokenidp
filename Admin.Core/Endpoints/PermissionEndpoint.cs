@@ -1,4 +1,4 @@
-using Admin.Core.Roles;
+using Admin.Core.Permissions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -8,48 +8,92 @@ internal class PermissionEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/admin/permissions")
+        var authGroup = app.MapGroup("/admin/permission")
             .RequireAuthorization(new AuthorizeAttribute
             {
                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
             })
             .AddEndpointFilter<EndpointValidationFilter>();
 
-        authGroup.MapGet("/", async (
-            IAppLogger<PermissionEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapGet("assign", async (GetPermissionUseCase permissionUseCases) =>
         {
-            var response = await roleService.GetPermissions();
+            var response = await permissionUseCases.GetPermissions();
 
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("Permissions")
         .WithTags("Permissions");
 
-        authGroup.MapGet("/parents", async (
-            IAppLogger<PermissionEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapPost("list", async (SearchData data,
+            GetPermissionUseCase permissionUseCases) =>
         {
-            var response = await roleService.GetParentPermissions();
+            var response = await permissionUseCases.GetPermissions(data);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
-        .WithName("PermissionParents")
-        .WithTags("Permissions");
+        .WithName("PagedPermissions")
+        .WithTags("PagedPermissions");
 
-        authGroup.MapPost("/", async (CreatePermissionRequest request,
-            IAppLogger<PermissionEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapPost("/", async (CreateUpdatePermission request,
+            CreateUpdatePermissionUseCase permissionUseCases) =>
         {
-            var response = await roleService.CreatePermission(request);
+            var response = await permissionUseCases.CreatePermission(request);
 
             var location = response.IsSuccess
-                ? $"permissions/{response.Value?.Id}"
+                ? $"permissions/{response.Value}"
                 : string.Empty;
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreatePermission")
-        .WithTags("Permissions");
+        .WithTags("CreatePermission");
+
+        authGroup.MapPut("/{id}", async (int id, CreateUpdatePermission request,
+            CreateUpdatePermissionUseCase permissionUseCases) =>
+        {
+            if (id != request.Id)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Ids didn't match.")));
+            }
+
+            var response = await permissionUseCases.UpdatePermission(id, request);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .WithName("UpdatePermission")
+        .WithTags("UpdatePermission");
+
+        authGroup.MapGet("/{id}", async (int id,
+            GetPermissionUseCase permissionUseCases) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await permissionUseCases.GetPermissionById(id);
+
+            var location = response.IsSuccess
+                ? $"admin/permission/{response.Value?.Id}"
+                : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
+        })
+        .WithName("PermissionbyId")
+        .WithTags("PermissionbyId");
+
+        authGroup.MapGet("lookups", async (
+            GetPermissionLookupsUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.GetPermissionLookups(
+                httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("PermissionLookups")
+        .WithTags("PermissionLookups");
     }
 }

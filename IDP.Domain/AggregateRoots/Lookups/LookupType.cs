@@ -7,7 +7,6 @@ public class LookupType : BaseEntity, ITenant, IAggregateRoot
     public int? ParentId { get; private set; }
     public string LookupTypeName { get; private set; }
     public string? LookupTypeDescription { get; private set; }
-    public bool? IsDisplay { get; private set; }
     public string? UseFor { get; private set; }
     public virtual ICollection<LookupValue> LookupValues { get; private set; }
 

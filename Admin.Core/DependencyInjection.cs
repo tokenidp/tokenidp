@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Clients;
 using Admin.Core.Configurations;
 using Admin.Core.Lookups;
+using Admin.Core.Permissions;
 using Admin.Core.Roles;
 using Admin.Core.Tenants;
 using Admin.Core.Users;
@@ -14,11 +15,15 @@ public static class DependencyInjection
     public static void AddAdminServices(this IServiceCollection services,
          IConfiguration configuration)
     {
-        services.AddScoped<RoleService>();
-        services.AddScoped<ClientService>();
-        services.AddScoped<TenantService>();
-        services.AddScoped<ConfigurationService>();
-        services.AddScoped<UserService>();
-        services.AddScoped<LookupService>();
+        services.AddScoped<CreateUpdateRoleUseCase>();
+        services.AddScoped<GetRoleUseCase>();
+        services.AddScoped<ClientUseCases>();
+        services.AddScoped<TenantUseCases>();
+        services.AddScoped<ConfigurationUseCases>();
+        services.AddScoped<CreateUpdatePermissionUseCase>();
+        services.AddScoped<GetPermissionUseCase>();
+        services.AddScoped<GetPermissionLookupsUseCase>();
+        services.AddScoped<UserUseCases>();
+        services.AddScoped<LookupUseCases>();
     }
 }

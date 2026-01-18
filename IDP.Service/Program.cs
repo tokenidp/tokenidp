@@ -1,49 +1,75 @@
 using IDP.Server.ApplicationSetup;
 using IDP.Server.Components;
+using NLog;
+using NLog.Extensions.Hosting;
 
-var builder = WebApplication.CreateBuilder(args);
+// Bootstrap NLog early
+var logger = LogManager.Setup()
+    .LoadConfigurationFromFile("nlog.config", optional: false)
+    .GetCurrentClassLogger();
 
-builder.AddTokenTresorServices("Identity_DB", "admin.api");
+try
+{
 
-//builder.AddTokenTresorServices(
-//    connectionStringName: "DefaultConnection",
-//    audience: "idp-api",
-//    configureToken: options =>
-//    {
-//        options.Issuer = "https://idp.example.com";
-//        options.KeyPath = "C:\\secrets\\signing-key.pem";
-//    });
+    var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthorization();
+    // Remove default providers
+    builder.Logging.ClearProviders();
 
-builder.Services
-    .AddRazorComponents()
-    .AddInteractiveServerComponents();
+    // Add NLog as the ONLY provider
+    builder.Host.UseNLog();
 
-var app = builder.Build();
+    builder.AddTokenTresorServices("Identity_DB", "admin.api");
 
-app.UseExceptionHandler("/error");
-app.UseHttpsRedirection();
+    //builder.AddTokenTresorServices(
+    //    connectionStringName: "DefaultConnection",
+    //    audience: "idp-api",
+    //    configureToken: options =>
+    //    {
+    //        options.Issuer = "https://idp.example.com";
+    //        options.KeyPath = "C:\\secrets\\signing-key.pem";
+    //    });
 
-app.UseStaticFiles();
+    builder.Services.AddAuthorization();
 
-app.UseRouting();
+    builder.Services
+        .AddRazorComponents()
+        .AddInteractiveServerComponents();
 
-app.UseCors(policy => policy
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .WithOrigins("http://localhost:3000") // replace with your actual client URL
-    .AllowCredentials()
-);
+    var app = builder.Build();
 
-app.UseAuthentication();
-app.UseAuthorization();
+    app.UseExceptionHandler("/error");
+    app.UseHttpsRedirection();
 
-app.UseAntiforgery();
+    app.UseStaticFiles();
 
-app.MapRazorComponents<App>()
-   .AddInteractiveServerRenderMode();
+    app.UseRouting();
 
-app.UseTokenTresor();
+    app.UseCors(policy => policy
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .WithOrigins("http://localhost:3000") // replace with your actual client URL
+        .AllowCredentials()
+    );
 
-await app.RunAsync();
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.UseAntiforgery();
+
+    app.MapRazorComponents<App>()
+       .AddInteractiveServerRenderMode();
+
+    app.UseTokenTresor();
+
+    await app.RunAsync();
+
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "Unhandled exception during logging test");
+}
+finally
+{
+    LogManager.Shutdown();
+}

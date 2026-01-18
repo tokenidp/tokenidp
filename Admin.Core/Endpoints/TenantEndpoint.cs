@@ -16,8 +16,7 @@ internal class TenantEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            IAppLogger<TenantEndpoint> _logger,
-            TenantService tenantService) =>
+            TenantUseCases tenantService) =>
         {
             var response = await tenantService.GetTenants(data);
 
@@ -27,8 +26,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("Tenants");
 
         authGroup.MapGet("/{id}", async (int id,
-            IAppLogger<TenantEndpoint> _logger,
-            TenantService tenantService) =>
+            TenantUseCases tenantService) =>
         {
             if (id <= 0)
             {
@@ -44,8 +42,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("TenantById");
 
         authGroup.MapPost("/", async (CreateUpdateTenant tenant,
-            IAppLogger<TenantEndpoint> _logger,
-            TenantService tenantService) =>
+            TenantUseCases tenantService) =>
         {
             var response = await tenantService.CreateTenant(tenant);
 
@@ -57,8 +54,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("CreateTenant");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateTenant tenant,
-            IAppLogger<TenantEndpoint> _logger,
-            TenantService tenantService) =>
+            TenantUseCases tenantService) =>
         {
             if (id != tenant.Id)
             {

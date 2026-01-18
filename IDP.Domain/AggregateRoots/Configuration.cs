@@ -6,8 +6,7 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
     public int TenantId { get; private set; }
     public string ConfigKey { get; private set; }
     public string ConfigValue { get; private set; }
-    public bool? IsDisplay { get; private set; }
-    public bool? IsDeleted { get; private set; }
+    public bool IsDeleted { get; private set; }
     public bool IsEditable { get; private set; }
     public virtual Tenant Tenant { get; private set; }
 
@@ -16,13 +15,11 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
     public Configuration(int tenantId,
         string configKey,
         string configValue,
-        bool? isDisplay,
         bool isEditable)
     {
         TenantId = tenantId;
         ConfigKey = configKey;
         ConfigValue = configValue;
-        IsDisplay = isDisplay;
         IsEditable = isEditable;
     }
 
@@ -32,7 +29,6 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
         bool isEditable)
     {
         ConfigValue = configValue;
-        IsDisplay = isDisplay;
         IsEditable = isEditable;
     }
 }

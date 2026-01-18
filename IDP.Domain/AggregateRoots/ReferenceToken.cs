@@ -13,7 +13,7 @@ public class ReferenceToken
     public DateTime ExpiresAt { get; private set; }
     public DateTime IssuedAt { get; private set; }
     public string Roles { get; private set; }
-    public bool? IsRevoked { get; private set; }
+    public bool IsRevoked { get; private set; }
     public int CreatedBy { get; private set; }
     public DateTime CreatedOn { get; private set; }
     public int? UpdatedBy { get; private set; }

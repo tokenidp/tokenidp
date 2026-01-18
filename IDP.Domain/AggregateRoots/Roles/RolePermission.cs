@@ -1,38 +1,34 @@
-﻿namespace IDP.Domain.AggregateRoots.Roles;
+﻿using IDP.Domain.AggregateRoots.Permissions;
 
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class RolePermission : IdentityRoleClaim<int>, IBaseEntity, IAuditable
+namespace IDP.Domain.AggregateRoots.Roles;
+
+public class RolePermission : BaseEntity
 {
-    public int TenantPermissionId { get; private set; }
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
+    public int RoleId { get; private set; }
+    public int PermissionId { get; private set; }
+
+    public string PermissionKey { get; private set; }
+    public bool IsAllowed { get; private set; }
+
     public virtual Role Role { get; private set; }
-    public virtual TenantPermission TenantPermission { get; private set; }
+    public virtual Permission Permission { get; private set; }
 
-    public RolePermission() : base() { }
+    private RolePermission() : base() { }
 
-    public RolePermission(int tenantPermissionId,
+    internal RolePermission(
         int roleId,
-        string claimType,
-        string claimValue)
+        int permissionId,
+        string permissionKey,
+        bool isAllowed)
     {
-        TenantPermissionId = tenantPermissionId;
         RoleId = roleId;
-        ClaimType = claimType;
-        ClaimValue = claimValue;
+        PermissionId = permissionId;
+        PermissionKey = permissionKey;
+        IsAllowed = isAllowed;
     }
 
-    public void SetCreatedByAndCreatedOn(int userId)
+    public void Set(bool isAllowed)
     {
-        CreatedOn = DateTime.UtcNow;
-        CreatedBy = userId;
-    }
-
-    public void SetUpdatedByAndUpdatedOn(int userId)
-    {
-        UpdatedOn = DateTime.UtcNow;
-        UpdatedBy = userId;
+        IsAllowed = isAllowed;
     }
 }

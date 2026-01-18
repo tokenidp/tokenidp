@@ -1,12 +1,11 @@
-﻿namespace Admin.Core.Roles;
+﻿namespace Admin.Core.Permissions;
 
-internal class PermissionDto
+internal class PermissionInfo
 {
     public int Id { get; private set; }
     public int? ParentId { get; private set; }
     public int UserId { get; private set; }
     public int Sequence { get; private set; }
-    public string PermissionType { get; private set; }
     public string PermissionName { get; private set; }
     public string PermissionValue { get; private set; }
     public string PermissionKey { get; private set; }
@@ -15,11 +14,10 @@ internal class PermissionDto
     public string RoleName { get; private set; }
     public string ControlType { get; private set; }
 
-    public PermissionDto(int permissionId,
+    public PermissionInfo(int permissionId,
         int? parentId,
         int userId,
         int sequence,
-        string permissionType,
         string permissionName,
         string permissionValue,
         string permissionKey,
@@ -32,7 +30,6 @@ internal class PermissionDto
         ParentId = parentId;
         UserId = userId;
         Sequence = sequence;
-        PermissionType = permissionType;
         PermissionName = permissionName;
         PermissionValue = permissionValue;
         PermissionKey = permissionKey;

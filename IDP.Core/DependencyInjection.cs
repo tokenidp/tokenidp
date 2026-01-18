@@ -1,5 +1,5 @@
-﻿using IDP.Core.OAuth;
-using IDP.Core.GrantHandlers;
+﻿using IDP.Core.GrantHandlers;
+using IDP.Core.OAuth;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

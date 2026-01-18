@@ -1,6 +1,6 @@
 ﻿namespace IDP.Foundation.Contracts;
 
-public class NotificationRequest
+public sealed class NotificationRequest
 {
     public string Recipient { get; private set; }
     public string RecipientName { get; private set; }

@@ -1,5 +1,4 @@
 ﻿using IDP.Domain.AggregateRoots;
-using System.Linq.Expressions;
 
 namespace Admin.Core.Configurations;
 
@@ -12,7 +11,6 @@ internal class ConfigurationDto
             Id = t.Id,
             ConfigKey = t.ConfigKey,
             ConfigValue = t.ConfigValue,
-            IsDisplay = t.IsDisplay,
             TenantId = t.TenantId
         };
 

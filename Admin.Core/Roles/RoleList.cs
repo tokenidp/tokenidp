@@ -1,11 +1,9 @@
-﻿using System.Linq.Expressions;
+﻿namespace Admin.Core.Roles;
 
-namespace Admin.Core.Roles;
-
-internal class RoleSearchDto
+internal class RoleList
 {
-    internal static Expression<Func<RoleSearch, RoleSearchDto>> Projection =>
-         t => new RoleSearchDto
+    internal static Expression<Func<RoleSearch, RoleList>> Projection =>
+         t => new RoleList
          {
              Id = t.Id,
              RoleName = t.RoleName,

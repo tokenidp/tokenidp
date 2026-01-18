@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core.Roles;
+﻿namespace Admin.Core.Roles;
 
 internal class RoleLookup
 {

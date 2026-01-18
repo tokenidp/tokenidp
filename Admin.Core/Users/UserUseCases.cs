@@ -1,18 +1,19 @@
-﻿using Admin.Core.Roles;
+﻿using Admin.Core.Permissions;
+using Admin.Core.Roles;
 
 namespace Admin.Core.Users;
 
-internal class UserService
+internal class UserUseCases
 {
     private readonly UserManager<User> _userManager;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationDbContext _dbContext;
-    private readonly IAppLogger<UserService> _logger;
+    private readonly IAppLogger<UserUseCases> _logger;
 
-    public UserService(ICurrentUserService currentUserService,
+    public UserUseCases(ICurrentUserService currentUserService,
         UserManager<User> userManager,
         IApplicationDbContext applicationDbContext,
-        IAppLogger<UserService> logger)
+        IAppLogger<UserUseCases> logger)
     {
         _currentUserService = currentUserService;
         _userManager = userManager;
@@ -147,14 +148,13 @@ internal class UserService
 
         var permissions = await _dbContext.UserRolePermissions
             .Where(c => c.UserId == _currentUserService.UserId)
-            .Select(c => new PermissionDto(
+            .Select(c => new PermissionInfo(
                 c.Id,
                 c.ParentId,
                 c.UserId,
                 c.Sequence,
-                c.Permissionkey,
                 c.PermissionName,
-                c.PermissionValue,
+                c.IsAllowed ? "true" : "false",
                 c.Permissionkey,
                 c.Icon,
                 c.AccessUrl,

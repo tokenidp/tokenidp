@@ -16,8 +16,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            IAppLogger<ConfigurationEndpoint> _logger,
-            ConfigurationService configurationService) =>
+            ConfigurationUseCases configurationService) =>
         {
             var response = await configurationService.GetConfigurations(data);
 
@@ -27,8 +26,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("Configurations");
 
         authGroup.MapGet("/{id}", async (int id,
-            IAppLogger<ConfigurationEndpoint> _logger,
-            ConfigurationService configurationService) =>
+            ConfigurationUseCases configurationService) =>
         {
             if (id <= 0)
             {
@@ -44,8 +42,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("ConfigById");
 
         authGroup.MapPost("/", async (CreateUpdateConfiguration configuration,
-            IAppLogger<ConfigurationEndpoint> _logger,
-            ConfigurationService configurationService) =>
+            ConfigurationUseCases configurationService) =>
         {
             var response = await configurationService.CreateConfiguration(configuration);
 
@@ -57,8 +54,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("CreateConfig");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateConfiguration configuration,
-            IAppLogger<ConfigurationEndpoint> _logger,
-            ConfigurationService configurationService) =>
+            ConfigurationUseCases configurationService) =>
         {
             if (id != configuration.Id)
             {

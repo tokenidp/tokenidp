@@ -1,14 +1,14 @@
 ﻿namespace Admin.Core.Clients;
 
-internal class ClientService
+internal class ClientUseCases
 {
-    private readonly IAppLogger<ClientService> _logger;
+    private readonly IAppLogger<ClientUseCases> _logger;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationDbContext _dbContext;
     private readonly ICache _cache;
 
-    public ClientService(IApplicationDbContext dbContext,
-        IAppLogger<ClientService> logger,
+    public ClientUseCases(IApplicationDbContext dbContext,
+        IAppLogger<ClientUseCases> logger,
         ICache cache,
         ICurrentUserService currentUserService)
     {

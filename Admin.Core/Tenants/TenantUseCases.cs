@@ -1,12 +1,12 @@
 ﻿namespace Admin.Core.Tenants;
 
-internal class TenantService
+internal class TenantUseCases
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly ICache _cache;
-    private readonly IAppLogger<TenantService> _logger;
+    private readonly IAppLogger<TenantUseCases> _logger;
 
-    public TenantService(IApplicationDbContext dbContext, ICache cache, IAppLogger<TenantService> logger)
+    public TenantUseCases(IApplicationDbContext dbContext, ICache cache, IAppLogger<TenantUseCases> logger)
     {
         _dbContext = dbContext;
         _cache = cache;
@@ -27,7 +27,7 @@ internal class TenantService
 
         var roles = await _dbContext.Roles.Where(s => s.IsEditable).ToListAsync();
 
-        var claims = await _dbContext.Permissions.Where(s => s.IsEditable).ToListAsync();
+        var claims = await _dbContext.Permissions.ToListAsync();
 
         var configurations = await _dbContext.Configurations.Where(s => s.IsEditable).ToListAsync();
 
@@ -38,14 +38,13 @@ internal class TenantService
 
         foreach (var claim in claims)
         {
-            tenant.AddTenantClaims(claim.Id, claim.Permissionkey);
+            //tenant.AddPermission(claim.Id);
         }
 
         foreach (var configuration in configurations)
         {
             tenant.AddTenantConfigurations(configuration.ConfigKey,
                 configuration.ConfigValue,
-                configuration.IsDisplay,
                 configuration.IsEditable);
         }
 
@@ -150,17 +149,16 @@ internal class TenantService
 
         List<RolePermission> roleClaims = new();
 
-        foreach (var role in tenant.Roles)
-        {
-            roleClaims = (from ct in tenant.TenantPermissions
-                          select new RolePermission
-                          (
-                              ct.Id,
-                              role.Id,
-                              ct.ClaimType,
-                              "true"
-                          )).ToList();
-        }
+        //foreach (var role in tenant.Roles)
+        //{
+        //    roleClaims = (from ct in tenant.TenantPermissions
+        //                  select new RolePermission
+        //                  (
+        //                     role.Id,
+        //                      ct.Id
+
+        //                  )).ToList();
+        //}
 
         _dbContext.RolePermissions.AddRange(roleClaims);
 

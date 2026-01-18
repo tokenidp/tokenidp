@@ -16,8 +16,7 @@ internal class ClientEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            IAppLogger<ClientEndpoint> _logger,
-            ClientService clientService) =>
+            ClientUseCases clientService) =>
         {
             var response = await clientService.GetClients(data);
 
@@ -27,8 +26,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("Clients");
 
         authGroup.MapGet("/{id}", async (int id,
-            IAppLogger<ClientEndpoint> _logger,
-            ClientService clientService) =>
+            ClientUseCases clientService) =>
         {
             if (id <= 0)
             {
@@ -44,8 +42,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("ClientById");
 
         authGroup.MapPost("/", async (CreateUpdateClient client,
-            IAppLogger<ClientEndpoint> _logger,
-            ClientService clientService) =>
+            ClientUseCases clientService) =>
         {
             var response = await clientService.CreateClient(client);
 
@@ -57,8 +54,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("CreateClient");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateClient client,
-            IAppLogger<ClientEndpoint> _logger,
-            ClientService clientService) =>
+            ClientUseCases clientService) =>
         {
             if (id != client.Id)
             {

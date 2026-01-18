@@ -9,7 +9,7 @@ public class UserRolePermission
     public int Sequence { get; private set; }
     public string Permissionkey { get; private set; }
     public string PermissionName { get; private set; }
-    public string PermissionValue { get; private set; }
+    public bool IsAllowed { get; private set; }
     public string? Icon { get; private set; }
     public string? AccessUrl { get; private set; }
     public string RoleName { get; private set; }

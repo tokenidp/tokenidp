@@ -25,4 +25,56 @@ internal sealed class RoleStore : IRoleStore
 
         return userRoles;
     }
+
+    public async Task<ApiResult<bool>> HasPermission(int userId, string claim)
+    {
+        _logger.LogDebug("Checking authorization for user {UserId} and claim {Claim}", userId, claim);
+
+        var cacheKey = CacheKeys.USER_CLAIM.FormatCacheKey(userId, claim);
+
+        var hasPermission = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+            var claimValue = await _dbContext.UserRolePermissions
+              .Where(c => c.UserId == userId
+                           && c.Permissionkey == claim
+                           && c.IsAllowed)
+              .Select(c => c.IsAllowed)
+              .FirstOrDefaultAsync();
+
+            return claimValue;
+
+        }, new TimeSpan(0, 15, 0));
+
+        _logger.LogDebug("Cache hit for claim authorization {CacheKey}", cacheKey);
+
+        return ApiResult<bool>.Success(hasPermission);
+    }
+
+    public async Task<ApiResult<bool>> HasRole(int userId, string role)
+    {
+        _logger.LogDebug("Checking role membership for user {UserId} and role {Role}", userId, role);
+
+        var cacheKey = CacheKeys.USER_ROLE.FormatCacheKey(userId, role);
+
+        var hasAssignedRole = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+
+            var assignedRole = await (from ur in _dbContext.UserRoles
+                                      join r in _dbContext.Roles on ur.RoleId equals r.Id
+                                      where ur.UserId == userId
+                                        && r.Name == role
+                                        && r.IsDeleted != true
+                                        && r.IsActive != false
+                                      select r.Name).FirstOrDefaultAsync();
+
+            _logger.LogDebug("Cached role membership for {CacheKey}", cacheKey);
+
+            return !string.IsNullOrEmpty(assignedRole);
+
+        }, new TimeSpan(0, 15, 0));
+
+        _logger.LogDebug("Cache hit for role membership {CacheKey}", cacheKey);
+
+        return ApiResult<bool>.Success(hasAssignedRole);
+    }
 }

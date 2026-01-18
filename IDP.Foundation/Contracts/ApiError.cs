@@ -1,6 +1,6 @@
 ﻿namespace IDP.Foundation.Contracts;
 
-public class ApiError
+public sealed class ApiError
 {
     public string Code { get; private set; }
     public string CorrelationId { get; private set; }

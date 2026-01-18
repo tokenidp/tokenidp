@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core.Clients;
+﻿namespace Admin.Core.Clients;
 
 internal class ClientDto
 {
@@ -14,7 +12,7 @@ internal class ClientDto
         ClientType = client.ClientType,
         AppType = client.AppType,
         AccessTokenType = client.TokenType,
-        IsActive = client.IsActive      
+        IsActive = client.IsActive
     };
 
 

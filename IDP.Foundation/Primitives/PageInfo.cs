@@ -2,7 +2,6 @@
 
 public abstract class PageInfo
 {
-    public int TenantId { get; set; }
     public int PageNumber { get; set; }
     public int PageSize { get; set; }
     public string SortOrder { get; set; }

@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Roles;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Admin.Core.Endpoints;
 
@@ -15,11 +16,11 @@ internal class RoleEndpoint : IEndpointDefinition
             })
             .AddEndpointFilter<EndpointValidationFilter>();
 
-        authGroup.MapPost("/list", async (SearchData data,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapPost("/list", async ([FromBody] SearchData data,
+            [FromServices] GetRoleUseCase roleService,
+            HttpContext httpContext) =>
         {
-            var response = await roleService.GerRoles(data);
+            var response = await roleService.GerRoles(data, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
@@ -27,8 +28,8 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("Roles");
 
         authGroup.MapGet("/{id}", async (int id,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
+            [FromServices] GetRoleUseCase roleService,
+            HttpContext httpContext) =>
         {
             if (id <= 0)
             {
@@ -36,29 +37,33 @@ internal class RoleEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            var response = await roleService.GetRoleById(id);
+            var response = await roleService.GetRoleById(id, httpContext.RequestAborted);
 
-            return EndpointResultMapper.ToOkOrError(response);
+            var location = response.IsSuccess
+                ? $"admin/role/{response.Value?.Id}"
+                : string.Empty;
+
+            return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("RoleById")
         .WithTags("RoleById");
 
-        authGroup.MapPost("/", async (CreateUpdateRole role,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapPost("/", async ([FromBody] CreateUpdateRole role,
+            [FromServices] CreateUpdateRoleUseCase roleService,
+            HttpContext httpContext) =>
         {
-            var response = await roleService.CreateRole(role);
+            var response = await roleService.CreateRole(role, httpContext.RequestAborted);
 
-            var location = response.IsSuccess ? $"role/{role.Name}" : string.Empty;
+            var location = response.IsSuccess ? $"role/{role.RoleName}" : string.Empty;
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
         .WithName("CreateRole")
         .WithTags("CreateRole");
 
-        authGroup.MapPut("/{id}", async (int id, CreateUpdateRole role,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
+        authGroup.MapPut("/{id}", async (int id, [FromBody] CreateUpdateRole role,
+            [FromServices] CreateUpdateRoleUseCase roleService,
+            HttpContext httpContext) =>
         {
             if (id != role.Id)
             {
@@ -66,7 +71,7 @@ internal class RoleEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await roleService.UpdateRole(id, role);
+            var response = await roleService.UpdateRole(id, role, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
@@ -74,8 +79,7 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("UpdateRole");
 
         authGroup.MapDelete("/{id}", async (int id,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
+            [FromServices] CreateUpdateRoleUseCase roleService) =>
         {
             if (id <= 0)
             {
@@ -89,17 +93,5 @@ internal class RoleEndpoint : IEndpointDefinition
         })
         .WithName("DeleteRole")
         .WithTags("DeleteRole");
-
-
-        authGroup.MapPut("/{id}/permissions", async (int id, RolePermissionsUpdateRequest request,
-            IAppLogger<RoleEndpoint> _logger,
-            RoleService roleService) =>
-        {
-            var response = await roleService.UpdateRolePermissions(id, request);
-
-            return EndpointResultMapper.ToNoContentOrError(response);
-        })
-        .WithName("UpdateRolePermissions")
-        .WithTags("RolePermissions");
     }
 }

@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core.Tenants;
+﻿namespace Admin.Core.Tenants;
 
 internal class TenantSearchDto
 {

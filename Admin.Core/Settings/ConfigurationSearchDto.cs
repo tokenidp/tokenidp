@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core.Configurations;
+﻿namespace Admin.Core.Configurations;
 
 internal class ConfigurationSearchDto
 {

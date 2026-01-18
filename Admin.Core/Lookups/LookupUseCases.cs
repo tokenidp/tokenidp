@@ -1,12 +1,12 @@
 ﻿namespace Admin.Core.Lookups;
 
-internal class LookupService
+internal class LookupUseCases
 {
     private readonly IApplicationDbContext _applicationDbContext;
     private readonly ICache _cache;
-    private readonly IAppLogger<LookupService> _logger;
+    private readonly IAppLogger<LookupUseCases> _logger;
 
-    public LookupService(IApplicationDbContext applicationDbContext, ICache cache, IAppLogger<LookupService> logger)
+    public LookupUseCases(IApplicationDbContext applicationDbContext, ICache cache, IAppLogger<LookupUseCases> logger)
     {
         _applicationDbContext = applicationDbContext;
         _cache = cache;

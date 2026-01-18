@@ -1,6 +1,4 @@
-﻿using System.Linq.Expressions;
-
-namespace Admin.Core.Users;
+﻿namespace Admin.Core.Users;
 
 internal class UserSearchDto
 {

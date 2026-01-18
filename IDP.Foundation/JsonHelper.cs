@@ -67,23 +67,59 @@ public class PrivateSetterConverterFactory : JsonConverterFactory
 
 public class PrivateSetterConverter<T> : JsonConverter<T>
 {
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override T Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options)
     {
-        var instance = (T)Activator.CreateInstance(typeToConvert, nonPublic: true);
+        var instance = (T)Activator.CreateInstance(typeToConvert, nonPublic: true)!;
+
         using var doc = JsonDocument.ParseValue(ref reader);
-        foreach (var prop in typeToConvert.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
+
+        var safeOptions = new JsonSerializerOptions(options);
+
+        for (int i = safeOptions.Converters.Count - 1; i >= 0; i--)
+        {
+            if (safeOptions.Converters[i] is PrivateSetterConverterFactory)
+            {
+                safeOptions.Converters.RemoveAt(i);
+            }
+        }
+
+        foreach (var prop in typeToConvert.GetProperties(
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
         {
             if (doc.RootElement.TryGetProperty(prop.Name, out var jsonProp))
             {
-                var value = JsonSerializer.Deserialize(jsonProp.GetRawText(), prop.PropertyType, options);
+                var value = JsonSerializer.Deserialize(
+                    jsonProp.GetRawText(),
+                    prop.PropertyType,
+                    safeOptions);
+
                 prop.SetValue(instance, value);
             }
         }
+
         return instance;
     }
 
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+    public override void Write(
+    Utf8JsonWriter writer,
+    T value,
+    JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, value, options);
+        var safeOptions = new JsonSerializerOptions(options);
+
+        // Remove the FACTORY to stop re-creation
+        for (int i = safeOptions.Converters.Count - 1; i >= 0; i--)
+        {
+            if (safeOptions.Converters[i] is PrivateSetterConverterFactory)
+            {
+                safeOptions.Converters.RemoveAt(i);
+            }
+        }
+
+        JsonSerializer.Serialize(writer, value, safeOptions);
     }
+
 }

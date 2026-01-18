@@ -2,15 +2,15 @@
 
 namespace Admin.Core.Configurations;
 
-internal class ConfigurationService
+internal class ConfigurationUseCases
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IAppLogger<ConfigurationService> _logger;
+    private readonly IAppLogger<ConfigurationUseCases> _logger;
 
-    public ConfigurationService(IApplicationDbContext dbContext,
+    public ConfigurationUseCases(IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
-        IAppLogger<ConfigurationService> logger)
+        IAppLogger<ConfigurationUseCases> logger)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
@@ -25,7 +25,6 @@ internal class ConfigurationService
         Configuration configuration = new(_currentUserService.TenantId,
             request.ConfigKey,
             request.ConfigValue,
-            request.IsDisplay,
             request.IsEditable);
 
         _dbContext.Configurations.Add(configuration);

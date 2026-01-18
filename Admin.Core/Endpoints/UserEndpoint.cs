@@ -11,14 +11,13 @@ internal class UserEndpoint : IEndpointDefinition
     {
         var authGroup = app.MapGroup("/admin/user")
             .RequireAuthorization(new AuthorizeAttribute
-             {
-                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
-             })
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            })
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             var response = await userService.GetUsers(data);
 
@@ -28,8 +27,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("Users");
 
         authGroup.MapGet("/{id}", async (int id,
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             if (id <= 0)
             {
@@ -45,8 +43,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UserById");
 
         authGroup.MapPost("/", async (CreateUpdateUser user,
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             var response = await userService.CreateUser(user);
 
@@ -58,8 +55,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("CreateUser");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateUser user,
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             if (id != user.Id)
             {
@@ -75,8 +71,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUser");
 
         authGroup.MapPatch("/{id}", async (int id, UpdateUserStatus user,
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             if (id != user.Id)
             {
@@ -92,8 +87,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUserStatus");
 
         authGroup.MapGet("/userclaims", async (
-            IAppLogger<UserEndpoint> _logger,
-            UserService userService) =>
+            UserUseCases userService) =>
         {
             var response = await userService.GetUserPermissions();
 

@@ -85,7 +85,8 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddAuthentication(builder.Configuration, builder.Environment);
 
-        builder.Services.ConfigureHttpJsonOptions(options => {
+        builder.Services.ConfigureHttpJsonOptions(options =>
+        {
             options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         });

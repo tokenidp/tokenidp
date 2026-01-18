@@ -2,5 +2,5 @@
 
 public class SearchData : PageInfo
 {
-    public IEnumerable<SearchCriteria> SearchCriterias { get; set; }
+    public List<SearchCriteria> SearchCriterias { get; set; } = new List<SearchCriteria>();
 }

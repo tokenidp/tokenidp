@@ -1,4 +1,4 @@
-﻿using IDP.Domain.AggregateRoots;
+﻿using IDP.Domain.AggregateRoots.Permissions;
 
 namespace IDP.Infrastructure.Config;
 
@@ -9,5 +9,10 @@ internal class PermissionConfig : IEntityTypeConfiguration<Permission>
         builder.HasKey(p => new { p.Id });
 
         builder.ToTable("Permissions");
+
+        builder.Property(p => p.ControlType)
+               .HasConversion(
+                   v => v.ToString(),
+                   v => Enum.Parse<ControlTypes>(v));
     }
 }

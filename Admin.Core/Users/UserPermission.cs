@@ -1,4 +1,4 @@
-﻿using Admin.Core.Roles;
+﻿using Admin.Core.Permissions;
 
 namespace Admin.Core.Users;
 
@@ -8,7 +8,7 @@ internal class UserPermission
     public int TenantId { get; private set; }
     public string UserName { get; private set; }
     public string LandingPage { get; private set; }
-    public IEnumerable<PermissionDto> Permissions { get; private set; }
+    public IEnumerable<PermissionInfo> Permissions { get; private set; }
 
     private UserPermission() { }
 
@@ -17,7 +17,7 @@ internal class UserPermission
         int tenantId,
         string name,
         string page,
-        IEnumerable<PermissionDto> permissions)
+        IEnumerable<PermissionInfo> permissions)
     {
         return new UserPermission()
         {

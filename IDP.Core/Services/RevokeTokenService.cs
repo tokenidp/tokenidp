@@ -29,7 +29,7 @@ internal sealed class RevokeTokenService
 
         _logger.LogDebug("Marked token as revoked at {RevocationTime}", DateTime.UtcNow);
 
-       await _tokenStore.RevokeToken(referenceToken);
+        await _tokenStore.RevokeToken(referenceToken);
 
         _logger.LogInfo("Successfully revoked refresh token for user {UserId}", referenceToken.Id);
     }

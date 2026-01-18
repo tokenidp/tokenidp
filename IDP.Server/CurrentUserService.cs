@@ -1,5 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Users;
-using IDP.Foundation.Abstractions;
+﻿using IDP.Foundation.Abstractions;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 

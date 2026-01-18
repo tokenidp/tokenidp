@@ -1,18 +1,11 @@
 ﻿using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Permissions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
 
-internal sealed class ApplicationDbContext : IdentityDbContext<
-    User,
-    Role,
-    int,
-    IdentityUserClaim<int>,
-    UserRole,
-    IdentityUserLogin<int>,
-    RolePermission,
-    IdentityUserToken<int>>, IApplicationDbContext
+internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly AuditService _auditService;
@@ -26,7 +19,6 @@ internal sealed class ApplicationDbContext : IdentityDbContext<
     }
 
     public DbSet<Permission> Permissions { get; set; }
-    public DbSet<TenantPermission> TenantPermissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -47,6 +39,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<
     public DbSet<RoleSearch> RolesSearch { get; set; }
     public DbSet<TenantSearch> TenantsSearch { get; set; }
     public DbSet<ConfigurationSearch> ConfigurationsSearch { get; set; }
+    public DbSet<UserRole> UserRoles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -54,7 +47,6 @@ internal sealed class ApplicationDbContext : IdentityDbContext<
 
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-        builder.Entity<RolePermission>().ToTable("RolePermissions");
 
         builder.Entity<UserRole>().ToTable("UserRoles");
 

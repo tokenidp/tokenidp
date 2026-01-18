@@ -1,13 +1,13 @@
 ﻿using IDP.Domain;
 using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Permissions;
 
 namespace Admin.Core;
 
 public interface IApplicationDbContext
 {
     public DbSet<Permission> Permissions { get; set; }
-    public DbSet<TenantPermission> TenantPermissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
