@@ -1,9 +1,8 @@
-﻿
-namespace Admin.Core;
+﻿namespace Admin.Core.Common;
 
 public static class QueryablePaginationExtensions
 {
-    public static async Task<IDP.Foundation.Primitives.PaginatedList<T>> ToPaginatedListAsync<T>(
+    public static async Task<PaginatedList<T>> ToPaginatedListAsync<T>(
         this IQueryable<T> source,
         int pageIndex,
         int pageSize,
@@ -17,6 +16,6 @@ public static class QueryablePaginationExtensions
                           .Take(pageSize)
                           .ToListAsync();
 
-        return new IDP.Foundation.Primitives.PaginatedList<T>(items, count, pageIndex, pageSize);
+        return new PaginatedList<T>(items, count, pageIndex, pageSize);
     }
 }

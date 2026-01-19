@@ -16,6 +16,16 @@ internal class UserConfig : IEntityTypeConfiguration<User>
         .HasForeignKey(ur => ur.UserId)
         .IsRequired();
 
+        builder.HasMany(e => e.UserAddresses)
+        .WithOne(e => e.User)
+        .HasForeignKey(ur => ur.UserId)
+        .IsRequired();
+
+        builder.HasMany(e => e.UserContacts)
+          .WithOne(e => e.User)
+          .HasForeignKey(ur => ur.UserId)
+          .IsRequired();
+
         builder.Property(p => p.StatusId)
         .HasConversion(
         v => v.ToString(),

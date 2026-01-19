@@ -31,6 +31,8 @@ public interface IApplicationDbContext
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<UserAddress> UserAddresses { get; set; }
+    public DbSet<UserContact> UserContacts { get; set; }
 
     int SaveChanges();
 

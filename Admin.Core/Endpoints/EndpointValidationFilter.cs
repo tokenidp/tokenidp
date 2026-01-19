@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Admin.Core;
+namespace Admin.Core.Endpoints;
 
 internal sealed class EndpointValidationFilter : IEndpointFilter
 {

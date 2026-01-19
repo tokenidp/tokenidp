@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Roles;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Roles;
 
 internal class GetRoleUseCase
 {
@@ -55,7 +57,7 @@ internal class GetRoleUseCase
            .Select(RoleList.Projection)
            .ApplyFilter(request.SearchCriterias)
            .ApplySort(request.SortColumn, request.SortOrder)
-           .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+           .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} roles", roles.TotalCount);
 

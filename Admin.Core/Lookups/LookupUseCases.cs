@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Lookups;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Lookups;
 
 internal class LookupUseCases
 {

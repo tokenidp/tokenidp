@@ -17,13 +17,16 @@ public static class DependencyInjection
     {
         services.AddScoped<CreateUpdateRoleUseCase>();
         services.AddScoped<GetRoleUseCase>();
-        services.AddScoped<ClientUseCases>();
-        services.AddScoped<TenantUseCases>();
-        services.AddScoped<ConfigurationUseCases>();
         services.AddScoped<CreateUpdatePermissionUseCase>();
         services.AddScoped<GetPermissionUseCase>();
         services.AddScoped<GetPermissionLookupsUseCase>();
-        services.AddScoped<UserUseCases>();
+        services.AddScoped<GetUserUseCase>();
+        services.AddScoped<CreateUpdateUserUseCase>();
+        services.AddScoped<GetUserLookupsUseCase>();
+        services.AddScoped<GetUserPermissionsUseCase>();
         services.AddScoped<LookupUseCases>();
+        services.AddScoped<ClientUseCases>();
+        services.AddScoped<TenantUseCases>();
+        services.AddScoped<ConfigurationUseCases>();
     }
 }

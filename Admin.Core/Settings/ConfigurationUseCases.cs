@@ -1,4 +1,5 @@
-﻿using IDP.Domain.AggregateRoots;
+﻿using Admin.Core.Common;
+using IDP.Domain.AggregateRoots;
 
 namespace Admin.Core.Configurations;
 
@@ -92,7 +93,7 @@ internal class ConfigurationUseCases
            .Select(ConfigurationSearchDto.Projection)
            .ApplyFilter(request.SearchCriterias)
            .ApplySort(request.SortColumn, request.SortOrder)
-           .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+           .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} configurations", configurations.TotalCount);
 

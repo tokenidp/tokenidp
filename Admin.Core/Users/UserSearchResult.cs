@@ -1,9 +1,9 @@
 ﻿namespace Admin.Core.Users;
 
-internal class UserSearchDto
+internal class UserSearchResult
 {
-    internal static Expression<Func<UserSearch, UserSearchDto>> Projection =>
-        user => new UserSearchDto()
+    internal static Expression<Func<UserSearch, UserSearchResult>> Projection =>
+        user => new UserSearchResult()
         {
             Id = user.Id,
             TenantId = user.TenantId,

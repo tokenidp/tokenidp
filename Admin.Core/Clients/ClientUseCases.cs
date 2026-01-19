@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Clients;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Clients;
 
 internal class ClientUseCases
 {
@@ -86,7 +88,7 @@ internal class ClientUseCases
             .Select(ClientDto.Projection)
             .ApplyFilter(request.SearchCriterias)
             .ApplySort(request.SortColumn, request.SortOrder)
-            .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} clients", clients.TotalCount);
 

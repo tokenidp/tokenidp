@@ -1,4 +1,5 @@
 ﻿using Admin.Core;
+using Admin.Core.Endpoints;
 using IDP.Core;
 using IDP.Foundation.Abstractions;
 using IDP.Foundation.Options;

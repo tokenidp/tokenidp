@@ -9,13 +9,13 @@ public abstract class BaseEntity : IBaseEntity, IAuditable
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedOn { get; private set; }
 
-    public void SetCreatedByAndCreatedOn(int userId)
+    public void SetCreated(int userId)
     {
         CreatedOn = DateTime.UtcNow;
         CreatedBy = userId;
     }
 
-    public void SetUpdatedByAndUpdatedOn(int userId)
+    public void SetUpdated(int userId)
     {
         UpdatedOn = DateTime.UtcNow;
         UpdatedBy = userId;

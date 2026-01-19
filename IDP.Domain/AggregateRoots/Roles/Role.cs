@@ -175,13 +175,13 @@ public class Role : IdentityRole<int>, IBaseEntity, ITenant, IAggregateRoot
         return Result.Success(id: 0);
     }
 
-    public void SetCreatedByAndCreatedOn(int userId)
+    public void SetCreated(int userId)
     {
         CreatedOn = DateTime.UtcNow;
         CreatedBy = userId;
     }
 
-    public void SetUpdatedByAndUpdatedOn(int userId)
+    public void SetUpdated(int userId)
     {
         UpdatedOn = DateTime.UtcNow;
         UpdatedBy = userId;

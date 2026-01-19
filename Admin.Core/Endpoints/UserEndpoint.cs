@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
-
 namespace Admin.Core.Endpoints;
 
 internal class UserEndpoint : IEndpointDefinition
@@ -17,9 +16,10 @@ internal class UserEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            UserUseCases userService) =>
+            GetUserUseCase userService,
+            HttpContext httpContext) =>
         {
-            var response = await userService.GetUsers(data);
+            var response = await userService.GetUsers(data, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
@@ -27,7 +27,8 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("Users");
 
         authGroup.MapGet("/{id}", async (int id,
-            UserUseCases userService) =>
+            GetUserUseCase userService,
+            HttpContext httpContext) =>
         {
             if (id <= 0)
             {
@@ -35,17 +36,29 @@ internal class UserEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            var response = await userService.GetUserById(id);
+            var response = await userService.GetUserById(id, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("UserById")
         .WithTags("UserById");
 
-        authGroup.MapPost("/", async (CreateUpdateUser user,
-            UserUseCases userService) =>
+        authGroup.MapGet("userlookups", async (GetUserLookupsUseCase userService,
+            HttpContext httpContext) =>
         {
-            var response = await userService.CreateUser(user);
+            var response = await userService.GetUserLookups(httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+
+        })
+        .WithName("UserLookups")
+        .WithTags("UserLookups");
+
+        authGroup.MapPost("/", async (UserDetail user,
+            CreateUpdateUserUseCase userService,
+            HttpContext httpContext) =>
+        {
+            var response = await userService.CreateUser(user, httpContext.RequestAborted);
 
             var location = response.IsSuccess ? $"user/{response.Value}" : string.Empty;
 
@@ -54,8 +67,9 @@ internal class UserEndpoint : IEndpointDefinition
         .WithName("CreateUser")
         .WithTags("CreateUser");
 
-        authGroup.MapPut("/{id}", async (int id, CreateUpdateUser user,
-            UserUseCases userService) =>
+        authGroup.MapPut("/{id}", async (int id, UserDetail user,
+            CreateUpdateUserUseCase userService,
+            HttpContext httpContext) =>
         {
             if (id != user.Id)
             {
@@ -63,7 +77,7 @@ internal class UserEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await userService.UpdateUser(id, user);
+            var response = await userService.UpdateUser(id, user, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
@@ -71,7 +85,8 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUser");
 
         authGroup.MapPatch("/{id}", async (int id, UpdateUserStatus user,
-            UserUseCases userService) =>
+            CreateUpdateUserUseCase userService,
+            HttpContext httpContext) =>
         {
             if (id != user.Id)
             {
@@ -79,7 +94,7 @@ internal class UserEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await userService.UpdateUserStatus(id, user);
+            var response = await userService.UpdateUserStatus(id, user, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
@@ -87,7 +102,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUserStatus");
 
         authGroup.MapGet("/userclaims", async (
-            UserUseCases userService) =>
+            GetUserPermissionsUseCase userService) =>
         {
             var response = await userService.GetUserPermissions();
 

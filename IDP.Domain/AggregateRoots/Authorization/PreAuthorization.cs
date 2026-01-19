@@ -19,6 +19,8 @@ public class PreAuthorization
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedOn { get; private set; }
 
+    private PreAuthorization() { }
+
     public PreAuthorization(int userId,
         string mfaCode,
         string correlationId,

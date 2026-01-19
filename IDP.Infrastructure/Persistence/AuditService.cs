@@ -37,7 +37,7 @@ internal sealed class AuditService
                 entry.State == EntityState.Deleted ? null : _jsonHelper.SerializeObject(entry.CurrentValues, serializeSettings)
             );
 
-            auditLog.SetCreatedByAndCreatedOn(_currentUserService.UserId);
+            auditLog.SetCreated(_currentUserService.UserId);
 
             context.AuditLogs.Add(auditLog);
         }

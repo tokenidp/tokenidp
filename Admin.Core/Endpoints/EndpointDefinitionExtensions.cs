@@ -1,6 +1,4 @@
-﻿using Admin.Core.Endpoints;
-
-namespace Admin.Core;
+﻿namespace Admin.Core.Endpoints;
 
 public static class EndpointDefinitionExtensions
 {

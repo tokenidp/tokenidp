@@ -1,18 +1,15 @@
 namespace IDP.Domain;
 
-public partial class RefreshToken
+public partial class RefreshToken : BaseEntity
 {
-    [Key]
-    public int Id { get; private set; }
     public int UserId { get; private set; }
     public string Token { get; private set; }
     public DateTime Expires { get; private set; }
     public string CreatedByIp { get; private set; }
     public DateTime? Revoked { get; private set; }
-    public string RevokedByIp { get; private set; }
-    public string ReasonRevoked { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public int CreatedBy { get; private set; }
+    public string? RevokedByIp { get; private set; }
+    public string? ReasonRevoked { get; private set; }
+
     private RefreshToken() { }
 
     public RefreshToken(int userId,
@@ -24,8 +21,6 @@ public partial class RefreshToken
         Token = token;
         CreatedByIp = ipAddress;
         Expires = DateTime.UtcNow.AddDays(expiry);
-        CreatedBy = userId;
-        CreatedOn = DateTime.UtcNow;
     }
 
     public void RevokeToken(string ipAddress,

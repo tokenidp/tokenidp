@@ -1,20 +1,11 @@
-﻿namespace Admin.Core;
+﻿namespace Admin.Core.Common;
 
 internal static class QueryableExtensions
 {
-    public static Task<PaginatedList<TDestination>> PaginatedTo<TDestination>(
-        this IQueryable<TDestination> queryable,
-        int pageNumber,
-        int pageSize,
-        bool searchAll)
-    {
-        return PaginatedList<TDestination>.CreateAsync(queryable, pageNumber, pageSize, searchAll);
-    }
-
     public static IQueryable<T> ApplySort<T>(
-       this IQueryable<T> query,
-       string column,
-       string order)
+        this IQueryable<T> query,
+        string column,
+        string order)
     {
         if (string.IsNullOrWhiteSpace(column))
             return query;
@@ -39,8 +30,8 @@ internal static class QueryableExtensions
     }
 
     public static IQueryable<T> ApplyFilter<T>(
-    this IQueryable<T> query,
-    IEnumerable<SearchCriteria> criteria)
+        this IQueryable<T> query,
+        IEnumerable<SearchCriteria> criteria)
     {
         if (criteria == null || !criteria.Any())
             return query;

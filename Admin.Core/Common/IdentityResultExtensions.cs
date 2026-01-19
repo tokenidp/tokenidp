@@ -1,4 +1,4 @@
-﻿namespace Admin.Core;
+﻿namespace Admin.Core.Common;
 
 internal static class IdentityResultExtensions
 {

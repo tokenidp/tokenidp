@@ -28,13 +28,13 @@ public class AuditLog : IBaseEntity
         NewValues = newValue;
     }
 
-    public void SetCreatedByAndCreatedOn(int userId)
+    public void SetCreated(int userId)
     {
         CreatedOn = DateTime.UtcNow;
         CreatedBy = userId;
     }
 
-    public void SetUpdatedByAndUpdatedOn(int userId)
+    public void SetUpdated(int userId)
     {
         UpdatedOn = DateTime.UtcNow;
         UpdatedBy = userId;

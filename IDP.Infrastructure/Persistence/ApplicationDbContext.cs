@@ -40,6 +40,8 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<TenantSearch> TenantsSearch { get; set; }
     public DbSet<ConfigurationSearch> ConfigurationsSearch { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
+    public DbSet<UserAddress> UserAddresses { get; set; }
+    public DbSet<UserContact> UserContacts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -95,6 +97,18 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
         builder.Entity<LookupType>().ToTable("LookupTypes");
 
         builder.Entity<LookupValue>().ToTable("LookupValues");
+
+        builder.Entity<UserAddress>(entity =>
+        {
+            entity.ToTable("UserAddresses");
+
+            entity.Property(p => p.AddressType)
+                .HasConversion(
+                    v => v.ToString(),
+                    v => Enum.Parse<AddressTypes>(v));
+        });
+
+        builder.Entity<UserContact>().ToTable("UserContacts");
     }
 
     /// <summary>
@@ -142,7 +156,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
             {
                 case EntityState.Added:
 
-                    entry.Entity.SetCreatedByAndCreatedOn(_currentUserService.UserId);
+                    entry.Entity.SetCreated(_currentUserService.UserId);
                     break;
 
                 case EntityState.Modified:
@@ -150,7 +164,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
                     entry.Property(x => x.CreatedBy).IsModified = false;
                     entry.Property(x => x.CreatedOn).IsModified = false;
 
-                    entry.Entity.SetUpdatedByAndUpdatedOn(_currentUserService.UserId);
+                    entry.Entity.SetUpdated(_currentUserService.UserId);
                     break;
             }
         }

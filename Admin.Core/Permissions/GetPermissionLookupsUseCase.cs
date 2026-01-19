@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Permissions;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Permissions;
 
 internal sealed class GetPermissionLookupsUseCase
 {

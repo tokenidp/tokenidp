@@ -1,4 +1,5 @@
-﻿using Admin.Core.Roles;
+﻿using Admin.Core.Common;
+using Admin.Core.Roles;
 
 namespace Admin.Core.Permissions;
 
@@ -77,7 +78,7 @@ internal class GetPermissionUseCase
             .Select(PermissionList.Projection)
             .ApplyFilter(criterias)
             .ApplySort(request.SortColumn, request.SortOrder)
-            .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} roles", permissions.TotalCount);
 

@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Tenants;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Tenants;
 
 internal class TenantUseCases
 {
@@ -117,7 +119,7 @@ internal class TenantUseCases
            .Select(TenantSearchDto.Projection)
            .ApplyFilter(request.SearchCriterias)
            .ApplySort(request.SortColumn, request.SortOrder)
-           .PaginatedTo(request.PageNumber, request.PageSize, request.SearchAll);
+           .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} tenants", users.TotalCount);
 

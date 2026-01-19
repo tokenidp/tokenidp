@@ -7,7 +7,7 @@ public interface IBaseEntity
     public int? UpdatedBy { get; }
     public DateTime? UpdatedOn { get; }
 
-    void SetCreatedByAndCreatedOn(int userId);
+    void SetCreated(int userId);
 
-    void SetUpdatedByAndUpdatedOn(int userId);
+    void SetUpdated(int userId);
 }

@@ -1,4 +1,4 @@
-﻿namespace Admin.Core;
+﻿namespace Admin.Core.Common;
 
 public static class CacheKeys
 {
