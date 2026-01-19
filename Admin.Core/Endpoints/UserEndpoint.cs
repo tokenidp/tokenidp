@@ -101,14 +101,14 @@ internal class UserEndpoint : IEndpointDefinition
         .WithName("UpdateUserStatus")
         .WithTags("UpdateUserStatus");
 
-        authGroup.MapGet("/userclaims", async (
+        authGroup.MapGet("/permissions", async (
             GetUserPermissionsUseCase userService) =>
         {
             var response = await userService.GetUserPermissions();
 
             return EndpointResultMapper.ToOkOrError(response);
         })
-        .WithName("UserClaims")
-        .WithTags("UserClaims");
+        .WithName("UserPermissions")
+        .WithTags("UserPermissions");
     }
 }
