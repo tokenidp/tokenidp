@@ -16,9 +16,9 @@ internal class ClientEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            ClientUseCases clientService) =>
+            GetClientUseCase useCase) =>
         {
-            var response = await clientService.GetClients(data);
+            var response = await useCase.GetClients(data);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
@@ -26,7 +26,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("Clients");
 
         authGroup.MapGet("/{id}", async (int id,
-            ClientUseCases clientService) =>
+            GetClientUseCase useCase) =>
         {
             if (id <= 0)
             {
@@ -34,17 +34,28 @@ internal class ClientEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            var response = await clientService.GetClientById(id);
+            var response = await useCase.GetClientById(id);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("ClientById")
         .WithTags("ClientById");
 
-        authGroup.MapPost("/", async (CreateUpdateClient client,
-            ClientUseCases clientService) =>
+        authGroup.MapGet("clientlookups", async (GetClientLookupsUseCase useCase,
+            HttpContext httpContext) =>
         {
-            var response = await clientService.CreateClient(client);
+            var response = await useCase.GetClientLookups(httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("ClientLookups")
+        .WithTags("ClientLookups");
+
+        authGroup.MapPost("/", async (CreateUpdateClient client,
+            CreateUpdateClientUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.CreateClient(client, httpContext.RequestAborted);
 
             var location = response.IsSuccess ? $"client/{response.Value}" : string.Empty;
 
@@ -54,7 +65,8 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("CreateClient");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateClient client,
-            ClientUseCases clientService) =>
+            CreateUpdateClientUseCase useCase,
+            HttpContext httpContext) =>
         {
             if (id != client.Id)
             {
@@ -62,11 +74,28 @@ internal class ClientEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await clientService.UpdateClient(id, client);
+            var response = await useCase.UpdateClient(id, client, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateClient")
         .WithTags("UpdateClient");
+
+        authGroup.MapDelete("/{id}", async (int id,
+            CreateUpdateClientUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.DeleteClient(id, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .WithName("DeleteClient")
+        .WithTags("DeleteClient");
     }
 }

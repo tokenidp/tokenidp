@@ -15,6 +15,9 @@ public static class DependencyInjection
     public static void AddAdminServices(this IServiceCollection services,
          IConfiguration configuration)
     {
+        services.AddScoped<CreateUpdateClientUseCase>();
+        services.AddScoped<GetClientLookupsUseCase>();
+        services.AddScoped<GetClientUseCase>();
         services.AddScoped<CreateUpdateRoleUseCase>();
         services.AddScoped<GetRoleUseCase>();
         services.AddScoped<CreateUpdatePermissionUseCase>();
@@ -25,7 +28,6 @@ public static class DependencyInjection
         services.AddScoped<GetUserLookupsUseCase>();
         services.AddScoped<GetUserPermissionsUseCase>();
         services.AddScoped<LookupUseCases>();
-        services.AddScoped<ClientUseCases>();
         services.AddScoped<TenantUseCases>();
         services.AddScoped<ConfigurationUseCases>();
     }

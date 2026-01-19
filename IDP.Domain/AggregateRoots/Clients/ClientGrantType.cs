@@ -1,4 +1,5 @@
-﻿using IDP.Domain.Specifications;
+﻿using IDP.Domain.Base;
+using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Clients;
 
@@ -12,5 +13,16 @@ public class ClientGrantType : BaseEntity
     private ClientGrantType()
     {
 
+    }
+
+    private ClientGrantType(GrantTypes grantType)
+    {
+        AllowedGrantType = grantType;
+    }
+
+    public static Result Create(GrantTypes grantType, out ClientGrantType? clientGrantType)
+    {
+        clientGrantType = new ClientGrantType(grantType);
+        return Result.Success(0);
     }
 }

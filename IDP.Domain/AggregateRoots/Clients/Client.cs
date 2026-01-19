@@ -1,8 +1,9 @@
-﻿using IDP.Domain.Specifications;
+﻿using IDP.Domain.Base;
+using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Clients;
 
-public class Client : BaseEntity, IAggregateRoot, ITenant
+public class Client : BaseEntity, ITenant, IAggregateRoot
 {
     public string ClientId { get; private set; }
     public string ClientName { get; private set; }
@@ -34,7 +35,7 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
 
     }
 
-    public Client(int tenantId,
+    private Client(int tenantId,
         string clientId,
         string clientName,
         string? description,
@@ -78,7 +79,7 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         ClientAudiences = new List<ClientAudience>();
     }
 
-    public void UpdateClient(
+    public Result UpdateClient(
         string clientId,
         string clientName,
         string? description,
@@ -97,6 +98,18 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         int? queueLimit,
         bool? enableITracking)
     {
+        var validation = ValidateInput(
+            clientId,
+            clientName,
+            redirectUri,
+            accessTokenLifetime,
+            authorizationCodeLifetime,
+            refreshTokenExpiration);
+        if (!validation.IsSuccess)
+        {
+            return validation;
+        }
+
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
@@ -114,5 +127,170 @@ public class Client : BaseEntity, IAggregateRoot, ITenant
         TimeWindow = timeWindow;
         QueueLimit = queueLimit;
         EnableITracking = enableITracking;
+
+        return Result.Success(Id);
+    }
+
+    public Result AddSecret(ClientSecret clientSecret)
+    {
+        if (clientSecret == null)
+        {
+            return Result.Failure("client.secret.invalid", "Client secret cannot be empty.");
+        }
+
+        ClientSecrets.Add(clientSecret);
+        return Result.Success(Id);
+    }
+
+    public Result ReplaceScopes(IEnumerable<ClientScope> scopes)
+    {
+        if (scopes == null)
+        {
+            return Result.Success(Id);
+        }
+
+        ClientScopes.Clear();
+        foreach (var scope in scopes)
+        {
+            ClientScopes.Add(scope);
+        }
+
+        return Result.Success(Id);
+    }
+
+    public Result ReplaceGrantTypes(IEnumerable<ClientGrantType> grantTypes)
+    {
+        if (grantTypes == null)
+        {
+            return Result.Success(Id);
+        }
+
+        ClientGrantTypes.Clear();
+        foreach (var grantType in grantTypes)
+        {
+            ClientGrantTypes.Add(grantType);
+        }
+
+        return Result.Success(Id);
+    }
+
+    public Result ReplaceAudiences(IEnumerable<ClientAudience> audiences)
+    {
+        if (audiences == null)
+        {
+            return Result.Success(Id);
+        }
+
+        ClientAudiences.Clear();
+        foreach (var audience in audiences)
+        {
+            ClientAudiences.Add(audience);
+        }
+
+        return Result.Success(Id);
+    }
+
+    public static Result Create(
+        int tenantId,
+        string clientId,
+        string clientName,
+        string? description,
+        ClientTypes clientType,
+        AppTypes appType,
+        TokenTypes tokenType,
+        string redirectUri,
+        string? logoutRedirectUri,
+        bool isActive,
+        int? clientSecretExpiry,
+        int accessTokenLifetime,
+        int authorizationCodeLifetime,
+        int refreshTokenExpiration,
+        int? permitLimit,
+        TimeSpan? timeWindow,
+        int? queueLimit,
+        bool? enableITracking,
+        out Client? client)
+    {
+        client = null;
+
+        var validation = ValidateInput(
+            clientId,
+            clientName,
+            redirectUri,
+            accessTokenLifetime,
+            authorizationCodeLifetime,
+            refreshTokenExpiration);
+        if (!validation.IsSuccess)
+        {
+            return validation;
+        }
+
+        client = new Client(
+            tenantId,
+            clientId.Trim(),
+            clientName.Trim(),
+            description?.Trim(),
+            clientType,
+            appType,
+            tokenType,
+            redirectUri.Trim(),
+            logoutRedirectUri?.Trim(),
+            isActive,
+            clientSecretExpiry,
+            accessTokenLifetime,
+            authorizationCodeLifetime,
+            refreshTokenExpiration,
+            permitLimit,
+            timeWindow,
+            queueLimit,
+            enableITracking);
+
+        return Result.Success(0);
+    }
+
+    private static Result ValidateInput(
+        string clientId,
+        string clientName,
+        string redirectUri,
+        int accessTokenLifetime,
+        int authorizationCodeLifetime,
+        int refreshTokenExpiration)
+    {
+        var validation = ValidateRequired(clientId, "client.id.invalid",
+                "Client Id cannot be empty.")
+            .Combine(ValidateRequired(clientName, "client.name.invalid",
+                "Client name cannot be empty."))
+            .Combine(ValidateRequired(redirectUri, "client.redirect.invalid",
+                "Redirect URI cannot be empty."));
+
+        if (accessTokenLifetime <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.access_token_lifetime.invalid",
+                "Access token lifetime must be greater than zero."));
+        }
+
+        if (authorizationCodeLifetime <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.authorization_code_lifetime.invalid",
+                "Authorization code lifetime must be greater than zero."));
+        }
+
+        if (refreshTokenExpiration <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.refresh_token_expiration.invalid",
+                "Refresh token expiration must be greater than zero."));
+        }
+
+        return validation;
+    }
+
+    private static Result ValidateRequired(string? value, string code, string message)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? Result.Failure(code, message)
+            : Result.Success(0);
     }
 }
