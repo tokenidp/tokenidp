@@ -8,7 +8,7 @@ internal class TenantEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/admin/Tenant")
+        var authGroup = app.MapGroup("/admin/tenant")
             .RequireAuthorization(new AuthorizeAttribute
             {
                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
@@ -16,9 +16,10 @@ internal class TenantEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            TenantUseCases tenantService) =>
+            GetTenantUseCase useCase,
+            HttpContext httpContext) =>
         {
-            var response = await tenantService.GetTenants(data);
+            var response = await useCase.GetTenants(data, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
@@ -26,7 +27,8 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("Tenants");
 
         authGroup.MapGet("/{id}", async (int id,
-            TenantUseCases tenantService) =>
+            GetTenantUseCase useCase,
+            HttpContext httpContext) =>
         {
             if (id <= 0)
             {
@@ -34,19 +36,30 @@ internal class TenantEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            var response = await tenantService.GetTenantById(id);
+            var response = await useCase.GetTenantById(id, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("TenantById")
         .WithTags("TenantById");
 
-        authGroup.MapPost("/", async (CreateUpdateTenant tenant,
-            TenantUseCases tenantService) =>
+        authGroup.MapGet("tenantlookups", async (GetTenantLookupsUseCase useCase,
+            HttpContext httpContext) =>
         {
-            var response = await tenantService.CreateTenant(tenant);
+            var response = await useCase.GetTenantLookups(httpContext.RequestAborted);
 
-            var location = response.IsSuccess ? $"tenant/{tenant.TenantName}" : string.Empty;
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("TenantLookups")
+        .WithTags("TenantLookups");
+
+        authGroup.MapPost("/", async (CreateUpdateTenant tenant,
+            CreateUpdateTenantUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.CreateTenant(tenant, httpContext.RequestAborted);
+
+            var location = response.IsSuccess ? $"tenant/{response.Value}" : string.Empty;
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
@@ -54,7 +67,8 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("CreateTenant");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateTenant tenant,
-            TenantUseCases tenantService) =>
+            CreateUpdateTenantUseCase useCase,
+            HttpContext httpContext) =>
         {
             if (id != tenant.Id)
             {
@@ -62,11 +76,28 @@ internal class TenantEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await tenantService.UpdateTenant(id, tenant);
+            var response = await useCase.UpdateTenant(id, tenant, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
         .WithName("UpdateTenant")
         .WithTags("UpdateTenant");
+
+        authGroup.MapDelete("/{id}", async (int id,
+            CreateUpdateTenantUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.DeleteTenant(id, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .WithName("DeleteTenant")
+        .WithTags("DeleteTenant");
     }
 }

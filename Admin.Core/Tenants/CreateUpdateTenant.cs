@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using IDP.Domain.Specifications;
 
 namespace Admin.Core.Tenants;
 
@@ -11,7 +12,15 @@ internal class CreateUpdateTenant
     [EmailAddress]
     public string? Email { get; set; }
     public string? Theme { get; set; }
-    public string? Logo { get; set; }
-    public string? LandingPage { get; set; }
-    public bool? IsActive { get; set; }
+    public string? LogoUrl { get; set; }
+    public string? PrimaryColor { get; set; }
+    public string? DefaultLanguage { get; set; }
+    public string? LoginText { get; set; }
+    public bool? TwoFactorEnabled { get; set; }
+    public int? TwoFactorCodeExpiry { get; set; }
+    public string? HomePageUrl { get; set; }
+    public bool IsActive { get; set; }
+    public TenantTypes TenantType { get; set; }
+    public SubscriptionTypes SubscriptionType { get; set; }
+    public AuthenticationModes AuthenticationMode { get; set; }
 }
