@@ -2,6 +2,7 @@
 using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Permissions;
+using IDP.Domain.AggregateRoots.Tokens;
 
 namespace Admin.Core;
 

@@ -8,9 +8,9 @@ internal class TenantSearchResult
         string tenantName,
         string tenantCode,
         string? email,
-        TenantTypes tenantType,
-        SubscriptionTypes subscriptionType,
-        AuthenticationModes authenticationMode,
+        TenantTypes? tenantType,
+        SubscriptionTypes? subscriptionType,
+        AuthenticationModes? authenticationMode,
         bool? isActive)
     {
         Id = id;
@@ -38,8 +38,8 @@ internal class TenantSearchResult
     public string TenantName { get; set; }
     public string TenantCode { get; set; }
     public string Email { get; set; }
-    public TenantTypes TenantType { get; set; }
-    public SubscriptionTypes SubscriptionType { get; set; }
-    public AuthenticationModes AuthenticationMode { get; set; }
+    public TenantTypes? TenantType { get; set; }
+    public SubscriptionTypes? SubscriptionType { get; set; }
+    public AuthenticationModes? AuthenticationMode { get; set; }
     public bool IsActive { get; set; }
 }

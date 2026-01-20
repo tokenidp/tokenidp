@@ -1,4 +1,4 @@
-﻿namespace IDP.Domain.AggregateRoots;
+﻿namespace IDP.Domain.AggregateRoots.Tokens;
 
 public class ReferenceToken
 {

@@ -106,9 +106,9 @@ internal sealed class GetTenantUseCase
         }
 
         var tenants = await query
-            .Select(TenantSearchResult.Projection)
             .ApplyFilter(criterias)
             .ApplySort(request.SortColumn, request.SortOrder)
+            .Select(TenantSearchResult.Projection)
             .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
 
         _logger.LogDebug("Fetched {Count} tenants", tenants.TotalCount);

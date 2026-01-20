@@ -1,5 +1,5 @@
 ﻿using IDP.Domain;
-using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.Tokens;
 
 namespace IDP.Foundation.Abstractions;
 

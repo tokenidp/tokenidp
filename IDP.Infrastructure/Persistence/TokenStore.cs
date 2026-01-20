@@ -1,4 +1,4 @@
-﻿using IDP.Domain.AggregateRoots;
+﻿using IDP.Domain.AggregateRoots.Tokens;
 
 namespace IDP.Infrastructure.Persistence;
 

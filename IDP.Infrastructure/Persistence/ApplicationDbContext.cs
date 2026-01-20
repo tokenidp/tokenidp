@@ -1,6 +1,7 @@
 ﻿using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Permissions;
+using IDP.Domain.AggregateRoots.Tokens;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;

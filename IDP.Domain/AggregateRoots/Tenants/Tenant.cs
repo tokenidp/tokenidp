@@ -18,9 +18,9 @@ public partial class Tenant : BaseEntity, IAggregateRoot
     public bool? TwoFactorEnabled { get; private set; }
     public int? TwoFactorCodeExpiry { get; private set; }
     public string? HomePageUrl { get; private set; }
-    public TenantTypes TenantType { get; private set; }
-    public SubscriptionTypes SubscriptionType { get; private set; }
-    public AuthenticationModes AuthenticationMode { get; private set; }
+    public TenantTypes? TenantType { get; private set; }
+    public SubscriptionTypes? SubscriptionType { get; private set; }
+    public AuthenticationModes? AuthenticationMode { get; private set; }
     public bool IsActive { get; private set; }
     public virtual ICollection<Client> Clients { get; private set; }
     public virtual ICollection<Configuration> Configurations { get; private set; }
@@ -42,9 +42,9 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         int? twoFactorCodeExpiry,
         string? landingPage,
         bool isActive,
-        TenantTypes tenantType,
-        SubscriptionTypes subscriptionType,
-        AuthenticationModes authenticationMode)
+        TenantTypes? tenantType,
+        SubscriptionTypes? subscriptionType,
+        AuthenticationModes? authenticationMode)
     {
         TenantName = tenantName;
         TenantCode = tenantCode;
@@ -78,9 +78,9 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         int? twoFactorCodeExpiry,
         string? landingPage,
         bool isActive,
-        TenantTypes tenantType,
-        SubscriptionTypes subscriptionType,
-        AuthenticationModes authenticationMode)
+        TenantTypes? tenantType,
+        SubscriptionTypes? subscriptionType,
+        AuthenticationModes? authenticationMode)
     {
         var validation = ValidateInput(tenantName, TenantCode);
         if (!validation.IsSuccess)
@@ -146,9 +146,9 @@ public partial class Tenant : BaseEntity, IAggregateRoot
         int? twoFactorCodeExpiry,
         string? landingPage,
         bool isActive,
-        TenantTypes tenantType,
-        SubscriptionTypes subscriptionType,
-        AuthenticationModes authenticationMode,
+        TenantTypes? tenantType,
+        SubscriptionTypes? subscriptionType,
+        AuthenticationModes? authenticationMode,
         out Tenant? tenant)
     {
         tenant = null;

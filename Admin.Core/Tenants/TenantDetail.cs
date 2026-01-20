@@ -38,7 +38,7 @@ internal class TenantDetail
     public int? TwoFactorCodeExpiry { get; set; }
     public string? HomePageUrl { get; set; }
     public bool? IsActive { get; set; }
-    public TenantTypes TenantType { get; set; }
-    public SubscriptionTypes SubscriptionType { get; set; }
-    public AuthenticationModes AuthenticationMode { get; set; }
+    public TenantTypes? TenantType { get; set; }
+    public SubscriptionTypes? SubscriptionType { get; set; }
+    public AuthenticationModes? AuthenticationMode { get; set; }
 }
