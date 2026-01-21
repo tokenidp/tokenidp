@@ -43,6 +43,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
+    public DbSet<TokenSearch> TokensSearch { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

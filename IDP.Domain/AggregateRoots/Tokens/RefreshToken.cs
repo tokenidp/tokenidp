@@ -30,6 +30,11 @@ public partial class RefreshToken : BaseEntity
         RevokedByIp = ipAddress;
         ReasonRevoked = reason;
     }
+
+    public void ExpireNow()
+    {
+        Expires = DateTime.UtcNow;
+    }
 }
 
 public partial class RefreshToken

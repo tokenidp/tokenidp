@@ -34,6 +34,8 @@ public interface IApplicationDbContext
     public DbSet<User> Users { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
+    public DbSet<TokenSearch> TokensSearch { get; set; }
+
 
     int SaveChanges();
 

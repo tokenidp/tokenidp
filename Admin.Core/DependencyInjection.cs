@@ -1,9 +1,9 @@
 ﻿using Admin.Core.Clients;
 using Admin.Core.Configurations;
-using Admin.Core.Lookups;
 using Admin.Core.Permissions;
 using Admin.Core.Roles;
 using Admin.Core.Tenants;
+using Admin.Core.Tokens;
 using Admin.Core.Users;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +44,9 @@ public static class DependencyInjection
         services.AddScoped<DeleteTenantConfigurationUseCase>();
         services.AddScoped<UpsertTenantConfigurationUseCase>();
         services.AddScoped<BulkUpdateTenantConfigurationsUseCase>();
-        services.AddScoped<LookupUseCases>();
+
+        services.AddScoped<GetTokenUseCase>();
+        services.AddScoped<GetTokenLookupsUseCase>();
+        services.AddScoped<TokenCommandUseCase>();
     }
 }

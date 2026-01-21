@@ -49,4 +49,11 @@ public class ReferenceToken
         UpdatedOn = DateTime.UtcNow;
         UpdatedBy = userId;
     }
+
+    public void ExpireNow(int userId)
+    {
+        ExpiresAt = DateTime.UtcNow;
+        UpdatedOn = DateTime.UtcNow;
+        UpdatedBy = userId;
+    }
 }
