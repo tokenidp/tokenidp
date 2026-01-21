@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.Specifications;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IDP.Domain.AggregateRoots;
 
@@ -10,7 +11,8 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
     public bool IsDeleted { get; private set; }
     public bool IsEditable { get; private set; }
     public ValueTypes ValueType { get; private set; }
-    public ConfigurationScopes? Scope { get; private set; }
+    public ConfigurationScopes Scope { get; private set; }
+   
     public virtual Tenant Tenant { get; private set; }
 
     private Configuration() { }
@@ -19,7 +21,7 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
         string configKey,
         string configValue,
         ValueTypes valueType,
-        ConfigurationScopes? scope,
+        ConfigurationScopes scope,
         bool isEditable)
     {
         TenantId = tenantId;
@@ -35,7 +37,7 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
         string configKey,
         string configValue,
         ValueTypes valueType,
-        ConfigurationScopes? scope,
+        ConfigurationScopes scope,
         bool isEditable,
         out Configuration? configuration)
     {
@@ -61,7 +63,7 @@ public class Configuration : BaseEntity, ITenant, IAggregateRoot
     public Result UpdateConfiguration(
         string configValue,
         ValueTypes valueType,
-        ConfigurationScopes? scope,
+        ConfigurationScopes scope,
         bool isEditable)
     {
         var validation = ValidateInput(ConfigKey, configValue);

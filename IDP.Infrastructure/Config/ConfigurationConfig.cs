@@ -9,5 +9,15 @@ internal class ConfigurationConfig : IEntityTypeConfiguration<Configuration>
         builder.HasKey(p => new { p.Id });
 
         builder.ToTable("Configurations");
+
+        builder.Property(p => p.ValueType)
+               .HasConversion(
+                   v => v.ToString(),
+                   v => Enum.Parse<ValueTypes>(v));
+
+        builder.Property(p => p.Scope)
+             .HasConversion(
+                 v => v.ToString(),
+                 v => Enum.Parse<ConfigurationScopes>(v));
     }
 }

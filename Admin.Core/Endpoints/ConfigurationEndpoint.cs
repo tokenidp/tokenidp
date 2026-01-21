@@ -16,17 +16,18 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            ConfigurationUseCases configurationService) =>
+            GetTenantConfigurationsUseCase useCase,
+            HttpContext httpContext) =>
         {
-            var response = await configurationService.GetConfigurations(data);
-
+            var response = await useCase.GetTenantConfigurations(data, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
-        .WithName("Configurations")
-        .WithTags("Configurations");
+        .WithName("TenantConfigurations")
+        .WithTags("TenantConfigurations");
 
-        authGroup.MapGet("/{id}", async (int id,
-            ConfigurationUseCases configurationService) =>
+        authGroup.MapGet("/{id:int}", async (int id,
+            GetTenantConfigurationByIdUseCase useCase,
+            HttpContext httpContext) =>
         {
             if (id <= 0)
             {
@@ -34,27 +35,36 @@ internal class ConfigurationEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Id should be greater than zero.")));
             }
 
-            var response = await configurationService.GerConfigurationById(id);
-
+            var response = await useCase.GetConfigurationById(id, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
-        .WithName("ConfigById")
-        .WithTags("ConfigById");
+        .WithName("TenantConfigurationById")
+        .WithTags("TenantConfigurationById");
+
+        authGroup.MapGet("/key/{key}", async (string key,
+            GetTenantConfigurationByKeyUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.GetConfigurationByKey(key, httpContext.RequestAborted);
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("TenantConfigurationByKey")
+        .WithTags("TenantConfigurationByKey");
 
         authGroup.MapPost("/", async (CreateUpdateConfiguration configuration,
-            ConfigurationUseCases configurationService) =>
+            CreateTenantConfigurationUseCase useCase,
+            HttpContext httpContext) =>
         {
-            var response = await configurationService.CreateConfiguration(configuration);
-
+            var response = await useCase.CreateConfiguration(configuration, httpContext.RequestAborted);
             var location = response.IsSuccess ? $"configuration/{configuration.ConfigKey}" : string.Empty;
-
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
-        .WithName("CreateConfig")
-        .WithTags("CreateConfig");
+        .WithName("CreateTenantConfiguration")
+        .WithTags("CreateTenantConfiguration");
 
-        authGroup.MapPut("/{id}", async (int id, CreateUpdateConfiguration configuration,
-            ConfigurationUseCases configurationService) =>
+        authGroup.MapPut("/{id:int}", async (int id, CreateUpdateConfiguration configuration,
+            UpdateTenantConfigurationUseCase useCase,
+            HttpContext httpContext) =>
         {
             if (id != configuration.Id)
             {
@@ -62,11 +72,46 @@ internal class ConfigurationEndpoint : IEndpointDefinition
                     ApiError.Failure("Record Ids didn't match.")));
             }
 
-            var response = await configurationService.UpdateConfiguration(id, configuration);
-
+            var response = await useCase.UpdateConfiguration(id, configuration, httpContext.RequestAborted);
             return EndpointResultMapper.ToNoContentOrError(response);
         })
-        .WithName("UpdateConfig")
-        .WithTags("UpdateConfig");
+        .WithName("UpdateTenantConfiguration")
+        .WithTags("UpdateTenantConfiguration");
+
+        authGroup.MapDelete("/{id:int}", async (int id,
+            DeleteTenantConfigurationUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.DeleteConfiguration(id, httpContext.RequestAborted);
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .WithName("DeleteTenantConfiguration")
+        .WithTags("DeleteTenantConfiguration");
+
+        authGroup.MapPost("/upsert", async (CreateUpdateConfiguration configuration,
+            UpsertTenantConfigurationUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.UpsertConfiguration(configuration, httpContext.RequestAborted);
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("UpsertTenantConfiguration")
+        .WithTags("UpsertTenantConfiguration");
+
+        authGroup.MapPost("/bulk", async (BulkUpdateTenantConfigurations request,
+            BulkUpdateTenantConfigurationsUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.BulkUpdate(request, httpContext.RequestAborted);
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .WithName("BulkUpdateTenantConfigurations")
+        .WithTags("BulkUpdateTenantConfigurations");
     }
 }

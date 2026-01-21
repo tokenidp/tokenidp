@@ -35,7 +35,15 @@ public static class DependencyInjection
         services.AddScoped<CreateUpdateTenantUseCase>();
         services.AddScoped<GetTenantLookupsUseCase>();
 
-        services.AddScoped<ConfigurationUseCases>();
+        services.AddScoped<ITenantConfigurationRepository, TenantConfigurationRepository>();
+        services.AddScoped<GetTenantConfigurationsUseCase>();
+        services.AddScoped<GetTenantConfigurationByIdUseCase>();
+        services.AddScoped<GetTenantConfigurationByKeyUseCase>();
+        services.AddScoped<CreateTenantConfigurationUseCase>();
+        services.AddScoped<UpdateTenantConfigurationUseCase>();
+        services.AddScoped<DeleteTenantConfigurationUseCase>();
+        services.AddScoped<UpsertTenantConfigurationUseCase>();
+        services.AddScoped<BulkUpdateTenantConfigurationsUseCase>();
         services.AddScoped<LookupUseCases>();
     }
 }

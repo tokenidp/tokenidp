@@ -121,15 +121,23 @@ public partial class Tenant : BaseEntity, IAggregateRoot
 
     public void AddTenantConfigurations(string configKey,
         string configValue,
+        ValueTypes valueType,
+        ConfigurationScopes scope,
         bool isDefaultforTenant)
     {
-        Configuration appConfiguration = new
-            (
-                default,
-                configKey,
-                configValue,
-                isDefaultforTenant
-            );
+        var createResult = Configuration.Create(
+            default,
+            configKey,
+            configValue,
+            valueType,
+            scope,
+            isDefaultforTenant,
+            out var appConfiguration);
+
+        if (!createResult.IsSuccess || appConfiguration == null)
+        {
+            return;
+        }
 
         Configurations.Add(appConfiguration);
     }

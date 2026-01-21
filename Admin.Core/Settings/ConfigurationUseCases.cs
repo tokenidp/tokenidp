@@ -23,10 +23,20 @@ internal class ConfigurationUseCases
         _logger.LogDebug("Creating configuration {ConfigKey} for tenant {TenantId}",
             request.ConfigKey, _currentUserService.TenantId);
 
-        Configuration configuration = new(_currentUserService.TenantId,
+        var createResult = Configuration.Create(
+            _currentUserService.TenantId,
             request.ConfigKey,
             request.ConfigValue,
-            request.IsEditable);
+            request.ValueType,
+            request.Scope,
+            request.IsEditable,
+            out var configuration);
+
+        if (!createResult.IsSuccess || configuration == null)
+        {
+            return ApiResult<int>.Failure(
+                createResult.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
+        }
 
         _dbContext.Configurations.Add(configuration);
 
@@ -50,10 +60,17 @@ internal class ConfigurationUseCases
                 "Configuration not found for the Id {0}".FormatString(id)));
         }
 
-        configuration.UpdateConfiguration(
+        var updateResult = configuration.UpdateConfiguration(
             request.ConfigValue,
-            request.IsDisplay,
+            request.ValueType,
+            request.Scope,
             request.IsEditable);
+
+        if (!updateResult.IsSuccess)
+        {
+            return ApiResult<int>.Failure(
+                updateResult.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
+        }
 
         _dbContext.Configurations.Update(configuration);
 
