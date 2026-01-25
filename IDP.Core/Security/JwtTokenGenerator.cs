@@ -158,16 +158,6 @@ internal sealed class JwtTokenGenerator
         return _tokenHandler.WriteToken(token);
     }
 
-    /// <summary>
-    /// Generates a secure 512-bit refresh token using non-allocating RNG APIs.
-    /// </summary>
-    internal static string CreateRefreshToken()
-    {
-        Span<byte> bytes = stackalloc byte[64]; // 512-bit
-        RandomNumberGenerator.Fill(bytes);
-        return Convert.ToBase64String(bytes);
-    }
-
     private string CreateToken(IEnumerable<Claim> claims, string[] audiences, DateTime expireAt)
     {
         var now = DateTime.UtcNow;
@@ -199,7 +189,7 @@ internal sealed class JwtTokenGenerator
         return _tokenHandler.WriteToken(token);
     }
 
-    private static void AddIfPresent(ICollection<Claim> claims, string claimType, string? value)
+    private void AddIfPresent(ICollection<Claim> claims, string claimType, string? value)
     {
         if (!string.IsNullOrWhiteSpace(value))
         {
@@ -207,7 +197,7 @@ internal sealed class JwtTokenGenerator
         }
     }
 
-    private static SecurityKey CreateSigningKey(string keyMaterial)
+    private SecurityKey CreateSigningKey(string keyMaterial)
     {
         if (string.IsNullOrWhiteSpace(keyMaterial))
         {
@@ -234,7 +224,7 @@ internal sealed class JwtTokenGenerator
         }
     }
 
-    private static string GetKeyMaterial(TokenOption settings)
+    private string GetKeyMaterial(TokenOption settings)
     {
         if (!string.IsNullOrWhiteSpace(settings.KeyPath))
         {

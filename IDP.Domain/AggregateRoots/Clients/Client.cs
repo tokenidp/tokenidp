@@ -1,9 +1,8 @@
-﻿using IDP.Domain.Base;
-using IDP.Domain.Specifications;
+﻿using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Clients;
 
-public class Client : BaseEntity, ITenant, IAggregateRoot
+public class Client : AuditableAggregate<int>, ITenant
 {
     public string ClientId { get; private set; }
     public string ClientName { get; private set; }

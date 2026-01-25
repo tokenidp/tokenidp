@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots.Roles;
 
-public class RolePermission : BaseEntity
+public class RolePermission : Entity<int>
 {
     public int RoleId { get; private set; }
     public int PermissionId { get; private set; }

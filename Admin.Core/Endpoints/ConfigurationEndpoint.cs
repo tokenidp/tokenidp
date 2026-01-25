@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Configurations;
+using Admin.Core.Settings.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,7 +17,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            GetTenantConfigurationsUseCase useCase,
+            ConfigurationsQueryUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetTenantConfigurations(data, httpContext.RequestAborted);
@@ -26,7 +27,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("TenantConfigurations");
 
         authGroup.MapGet("/{id:int}", async (int id,
-            GetTenantConfigurationByIdUseCase useCase,
+            ConfigurationQueryByIdUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id <= 0)
@@ -42,7 +43,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("TenantConfigurationById");
 
         authGroup.MapGet("/key/{key}", async (string key,
-            GetTenantConfigurationByKeyUseCase useCase,
+            ConfigurationQueryByKeyUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetConfigurationByKey(key, httpContext.RequestAborted);
@@ -52,7 +53,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("TenantConfigurationByKey");
 
         authGroup.MapPost("/", async (CreateUpdateConfiguration configuration,
-            CreateTenantConfigurationUseCase useCase,
+            ConfigurationCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.CreateConfiguration(configuration, httpContext.RequestAborted);
@@ -63,7 +64,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("CreateTenantConfiguration");
 
         authGroup.MapPut("/{id:int}", async (int id, CreateUpdateConfiguration configuration,
-            UpdateTenantConfigurationUseCase useCase,
+            ConfigurationUpdateCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id != configuration.Id)
@@ -79,7 +80,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("UpdateTenantConfiguration");
 
         authGroup.MapDelete("/{id:int}", async (int id,
-            DeleteTenantConfigurationUseCase useCase,
+            ConfigurationDeleteCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id <= 0)
@@ -95,7 +96,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("DeleteTenantConfiguration");
 
         authGroup.MapPost("/upsert", async (CreateUpdateConfiguration configuration,
-            UpsertTenantConfigurationUseCase useCase,
+            ConfigurationUpsertCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.UpsertConfiguration(configuration, httpContext.RequestAborted);
@@ -105,7 +106,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         .WithTags("UpsertTenantConfiguration");
 
         authGroup.MapPost("/bulk", async (BulkUpdateTenantConfigurations request,
-            BulkUpdateTenantConfigurationsUseCase useCase,
+            ConfigurationsBulkCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.BulkUpdate(request, httpContext.RequestAborted);

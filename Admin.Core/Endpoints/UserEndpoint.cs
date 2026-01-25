@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Users;
+using Admin.Core.Users.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,7 +17,7 @@ internal class UserEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            GetUserUseCase userService,
+            UserQueryUseCase userService,
             HttpContext httpContext) =>
         {
             var response = await userService.GetUsers(data, httpContext.RequestAborted);
@@ -27,7 +28,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("Users");
 
         authGroup.MapGet("/{id}", async (int id,
-            GetUserUseCase userService,
+            UserQueryUseCase userService,
             HttpContext httpContext) =>
         {
             if (id <= 0)
@@ -43,7 +44,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithName("UserById")
         .WithTags("UserById");
 
-        authGroup.MapGet("userlookups", async (GetUserLookupsUseCase userService,
+        authGroup.MapGet("userlookups", async (UserLookupsUseCase userService,
             HttpContext httpContext) =>
         {
             var response = await userService.GetUserLookups(httpContext.RequestAborted);
@@ -55,7 +56,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UserLookups");
 
         authGroup.MapPost("/", async (UserDetail user,
-            CreateUpdateUserUseCase userService,
+            UserCommandUseCase userService,
             HttpContext httpContext) =>
         {
             var response = await userService.CreateUser(user, httpContext.RequestAborted);
@@ -68,7 +69,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("CreateUser");
 
         authGroup.MapPut("/{id}", async (int id, UserDetail user,
-            CreateUpdateUserUseCase userService,
+            UserCommandUseCase userService,
             HttpContext httpContext) =>
         {
             if (id != user.Id)
@@ -85,7 +86,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUser");
 
         authGroup.MapPatch("/{id}", async (int id, UpdateUserStatus user,
-            CreateUpdateUserUseCase userService,
+            UserCommandUseCase userService,
             HttpContext httpContext) =>
         {
             if (id != user.Id)
@@ -102,7 +103,7 @@ internal class UserEndpoint : IEndpointDefinition
         .WithTags("UpdateUserStatus");
 
         authGroup.MapGet("/permissions", async (
-            GetUserPermissionsUseCase userService) =>
+            UserPermissionsUseCase userService) =>
         {
             var response = await userService.GetUserPermissions();
 

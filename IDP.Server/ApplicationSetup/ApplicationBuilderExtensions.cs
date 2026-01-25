@@ -1,6 +1,7 @@
 ﻿using Admin.Core;
 using Admin.Core.Endpoints;
 using IDP.Core;
+using IDP.Core.Endpoints;
 using IDP.Foundation.Abstractions;
 using IDP.Foundation.Options;
 using IDP.Foundation.Primitives;

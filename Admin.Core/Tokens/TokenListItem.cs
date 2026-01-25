@@ -3,13 +3,10 @@
 internal sealed class TokenListItem
 {
     public int Id { get; private set; }
-    public string TokenId { get; private set; }
-    public string TokenType { get; private set; }
-    public string ClientId { get; private set; }
-    public string ClientName { get; private set; }
-    public int? UserId { get; private set; }
-    public string UserName { get; private set; }
-    public string Subject { get; private set; }
+    public string TokenId { get; private set; } = string.Empty;
+    public string TokenType { get; private set; } = string.Empty;
+    public string ClientName { get; private set; } = string.Empty;
+    public string UserName { get; private set; } = string.Empty;
     public DateTime IssuedAt { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public TokenStatus Status { get; private set; }
@@ -18,13 +15,10 @@ internal sealed class TokenListItem
         token => new TokenListItem
         {
             Id = token.Id,
-            TokenId = token.TokenIdHash,
+            TokenId = token.TokenId,
             TokenType = token.TokenType,
-            ClientId = token.ClientId,
             ClientName = token.ClientName,
-            UserId = token.UserId,
-            UserName = token.UserName,
-            Subject = token.Subject,
+            UserName = token.UserName ?? string.Empty,
             IssuedAt = token.IssuedAt,
             ExpiresAt = token.ExpiresAt,
             Status = token.Status

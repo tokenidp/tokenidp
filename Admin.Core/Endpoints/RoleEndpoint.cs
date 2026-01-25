@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Roles;
+using Admin.Core.Roles.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ internal class RoleEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async ([FromBody] SearchData data,
-            [FromServices] GetRoleUseCase roleService,
+            [FromServices] RoleQueryUseCase roleService,
             HttpContext httpContext) =>
         {
             var response = await roleService.GerRoles(data, httpContext.RequestAborted);
@@ -28,7 +29,7 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("Roles");
 
         authGroup.MapGet("/{id}", async (int id,
-            [FromServices] GetRoleUseCase roleService,
+            [FromServices] RoleQueryUseCase roleService,
             HttpContext httpContext) =>
         {
             if (id <= 0)
@@ -49,7 +50,7 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("RoleById");
 
         authGroup.MapPost("/", async ([FromBody] CreateUpdateRole role,
-            [FromServices] CreateUpdateRoleUseCase roleService,
+            [FromServices] RoleCommandUseCase roleService,
             HttpContext httpContext) =>
         {
             var response = await roleService.CreateRole(role, httpContext.RequestAborted);
@@ -62,7 +63,7 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("CreateRole");
 
         authGroup.MapPut("/{id}", async (int id, [FromBody] CreateUpdateRole role,
-            [FromServices] CreateUpdateRoleUseCase roleService,
+            [FromServices] RoleCommandUseCase roleService,
             HttpContext httpContext) =>
         {
             if (id != role.Id)
@@ -79,7 +80,7 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithTags("UpdateRole");
 
         authGroup.MapDelete("/{id}", async (int id,
-            [FromServices] CreateUpdateRoleUseCase roleService) =>
+            [FromServices] RoleCommandUseCase roleService) =>
         {
             if (id <= 0)
             {

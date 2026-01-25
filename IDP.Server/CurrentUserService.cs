@@ -1,5 +1,6 @@
 ﻿using IDP.Foundation.Abstractions;
 using Microsoft.AspNetCore.Http;
+using System.Net;
 using System.Security.Claims;
 
 namespace IDP.Server;
@@ -8,9 +9,20 @@ internal class CurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
+    public string? IpAddress { get; }
+    public string? UserAgent { get; }
+
     public CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
+
+        var ctx = _httpContextAccessor.HttpContext;
+
+        IpAddress = ctx?.Request.Headers["X-Forwarded-For"]
+            .FirstOrDefault()?.Split(',').FirstOrDefault()
+            ?? ctx?.Connection.RemoteIpAddress?.ToString();
+
+        UserAgent = ctx?.Request.Headers["User-Agent"].ToString();
     }
 
     public int UserId => Convert.ToInt32(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier));

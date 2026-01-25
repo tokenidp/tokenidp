@@ -1,9 +1,8 @@
-﻿using IDP.Domain.Base;
-using IDP.Domain.Specifications;
+﻿using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Users;
 
-public class UserAddress : BaseEntity
+public class UserAddress : Entity<int>
 {
     [Required]
     public int UserId { get; private set; }

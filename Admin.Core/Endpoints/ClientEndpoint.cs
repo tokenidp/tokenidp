@@ -1,4 +1,5 @@
 using Admin.Core.Clients;
+using Admin.Core.Clients.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,7 +17,7 @@ internal class ClientEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            GetClientUseCase useCase) =>
+            ClientQueryUseCase useCase) =>
         {
             var response = await useCase.GetClients(data);
 
@@ -26,7 +27,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("Clients");
 
         authGroup.MapGet("/{id}", async (int id,
-            GetClientUseCase useCase) =>
+            ClientQueryUseCase useCase) =>
         {
             if (id <= 0)
             {
@@ -41,7 +42,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithName("ClientById")
         .WithTags("ClientById");
 
-        authGroup.MapGet("clientlookups", async (GetClientLookupsUseCase useCase,
+        authGroup.MapGet("clientlookups", async (ClientLookupsUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetClientLookups(httpContext.RequestAborted);
@@ -52,7 +53,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("ClientLookups");
 
         authGroup.MapPost("/", async (CreateUpdateClient client,
-            CreateUpdateClientUseCase useCase,
+            ClientCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.CreateClient(client, httpContext.RequestAborted);
@@ -65,7 +66,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("CreateClient");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateClient client,
-            CreateUpdateClientUseCase useCase,
+            ClientCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id != client.Id)
@@ -82,7 +83,7 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithTags("UpdateClient");
 
         authGroup.MapDelete("/{id}", async (int id,
-            CreateUpdateClientUseCase useCase,
+            ClientCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id <= 0)

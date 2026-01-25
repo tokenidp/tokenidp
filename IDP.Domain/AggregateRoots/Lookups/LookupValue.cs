@@ -1,7 +1,7 @@
 ﻿namespace IDP.Domain.AggregateRoots.Lookups;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
-public class LookupValue : BaseEntity
+public class LookupValue : Entity<int>
 {
     public int LookupTypeId { get; private set; }
     public string LookupCode { get; private set; }

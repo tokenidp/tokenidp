@@ -1,5 +1,4 @@
-﻿using IDP.Domain;
-using IDP.Domain.AggregateRoots;
+﻿using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
@@ -11,7 +10,6 @@ public interface IApplicationDbContext
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<PreAuthorization> PreAuthorizations { get; set; }
     public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<Client> Clients { get; set; }
@@ -19,11 +17,13 @@ public interface IApplicationDbContext
     public DbSet<ClientAudience> ClientAudiences { get; set; }
     public DbSet<ClientSecret> ClientSecrets { get; set; }
     public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
+    public DbSet<Token> Tokens { get; set; }
     public DbSet<ReferenceToken> ReferenceTokens { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
     public DbSet<LookupType> LookupTypes { get; set; }
     public DbSet<LookupValue> LookupValues { get; set; }
     public DbSet<Configuration> Configurations { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<UserRolePermission> UserRolePermissions { get; set; }
     public DbSet<UserSearch> UsersSearch { get; set; }
     public DbSet<RoleSearch> RolesSearch { get; set; }
@@ -34,8 +34,7 @@ public interface IApplicationDbContext
     public DbSet<User> Users { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
-    public DbSet<TokenSearch> TokensSearch { get; set; }
-
+    public DbSet<TokenSearch> TokenSearch { get; set; }
 
     int SaveChanges();
 

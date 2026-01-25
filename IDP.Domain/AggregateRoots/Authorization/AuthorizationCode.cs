@@ -1,22 +1,15 @@
 ﻿namespace IDP.Domain.AggregateRoots.Authorization;
-public class AuthorizationCode
+public class AuthorizationCode : AuditableAggregate<int>
 {
-    [Key]
-    public int Id { get; private set; }
-    public string Code { get; private set; }
-    public string ClientId { get; private set; }
+    public string Code { get; private set; } = string.Empty;
+    public string ClientId { get; private set; } = string.Empty;
     public int UserId { get; private set; }
     public DateTime Expiry { get; private set; }
-    public string RedirectUri { get; private set; }
-    public string CodeChallenge { get; private set; }
-    public string CodeChallengeMethod { get; private set; } //Default is SHA-256
-    public string Scopes { get; private set; }
+    public string RedirectUri { get; private set; } = string.Empty;
+    public string CodeChallenge { get; private set; } = string.Empty;
+    public string CodeChallengeMethod { get; private set; } = string.Empty; //Default is SHA-256
+    public string? Scopes { get; private set; }
     public bool IsUsed { get; private set; }
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
-
 
     private AuthorizationCode() { }
 
@@ -27,7 +20,7 @@ public class AuthorizationCode
         int userId,
         DateTime expiry,
         string redirectUri,
-        string scopes = null)
+        string? scopes = null)
     {
         CodeChallenge = codeChallenge;
         Code = code;
@@ -35,16 +28,14 @@ public class AuthorizationCode
         UserId = userId;
         Expiry = expiry;
         RedirectUri = redirectUri;
-        CreatedBy = userId;
-        CreatedOn = DateTime.UtcNow;
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
+        SetCreated(userId);
     }
 
     public void UpdateIsUsed(bool isUsed)
     {
         IsUsed = isUsed;
-        UpdatedBy = UserId;
-        UpdatedOn = DateTime.UtcNow;
+        SetUpdated(UserId);
     }
 }

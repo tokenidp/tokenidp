@@ -1,7 +1,7 @@
 ﻿
 namespace IDP.Domain.AggregateRoots.Roles;
 
-public class Role : IdentityRole<int>, IBaseEntity, ITenant, IAggregateRoot
+public class Role : IdentityRole<int>, IAuditableAggregate, ITenant
 {
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();

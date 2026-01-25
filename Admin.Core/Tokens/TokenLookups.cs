@@ -1,6 +1,4 @@
-﻿using IDP.Foundation.Contracts;
-
-namespace Admin.Core.Tokens;
+﻿namespace Admin.Core.Tokens;
 
 internal sealed class TokenLookups
 {

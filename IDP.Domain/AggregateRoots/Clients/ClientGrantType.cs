@@ -1,9 +1,8 @@
-﻿using IDP.Domain.Base;
-using IDP.Domain.Specifications;
+﻿using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Clients;
 
-public class ClientGrantType : BaseEntity
+public class ClientGrantType : Entity<int>
 {
     public int ClientId { get; private set; }
     public GrantTypes AllowedGrantType { get; private set; }

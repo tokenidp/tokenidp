@@ -1,19 +1,18 @@
 ﻿using IDP.Domain.Specifications;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace IDP.Domain.AggregateRoots;
 
-public class Configuration : BaseEntity, ITenant, IAggregateRoot
+public class Configuration : AuditableAggregate<int>, ITenant
 {
-    public string ConfigKey { get; private set; }
-    public string ConfigValue { get; private set; }
+    public string ConfigKey { get; private set; } = string.Empty;
+    public string ConfigValue { get; private set; } = string.Empty;
     public int TenantId { get; private set; }
     public bool IsDeleted { get; private set; }
     public bool IsEditable { get; private set; }
     public ValueTypes ValueType { get; private set; }
     public ConfigurationScopes Scope { get; private set; }
-   
-    public virtual Tenant Tenant { get; private set; }
+
+    public virtual Tenant Tenant { get; private set; } = default!;
 
     private Configuration() { }
 

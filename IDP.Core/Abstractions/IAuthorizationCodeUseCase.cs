@@ -4,7 +4,7 @@ public interface IAuthorizationCodeUseCase
 {
     Task<AuthResponse> Authenticate(AuthRequest request);
 
-    Task<AuthResponse> VerifyCode(MfaRequest request);
+    Task<AuthResponse> VerifyMfaCode(MfaRequest request);
 
-    Task<ClientValidationResult> ValidateClient(string clientId);
+    Task<TokenContext> ValidateAuthorizationCodeAsync(TokenRequest tokenRequest);
 }

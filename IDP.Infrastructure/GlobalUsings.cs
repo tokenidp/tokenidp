@@ -1,5 +1,4 @@
 ﻿global using Admin.Core;
-global using IDP.Domain;
 global using IDP.Domain.AggregateRoots.Clients;
 global using IDP.Domain.AggregateRoots.Lookups;
 global using IDP.Domain.AggregateRoots.Roles;

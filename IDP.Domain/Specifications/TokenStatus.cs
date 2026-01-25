@@ -2,9 +2,7 @@
 
 public enum TokenStatus
 {
-    Active = 0,
-    Expired = 1,
-    Revoked = 2,
-    Compromised = 3,
-    Suspended = 4
+    Active = 1,
+    Expired = 2,
+    Revoked = 3
 }

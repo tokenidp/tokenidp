@@ -1,5 +1,3 @@
-using IDP.Domain.Specifications;
-
 namespace Admin.Core.Configurations;
 
 internal static class TenantConfigurationKeys

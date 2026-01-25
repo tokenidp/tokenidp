@@ -1,5 +1,7 @@
 ﻿using IDP.Core.GrantHandlers;
-using IDP.Core.OAuth;
+using IDP.Core.Policies;
+using IDP.Core.UseCases;
+using IDP.Foundation.Abstractions.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,55 +12,61 @@ public static class DependencyInjection
     public static void AddIDPServices(this IServiceCollection services,
         IConfiguration configuration)
     {
-        AddDomainServices(services);
+        services.AddScoped<JwtTokenGenerator>();
+        services.AddScoped<TokenSecretGenerator>();
+
+        AddUseCases(services);
         AddGrantHandlers(services);
     }
 
-    private static void AddDomainServices(IServiceCollection services)
+    private static void AddUseCases(IServiceCollection services)
     {
-        services.AddScoped<ClientService>();
-        services.AddScoped<UserInfoService>();
+        services.AddScoped<IClientUseCase, ClientUseCase>();
+        services.AddScoped<UserInfoUseCase>();
+        services.AddScoped<TokenIssuerUseCase>();
+        services.AddScoped<RevokeTokenUseCase>();
+        services.AddScoped<IntrospectionUseCase>();
+        services.AddScoped<TokenContextUseCase>();
+        services.AddScoped<TokenContextUseCase>();
+        services.AddScoped<TenantUserMfaPolicy>();
+
+        services.AddMfaService();
+        services.AddAuthorizationUseCase();      
     }
 
-    private static void AddAuthorizationUseCases(this IServiceCollection services)
+    private static void AddAuthorizationUseCase(this IServiceCollection services)
     {
         services.AddScoped<IAuthorizationCodeUseCase>(sp =>
             new AuthorizationCodeUseCase(
                 sp.GetRequiredService<IIdentityStore>(),
                 sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
-                sp.GetRequiredService<IMfaService>(),
-                sp.GetRequiredService<AuthorizationCodeService>(),
-                sp.GetRequiredService<ClientService>()));
-
+                sp.GetRequiredService<IMfaUseCase>(),
+                sp.GetRequiredService<IAuthorizationCodeStore>(),
+                sp.GetRequiredService<TokenContextUseCase>(),
+                sp.GetRequiredService<IClientUseCase>(),
+                sp.GetRequiredService<TenantUserMfaPolicy>()));
     }
 
-    private static void AddMfaServices(this IServiceCollection services)
+    private static void AddMfaService(this IServiceCollection services)
     {
-        services.AddScoped<IMfaService>(sp =>
-            new MfaService(
-                sp.GetRequiredService<IAppLogger<MfaService>>(),
+        services.AddScoped<TenantUserMfaPolicy>();
+
+        services.AddScoped<IMfaUseCase>(sp =>
+            new MfaUseCase(sp.GetRequiredService<IIdentityStore>(),
                 sp.GetRequiredService<IEmailSetting>(),
                 sp.GetRequiredService<IPreAuthorizationStore>(),
                 sp.GetRequiredService<EmailProviderFactory>(),
-                sp.GetRequiredService<IIdentityStore>()));
-
+                sp.GetRequiredService<IAppLogger<MfaUseCase>>()));
     }
 
     private static void AddGrantHandlers(IServiceCollection services)
     {
-        services.AddScoped<JwtTokenGenerator>();
-        services.AddAuthorizationUseCases();
-        services.AddMfaServices();
-        services.AddScoped<TokenValidatorService>();
-        services.AddScoped<TokenGrantUseCase>();
-        services.AddScoped<TokenService>();
-        services.AddScoped<RevokeTokenService>();
         services.AddScoped<TokenGrantFactory>();
+        services.AddScoped<TokenGrantUseCase>();
+
         services.AddScoped<RefreshTokenGrantHandler>();
         services.AddScoped<AuthorizationCodeGrantHandler>();
         services.AddScoped<ClientCredentialGrantHandler>();
-        services.AddScoped<IntrospectionValidatorService>();
-        services.AddScoped<AuthorizationCodeService>();
 
         services.AddTransient<Func<GrantTypes, ITokenGrantHandler>>(serviceProvider => key =>
         {

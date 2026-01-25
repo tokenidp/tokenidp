@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Tokens;
+using Admin.Core.Tokens.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ internal class TokenEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-             GetTokenUseCase useCase) =>
+             TokenQueryUseCase useCase) =>
         {
             var response = await useCase.GetTokens(data);
 
@@ -26,7 +27,7 @@ internal class TokenEndpoint : IEndpointDefinition
          .WithName("Tokens")
          .WithTags("Tokens");
 
-        authGroup.MapGet("/lookups", async (GetTokenLookupsUseCase useCase,
+        authGroup.MapGet("/lookups", async (TokenLookupsUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetLookups(httpContext.RequestAborted);
@@ -36,15 +37,8 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenLookups")
         .WithTags("TokenLookups");
 
-        var tokensGroup = app.MapGroup("/admin/tokens")
-            .RequireAuthorization(new AuthorizeAttribute
-            {
-                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
-            })
-            .AddEndpointFilter<EndpointValidationFilter>();
-
-        tokensGroup.MapGet("/{id}", async (int id,
-            GetTokenUseCase useCase) =>
+        authGroup.MapGet("/{id}", async (int id,
+            TokenQueryUseCase useCase) =>
         {
             if (id <= 0)
             {
@@ -59,7 +53,7 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenById")
         .WithTags("TokenById");
 
-        tokensGroup.MapPost("/{id}/revoke", async (int id,
+        authGroup.MapPost("/{id}/revoke", async (int id,
             [FromBody] TokenRevokeRequest request,
             TokenCommandUseCase useCase,
             HttpContext httpContext) =>
@@ -72,7 +66,7 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenRevoke")
         .WithTags("TokenRevoke");
 
-        tokensGroup.MapPost("/{id}/expire", async (int id,
+        authGroup.MapPost("/{id}/expire", async (int id,
             TokenCommandUseCase useCase,
             HttpContext httpContext) =>
         {

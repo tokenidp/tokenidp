@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using IDP.Core.UseCases;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -8,13 +9,13 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 {
     private const string GrantTypeValue = "client_credentials";
 
-    private readonly ClientService _clientService;
-    private readonly TokenService _tokenService;
+    private readonly IClientUseCase _clientService;
+    private readonly TokenIssuerUseCase _tokenService;
     private readonly IAppLogger<ClientCredentialGrantHandler> _logger;
 
     public ClientCredentialGrantHandler(
-        ClientService clientService,
-        TokenService tokenService,
+        IClientUseCase clientService,
+        TokenIssuerUseCase tokenService,
         IAppLogger<ClientCredentialGrantHandler> logger)
     {
         _clientService = clientService;

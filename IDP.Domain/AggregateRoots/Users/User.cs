@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots.Users;
 
-public partial class User : IdentityUser<int>, IBaseEntity, ITenant, IAggregateRoot
+public partial class User : IdentityUser<int>, IAuditableAggregate, ITenant
 {
     private readonly List<UserRole> _userRoles = new();
     private readonly List<UserAddress> _userAddresses = new();

@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Tenants;
+using Admin.Core.Tenants.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -16,7 +17,7 @@ internal class TenantEndpoint : IEndpointDefinition
             .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapPost("/list", async (SearchData data,
-            GetTenantUseCase useCase,
+            TenantQueryUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetTenants(data, httpContext.RequestAborted);
@@ -27,7 +28,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("Tenants");
 
         authGroup.MapGet("/{id}", async (int id,
-            GetTenantUseCase useCase,
+            TenantQueryUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id <= 0)
@@ -43,7 +44,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithName("TenantById")
         .WithTags("TenantById");
 
-        authGroup.MapGet("tenantlookups", async (GetTenantLookupsUseCase useCase,
+        authGroup.MapGet("tenantlookups", async (TenantLookupsUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetTenantLookups(httpContext.RequestAborted);
@@ -54,7 +55,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("TenantLookups");
 
         authGroup.MapPost("/", async (CreateUpdateTenant tenant,
-            CreateUpdateTenantUseCase useCase,
+            TenantCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.CreateTenant(tenant, httpContext.RequestAborted);
@@ -67,7 +68,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("CreateTenant");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateTenant tenant,
-            CreateUpdateTenantUseCase useCase,
+            TenantCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id != tenant.Id)
@@ -84,7 +85,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithTags("UpdateTenant");
 
         authGroup.MapDelete("/{id}", async (int id,
-            CreateUpdateTenantUseCase useCase,
+            TenantCommandUseCase useCase,
             HttpContext httpContext) =>
         {
             if (id <= 0)

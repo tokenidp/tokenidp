@@ -1,4 +1,6 @@
-﻿namespace IDP.Infrastructure.Notifications;
+﻿using IDP.Foundation.Abstractions.Stores;
+
+namespace IDP.Infrastructure.Notifications;
 
 internal sealed class EmailSetting : IEmailSetting
 {

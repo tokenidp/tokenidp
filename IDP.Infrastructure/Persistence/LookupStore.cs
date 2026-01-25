@@ -1,4 +1,6 @@
-﻿namespace IDP.Infrastructure.Persistence;
+﻿using IDP.Foundation.Abstractions.Stores;
+
+namespace IDP.Infrastructure.Persistence;
 
 internal sealed class LookupStore : ILookupStore
 {

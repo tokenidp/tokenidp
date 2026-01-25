@@ -1,8 +1,6 @@
-﻿using IDP.Domain.Base;
+﻿namespace IDP.Domain.AggregateRoots.Clients;
 
-namespace IDP.Domain.AggregateRoots.Clients;
-
-public class ClientAudience : BaseEntity
+public class ClientAudience : Entity<int>
 {
     public int ClientId { get; private set; }
     public string Name { get; private set; }

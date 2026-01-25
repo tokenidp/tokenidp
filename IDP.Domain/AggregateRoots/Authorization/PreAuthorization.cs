@@ -1,9 +1,7 @@
 ﻿namespace IDP.Domain.AggregateRoots.Authorization;
 
-public class PreAuthorization
+public class PreAuthorization : AuditableAggregate<int>
 {
-    [Key]
-    public int Id { get; private set; }
     public int UserId { get; private set; }
     public string CorrelationId { get; private set; }
     public string ClientId { get; private set; }
@@ -14,10 +12,6 @@ public class PreAuthorization
     public string MfaCode { get; private set; }
     public DateTime Expiry { get; private set; }
     public bool Is2FAVerified { get; private set; }
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
 
     private PreAuthorization() { }
 
@@ -40,8 +34,7 @@ public class PreAuthorization
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
         Expiry = expiry;
-        CreatedBy = userId;
-        CreatedOn = DateTime.UtcNow;
+        SetCreated(userId);
     }
 
     public void UpdateMfaCode(int userId,
@@ -50,8 +43,7 @@ public class PreAuthorization
     {
         MfaCode = mfaCode;
         Expiry = expiry;
-        UpdatedOn = DateTime.UtcNow;
-        UpdatedBy = userId;
+        SetUpdated(userId);
     }
 
     public void UpdateTwoFactorEnableFlag(bool enabled)

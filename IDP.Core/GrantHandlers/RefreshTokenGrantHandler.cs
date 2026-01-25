@@ -1,53 +1,55 @@
-﻿namespace IDP.Core.GrantHandlers;
+﻿using IDP.Core.UseCases;
+using IDP.Foundation.Abstractions.Stores;
+
+namespace IDP.Core.GrantHandlers;
 
 internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
 {
     private readonly IAppLogger<RefreshTokenGrantHandler> _logger;
-    private readonly TokenValidatorService _tokenValidatorService;
     private readonly ITokenStore _tokenStore;
-    private readonly TokenService _tokenService;
+    private readonly TokenIssuerUseCase _tokenService;
+    private readonly TokenContextUseCase _tokenContextUseCase;
+    private readonly TokenSecretGenerator _tokenSecretGenerator;
 
     public RefreshTokenGrantHandler(JwtTokenGenerator tokenGenerator,
         IAppLogger<RefreshTokenGrantHandler> logger,
-        TokenValidatorService tokenValidatorService,
-        TokenService tokenService,
-        ITokenStore tokenStore)
+        ITokenStore tokenStore,
+        TokenContextUseCase tokenContextUseCase,
+        TokenIssuerUseCase tokenService,
+        TokenSecretGenerator tokenSecretGenerator)
     {
         _logger = logger;
-        _tokenValidatorService = tokenValidatorService;
         _tokenService = tokenService;
         _tokenStore = tokenStore;
+        _tokenContextUseCase = tokenContextUseCase;
+        _tokenSecretGenerator = tokenSecretGenerator;
     }
 
     public async Task<TokenResponse> HandleAsync(TokenRequest request)
     {
-        if (request is null)
+        if (request is null || string.IsNullOrEmpty(request.RefreshToken))
         {
             throw new ArgumentNullException(nameof(request));
         }
 
-        var existingRefreshToken = await _tokenStore.GetRefreshToken(request.RefreshToken ?? string.Empty);
+        var tokenHash = _tokenSecretGenerator.HashToken(request.RefreshToken!);
 
-        if (existingRefreshToken == null)
+        var existingToken = await _tokenStore.GetRefreshToken(tokenHash);
+
+        if (existingToken == null)
         {
             _logger.LogWarning("Refresh token not found.");
 
             throw new NotFoundException("Refresh token not found.");
         }
 
-        var tokenInfo = await _tokenValidatorService.ValidateTokenInfoAsync(request.ClientId, existingRefreshToken.UserId);
+        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(request.ClientId, existingToken.UserId);
 
         _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}", request.ClientId, request.IpAddress);
 
-        var refreshToken = await _tokenService.CreateRefreshToken(existingRefreshToken.UserId,
-            request.IpAddress,
-            tokenInfo.RefreshTokenExpiration);
+        var token = await _tokenService.IssueTokenAsync(tokenInfo);
 
-        var token = await _tokenService.CreateToken(tokenInfo);
-
-        token.AddRefreshToken(refreshToken);
-
-        _logger.LogInfo("Successfully saved new refresh token for user {UserId}", existingRefreshToken.UserId);
+        _logger.LogInfo("Successfully saved new refresh token for user {UserId}", existingToken.UserId);
 
         return token;
     }

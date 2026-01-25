@@ -3,15 +3,12 @@
 public class TokenResponse
 {
     public int UserId { get; private set; }
-    public string AccessToken { get; private set; }
-    public string IDToken { get; private set; }
-    public string RefreshToken { get; private set; }
+    public string AccessToken { get; private set; } = default!;
+    public string IDToken { get; private set; } = default!;
+    public string? RefreshToken { get; private set; } = default!;
     public DateTime Expiry { get; private set; }
 
-    private TokenResponse()
-    {
-
-    }
+    private TokenResponse() { }
 
     public static TokenResponse Create(
         int userId,
@@ -28,7 +25,7 @@ public class TokenResponse
         };
     }
 
-    public void AddRefreshToken(string refreshToken)
+    public void AddRefreshToken(string? refreshToken)
     {
         RefreshToken = refreshToken;
     }

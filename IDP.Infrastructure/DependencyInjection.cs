@@ -1,4 +1,5 @@
 ﻿using IDP.Core.OAuth;
+using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Notifications;
 using IDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
@@ -45,7 +46,6 @@ public static class DependencyInjection
 
     private static void AddStores(IServiceCollection services)
     {
-        services.AddScoped<AuditService>();
         services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
         services.AddScoped<IClientStore, ClientStore>();
         services.AddScoped<IIdentityStore, IdentityStore>();
@@ -72,6 +72,4 @@ public static class DependencyInjection
             };
         });
     }
-
-
 }

@@ -1,64 +1,40 @@
-﻿using IDP.Domain.AggregateRoots.Tokens;
+﻿using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Persistence;
 
 internal class TokenStore : ITokenStore
 {
     private readonly IApplicationDbContext _dbContext;
-    private readonly ICache _cache;
     private readonly IAppLogger<TokenStore> _logger;
 
     public TokenStore(IApplicationDbContext dbContext,
-        IAppLogger<TokenStore> logger,
-        ICache cache)
+        IAppLogger<TokenStore> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
-        _cache = cache;
     }
 
-    public async Task<bool> CheckUniqueRefreshToken(string token)
+    public async Task<int> CreateToken(Token token)
     {
-        _logger.LogTrace("Checking uniqueness of token");
-
-        bool isUnique = await _dbContext.RefreshTokens
-            .AnyAsync(t => t.Token == token);
-
-        _logger.LogDebug("Token uniqueness check result: {IsUnique}", isUnique);
-
-        return isUnique;
-    }
-
-    public async Task<int> CreateReferenceToken(ReferenceToken referenceToken)
-    {
-        _dbContext.ReferenceTokens.Add(referenceToken);
+        _dbContext.Tokens.Add(token);
 
         var id = await _dbContext.SaveChangesAsync();
 
         return id;
     }
 
-    public async Task<int> CreateRefreshToken(RefreshToken refreshToken)
+    public async Task<Token?> GetReferenceToken(byte[] tokenHash)
     {
-        _dbContext.RefreshTokens.Add(refreshToken);
-
-        var id = await _dbContext.SaveChangesAsync();
-
-        return id;
-    }
-
-    public async Task<ReferenceToken?> GetReferenceToken(string token)
-    {
-        var referenceToken = await _dbContext.ReferenceTokens
-             .FirstOrDefaultAsync(s => s.Token == token && s.IsRevoked != true);
+        var referenceToken = await _dbContext.Tokens
+             .FirstOrDefaultAsync(s => s.ReferenceToken.TokenHash == tokenHash && s.IsRevoked != true);
 
         return referenceToken;
     }
 
-    public async Task<RefreshToken?> GetRefreshToken(string token)
+    public async Task<Token?> GetRefreshToken(byte[] tokenHash)
     {
-        var refreshToken = await _dbContext.RefreshTokens.Where(t => t.Token == token)
-            .FirstOrDefaultAsync();
+        var refreshToken = await _dbContext.Tokens
+            .FirstOrDefaultAsync(t => t.RefreshToken.TokenHash == tokenHash && t.IsRevoked != true);
 
         return refreshToken;
     }
@@ -69,17 +45,20 @@ internal class TokenStore : ITokenStore
 
         var cutoff = DateTime.UtcNow.AddDays(-expiry);
 
-        var oldTokens = await _dbContext.RefreshTokens
-            .Where(t => t.UserId == userId && t.Expires < cutoff)
+        var oldTokens = await _dbContext.Tokens
+            .Where(t => t.UserId == userId && t.ExpiresAt < cutoff)
             .ToListAsync();
 
         if (oldTokens.Any())
         {
-            _dbContext.RefreshTokens.RemoveRange(oldTokens);
+            foreach(var token in oldTokens)
+            {
+                token.Revoke(RevokeReason.RefreshReuse.ToString(), userId);
+            }
 
             await _dbContext.SaveChangesAsync();
 
-            _logger.LogInfo("Removed {Count} old refresh tokens for user {UserId}",
+            _logger.LogDebug("Removed {Count} old refresh tokens for user {UserId}",
                 oldTokens.Count, userId);
         }
         else
@@ -90,9 +69,9 @@ internal class TokenStore : ITokenStore
         return true;
     }
 
-    public async Task<int> RevokeToken(ReferenceToken referenceToken)
+    public async Task<int> RevokeToken(Token token)
     {
-        _dbContext.ReferenceTokens.Update(referenceToken);
+        _dbContext.Tokens.Update(token);
 
         var id = await _dbContext.SaveChangesAsync();
 

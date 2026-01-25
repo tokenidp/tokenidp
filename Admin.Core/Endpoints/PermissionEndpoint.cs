@@ -1,4 +1,5 @@
 using Admin.Core.Permissions;
+using Admin.Core.Permissions.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 
@@ -15,7 +16,7 @@ internal class PermissionEndpoint : IEndpointDefinition
             })
             .AddEndpointFilter<EndpointValidationFilter>();
 
-        authGroup.MapGet("assign", async (GetPermissionUseCase permissionUseCases) =>
+        authGroup.MapGet("assign", async (PermissionQueryUseCase permissionUseCases) =>
         {
             var response = await permissionUseCases.GetPermissions();
 
@@ -25,7 +26,7 @@ internal class PermissionEndpoint : IEndpointDefinition
         .WithTags("Permissions");
 
         authGroup.MapPost("list", async (SearchData data,
-            GetPermissionUseCase permissionUseCases) =>
+            PermissionQueryUseCase permissionUseCases) =>
         {
             var response = await permissionUseCases.GetPermissions(data);
 
@@ -35,7 +36,7 @@ internal class PermissionEndpoint : IEndpointDefinition
         .WithTags("PagedPermissions");
 
         authGroup.MapPost("/", async (CreateUpdatePermission request,
-            CreateUpdatePermissionUseCase permissionUseCases) =>
+            PermissionCommandUseCase permissionUseCases) =>
         {
             var response = await permissionUseCases.CreatePermission(request);
 
@@ -49,7 +50,7 @@ internal class PermissionEndpoint : IEndpointDefinition
         .WithTags("CreatePermission");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdatePermission request,
-            CreateUpdatePermissionUseCase permissionUseCases) =>
+            PermissionCommandUseCase permissionUseCases) =>
         {
             if (id != request.Id)
             {
@@ -65,7 +66,7 @@ internal class PermissionEndpoint : IEndpointDefinition
         .WithTags("UpdatePermission");
 
         authGroup.MapGet("/{id}", async (int id,
-            GetPermissionUseCase permissionUseCases) =>
+            PermissionQueryUseCase permissionUseCases) =>
         {
             if (id <= 0)
             {
@@ -85,7 +86,7 @@ internal class PermissionEndpoint : IEndpointDefinition
         .WithTags("PermissionbyId");
 
         authGroup.MapGet("lookups", async (
-            GetPermissionLookupsUseCase useCase,
+            PermissionLookupsUseCase useCase,
             HttpContext httpContext) =>
         {
             var response = await useCase.GetPermissionLookups(

@@ -8,11 +8,11 @@ internal class MfaEndpoint : IEndpointDefinition
 
         authGroup.MapPost("/verify", async (MfaRequest request,
             IAppLogger<MfaEndpoint> _logger,
-            IMfaService mfaService) =>
+            IMfaUseCase mfaUseCase) =>
         {
             _logger.LogInfo("Mfa verification code started for user: {UserId}", request.UserId);
 
-            var (authRequest, authResponse) = await mfaService.VerifyMfaRequest(request);
+            var (authRequest, authResponse) = await mfaUseCase.VerifyMfaRequest(request);
 
             _logger.LogInfo("Mfa completed for user: {UserId}", request.UserId);
 
@@ -23,7 +23,7 @@ internal class MfaEndpoint : IEndpointDefinition
 
         authGroup.MapPost("/resend", async (MfaRequest request,
             IAppLogger<MfaEndpoint> _logger,
-            IMfaService mfaService) =>
+            IMfaUseCase mfaUseCase) =>
         {
             _logger.LogInfo("Resend Mfa Code process started for user: {UserId}", request.UserId);
 
@@ -35,7 +35,7 @@ internal class MfaEndpoint : IEndpointDefinition
                 return Results.BadRequest(errorResult);
             }
 
-            var response = await mfaService.ResendMfaCode(request);
+            var response = await mfaUseCase.ResendMfaCode(request);
 
             _logger.LogInfo("Resend Mfa Code process completed for user: {UserId}", request.UserId);
 

@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.Endpoints;
+﻿using IDP.Core.UseCases;
+
+namespace IDP.Core.Endpoints;
 
 internal class IntrospectionEndpoint : IEndpointDefinition
 {
@@ -8,7 +10,7 @@ internal class IntrospectionEndpoint : IEndpointDefinition
 
         authGroup.MapPost("", async (IntrospectionRequest request,
             IAppLogger<IntrospectionEndpoint> _logger,
-            IntrospectionValidatorService referenceTokenValidator) =>
+            IntrospectionUseCase useCase) =>
         {
             _logger.LogInfo("Introspect process started.");
 
@@ -21,7 +23,7 @@ internal class IntrospectionEndpoint : IEndpointDefinition
             _logger.LogInfo("Introspect called for token (partial): {TokenPartial}",
                 $"{request.Token?.Substring(request.Token.Length - 5, 5)}...");
 
-            var response = await referenceTokenValidator.ValidateReferenceToken(request.Token);
+            var response = await useCase.ValidateReferenceToken(request.Token!);
 
             _logger.LogInfo("Introspect completed. Active: {IsActive}", response.Active);
 

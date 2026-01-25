@@ -1,6 +1,6 @@
 ﻿namespace IDP.Domain.AggregateRoots.Clients;
 
-public class ClientSecret : BaseEntity
+public class ClientSecret : Entity<int>
 {
     public int ClientId { get; private set; }
     public string SecretHash { get; private set; }

@@ -1,11 +1,9 @@
 ﻿using IDP.Domain.AggregateRoots.Permissions;
-
-using IDP.Domain.Base;
 using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Tenants;
 
-public partial class Tenant : BaseEntity, IAggregateRoot
+public partial class Tenant : AuditableAggregate<int>
 {
     public string TenantName { get; private set; }
     public string TenantCode { get; private set; }

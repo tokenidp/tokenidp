@@ -1,5 +1,4 @@
 using System.Text.Json;
-using IDP.Domain.Specifications;
 
 namespace Admin.Core.Configurations;
 

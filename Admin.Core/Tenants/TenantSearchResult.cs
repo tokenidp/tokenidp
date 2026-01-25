@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace Admin.Core.Tenants;
+﻿namespace Admin.Core.Tenants;
 
 internal class TenantSearchResult
 {

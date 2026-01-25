@@ -15,6 +15,4 @@ global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Identity;
 global using Microsoft.AspNetCore.Routing;
 global using Microsoft.EntityFrameworkCore;
-global using System.Diagnostics.CodeAnalysis;
 global using System.Linq.Expressions;
-global using IDP.Foundation.Primitives;

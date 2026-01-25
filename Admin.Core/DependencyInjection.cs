@@ -1,10 +1,11 @@
-﻿using Admin.Core.Clients;
+﻿using Admin.Core.Clients.UseCases;
 using Admin.Core.Configurations;
-using Admin.Core.Permissions;
-using Admin.Core.Roles;
-using Admin.Core.Tenants;
-using Admin.Core.Tokens;
-using Admin.Core.Users;
+using Admin.Core.Permissions.UseCases;
+using Admin.Core.Roles.UseCases;
+using Admin.Core.Settings.UseCases;
+using Admin.Core.Tenants.UseCases;
+using Admin.Core.Tokens.UseCases;
+using Admin.Core.Users.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,38 +16,38 @@ public static class DependencyInjection
     public static void AddAdminServices(this IServiceCollection services,
          IConfiguration configuration)
     {
-        services.AddScoped<CreateUpdateClientUseCase>();
-        services.AddScoped<GetClientLookupsUseCase>();
-        services.AddScoped<GetClientUseCase>();
+        services.AddScoped<ClientCommandUseCase>();
+        services.AddScoped<ClientLookupsUseCase>();
+        services.AddScoped<ClientQueryUseCase>();
 
-        services.AddScoped<CreateUpdateRoleUseCase>();
-        services.AddScoped<GetRoleUseCase>();
-       
-        services.AddScoped<GetUserUseCase>();
-        services.AddScoped<CreateUpdateUserUseCase>();
-        services.AddScoped<GetUserLookupsUseCase>();
+        services.AddScoped<RoleCommandUseCase>();
+        services.AddScoped<RoleQueryUseCase>();
 
-        services.AddScoped<GetUserPermissionsUseCase>();
-        services.AddScoped<CreateUpdatePermissionUseCase>();
-        services.AddScoped<GetPermissionUseCase>();
-        services.AddScoped<GetPermissionLookupsUseCase>();
+        services.AddScoped<UserQueryUseCase>();
+        services.AddScoped<UserCommandUseCase>();
+        services.AddScoped<UserLookupsUseCase>();
 
-        services.AddScoped<GetTenantUseCase>();
-        services.AddScoped<CreateUpdateTenantUseCase>();
-        services.AddScoped<GetTenantLookupsUseCase>();
+        services.AddScoped<UserPermissionsUseCase>();
+        services.AddScoped<PermissionCommandUseCase>();
+        services.AddScoped<PermissionQueryUseCase>();
+        services.AddScoped<PermissionLookupsUseCase>();
+
+        services.AddScoped<TenantQueryUseCase>();
+        services.AddScoped<TenantCommandUseCase>();
+        services.AddScoped<TenantLookupsUseCase>();
 
         services.AddScoped<ITenantConfigurationRepository, TenantConfigurationRepository>();
-        services.AddScoped<GetTenantConfigurationsUseCase>();
-        services.AddScoped<GetTenantConfigurationByIdUseCase>();
-        services.AddScoped<GetTenantConfigurationByKeyUseCase>();
-        services.AddScoped<CreateTenantConfigurationUseCase>();
-        services.AddScoped<UpdateTenantConfigurationUseCase>();
-        services.AddScoped<DeleteTenantConfigurationUseCase>();
-        services.AddScoped<UpsertTenantConfigurationUseCase>();
-        services.AddScoped<BulkUpdateTenantConfigurationsUseCase>();
+        services.AddScoped<ConfigurationsQueryUseCase>();
+        services.AddScoped<ConfigurationQueryByIdUseCase>();
+        services.AddScoped<ConfigurationQueryByKeyUseCase>();
+        services.AddScoped<ConfigurationCommandUseCase>();
+        services.AddScoped<ConfigurationUpdateCommandUseCase>();
+        services.AddScoped<ConfigurationDeleteCommandUseCase>();
+        services.AddScoped<ConfigurationUpsertCommandUseCase>();
+        services.AddScoped<ConfigurationsBulkCommandUseCase>();
 
-        services.AddScoped<GetTokenUseCase>();
-        services.AddScoped<GetTokenLookupsUseCase>();
+        services.AddScoped<TokenQueryUseCase>();
+        services.AddScoped<TokenLookupsUseCase>();
         services.AddScoped<TokenCommandUseCase>();
     }
 }

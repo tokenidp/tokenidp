@@ -1,7 +1,6 @@
 ﻿namespace IDP.Domain.AggregateRoots.Users;
 
-[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model")]
-public class UserRole : BaseEntity
+public class UserRole : Entity<int>
 {
     public int RoleId { get; private set; }
     public int UserId { get; private set; }

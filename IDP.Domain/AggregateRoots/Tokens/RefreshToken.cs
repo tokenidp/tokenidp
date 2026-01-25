@@ -1,45 +1,37 @@
-namespace IDP.Domain;
+using System.Security;
 
-public partial class RefreshToken : BaseEntity
+public class RefreshToken : Entity<Guid>
 {
-    public int UserId { get; private set; }
-    public string Token { get; private set; }
-    public DateTime Expires { get; private set; }
-    public string CreatedByIp { get; private set; }
-    public DateTime? Revoked { get; private set; }
-    public string? RevokedByIp { get; private set; }
-    public string? ReasonRevoked { get; private set; }
+    public Guid TokenId { get; private set; }
+    public byte[] TokenHash { get; private set; } = default!;
+    public Guid? ParentTokenId { get; private set; }
+    public Guid? ReplacedByTokenId { get; private set; }
+    public DateTime? ConsumedAt { get; private set; }
+    public DateTime ExpiresAt { get; private set; }
+
+    public virtual Token Token { get; private set; } = default!;
 
     private RefreshToken() { }
 
-    public RefreshToken(int userId,
-        string token,
-        string ipAddress,
-        int expiry)
+    private RefreshToken(Guid tokenId, byte[] hash, DateTime expiresAt, Guid? parentId)
     {
-        UserId = userId;
-        Token = token;
-        CreatedByIp = ipAddress;
-        Expires = DateTime.UtcNow.AddDays(expiry);
+        TokenId = tokenId;
+        TokenHash = hash;
+        ParentTokenId = parentId;
+        ExpiresAt = expiresAt;
     }
 
-    public void RevokeToken(string ipAddress,
-        string reason)
-    {
-        Revoked = DateTime.UtcNow;
-        RevokedByIp = ipAddress;
-        ReasonRevoked = reason;
-    }
+    public static RefreshToken Create(Guid tokenId, byte[] hash, DateTime expiresAt, Guid? parentId = null)
+        => new RefreshToken(tokenId, hash, expiresAt, parentId);
 
-    public void ExpireNow()
-    {
-        Expires = DateTime.UtcNow;
-    }
-}
+    public bool IsConsumed => ConsumedAt.HasValue;
 
-public partial class RefreshToken
-{
-    public bool IsExpired => DateTime.UtcNow >= Expires;
-    public bool IsRevoked => Revoked != null;
-    public bool IsActive => !IsRevoked && !IsExpired;
+    public void Consume(Guid newTokenId)
+    {
+        if (IsConsumed)
+            throw new SecurityException("Refresh token reuse detected");
+
+        ConsumedAt = DateTime.UtcNow;
+        ReplacedByTokenId = newTokenId;
+    }
 }

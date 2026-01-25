@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using IDP.Core.UseCases;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IDP.Core.Endpoints;
 
@@ -11,7 +12,7 @@ internal class RevokeEndpoint : IEndpointDefinition
         authGroup.MapDelete("", static async (HttpContext httpContext,
         [FromBody] RevokeTokenRequest request,
         IAppLogger<RevokeEndpoint> _logger,
-        RevokeTokenService revokeTokenService) =>
+        RevokeTokenUseCase revokeTokenService) =>
         {
             string ipAddress = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 

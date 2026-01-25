@@ -1,4 +1,5 @@
-﻿using IDP.Infrastructure.Projections;
+﻿using IDP.Foundation.Abstractions.Stores;
+using IDP.Infrastructure.Projections;
 
 namespace IDP.Infrastructure.Persistence;
 

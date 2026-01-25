@@ -14,6 +14,7 @@
 @inject LoadService LoadService
 @inject NavigationManager Navigation
 @inject IAuthorizationCodeUseCase AuthUseCase
+@inject IClientUseCase ClientUseCase;
 @inject IJSRuntime JSRuntime
 @inject ILogger<Authorize> logger
 
@@ -109,7 +110,7 @@ else
                 return;
             }
 
-            var client = await AuthUseCase.ValidateClient(clientId);
+            var client = await ClientUseCase.ValidateClient(clientId);
 
             if (!client.IsValidClient)
             {

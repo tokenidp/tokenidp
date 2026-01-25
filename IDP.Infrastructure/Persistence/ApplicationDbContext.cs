@@ -2,6 +2,7 @@
 using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
+using IDP.Infrastructure.Outbox;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
@@ -9,20 +10,16 @@ namespace IDP.Infrastructure.Persistence;
 internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly AuditService _auditService;
 
     public ApplicationDbContext(DbContextOptions options,
-        ICurrentUserService currentUserService,
-        AuditService auditService) : base(options)
+        ICurrentUserService currentUserService) : base(options)
     {
         _currentUserService = currentUserService;
-        _auditService = auditService;
     }
 
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<PreAuthorization> PreAuthorizations { get; set; }
     public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<Client> Clients { get; set; }
@@ -30,11 +27,13 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<ClientAudience> ClientAudiences { get; set; }
     public DbSet<ClientSecret> ClientSecrets { get; set; }
     public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
+    public DbSet<Token> Tokens { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<ReferenceToken> ReferenceTokens { get; set; }
+    public DbSet<OutboxEvent> OutboxEvents { get; set; }
     public DbSet<LookupType> LookupTypes { get; set; }
     public DbSet<LookupValue> LookupValues { get; set; }
     public DbSet<Configuration> Configurations { get; set; }
-    public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<UserRolePermission> UserRolePermissions { get; set; }
     public DbSet<UserSearch> UsersSearch { get; set; }
     public DbSet<RoleSearch> RolesSearch { get; set; }
@@ -43,74 +42,13 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
-    public DbSet<TokenSearch> TokensSearch { get; set; }
+    public DbSet<TokenSearch> TokenSearch { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-
-        builder.Entity<UserRole>().ToTable("UserRoles");
-
-        builder.Entity<IdentityUserClaim<int>>().ToTable("UserClaims");
-
-        builder.Entity<PreAuthorization>().ToTable("PreAuthorizations");
-
-        builder.Entity<AuthorizationCode>().ToTable("AuthorizationCodes");
-
-        builder.Entity<RefreshToken>().ToTable("RefreshTokens");
-
-        builder.Entity<Client>(entity =>
-        {
-            entity.ToTable("Clients");
-
-            entity.Property(p => p.TokenType)
-                .HasConversion(
-                    v => v.ToString(),
-                    v => Enum.Parse<TokenTypes>(v));
-
-            entity.Property(p => p.ClientType)
-                .HasConversion(
-                    v => v.ToString(),
-                    v => Enum.Parse<ClientTypes>(v));
-
-            entity.Property(p => p.AppType)
-                .HasConversion(
-                    v => v.ToString(),
-                    v => Enum.Parse<AppTypes>(v));
-        });
-
-        builder.Entity<ClientScope>().ToTable("ClientScopes");
-
-        builder.Entity<ClientGrantType>(entity =>
-        {
-            entity.ToTable("ClientGrantTypes");
-
-            entity.Property(p => p.AllowedGrantType)
-                .HasConversion(
-                    v => v.ToString(),
-                    v => Enum.Parse<GrantTypes>(v));
-        });
-
-        builder.Entity<ReferenceToken>().ToTable("UserAccessTokens");
-
-        builder.Entity<LookupType>().ToTable("LookupTypes");
-
-        builder.Entity<LookupValue>().ToTable("LookupValues");
-
-        builder.Entity<UserAddress>(entity =>
-        {
-            entity.ToTable("UserAddresses");
-
-            entity.Property(p => p.AddressType)
-                .HasConversion(
-                    v => v.ToString(),
-                    v => Enum.Parse<AddressTypes>(v));
-        });
-
-        builder.Entity<UserContact>().ToTable("UserContacts");
     }
 
     /// <summary>
@@ -121,9 +59,21 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     {
         SetAuditFields();
 
-        _auditService.CreateAuditLog(this);
+        var domainEvents = ChangeTracker.Entries<AggregateRoot<Guid>>().SelectMany(e => e.Entity.DomainEvents)
+            .ToList();
+
+        foreach (var evt in domainEvents)
+        {
+            var outbox = DomainEventOutboxMapper.Map(evt);
+            OutboxEvents.Add(outbox);
+        }
 
         var result = base.SaveChanges();
+
+        foreach (var entry in ChangeTracker.Entries<AggregateRoot<Guid>>())
+        {
+            entry.Entity.ClearDomainEvents();
+        }
 
         return result;
     }
@@ -137,9 +87,21 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     {
         SetAuditFields();
 
-        //_auditService.CreateAuditLog(this);
+        var domainEvents = ChangeTracker.Entries<AggregateRoot<Guid>>().SelectMany(e => e.Entity.DomainEvents)
+            .ToList();
+
+        foreach (var evt in domainEvents)
+        {
+            var outbox = DomainEventOutboxMapper.Map(evt);
+            OutboxEvents.Add(outbox);
+        }
 
         var result = await base.SaveChangesAsync(cancellationToken);
+
+        foreach (var entry in ChangeTracker.Entries<AggregateRoot<Guid>>())
+        {
+            entry.Entity.ClearDomainEvents();
+        }
 
         return result;
     }
@@ -150,7 +112,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     /// <param name="entries"></param>
     private void SetAuditFields()
     {
-        var entries = ChangeTracker.Entries<IBaseEntity>().ToList();
+        var entries = ChangeTracker.Entries<IAuditableAggregate>().ToList();
 
         foreach (var entry in entries)
         {

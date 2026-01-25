@@ -1,7 +1,7 @@
 ﻿namespace IDP.Domain.AggregateRoots.Lookups;
 
 [SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
-public class LookupType : BaseEntity, ITenant, IAggregateRoot
+public class LookupType : AuditableAggregate<int>, ITenant
 {
     public int TenantId { get; private set; }
     public int? ParentId { get; private set; }

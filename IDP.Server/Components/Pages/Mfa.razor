@@ -7,7 +7,7 @@
 @rendermode InteractiveServer
 
 @inject NavigationManager Navigation
-@inject IMfaService MfaService
+@inject IMfaUseCase MfaService
 @inject IAuthorizationCodeUseCase AuthService
 @inject IJSRuntime JSRuntime
 @inject LoadService LoadService
@@ -209,7 +209,7 @@
             UserId = Convert.ToInt32(QueryParams["uid"])
         };
 
-        var result = await AuthService.VerifyCode(mfaRequest);
+        var result = await AuthService.VerifyMfaCode(mfaRequest);
 
         if (result?.IsSuccess == true)
         {

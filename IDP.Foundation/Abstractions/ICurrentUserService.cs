@@ -8,5 +8,7 @@ public interface ICurrentUserService
     string UserName { get; }
     string BaseUrl { get; }
     string Scopes { get; }
+    string? IpAddress { get; }
+    string? UserAgent { get; }
     string[] GetRoles();
 }

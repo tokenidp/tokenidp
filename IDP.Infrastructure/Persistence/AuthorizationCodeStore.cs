@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Persistence;
 

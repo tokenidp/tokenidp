@@ -1,6 +1,6 @@
 ﻿namespace IDP.Domain.AggregateRoots.Clients;
 
-public class ClientScope : BaseEntity
+public class ClientScope : Entity<int>
 {
     public int ClientId { get; private set; }
     public string Scope { get; private set; }

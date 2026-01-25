@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots.Permissions;
 
-public sealed class Permission : BaseEntity, ITenant, IAggregateRoot
+public sealed class Permission : AuditableAggregate<int>, ITenant
 {
     private static readonly System.Text.RegularExpressions.Regex PermissionKeyRegex =
         new("^[a-z0-9]+([._][a-z0-9]+)*$",

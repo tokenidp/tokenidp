@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using IDP.Domain.Specifications;
 
 namespace Admin.Core.Tenants;
 
