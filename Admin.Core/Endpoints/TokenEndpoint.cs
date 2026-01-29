@@ -37,10 +37,10 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenLookups")
         .WithTags("TokenLookups");
 
-        authGroup.MapGet("/{id}", async (int id,
+        authGroup.MapGet("/{id}", async (Guid id,
             TokenQueryUseCase useCase) =>
         {
-            if (id <= 0)
+            if (string.IsNullOrEmpty(id.ToString()))
             {
                 return Results.BadRequest(ApiResult<ApiError>.Failure(
                     ApiError.Failure("Record Id should be greater than zero.")));
@@ -53,7 +53,7 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenById")
         .WithTags("TokenById");
 
-        authGroup.MapPost("/{id}/revoke", async (int id,
+        authGroup.MapPost("/{id}/revoke", async (Guid id,
             [FromBody] TokenRevokeRequest request,
             TokenCommandUseCase useCase,
             HttpContext httpContext) =>
@@ -66,7 +66,7 @@ internal class TokenEndpoint : IEndpointDefinition
         .WithName("TokenRevoke")
         .WithTags("TokenRevoke");
 
-        authGroup.MapPost("/{id}/expire", async (int id,
+        authGroup.MapPost("/{id}/expire", async (Guid id,
             TokenCommandUseCase useCase,
             HttpContext httpContext) =>
         {

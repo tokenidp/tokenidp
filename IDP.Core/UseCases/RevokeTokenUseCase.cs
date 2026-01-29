@@ -24,23 +24,23 @@ internal sealed class RevokeTokenUseCase
     {
         var tokenHash = _tokenSecretGenerator.HashToken(request.Token!);
 
-        var token = await _tokenStore.GetReferenceToken(tokenHash);
+        var token = await _tokenStore.GetToken(tokenHash);
 
         if (token == null)
         {
-            _logger.LogWarning("Reference token not found.");
+            _logger.LogError("Token not found.");
 
-            throw new NotFoundException("Refresh token not found.");
+            throw new NotFoundException("Token not found.");
         }
 
-        _logger.LogDebug("Refresh token found for {UserId} for token revocation", _currentUserService.UserId);
+        _logger.LogDebug("Token found for {UserId} for token revocation", _currentUserService.UserId);
 
-        token.Revoke(request.ReasonRevoked, _currentUserService.UserId);
+        token.Revoke(request.ReasonRevoked, request.IpAddress, _currentUserService.UserId);
 
         _logger.LogDebug("Marked token as revoked at {RevocationTime}", DateTime.UtcNow);
 
         await _tokenStore.RevokeToken(token);
 
-        _logger.LogInfo("Successfully revoked refresh token for user {UserId}", _currentUserService.UserId);
+        _logger.LogInfo("Successfully revoked token for user {UserId}", _currentUserService.UserId);
     }
 }

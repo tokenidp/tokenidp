@@ -1,33 +1,39 @@
 ﻿using IDP.Domain.AggregateRoots.Tokens;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace Admin.Core.Tokens.UseCases;
 
 internal sealed class TokenCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly ITokenStore _tokenStore;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<TokenCommandUseCase> _logger;
 
     public TokenCommandUseCase(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
-        IAppLogger<TokenCommandUseCase> logger)
+        IAppLogger<TokenCommandUseCase> logger,
+        ITokenStore tokenStore)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
+        _tokenStore = tokenStore;
     }
 
     public async Task<ApiResult<int>> RevokeToken(
-        int tokenId,
+        Guid tokenId,
         string ipAddress,
         string? reason,
         CancellationToken cancellationToken = default)
     {
-        var token = await _dbContext.TokenSearch
+        var token = await _dbContext.Tokens
+            .Include(t => t.ReferenceToken)
+            .Include(t => t.RefreshToken)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.TenantId == _currentUserService.TenantId,
-                cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == tokenId && t.IsRevoked != true
+            && t.TenantId == _currentUserService.TenantId, cancellationToken);
 
         if (token == null)
         {
@@ -40,58 +46,26 @@ internal sealed class TokenCommandUseCase
             ? "Admin revocation"
             : reason.Trim();
 
-        if (string.Equals(token.SourceType, "RefreshToken", StringComparison.OrdinalIgnoreCase))
-        {
-            //var refreshToken = await _dbContext.RefreshTokens
-            //    .FirstOrDefaultAsync(t => t.Id == token.SourceTokenId, cancellationToken);
+        token.Revoke(normalizedReason, ipAddress, _currentUserService.UserId);
 
-            RefreshToken refreshToken = default!;
-
-            if (refreshToken == null)
-            {
-                return ApiResult<int>.Failure(ApiError.Failure("NotFound",
-                    "Refresh token not found for the Id {0}".FormatString(token.TokenId)));
-            }
-
-            //refreshToken.RevokeToken(ipAddress, normalizedReason);
-            //refreshToken.SetUpdated(_currentUserService.UserId);
-        }
-        else if (string.Equals(token.SourceType, "ReferenceToken", StringComparison.OrdinalIgnoreCase))
-        {
-            //var referenceToken = await _dbContext.ReferenceTokens
-            //    .FirstOrDefaultAsync(t => t.Id == token.SourceTokenId, cancellationToken);
-
-            ReferenceToken referenceToken = default!;
-
-            if (referenceToken == null)
-            {
-                return ApiResult<int>.Failure(ApiError.Failure("NotFound",
-                    "Reference token not found for the Id {0}".FormatString(token.TokenId)));
-            }
-
-            //referenceToken.RevokeToken(_currentUserService.UserId);
-        }
-        else
-        {
-            return ApiResult<int>.Failure(ApiError.Failure("token.unsupported",
-                "Token type does not support revocation."));
-        }
-
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        var result = await _tokenStore.RevokeToken(token);
+   
         _logger.LogInfo("Token revoked {TokenId}", tokenId);
 
         return ApiResult<int>.Success(result);
     }
 
     public async Task<ApiResult<int>> ExpireToken(
-        int tokenId,
+        Guid tokenId,
         string ipAddress,
         CancellationToken cancellationToken = default)
     {
-        var token = await _dbContext.TokenSearch
+        var token = await _dbContext.Tokens
+            .Include(t => t.ReferenceToken)
+            .Include(t => t.RefreshToken)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.TenantId == _currentUserService.TenantId,
-                cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == tokenId && t.IsRevoked != true 
+            && t.TenantId == _currentUserService.TenantId, cancellationToken);
 
         if (token == null)
         {
@@ -100,44 +74,12 @@ internal sealed class TokenCommandUseCase
                 "Token not found for the Id {0}".FormatString(tokenId)));
         }
 
-        if (string.Equals(token.SourceType, "RefreshToken", StringComparison.OrdinalIgnoreCase))
-        {
-            //var refreshToken = await _dbContext.RefreshTokens
-            //    .FirstOrDefaultAsync(t => t.Id == token.SourceTokenId, cancellationToken);
+        token.Expire(_currentUserService.UserId);
 
-            RefreshToken refreshToken = default!;
-
-            if (refreshToken == null)
-            {
-                return ApiResult<int>.Failure(ApiError.Failure("NotFound",
-                    "Refresh token not found for the Id {0}".FormatString(token.TokenId)));
-            }
-
-            //refreshToken.ExpireNow();
-            //refreshToken.SetUpdated(_currentUserService.UserId);
-        }
-        else if (string.Equals(token.SourceType, "ReferenceToken", StringComparison.OrdinalIgnoreCase))
-        {
-            //var referenceToken = await _dbContext.ReferenceTokens
-            //    .FirstOrDefaultAsync(t => t.Id == token.SourceTokenId, cancellationToken);
-
-            ReferenceToken referenceToken = default!;
-
-            if (referenceToken == null)
-            {
-                return ApiResult<int>.Failure(ApiError.Failure("NotFound",
-                    "Reference token not found for the Id {0}".FormatString(token.TokenId)));
-            }
-
-            //referenceToken.ExpireNow(_currentUserService.UserId);
-        }
-        else
-        {
-            return ApiResult<int>.Failure(ApiError.Failure("token.unsupported",
-                "Token type does not support force expiration."));
-        }
+        _dbContext.Tokens.Update(token);
 
         var result = await _dbContext.SaveChangesAsync(cancellationToken);
+
         _logger.LogInfo("Token expired {TokenId}", tokenId);
 
         return ApiResult<int>.Success(result);

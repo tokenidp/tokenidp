@@ -1,4 +1,5 @@
 ﻿using IDP.Foundation.Abstractions.Stores;
+using Microsoft.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
 
@@ -23,12 +24,20 @@ internal class TokenStore : ITokenStore
         return id;
     }
 
-    public async Task<Token?> GetReferenceToken(byte[] tokenHash)
+    public async Task<Token?> GetToken(byte[] tokenHash)
     {
-        var referenceToken = await _dbContext.Tokens
+        var token = await _dbContext.Tokens
+            .FirstOrDefaultAsync(s => s.RefreshToken.TokenHash == tokenHash && s.IsRevoked != true);
+
+        if (token != null)
+        {
+            return token;
+        }
+
+        token = await _dbContext.Tokens
              .FirstOrDefaultAsync(s => s.ReferenceToken.TokenHash == tokenHash && s.IsRevoked != true);
 
-        return referenceToken;
+        return token;
     }
 
     public async Task<Token?> GetRefreshToken(byte[] tokenHash)
@@ -39,7 +48,7 @@ internal class TokenStore : ITokenStore
         return refreshToken;
     }
 
-    public async Task<bool> RemoveOldRefreshTokens(int userId, int expiry)
+    public async Task<bool> RemoveOldRefreshTokens(int userId, string ipAddress, int expiry)
     {
         _logger.LogDebug("Removing old refresh tokens for user {UserId}", userId);
 
@@ -51,9 +60,9 @@ internal class TokenStore : ITokenStore
 
         if (oldTokens.Any())
         {
-            foreach(var token in oldTokens)
+            foreach (var token in oldTokens)
             {
-                token.Revoke(RevokeReason.RefreshReuse.ToString(), userId);
+                token.Revoke(RevokeReason.RefreshReuse.ToString(), ipAddress, userId);
             }
 
             await _dbContext.SaveChangesAsync();

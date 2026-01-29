@@ -2,23 +2,22 @@
 
 namespace IDP.Domain.AggregateRoots.Users;
 
-public partial class User : IdentityUser<int>, IAuditableAggregate, ITenant
+public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
 {
     private readonly List<UserRole> _userRoles = new();
     private readonly List<UserAddress> _userAddresses = new();
     private readonly List<UserContact> _userContacts = new();
+    private readonly List<IDomainEvent> _domainEvents = new();
 
     public int TenantId { get; private set; }
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; }
     public string LastName { get; private set; }
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
+
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
     public IReadOnlyCollection<UserContact> UserContacts => _userContacts.AsReadOnly();
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public virtual Tenant Tenant { get; private set; }
 
@@ -47,6 +46,16 @@ public partial class User : IdentityUser<int>, IAuditableAggregate, ITenant
         StatusId = UserStatus.Active;
 
         SyncRoles(roles);
+    }
+
+    public void AddDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
+    }
+
+    public void ClearDomainEvents()
+    {
+        _domainEvents.Clear();
     }
 
     public Result UpdateProfile(
@@ -88,18 +97,6 @@ public partial class User : IdentityUser<int>, IAuditableAggregate, ITenant
     public void UpdateStatus(UserStatus userStatus)
     {
         StatusId = userStatus;
-    }
-
-    public void SetCreated(int userId)
-    {
-        CreatedOn = DateTime.UtcNow;
-        CreatedBy = userId;
-    }
-
-    public void SetUpdated(int userId)
-    {
-        UpdatedOn = DateTime.UtcNow;
-        UpdatedBy = userId;
     }
 
     public Result ReplaceAddresses(IEnumerable<UserAddress> addresses)
@@ -216,14 +213,31 @@ public partial class User : IdentityUser<int>, IAuditableAggregate, ITenant
     }
 }
 
-public partial class User
+public partial class User : IAuditableAggregate
 {
+    public int CreatedBy { get; private set; }
+    public DateTime CreatedOn { get; private set; }
+    public int? UpdatedBy { get; private set; }
+    public DateTime? UpdatedOn { get; private set; }
+
     public string FullName
     {
         get
         {
             return string.Format("{0} {1}", FirstName, LastName);
         }
+    }
+
+    public void SetCreated(int userId)
+    {
+        CreatedOn = DateTime.UtcNow;
+        CreatedBy = userId;
+    }
+
+    public void SetUpdated(int userId)
+    {
+        UpdatedOn = DateTime.UtcNow;
+        UpdatedBy = userId;
     }
 }
 

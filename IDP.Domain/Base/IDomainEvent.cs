@@ -2,5 +2,9 @@
 
 public interface IDomainEvent
 {
-    DateTime OccurredOnUtc { get; }
+    int TenantId { get; }
+    string AggregateId { get; }
+    string AggregateType { get; }
+    string EventType { get; }
+    DateTime OccurredOn { get; }
 }

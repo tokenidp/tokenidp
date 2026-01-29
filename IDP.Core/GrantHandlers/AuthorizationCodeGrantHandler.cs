@@ -35,5 +35,5 @@ internal sealed class AuthorizationCodeGrantHandler : ITokenGrantHandler
         _logger.LogInfo("Token generated successfully for {UserId}", tokenInfo.UserId);
 
         return token;
-    }    
+    }
 }

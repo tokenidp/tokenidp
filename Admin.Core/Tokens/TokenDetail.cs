@@ -2,9 +2,9 @@
 
 internal sealed class TokenDetail
 {
-    public int Id { get; private set; }
+    public Guid Id { get; private set; }
     public int TenantId { get; private set; }
-    public string SourceTokenId { get; private set; } = default!;
+    public Guid SourceTokenId { get; private set; } = default!;
     public string SourceType { get; private set; } = default!;
     public string TokenType { get; private set; } = default!;
     public string ClientId { get; private set; } = default!;

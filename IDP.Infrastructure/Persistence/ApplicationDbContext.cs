@@ -3,6 +3,7 @@ using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
 using IDP.Infrastructure.Outbox;
+using IDP.Infrastructure.Persistence.ReadModels;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
@@ -10,11 +11,14 @@ namespace IDP.Infrastructure.Persistence;
 internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
+    private readonly IAppLogger<ApplicationDbContext> _appLogger;
 
     public ApplicationDbContext(DbContextOptions options,
-        ICurrentUserService currentUserService) : base(options)
+        ICurrentUserService currentUserService,
+        IAppLogger<ApplicationDbContext> appLogger) : base(options)
     {
         _currentUserService = currentUserService;
+        _appLogger = appLogger;
     }
 
     public DbSet<Permission> Permissions { get; set; }
@@ -43,6 +47,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
     public DbSet<TokenSearch> TokenSearch { get; set; }
+    public DbSet<TokenReadModel> TokenReadModel { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

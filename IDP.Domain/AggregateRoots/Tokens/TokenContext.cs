@@ -6,6 +6,7 @@ public class TokenContext
 {
     public int UserId { get; private set; }
     public int TenantId { get; private set; }
+    public string ClientName { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
     public string ClientId { get; private set; } = string.Empty;
     public string IpAddress { get; private set; } = string.Empty;
@@ -23,6 +24,7 @@ public class TokenContext
 
     public static TokenContext Create(int userId,
         int tenantId,
+        string clientName,
         string userName,
         string clientId,
         TokenTypes tokenType,
@@ -38,6 +40,7 @@ public class TokenContext
         {
             UserId = userId,
             TenantId = tenantId,
+            ClientName = clientName,
             UserName = userName,
             ClientId = clientId,
             TokenType = tokenType,

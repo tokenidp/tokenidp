@@ -31,7 +31,7 @@ public static class DependencyInjection
         services.AddScoped<TenantUserMfaPolicy>();
 
         services.AddMfaService();
-        services.AddAuthorizationUseCase();      
+        services.AddAuthorizationUseCase();
     }
 
     private static void AddAuthorizationUseCase(this IServiceCollection services)

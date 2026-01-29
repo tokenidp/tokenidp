@@ -7,5 +7,10 @@ internal class TokenSearchConfig : IEntityTypeConfiguration<TokenSearch>
         builder.HasKey(p => new { p.Id });
 
         builder.ToView("vTokenSearch");
+
+        builder.Property(p => p.Status)
+               .HasConversion(
+                   v => v.ToString(),
+                   v => Enum.Parse<TokenStatus>(v));
     }
 }

@@ -59,6 +59,7 @@ internal class TokenContextUseCase
 
         var userInfo = TokenContext.Create(userId,
             user.TenantId,
+            client.ClientName,
             user.UserName ?? string.Empty,
             clientId,
             client.TokenType,

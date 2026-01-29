@@ -1,11 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Authorization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace IDP.Infrastructure.Config;
+﻿namespace IDP.Infrastructure.Config;
 
 internal class RefreshTokenConfig : IEntityTypeConfiguration<RefreshToken>
 {

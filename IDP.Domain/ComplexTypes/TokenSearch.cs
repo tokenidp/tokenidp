@@ -4,9 +4,9 @@ namespace IDP.Domain.ComplexTypes;
 
 public class TokenSearch
 {
-    public int Id { get; private set; }
+    public Guid Id { get; private set; }
+    public Guid TokenId { get; private set; } = default!;
     public int TenantId { get; private set; }
-    public string TokenId { get; private set; } = default!;
     public string SourceType { get; private set; } = default!;
     public string TokenType { get; private set; } = default!;
     public string ClientId { get; private set; } = default!;

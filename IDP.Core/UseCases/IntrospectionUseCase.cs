@@ -23,7 +23,7 @@ internal sealed class IntrospectionUseCase
 
         var tokenHash = _tokenSecretGenerator.HashToken(token!);
 
-        var referenceToken = await _tokenStore.GetReferenceToken(tokenHash);
+        var referenceToken = await _tokenStore.GetToken(tokenHash);
 
         if (referenceToken == null)
         {

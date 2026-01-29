@@ -2,8 +2,8 @@
 global using IDP.Core.Model;
 global using IDP.Core.Security;
 global using IDP.Domain.AggregateRoots.Clients;
-global using IDP.Domain.AggregateRoots.Users;
 global using IDP.Domain.AggregateRoots.Tokens;
+global using IDP.Domain.AggregateRoots.Users;
 global using IDP.Domain.Specifications;
 global using IDP.Foundation.Abstractions;
 global using IDP.Foundation.Contracts;

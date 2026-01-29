@@ -37,16 +37,36 @@ internal sealed class TokenQueryUseCase
         if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
         {
             var term = searchCriteria.Value.Trim().ToLowerInvariant();
+            if (term.Length < 3)
+            {
+                term = string.Empty;
+            }
 
-            query = query.Where(token =>
-                (token.TokenId ?? string.Empty).ToLower().Contains(term) ||
-                (token.ClientId ?? string.Empty).ToLower().Contains(term) ||
-                (token.ClientName ?? string.Empty).ToLower().Contains(term) ||
-                (token.UserName ?? string.Empty).ToLower().Contains(term));
+            if (!string.IsNullOrWhiteSpace(term))
+            {
+                query = query.Where(token =>
+                    (token.TokenId.ToString() ?? string.Empty).ToLower().Contains(term) ||
+                    (token.ClientId ?? string.Empty).ToLower().Contains(term) ||
+                    (token.ClientName ?? string.Empty).ToLower().Contains(term) ||
+                    (token.UserName ?? string.Empty).ToLower().Contains(term));
+            }
         }
 
         criterias = criterias
             .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var sourceTypeCriteria = criterias.FirstOrDefault(c =>
+            string.Equals(c.ColumnName, "SourceType", StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(sourceTypeCriteria?.Value))
+        {
+            var sourceType = sourceTypeCriteria.Value.Trim().ToLowerInvariant();
+            query = query.Where(token => token.SourceType.ToLower() == sourceType);
+        }
+
+        criterias = criterias
+            .Where(c => !string.Equals(c.ColumnName, "SourceType", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var statusCriteria = criterias.FirstOrDefault(c =>
@@ -70,7 +90,7 @@ internal sealed class TokenQueryUseCase
     }
 
     public async Task<ApiResult<TokenDetail>> GetTokenById(
-        int tokenId,
+        Guid tokenId,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Fetching token {TokenId}", tokenId);

@@ -2,9 +2,10 @@
 
 internal sealed class TokenListItem
 {
-    public int Id { get; private set; }
-    public string TokenId { get; private set; } = string.Empty;
-    public string TokenType { get; private set; } = string.Empty;
+    public Guid Id { get; private set; }
+    public Guid TokenId { get; private set; }
+    public string SourceType { get; private set; } = string.Empty;
+    public string ClientId { get; private set; } = string.Empty;
     public string ClientName { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
     public DateTime IssuedAt { get; private set; }
@@ -16,7 +17,8 @@ internal sealed class TokenListItem
         {
             Id = token.Id,
             TokenId = token.TokenId,
-            TokenType = token.TokenType,
+            SourceType = token.SourceType,
+            ClientId = token.ClientId,
             ClientName = token.ClientName,
             UserName = token.UserName ?? string.Empty,
             IssuedAt = token.IssuedAt,

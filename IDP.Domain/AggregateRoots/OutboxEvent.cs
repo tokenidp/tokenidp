@@ -1,5 +1,4 @@
-﻿using IDP.Domain.DomainEvents;
-using IDP.Domain.Specifications;
+﻿using IDP.Domain.Specifications;
 using System.Text.Json;
 
 namespace IDP.Domain.AggregateRoots;
@@ -9,25 +8,27 @@ public sealed class OutboxEvent : AggregateRoot<long>
     public int TenantId { get; private set; }
     public string EventType { get; private set; } = string.Empty;
     public string PayloadJson { get; private set; } = string.Empty;
-
-    public long AggregateId { get; private set; }
-    public string? PartitionKey { get; private set; }
-
     public DateTime CreatedAt { get; private set; }
+
     public DateTime? ProcessedAt { get; private set; }
+    public OutboxStatus Status { get; private set; }
+    public string AggregateId { get; private set; }
+    public string? PartitionKey { get; private set; }
 
     public int RetryCount { get; private set; }
     public string? Error { get; private set; }
-    public DateTime? NextAttemptAt { get; private set; }
 
-    public OutboxStatus Status { get; private set; }
+    public DateTime? LockedUntil { get; private set; }
+    public string? LockedBy { get; private set; }
+    public DateTime? NextAttemptAt { get; private set; }
+    public DateTime? FailedAt { get; private set; }
 
     private OutboxEvent() { }
 
     private OutboxEvent(
         int tenantId,
         string eventType,
-        long aggregateId,
+        string aggregateId,
         string payloadJson,
         string? partitionKey)
     {
@@ -45,7 +46,7 @@ public sealed class OutboxEvent : AggregateRoot<long>
     public static OutboxEvent Create(
         int tenantId,
         string eventType,
-        long aggregateId,
+        string aggregateId,
         object payload,
         string? partitionKey = null)
     {
@@ -71,24 +72,36 @@ public sealed class OutboxEvent : AggregateRoot<long>
         ProcessedAt = DateTime.UtcNow;
         Error = null;
         NextAttemptAt = null;
+        LockedUntil = null;
+        LockedBy = null;
+        FailedAt = null;
     }
 
-    public void MarkFailed(Exception ex, int maxRetries)
+    public void MarkFailed(DateTime utcNow, string error, TimeSpan delay, int maxRetries)
     {
         RetryCount++;
-        Error = ex.Message;
+        Error = error.Length > 1024 ? error[..1024] : error;
 
         if (RetryCount >= maxRetries)
         {
+            FailedAt = utcNow;
             Status = OutboxStatus.Failed;
+            // leave ProcessedAt null to indicate “not processed”; FailedAt indicates DLQ state
             NextAttemptAt = null;
         }
         else
         {
-            Status = OutboxStatus.Pending;
-            NextAttemptAt = DateTime.UtcNow.AddSeconds(
-                Math.Pow(2, RetryCount));
+            NextAttemptAt = utcNow.Add(delay);
         }
+
+        LockedUntil = null;
+        LockedBy = null;
+    }
+
+    public void Lock(string workerId, DateTime utcNow, TimeSpan lockDuration)
+    {
+        LockedBy = workerId;
+        LockedUntil = utcNow.Add(lockDuration);
     }
 
     public bool CanProcess(DateTime nowUtc)
@@ -105,31 +118,15 @@ public sealed class OutboxEvent : AggregateRoot<long>
 
 public static class OutboxEventFactory
 {
-    public static OutboxEvent CreateFromDomainEvent(
-        IDomainEvent domainEvent,
-        int tenantId,
-        long? aggregateId,
+    public static OutboxEvent CreateFromDomainEvent(IDomainEvent domainEvent,
         string? partitionKey = null)
     {
         return OutboxEvent.Create(
-            tenantId,
-            MapEventType(domainEvent),
-            aggregateId ?? 0,
+            domainEvent.TenantId,
+            domainEvent.EventType,
+            domainEvent.AggregateId,
             domainEvent,
             partitionKey
         );
     }
-
-    private static string MapEventType(IDomainEvent evt) =>
-        evt switch
-        {
-            TokenIssuedDomainEvent => OutboxEventTypes.TokenIssued,
-            TokenRevokedDomainEvent => OutboxEventTypes.TokenRevoked,
-            TokenRefreshRotatedDomainEvent => OutboxEventTypes.TokenRefreshRotated,
-            TokenRefreshReuseDetectedDomainEvent => OutboxEventTypes.TokenRefreshReuseDetected,
-            ReferenceTokenIssuedDomainEvent  => OutboxEventTypes.ReferenceTokenIssued,
-            RefreshTokenIssuedDomainEvent => OutboxEventTypes.RefreshTokenIssued,
-            _ => throw new InvalidOperationException(
-                $"No outbox mapping defined for {evt.GetType().Name}")
-        };
 }

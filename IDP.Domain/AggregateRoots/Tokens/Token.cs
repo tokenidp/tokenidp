@@ -16,7 +16,7 @@ public sealed class Token : AuditableAggregate<Guid>
     public DateTime ExpiresAt { get; private set; }
 
     public string? Scope { get; private set; }
-    public string? Audience {get; private set; }
+    public string? Audience { get; private set; }
     public string? CreatedByIpAddress { get; private set; }
     public string? Roles { get; private set; }
     public Guid? SessionId { get; private set; }
@@ -26,7 +26,7 @@ public sealed class Token : AuditableAggregate<Guid>
     public bool IsRevoked { get; private set; }
     public DateTime? RevokedAt { get; private set; }
     public string? RevokedByIpAddress { get; private set; }
-    public string? ReasonRevoked { get; private set; }
+    public string? RevokeReason { get; private set; }
 
     public RefreshToken RefreshToken { get; private set; } = default!;
     public ReferenceToken ReferenceToken { get; private set; } = default!;
@@ -56,68 +56,83 @@ public sealed class Token : AuditableAggregate<Guid>
         return token;
     }
 
-    public void IssueJwt(TokenContext ctx)
+    public void IssueJwt(
+        string clientName, 
+        string userName)
     {
         AddDomainEvent(
-            new TokenIssuedDomainEvent(Id, 
-            TenantId, 
-            UserId, 
-            ClientId, 
-            TokenTypes.JWT, 
-            ctx.ExpiresAt));
+            new JwtTokenIssuedEvent(Id,
+            TenantId,
+            UserId,
+            ClientId,
+            TokenType,
+            ExpiresAt));
     }
 
-    public void AddReferenceToken(DateTime expires, byte[] tokenHash)
+    public void AddReferenceToken(
+        byte[] tokenHash, 
+        string clientName, 
+        string userName)
     {
         ReferenceToken = ReferenceToken.Create(Id, tokenHash);
 
         AddDomainEvent(
-            new ReferenceTokenIssuedDomainEvent(Id, 
-            Id, 
-            TenantId, 
-            UserId, 
-            ClientId, 
-            expires));
+            new ReferenceTokenIssuedEvent(Id,
+            TenantId,
+            UserId,
+            ClientId,
+            TokenType,
+            ExpiresAt));
     }
 
-    public void AddRefreshToken(DateTime expiresAt, byte[] tokenHash, string ip)
+    public void AddRefreshToken(
+        DateTime expiresAt, 
+        byte[] tokenHash, 
+        string ip, 
+        string clientName, 
+        string userName)
     {
         RefreshToken = RefreshToken.Create(Id, tokenHash, expiresAt);
 
         AddDomainEvent(
-            new RefreshTokenIssuedDomainEvent(Id, 
-            Id, 
-            TenantId, 
-            UserId, 
-            ClientId, 
-            expiresAt, 
+            new RefreshTokenIssuedEvent(Id,
+            TenantId,
+            UserId,
+            ClientId,
+            TokenType,
+            expiresAt,
             CreatedByIpAddress));
-
     }
 
-    public void Revoke(string reason, int userId)
+    public void Revoke(string reason, string revokeByIp, int userId)
     {
         if (TokenStatus != TokenStatus.Active) return;
 
         TokenStatus = TokenStatus.Revoked;
         RevokedAt = DateTime.UtcNow;
-        ReasonRevoked = reason;
+        RevokeReason = reason;
+        RevokedByIpAddress = revokeByIp; 
 
         AddDomainEvent(
-            new TokenRevokedDomainEvent(Id, 
+            new TokenRevokedEvent(Id,
             TenantId,
-            userId, 
+            userId,
             ClientId,
-            ReasonRevoked));
+            RefreshToken != null ? "Refresh" : "Reference",
+            RevokeReason));
     }
 
-    public void Expire()
+    public void Expire(int userId)
     {
         if (TokenStatus != TokenStatus.Active) return;
         TokenStatus = TokenStatus.Expired;
+        ExpiresAt = DateTime.UtcNow;
+
+        AddDomainEvent(
+            new TokenExpiredEvent(Id,
+            TenantId,
+            userId,      
+            ClientId,
+            RefreshToken != null ? "Refresh" : "Reference"));
     }
-
-    public bool IsActive() =>
-        TokenStatus == TokenStatus.Active && ExpiresAt > DateTime.UtcNow;
-
 }

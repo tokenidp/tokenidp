@@ -5,6 +5,7 @@ namespace IDP.Domain.AggregateRoots.Clients;
 public class ClientValidationSnapshot
 {
     public string ClientId { get; }
+    public string ClientName { get; }
     public int TenantId { get; private set; }
     public bool IsActive { get; }
     public string RedirectUri { get; private set; } = string.Empty;
@@ -22,6 +23,7 @@ public class ClientValidationSnapshot
 
     public ClientValidationSnapshot(
         string clientId,
+        string clientName,
         int tenantId,
         bool isActive,
         string redirectUri,
@@ -38,6 +40,7 @@ public class ClientValidationSnapshot
         int? clientSecretExpiry)
     {
         ClientId = clientId;
+        ClientName = clientName;
         TenantId = tenantId;
         IsActive = isActive;
         RedirectUri = redirectUri;

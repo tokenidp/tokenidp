@@ -7,6 +7,7 @@ internal static class ClientProjection
     public static Expression<Func<Client, ClientValidationSnapshot>> ValidationSnapshot =>
         client => new ClientValidationSnapshot(
             client.ClientId,
+            client.ClientName,
             client.TenantId,
             client.IsActive,
             client.RedirectUri,

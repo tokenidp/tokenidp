@@ -1,7 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Tokens;
-using IDP.Domain.Base;
-
-namespace IDP.Infrastructure.Config;
+﻿namespace IDP.Infrastructure.Config;
 
 internal class UserAddressConfig : IEntityTypeConfiguration<UserAddress>
 {

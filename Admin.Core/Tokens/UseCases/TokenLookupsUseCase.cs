@@ -2,7 +2,6 @@
 
 internal sealed class TokenLookupsUseCase
 {
-    private const int DefaultUserLimit = 200;
     private const int DefaultClientLimit = 200;
 
     private readonly IApplicationDbContext _dbContext;
@@ -26,11 +25,9 @@ internal sealed class TokenLookupsUseCase
 
         var tokenTypes = new List<LookupItem>
         {
-            new() { Key = "Access", Value = "Access Token" },
-            new() { Key = "Refresh", Value = "Refresh Token" },
-            new() { Key = "Reference", Value = "Reference Token" },
-            new() { Key = "DeviceCode", Value = "Device Code" },
-            new() { Key = "Ciba", Value = "CIBA" }
+            new() { Key = "JWT", Value = "JWT" },
+            new() { Key = "Reference", Value = "Reference" },
+            new() { Key = "Refresh", Value = "Refresh" }
         };
 
         var statuses = Enum.GetValues<TokenStatus>()
@@ -55,26 +52,11 @@ internal sealed class TokenLookupsUseCase
             .Take(DefaultClientLimit)
             .ToListAsync(cancellationToken);
 
-        var users = await _dbContext.Users
-            .AsNoTracking()
-            .Where(u => u.TenantId == _currentUserService.TenantId)
-            .OrderBy(u => u.UserName)
-            .Select(u => new LookupItem
-            {
-                Key = u.Id.ToString(),
-                Value = string.IsNullOrWhiteSpace(u.UserName)
-                    ? (u.FirstName + " " + u.LastName).Trim()
-                    : u.UserName
-            })
-            .Take(DefaultUserLimit)
-            .ToListAsync(cancellationToken);
-
         return ApiResult<TokenLookups>.Success(new TokenLookups
         {
             TokenTypes = tokenTypes,
             Statuses = statuses,
-            Clients = clients,
-            Users = users
+            Clients = clients
         });
     }
 }

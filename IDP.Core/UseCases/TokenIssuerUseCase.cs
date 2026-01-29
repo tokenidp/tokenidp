@@ -39,6 +39,8 @@ internal sealed class TokenIssuerUseCase
 
                     tokenResponse.AddRefreshToken(refreshToken);
 
+                    token.IssueJwt(context.ClientName, context.UserName);
+
                     await _tokenStore.CreateToken(token);
 
                     return tokenResponse;
@@ -49,7 +51,7 @@ internal sealed class TokenIssuerUseCase
 
                     var hashToken = _tokenSecretGenerator.HashToken(tokenResponse.AccessToken);
 
-                    token.AddReferenceToken(token.ExpiresAt, hashToken);
+                    token.AddReferenceToken(hashToken, context.ClientName, context.UserName);
 
                     var refreshToken = await IssueRefreshToken(token, context);
 
@@ -91,11 +93,12 @@ internal sealed class TokenIssuerUseCase
 
         var hashToken = _tokenSecretGenerator.HashToken(newRefreshToken);
 
-        token.AddRefreshToken(context.RefreshExpiresAt, hashToken, _currentUserService.IpAddress!);
+        token.AddRefreshToken(context.RefreshExpiresAt, hashToken, 
+            _currentUserService.IpAddress!, context.ClientName, context.UserName);
 
         _logger.LogDebug("Created refresh token entity with expiry {Expiry}", context.RefreshExpiresAt);
 
-        await _tokenStore.RemoveOldRefreshTokens(context.UserId, context.RefreshTokenExpiration);
+        await _tokenStore.RemoveOldRefreshTokens(context.UserId, context.IpAddress, context.RefreshTokenExpiration);
 
         _logger.LogDebug("Removed old refresh tokens for user {UserId}", context.UserId);
 

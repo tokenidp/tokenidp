@@ -17,5 +17,10 @@ internal class OutboxEventConfig : IEntityTypeConfiguration<OutboxEvent>
 
         builder.HasIndex(x => new { x.Status, x.CreatedAt });
         builder.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAt });
+
+        builder.Property(p => p.Status)
+              .HasConversion(
+                  v => v.ToString(),
+                  v => Enum.Parse<OutboxStatus>(v));
     }
 }
