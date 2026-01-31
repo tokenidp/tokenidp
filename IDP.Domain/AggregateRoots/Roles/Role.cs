@@ -1,10 +1,11 @@
 ﻿
 namespace IDP.Domain.AggregateRoots.Roles;
 
-public class Role : IdentityRole<int>, IAuditableAggregate, ITenant
+public class Role : IdentityRole<int>, IAggregateRoot, ITenant
 {
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
+    private readonly List<IDomainEvent> _domainEvents = new();
 
     public int TenantId { get; private set; }
     public string RoleDescription { get; private set; }
@@ -20,6 +21,7 @@ public class Role : IdentityRole<int>, IAuditableAggregate, ITenant
 
     public IReadOnlyCollection<RolePermission> RolePermissions => _rolePermissions.AsReadOnly();
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public Role() : base() { }
 
@@ -35,6 +37,16 @@ public class Role : IdentityRole<int>, IAuditableAggregate, ITenant
         IsActive = isActive;
         IsDeleted = false;
         IsEditable = true;
+    }
+
+    public void AddDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
+    }
+
+    public void ClearDomainEvents()
+    {
+        _domainEvents.Clear();
     }
 
     public Result Update(string name,

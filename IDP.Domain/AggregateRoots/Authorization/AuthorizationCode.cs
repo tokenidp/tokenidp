@@ -1,5 +1,5 @@
 ﻿namespace IDP.Domain.AggregateRoots.Authorization;
-public class AuthorizationCode : AuditableAggregate<int>
+public class AuthorizationCode : AggregateRoot<int>
 {
     public string Code { get; private set; } = string.Empty;
     public string ClientId { get; private set; } = string.Empty;
@@ -30,12 +30,10 @@ public class AuthorizationCode : AuditableAggregate<int>
         RedirectUri = redirectUri;
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
-        SetCreated(userId);
     }
 
     public void UpdateIsUsed(bool isUsed)
     {
         IsUsed = isUsed;
-        SetUpdated(UserId);
     }
 }

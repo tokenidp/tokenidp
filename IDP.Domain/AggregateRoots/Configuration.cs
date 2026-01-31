@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots;
 
-public class Configuration : AuditableAggregate<int>, ITenant
+public class Configuration : AggregateRoot<int>, ITenant
 {
     public string ConfigKey { get; private set; } = string.Empty;
     public string ConfigValue { get; private set; } = string.Empty;

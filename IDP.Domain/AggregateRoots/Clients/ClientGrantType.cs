@@ -7,7 +7,7 @@ public class ClientGrantType : Entity<int>
     public int ClientId { get; private set; }
     public GrantTypes AllowedGrantType { get; private set; }
 
-    public virtual Client Client { get; private set; }
+    public virtual Client Client { get; private set; } = default!;
 
     private ClientGrantType()
     {

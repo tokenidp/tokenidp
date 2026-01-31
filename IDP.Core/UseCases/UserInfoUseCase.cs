@@ -86,7 +86,7 @@ internal sealed class UserInfoUseCase
 
     private async Task<UserInfo> BuildUserInfoResponse(HashSet<string> scopes, string subject)
     {
-        var user = await _identityStore.FindByIdAsync(subject);
+        var user = await _identityStore.GetUserShortInfo(Convert.ToInt32(subject));
 
         if (user == null)
         {

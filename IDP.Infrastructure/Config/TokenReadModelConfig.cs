@@ -1,4 +1,4 @@
-﻿using IDP.Infrastructure.Persistence.ReadModels;
+﻿using IDP.Domain.ReadModels;
 
 namespace IDP.Infrastructure.Config;
 

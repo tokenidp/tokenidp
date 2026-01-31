@@ -32,7 +32,7 @@ internal class PreAuthorizationStore : IPreAuthorizationStore
         return id;
     }
 
-    public async Task<PreAuthorization?> GetPreAuthorization(string correlationId, int userId)
+    public async Task<PreAuthorization> GetPreAuthorization(string correlationId, int userId)
     {
         var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId, userId);
 
@@ -47,7 +47,7 @@ internal class PreAuthorizationStore : IPreAuthorizationStore
                    .FirstOrDefaultAsync();
         }
 
-        return preAuthorization;
+        return preAuthorization!;
     }
 
     public async Task<int> Update(PreAuthorization preAuthorization)

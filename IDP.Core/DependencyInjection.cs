@@ -56,7 +56,8 @@ public static class DependencyInjection
                 sp.GetRequiredService<IEmailSetting>(),
                 sp.GetRequiredService<IPreAuthorizationStore>(),
                 sp.GetRequiredService<EmailProviderFactory>(),
-                sp.GetRequiredService<IAppLogger<MfaUseCase>>()));
+                sp.GetRequiredService<IAppLogger<MfaUseCase>>(),
+                sp.GetRequiredService<ICurrentUserService>()));
     }
 
     private static void AddGrantHandlers(IServiceCollection services)

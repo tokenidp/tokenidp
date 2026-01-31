@@ -3,12 +3,12 @@
 public class ClientSecret : Entity<int>
 {
     public int ClientId { get; private set; }
-    public string SecretHash { get; private set; }
-    public string Description { get; private set; }
+    public string SecretHash { get; private set; } = default!;
+    public string Description { get; private set; } = default!;
     public DateTime ExpiresAt { get; private set; }
     public bool IsRevoked { get; private set; }
 
-    public virtual Client Client { get; private set; }
+    public virtual Client Client { get; private set; } = default!;
 
     private ClientSecret()
     {

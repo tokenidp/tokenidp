@@ -1,15 +1,15 @@
 ﻿namespace IDP.Domain.AggregateRoots.Authorization;
 
-public class PreAuthorization : AuditableAggregate<int>
+public class PreAuthorization : AggregateRoot<int>
 {
     public int UserId { get; private set; }
-    public string CorrelationId { get; private set; }
-    public string ClientId { get; private set; }
-    public string RedirectUri { get; private set; }
-    public string CodeChallenge { get; private set; }
-    public string CodeChallengeMethod { get; private set; } //Default is SHA-256
-    public string Scopes { get; private set; }
-    public string MfaCode { get; private set; }
+    public string CorrelationId { get; private set; } = default!;
+    public string ClientId { get; private set; } = default!;
+    public string RedirectUri { get; private set; } = default!;
+    public string CodeChallenge { get; private set; } = default!;
+    public string CodeChallengeMethod { get; private set; } = default!;//Default is SHA-256 
+    public string Scopes { get; private set; } = default!;
+    public string MfaCode { get; private set; } = default!;
     public DateTime Expiry { get; private set; }
     public bool Is2FAVerified { get; private set; }
 
@@ -34,7 +34,6 @@ public class PreAuthorization : AuditableAggregate<int>
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
         Expiry = expiry;
-        SetCreated(userId);
     }
 
     public void UpdateMfaCode(int userId,
@@ -43,7 +42,6 @@ public class PreAuthorization : AuditableAggregate<int>
     {
         MfaCode = mfaCode;
         Expiry = expiry;
-        SetUpdated(userId);
     }
 
     public void UpdateTwoFactorEnableFlag(bool enabled)

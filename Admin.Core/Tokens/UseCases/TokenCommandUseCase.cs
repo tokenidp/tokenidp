@@ -1,5 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Tokens;
-using IDP.Foundation.Abstractions.Stores;
+﻿using IDP.Foundation.Abstractions.Stores;
 
 namespace Admin.Core.Tokens.UseCases;
 
@@ -49,7 +48,7 @@ internal sealed class TokenCommandUseCase
         token.Revoke(normalizedReason, ipAddress, _currentUserService.UserId);
 
         var result = await _tokenStore.RevokeToken(token);
-   
+
         _logger.LogInfo("Token revoked {TokenId}", tokenId);
 
         return ApiResult<int>.Success(result);
@@ -64,7 +63,7 @@ internal sealed class TokenCommandUseCase
             .Include(t => t.ReferenceToken)
             .Include(t => t.RefreshToken)
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.IsRevoked != true 
+            .FirstOrDefaultAsync(t => t.Id == tokenId && t.IsRevoked != true
             && t.TenantId == _currentUserService.TenantId, cancellationToken);
 
         if (token == null)

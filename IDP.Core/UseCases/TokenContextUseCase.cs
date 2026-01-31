@@ -24,7 +24,7 @@ internal class TokenContextUseCase
     {
         _logger.LogInfo("Generating user info for token for user:{userId}", userId);
 
-        var user = await _identityStore.FindByIdAsync(userId.ToString());
+        var user = await _identityStore.GetUserShortInfo(userId);
 
         if (user == null)
         {

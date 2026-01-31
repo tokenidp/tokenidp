@@ -1,24 +1,30 @@
 ﻿using IDP.Domain.AggregateRoots;
 using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Outbox;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
-using IDP.Infrastructure.Outbox;
-using IDP.Infrastructure.Persistence.ReadModels;
+using IDP.Domain.ReadModels;
+using IDP.Infrastructure.Abstractions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
 
-internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
+internal partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
-
+    private readonly IOutboxMapperResolver _resolver;
+    private readonly IOutboxConsumerRouter _consumerRouter;
     public ApplicationDbContext(DbContextOptions options,
         ICurrentUserService currentUserService,
-        IAppLogger<ApplicationDbContext> appLogger) : base(options)
+        IAppLogger<ApplicationDbContext> appLogger,
+        IOutboxMapperResolver resolver,
+        IOutboxConsumerRouter consumerRouter) : base(options)
     {
         _currentUserService = currentUserService;
         _appLogger = appLogger;
+        _resolver = resolver;
+        _consumerRouter = consumerRouter;
     }
 
     public DbSet<Permission> Permissions { get; set; }
@@ -35,6 +41,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<ReferenceToken> ReferenceTokens { get; set; }
     public DbSet<OutboxEvent> OutboxEvents { get; set; }
+    public DbSet<OutboxEventConsumer> OutboxEventConsumers { get; set; }
     public DbSet<LookupType> LookupTypes { get; set; }
     public DbSet<LookupValue> LookupValues { get; set; }
     public DbSet<Configuration> Configurations { get; set; }
@@ -48,39 +55,13 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     public DbSet<UserContact> UserContacts { get; set; }
     public DbSet<TokenSearch> TokenSearch { get; set; }
     public DbSet<TokenReadModel> TokenReadModel { get; set; }
+    public DbSet<Activity> Activities { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
 
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-    }
-
-    /// <summary>
-    /// Save changes in database
-    /// </summary>
-    /// <returns>affected rows</returns>
-    public override int SaveChanges()
-    {
-        SetAuditFields();
-
-        var domainEvents = ChangeTracker.Entries<AggregateRoot<Guid>>().SelectMany(e => e.Entity.DomainEvents)
-            .ToList();
-
-        foreach (var evt in domainEvents)
-        {
-            var outbox = DomainEventOutboxMapper.Map(evt);
-            OutboxEvents.Add(outbox);
-        }
-
-        var result = base.SaveChanges();
-
-        foreach (var entry in ChangeTracker.Entries<AggregateRoot<Guid>>())
-        {
-            entry.Entity.ClearDomainEvents();
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -92,21 +73,36 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     {
         SetAuditFields();
 
-        var domainEvents = ChangeTracker.Entries<AggregateRoot<Guid>>().SelectMany(e => e.Entity.DomainEvents)
+        var aggregateEvents = ChangeTracker.Entries<IAggregateRoot>()
+            .SelectMany(e => e.Entity.DomainEvents)
             .ToList();
 
-        foreach (var evt in domainEvents)
+        var applicationEvents = DomainEvents.ToList();
+
+        var allEvents = aggregateEvents.Concat(applicationEvents).ToList();
+
+        foreach (var evt in allEvents)
         {
-            var outbox = DomainEventOutboxMapper.Map(evt);
+            var outbox = _resolver.Resolve(evt);
+
+            var consumers = _consumerRouter.ResolveConsumers(evt);
+
+            foreach (var consumer in consumers)
+            {
+                outbox.AddConsumer(consumer);
+            }
+
             OutboxEvents.Add(outbox);
         }
 
         var result = await base.SaveChangesAsync(cancellationToken);
 
-        foreach (var entry in ChangeTracker.Entries<AggregateRoot<Guid>>())
+        foreach (var entry in ChangeTracker.Entries<IAggregateRoot>())
         {
             entry.Entity.ClearDomainEvents();
         }
+
+        ClearDomainEvents();
 
         return result;
     }
@@ -117,7 +113,7 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
     /// <param name="entries"></param>
     private void SetAuditFields()
     {
-        var entries = ChangeTracker.Entries<IAuditableAggregate>().ToList();
+        var entries = ChangeTracker.Entries<IAggregateRoot>().ToList();
 
         foreach (var entry in entries)
         {
@@ -138,4 +134,17 @@ internal sealed class ApplicationDbContext : IdentityDbContext<User, Role, int>,
             }
         }
     }
+}
+
+internal partial class ApplicationDbContext
+{
+    private readonly List<IDomainEvent> _domainEvents = new();
+
+    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents;
+
+    public void AddDomainEvent(IDomainEvent evt)
+        => _domainEvents.Add(evt);
+
+    public void ClearDomainEvents()
+        => _domainEvents.Clear();
 }

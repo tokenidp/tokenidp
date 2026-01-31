@@ -1,0 +1,9 @@
+﻿global using IDP.Domain.AggregateRoots.Outbox;
+global using IDP.Domain.Base;
+global using IDP.Domain.DomainEvents.Tokens;
+global using IDP.Domain.DomainEvents.Users;
+global using IDP.Domain.ReadModels;
+global using IDP.Domain.Specifications;
+global using IDP.Foundation.Abstractions;
+global using Microsoft.EntityFrameworkCore;
+global using System.Text.Json;

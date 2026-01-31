@@ -33,7 +33,7 @@ internal class UserInfo
 
     private UserInfo() { }
 
-    public static UserInfo FromUser(User user)
+    public static UserInfo FromUser(UserShortInfo user)
     {
         if (user == null)
             throw new ArgumentNullException(nameof(user));

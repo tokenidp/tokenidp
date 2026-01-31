@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Authorization;
-
-namespace IDP.Foundation.Abstractions.Stores;
+﻿namespace IDP.Foundation.Abstractions.Stores;
 
 public interface IAuthorizationCodeStore
 {

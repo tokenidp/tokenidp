@@ -3,10 +3,10 @@
 public class ClientAudience : Entity<int>
 {
     public int ClientId { get; private set; }
-    public string Name { get; private set; }
+    public string Name { get; private set; } = default!;
     public bool IsActive { get; private set; }
 
-    public virtual Client Client { get; private set; }
+    public virtual Client Client { get; private set; } = default!;
 
     private ClientAudience()
     {

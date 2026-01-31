@@ -28,7 +28,17 @@ internal class CurrentUserService : ICurrentUserService
 
     public int TenantId => Convert.ToInt32(_httpContextAccessor.HttpContext?.User?.FindFirstValue("uid"));
 
-    public string CorrelationId => _httpContextAccessor.HttpContext?.Items["CorrelationId"]?.ToString() ?? string.Empty;
+    public Guid CorrelationId
+    {
+        get
+        {
+            var correlationId = _httpContextAccessor.HttpContext?.Items["CorrelationId"]?.ToString() ?? Guid.NewGuid().ToString();
+
+            Guid.TryParse(correlationId, out var guid);
+
+            return guid;
+        }
+    }
 
     public string UserName => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
 

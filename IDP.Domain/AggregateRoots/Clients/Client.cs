@@ -2,16 +2,16 @@
 
 namespace IDP.Domain.AggregateRoots.Clients;
 
-public class Client : AuditableAggregate<int>, ITenant
+public class Client : AggregateRoot<int>, ITenant
 {
-    public string ClientId { get; private set; }
-    public string ClientName { get; private set; }
+    public string ClientId { get; private set; } = default!;
+    public string ClientName { get; private set; } = default!;
     public string? Description { get; private set; }
     public ClientTypes ClientType { get; private set; }
     public AppTypes AppType { get; private set; }
     public TokenTypes TokenType { get; private set; }
     public int TenantId { get; private set; }
-    public string RedirectUri { get; private set; }
+    public string RedirectUri { get; private set; } = default!;
     public string? LogoutRedirectUri { get; private set; }
     public bool IsActive { get; private set; }
     public int? ClientSecretExpiry { get; private set; }
@@ -23,11 +23,11 @@ public class Client : AuditableAggregate<int>, ITenant
     public int? QueueLimit { get; private set; }
     public bool? EnableITracking { get; private set; }
 
-    public virtual Tenant Tenant { get; private set; }
-    public virtual ICollection<ClientScope> ClientScopes { get; private set; }
-    public virtual ICollection<ClientGrantType> ClientGrantTypes { get; private set; }
-    public virtual ICollection<ClientSecret> ClientSecrets { get; private set; }
-    public virtual ICollection<ClientAudience> ClientAudiences { get; private set; }
+    public virtual Tenant Tenant { get; private set; } = default!;
+    public virtual ICollection<ClientScope> ClientScopes { get; private set; } = default!;
+    public virtual ICollection<ClientGrantType> ClientGrantTypes { get; private set; } = default!;
+    public virtual ICollection<ClientSecret> ClientSecrets { get; private set; } = default!;
+    public virtual ICollection<ClientAudience> ClientAudiences { get; private set; } = default!;
 
     private Client()
     {

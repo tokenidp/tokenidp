@@ -1,8 +1,8 @@
 ﻿using IDP.Domain.AggregateRoots.Tokens;
-using IDP.Domain.DomainEvents;
+using IDP.Domain.DomainEvents.Tokens;
 using IDP.Domain.Specifications;
 
-public sealed class Token : AuditableAggregate<Guid>
+public sealed class Token : AggregateRoot<Guid>
 {
     public int TenantId { get; private set; }
     public int UserId { get; private set; }
@@ -57,7 +57,7 @@ public sealed class Token : AuditableAggregate<Guid>
     }
 
     public void IssueJwt(
-        string clientName, 
+        string clientName,
         string userName)
     {
         AddDomainEvent(
@@ -70,8 +70,8 @@ public sealed class Token : AuditableAggregate<Guid>
     }
 
     public void AddReferenceToken(
-        byte[] tokenHash, 
-        string clientName, 
+        byte[] tokenHash,
+        string clientName,
         string userName)
     {
         ReferenceToken = ReferenceToken.Create(Id, tokenHash);
@@ -86,10 +86,10 @@ public sealed class Token : AuditableAggregate<Guid>
     }
 
     public void AddRefreshToken(
-        DateTime expiresAt, 
-        byte[] tokenHash, 
-        string ip, 
-        string clientName, 
+        DateTime expiresAt,
+        byte[] tokenHash,
+        string ip,
+        string clientName,
         string userName)
     {
         RefreshToken = RefreshToken.Create(Id, tokenHash, expiresAt);
@@ -111,7 +111,7 @@ public sealed class Token : AuditableAggregate<Guid>
         TokenStatus = TokenStatus.Revoked;
         RevokedAt = DateTime.UtcNow;
         RevokeReason = reason;
-        RevokedByIpAddress = revokeByIp; 
+        RevokedByIpAddress = revokeByIp;
 
         AddDomainEvent(
             new TokenRevokedEvent(Id,
@@ -131,7 +131,7 @@ public sealed class Token : AuditableAggregate<Guid>
         AddDomainEvent(
             new TokenExpiredEvent(Id,
             TenantId,
-            userId,      
+            userId,
             ClientId,
             RefreshToken != null ? "Refresh" : "Reference"));
     }

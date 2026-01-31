@@ -3,7 +3,7 @@ using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Tenants;
 
-public partial class Tenant : AuditableAggregate<int>
+public partial class Tenant : AggregateRoot<int>
 {
     public string TenantName { get; private set; }
     public string TenantCode { get; private set; }

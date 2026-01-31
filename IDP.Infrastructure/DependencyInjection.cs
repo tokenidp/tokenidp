@@ -2,7 +2,6 @@
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Notifications;
 using IDP.Infrastructure.Persistence;
-using IDP.Infrastructure.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,7 +15,6 @@ public static class DependencyInjection
     {
         AddPersistence(services, configuration, connectionStringName);
         AddStores(services);
-        AddOutboxWorker(services);
         AddEmailServices(services);
     }
 
@@ -56,14 +54,8 @@ public static class DependencyInjection
         services.AddScoped<IPreAuthorizationStore, PreAuthorizationStore>();
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
+        services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
     }
-
-    public static void AddOutboxWorker(IServiceCollection services)
-    {
-        services.AddScoped<ITokenReadModelStore, TokenReadModelStore>();
-        services.AddHostedService<OutboxWorker>();
-    }
-
 
     private static void AddEmailServices(IServiceCollection services)
     {

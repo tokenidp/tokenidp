@@ -1,10 +1,12 @@
-﻿using IDP.Domain.AggregateRoots.Users;
-
-namespace IDP.Foundation.Abstractions.Stores;
+﻿namespace IDP.Foundation.Abstractions.Stores;
 
 public interface IIdentityStore
 {
     Task<AuthenticationContext> Authenticate(string userName, string password);
 
-    Task<User?> FindByIdAsync(string id);
+    Task<User> GetUserById(int id);
+
+    Task<UserShortInfo> GetUserShortInfo(int id);
+
+    Task<int> SaveChangesAsync();
 }

@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Clients;
-
-namespace IDP.Foundation.Abstractions.Stores;
+﻿namespace IDP.Foundation.Abstractions.Stores;
 
 public interface IClientStore
 {

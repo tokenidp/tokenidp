@@ -93,7 +93,7 @@ internal sealed class TokenIssuerUseCase
 
         var hashToken = _tokenSecretGenerator.HashToken(newRefreshToken);
 
-        token.AddRefreshToken(context.RefreshExpiresAt, hashToken, 
+        token.AddRefreshToken(context.RefreshExpiresAt, hashToken,
             _currentUserService.IpAddress!, context.ClientName, context.UserName);
 
         _logger.LogDebug("Created refresh token entity with expiry {Expiry}", context.RefreshExpiresAt);

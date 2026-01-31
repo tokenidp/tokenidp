@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots.Permissions;
 
-public sealed class Permission : AuditableAggregate<int>, ITenant
+public sealed class Permission : AggregateRoot<int>, ITenant
 {
     private static readonly System.Text.RegularExpressions.Regex PermissionKeyRegex =
         new("^[a-z0-9]+([._][a-z0-9]+)*$",
@@ -14,8 +14,8 @@ public sealed class Permission : AuditableAggregate<int>, ITenant
     public int? ParentId { get; private set; }
     public int Sequence { get; private set; }
 
-    public string PermissionKey { get; private set; }
-    public string PermissionName { get; private set; }
+    public string PermissionKey { get; private set; } = default!;
+    public string PermissionName { get; private set; } = default!;
 
     public string? AccessUrl { get; private set; }
     public string? Icon { get; private set; }
@@ -24,7 +24,7 @@ public sealed class Permission : AuditableAggregate<int>, ITenant
     public bool IsActive { get; private set; }
     public bool IsSystem { get; private set; }
 
-    public Tenant Tenant { get; private set; }
+    public Tenant Tenant { get; private set; } = default!;
 
     public IReadOnlyCollection<RolePermission> RolePermissions =>
     _rolePermissions.AsReadOnly();

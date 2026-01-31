@@ -1,4 +1,5 @@
-﻿using IDP.Domain.Specifications;
+﻿using IDP.Domain.DomainEvents.Users;
+using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Users;
 
@@ -213,7 +214,7 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
     }
 }
 
-public partial class User : IAuditableAggregate
+public partial class User
 {
     public int CreatedBy { get; private set; }
     public DateTime CreatedOn { get; private set; }
@@ -228,6 +229,125 @@ public partial class User : IAuditableAggregate
         }
     }
 
+    public void MarkLoginSuccess(
+        Guid correlationId,
+        string? ipAddress,
+        string? userAgent)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.Login,
+            AuthenticationResult.Success,
+            "Login successful",
+            correlationId,
+            ipAddress,
+            userAgent);
+    }
+
+    public void MarkLoginFailed(
+        string reason,
+        Guid correlationId,
+        string? ipAddress,
+        string? userAgent)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.Login,
+            AuthenticationResult.Failed,
+            reason,
+            correlationId,
+            ipAddress,
+            userAgent);
+    }
+
+    public void LockAccount(
+        string reason,
+        Guid correlationId)
+    {
+        LockoutEnabled = true;
+
+        RecordAuthenticationEvent(
+            AuthenticationAction.Login,
+            AuthenticationResult.Locked,
+            reason,
+            correlationId,
+            ipAddress: "system",
+            userAgent: "system");
+    }
+
+    public void UnlockAccount(Guid correlationId)
+    {
+        LockoutEnabled = false;
+
+        RecordAuthenticationEvent(
+            AuthenticationAction.Login,
+            AuthenticationResult.Unlocked,
+            "Account unlocked",
+            correlationId,
+            ipAddress: "system",
+            userAgent: "system");
+    }
+
+    public void MarkLogout(
+        Guid correlationId,
+        string? ipAddress,
+        string? userAgent)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.Logout,
+            AuthenticationResult.Success,
+            "User logged out",
+            correlationId,
+            ipAddress,
+            userAgent);
+    }
+
+    public void MarkMfaChallengeSent(
+        Guid correlationId,
+        string? ipAddress)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.MfaChallenge,
+            AuthenticationResult.Requested,
+            "MFA challenge sent",
+            correlationId,
+            ipAddress,
+            userAgent: "system");
+    }
+
+    public void MarkMfaValidated(
+        Guid correlationId,
+        string? ipAddress)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.MfaChallenge,
+            AuthenticationResult.Success,
+            "MFA validated",
+            correlationId,
+            ipAddress,
+            userAgent: "system");
+    }
+
+    public void MarkPasswordResetRequested(Guid correlationId)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.PasswordReset,
+            AuthenticationResult.Requested,
+            "Password reset requested",
+            correlationId,
+            ipAddress: "system",
+            userAgent: "system");
+    }
+
+    public void MarkPasswordResetCompleted(Guid correlationId)
+    {
+        RecordAuthenticationEvent(
+            AuthenticationAction.PasswordReset,
+            AuthenticationResult.Completed,
+            "Password reset completed",
+            correlationId,
+            ipAddress: "system",
+            userAgent: "system");
+    }
+
     public void SetCreated(int userId)
     {
         CreatedOn = DateTime.UtcNow;
@@ -238,6 +358,28 @@ public partial class User : IAuditableAggregate
     {
         UpdatedOn = DateTime.UtcNow;
         UpdatedBy = userId;
+    }
+
+    private void RecordAuthenticationEvent(
+        AuthenticationAction action,
+        AuthenticationResult result,
+        string? description,
+        Guid correlationId,
+        string? ipAddress,
+        string? userAgent)
+    {
+        var evt = new AuthenticationFlowEvent(
+            UserId: Id,
+            TenantId: TenantId,
+            Action: action,
+            Result: result,
+            Description: description!,
+            CorrelationId: correlationId,
+            IpAddress: ipAddress,
+            UserAgent: userAgent
+        );
+
+        AddDomainEvent(evt);
     }
 }
 

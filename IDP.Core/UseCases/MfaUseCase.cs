@@ -8,6 +8,7 @@ internal sealed class MfaUseCase : IMfaUseCase
     private readonly IEmailSetting _emailSetting;
     private readonly IIdentityStore _identityStore;
     private readonly IPreAuthorizationStore _preAuthorizationRepo;
+    private readonly ICurrentUserService _currentUserService;
     private readonly EmailProviderFactory _emailProviderFactory;
     private readonly IAppLogger<MfaUseCase> _logger;
 
@@ -15,13 +16,15 @@ internal sealed class MfaUseCase : IMfaUseCase
         IEmailSetting emailSetting,
         IPreAuthorizationStore preAuthorizationRepo,
         EmailProviderFactory emailProviderFactory,
-        IAppLogger<MfaUseCase> logger)
+        IAppLogger<MfaUseCase> logger,
+        ICurrentUserService currentUserService)
     {
         _logger = logger;
         _emailSetting = emailSetting;
         _preAuthorizationRepo = preAuthorizationRepo;
         _emailProviderFactory = emailProviderFactory;
         _identityStore = identityStore;
+        _currentUserService = currentUserService;
     }
 
     public async Task<AuthResponse> GenerateMfaCode(AuthRequest request, int userId)
@@ -47,7 +50,13 @@ internal sealed class MfaUseCase : IMfaUseCase
         _logger.LogInfo("Saved authorization code for user {UserId} (Client: {ClientId})",
             userId, request.ClientId);
 
-        await SendNotification(userId, mfaCode);
+        var user = await _identityStore.GetUserById(userId);
+
+        await SendNotification(user.TenantId, user.FullName, user.Email ?? string.Empty, mfaCode);
+
+        user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
+
+        await _identityStore.SaveChangesAsync();
 
         return AuthResponse.Success(userId, correlationId, true);
     }
@@ -72,6 +81,12 @@ internal sealed class MfaUseCase : IMfaUseCase
             preAuthorization.CodeChallengeMethod,
             preAuthorization.Scopes);
 
+        var user = await _identityStore.GetUserById(request.UserId);
+
+        user.MarkMfaValidated(_currentUserService.CorrelationId, _currentUserService.IpAddress);
+
+        await _identityStore.SaveChangesAsync();
+
         return (authRequest, authResponse);
     }
 
@@ -79,10 +94,19 @@ internal sealed class MfaUseCase : IMfaUseCase
     {
         _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
 
-        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
-
         var preAuthorization = await _preAuthorizationRepo
             .GetPreAuthorization(request.CorrelationId, request.UserId);
+
+        if (preAuthorization == null)
+        {
+            var message = $"Mfa code not found or expired for UserId: {request.UserId}";
+
+            _logger.LogWarning(message);
+
+            return AuthResponse.Failure(message);
+        }
+
+        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
 
         preAuthorization.UpdateMfaCode(request.UserId, mfaCode, DateTime.UtcNow.AddMinutes(5));
 
@@ -90,25 +114,33 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
 
-        await SendNotification(request.UserId, mfaCode);
+        var user = await _identityStore.GetUserById(request.UserId);
+
+        await SendNotification(user.TenantId, user.FullName, user.Email ?? string.Empty, mfaCode);
+
+        user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
+
+        await _identityStore.SaveChangesAsync();
 
         return AuthResponse.Success(request.UserId, request.CorrelationId, true);
     }
 
-    private async Task SendNotification(int userId, string mfaCode)
+    private async Task SendNotification(int tenantId,
+        string fullName,
+        string email,
+        string mfaCode)
     {
-        var user = await _identityStore.FindByIdAsync(userId.ToString());
-
-        await _emailSetting.PopulateEmailSettings(user.TenantId);
+        await _emailSetting.PopulateEmailSettings(tenantId);
 
         var tokens = new Dictionary<string, string>
         {
-            { "<%NAME%>", user.FullName},
-            { "<%MFA_CODE%>",  mfaCode}
+            { "<%NAME%>", fullName},
+            { "<%MFA_CODE%>",  mfaCode},
+            { "<%YEAR_REGISTERED%>",  DateTime.Now.Year.ToString()}
         };
 
-        var notificationRequest = NotificationRequest.Create(user.Email,
-            user.FullName,
+        var notificationRequest = NotificationRequest.Create(email,
+            fullName,
             tokens,
             "Your two-factor Verification Code!",
             string.Empty,
