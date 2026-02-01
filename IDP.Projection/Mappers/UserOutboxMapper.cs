@@ -19,7 +19,7 @@ internal sealed class UserOutboxMapper : IOutboxMapper
         return OutboxEvent.Create
             (
                  tenantId: meta.TenantId,
-                 eventType: evt.GetType().Name,
+                 eventType: meta.EventType,
                  aggregateId: meta.AggregateId!,
                  aggregateType: meta.AggregateType,
                  payload: evt,

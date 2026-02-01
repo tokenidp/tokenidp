@@ -31,7 +31,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
         return OutboxEvent.Create
             (
                  tenantId: meta.TenantId,
-                 eventType: evt.GetType().Name,
+                 eventType: meta.EventType,
                  aggregateId: meta.AggregateId!,
                  aggregateType: meta.AggregateType,
                  payload: evt,
@@ -46,7 +46,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             TokenExpiredEvent e => new OutboxMetadata
             (
                 TenantId: e.TenantId,
-                EventType: OutboxEventTypes.TokenExpired,
+                EventType: nameof(TokenExpiredEvent),
                 AggregateType: "Token",
                 AggregateId: e.TokenId.ToString(),
                 PartitionKey: $"tenant:{e.TenantId}:token"
@@ -54,7 +54,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             RefreshTokenIssuedEvent e => new OutboxMetadata
             (
                 TenantId: e.TenantId,
-                EventType: OutboxEventTypes.RefreshTokenIssued,
+                EventType: nameof(RefreshTokenIssuedEvent),
                 AggregateType: "Token",
                 AggregateId: e.TokenId.ToString(),
                 PartitionKey: $"tenant:{e.TenantId}:token"
@@ -62,7 +62,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             ReferenceTokenIssuedEvent e => new OutboxMetadata
             (
                 TenantId: e.TenantId,
-                EventType: OutboxEventTypes.RefreshTokenIssued,
+                EventType: nameof(ReferenceTokenIssuedEvent),
                 AggregateType: "Token",
                 AggregateId: e.TokenId.ToString(),
                 PartitionKey: $"tenant:{e.TenantId}:token"
@@ -70,7 +70,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             TokenRefreshReuseDetectedEvent e => new OutboxMetadata
             (
                TenantId: e.TenantId,
-               EventType: OutboxEventTypes.TokenRefreshReuseDetected,
+               EventType: nameof(TokenRefreshReuseDetectedEvent),
                AggregateType: "Token",
                AggregateId: e.TokenId.ToString(),
                PartitionKey: $"tenant:{e.TenantId}:token"
@@ -78,7 +78,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             TokenRefreshRotatedEvent e => new OutboxMetadata
             (
                 TenantId: e.TenantId,
-                EventType: OutboxEventTypes.TokenRefreshRotated,
+                EventType: nameof(TokenRefreshRotatedEvent),
                 AggregateType: "Token",
                 AggregateId: e.NewRefreshTokenId.ToString(),
                 PartitionKey: $"tenant:{e.TenantId}:token"
@@ -86,7 +86,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             TokenRevokedEvent e => new OutboxMetadata
             (
                TenantId: e.TenantId,
-               EventType: OutboxEventTypes.TokenRevoked,
+               EventType: nameof(TokenRevokedEvent),
                AggregateType: "Token",
                AggregateId: e.TokenId.ToString(),
                PartitionKey: $"tenant:{e.TenantId}:token"
@@ -94,7 +94,7 @@ internal sealed class TokenOutboxMapper : IOutboxMapper
             JwtTokenIssuedEvent e => new OutboxMetadata
             (
                 TenantId: e.TenantId,
-                EventType: OutboxEventTypes.TokenIssued,
+                EventType: nameof(JwtTokenIssuedEvent),
                 AggregateType: "Token",
                 AggregateId: e.TokenId.ToString(),
                 PartitionKey: $"tenant:{e.TenantId}:token"

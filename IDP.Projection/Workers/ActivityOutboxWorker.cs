@@ -5,18 +5,19 @@ using Microsoft.Extensions.Hosting;
 
 namespace IDP.Projection.Workers;
 
-internal sealed class TokenOutboxWorker : BackgroundService
+internal sealed class ActivityOutboxWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IAppLogger<TokenOutboxWorker> _logger;
-    private readonly string _workerId = $"{Environment.MachineName}:Token:{Guid.NewGuid():N}";
+    private readonly IAppLogger<ActivityOutboxWorker> _logger;
+    private readonly string _workerId = $"{Environment.MachineName}:Activity:{Guid.NewGuid():N}";
 
     private const int BatchSize = 100;
     private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(30);
     private const int MaxRetries = 5;
     private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(1);
 
-    public TokenOutboxWorker(IServiceScopeFactory scopeFactory, IAppLogger<TokenOutboxWorker> logger)
+    public ActivityOutboxWorker(IServiceScopeFactory scopeFactory,
+        IAppLogger<ActivityOutboxWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -68,7 +69,7 @@ internal sealed class TokenOutboxWorker : BackgroundService
         var ids = await db.Database
             .SqlQueryRaw<long>(
                 OutboxSql.ClaimBatch,
-                new SqlParameter("@consumer", OutboxConsumers.TokenReadModel),
+                new SqlParameter("@consumer", OutboxConsumers.Activity),
                 new SqlParameter("@batchSize", BatchSize),
                 new SqlParameter("@lockSeconds", (int)LockDuration.TotalSeconds),
                 new SqlParameter("@workerId", _workerId)
@@ -82,9 +83,9 @@ internal sealed class TokenOutboxWorker : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
-        var projector = scope.ServiceProvider.GetRequiredService<TokenReadModelProjector>();
+        var projector = scope.ServiceProvider.GetRequiredService<ActivityProjector>();
 
-        var consumerName = OutboxConsumers.TokenReadModel;
+        var consumerName = OutboxConsumers.Activity;
 
         var events = await db.OutboxEventConsumers.Include(e => e.OutboxEvent)
             .Where(x => ids.Contains(x.OutboxEventId)

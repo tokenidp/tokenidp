@@ -15,13 +15,14 @@ public enum ActivityEventType
     AccountUnlocked = 1009,
 
     // Authorization & Tokens (2000–2999)
-    TokenIssued = 2000,
-    TokenRefreshed = 2001,
+    TokenJWTIssued = 2000,
+    TokenRefreshIssue = 2001,
     TokenRevoked = 2002,
     TokenExpired = 2003,
     ScopeDenied = 2004,
     ConsentGranted = 2005,
     ConsentRevoked = 2006,
+    TokenReferenceIssue = 2007,
 
     // User Management (3000–3999)
     UserCreated = 3000,

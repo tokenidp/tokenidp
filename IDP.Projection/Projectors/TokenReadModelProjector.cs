@@ -16,23 +16,23 @@ internal sealed class TokenReadModelProjector
     {
         switch (evt.EventType)
         {
-            case OutboxEventTypes.TokenIssued:
+            case nameof(JwtTokenIssuedEvent):
                 await OnTokenIssued(evt, ct);
                 break;
 
-            case OutboxEventTypes.ReferenceTokenIssued:
+            case nameof(ReferenceTokenIssuedEvent):
                 await OnReferenceIssued(evt, ct);
                 break;
 
-            case OutboxEventTypes.RefreshTokenIssued:
+            case nameof(RefreshTokenIssuedEvent):
                 await OnRefreshIssued(evt, ct);
                 break;
 
-            case OutboxEventTypes.TokenRevoked:
+            case nameof(TokenRevokedEvent):
                 await OnTokenRevoked(evt, ct);
                 break;
 
-            case OutboxEventTypes.TokenExpired:
+            case nameof(TokenExpiredEvent):
                 await OnTokenExpired(evt, ct);
                 break;
         }

@@ -1,8 +1,9 @@
 ﻿namespace IDP.Domain.Specifications;
 
-public enum OutboxStatus
+public enum OutboxStatus : byte
 {
-    Pending,
-    Processed,
-    Failed
+    Pending = 0,
+    Processing = 1,
+    Processed = 2,
+    Failed = 3
 }

@@ -31,6 +31,7 @@
     <ProjectReference Include="..\IDP.Core\IDP.Core.csproj" />
     <ProjectReference Include="..\IDP.Foundation\IDP.Foundation.csproj" />
     <ProjectReference Include="..\IDP.Infrastructure\IDP.Infrastructure.csproj" />
+    <ProjectReference Include="..\IDP.Projection\IDP.Projection.csproj" />
   </ItemGroup>
 
 </Project>

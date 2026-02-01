@@ -19,7 +19,7 @@ public static class OutboxSql
                 ORDER BY Id
             )
             UPDATE cte
-            SET LockedUntil = DATEADD(SECOND, @lockSeconds, @now),
+            SET Status = 1, LockedUntil = DATEADD(SECOND, @lockSeconds, @now),
                 LockedBy = @workerId
             OUTPUT INSERTED.OutboxEventId;";
 }

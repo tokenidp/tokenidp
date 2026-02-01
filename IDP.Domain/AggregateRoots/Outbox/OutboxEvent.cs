@@ -15,7 +15,7 @@ public sealed class OutboxEvent : AggregateRoot<long>
     public Guid CorrelationId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
-    public IReadOnlyCollection<OutboxEventConsumer> OutboxEventConsumers => _consumers.AsReadOnly();
+    public IReadOnlyCollection<OutboxEventConsumer> OutboxEventConsumers => _consumers;
 
     private OutboxEvent() { }
 

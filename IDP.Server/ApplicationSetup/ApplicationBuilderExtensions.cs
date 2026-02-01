@@ -6,6 +6,7 @@ using IDP.Foundation.Abstractions;
 using IDP.Foundation.Options;
 using IDP.Foundation.Primitives;
 using IDP.Infrastructure;
+using IDP.Projection;
 using IDP.Server.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -86,6 +87,8 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddInfrastructureServices(builder.Configuration, connectionStringName);
 
         builder.Services.AddAuthentication(builder.Configuration, builder.Environment);
+
+        builder.Services.AddProjectionServices(builder.Configuration);
 
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

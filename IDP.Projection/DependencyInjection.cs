@@ -10,8 +10,7 @@ namespace IDP.Projection;
 public static class DependencyInjection
 {
     public static void AddProjectionServices(this IServiceCollection services,
-        IConfiguration configuration,
-        string connectionStringName)
+        IConfiguration configuration)
     {
         services.AddScoped<IOutboxMapper, TokenOutboxMapper>();
         services.AddScoped<IOutboxMapper, UserOutboxMapper>();
@@ -22,6 +21,6 @@ public static class DependencyInjection
         services.AddScoped<ActivityProjector>();
 
         services.AddHostedService<TokenOutboxWorker>();
-
+        services.AddHostedService<ActivityOutboxWorker>();
     }
 }

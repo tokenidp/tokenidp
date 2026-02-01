@@ -13,5 +13,9 @@ internal class OutboxEventConfig : IEntityTypeConfiguration<OutboxEvent>
         builder.Property(x => x.EventType).HasMaxLength(128);
         builder.Property(x => x.PayloadJson).IsRequired();
         builder.Property(x => x.PartitionKey).HasMaxLength(128);
+
+        builder.HasMany(e => e.OutboxEventConsumers)
+            .WithOne(e => e.OutboxEvent)
+            .HasForeignKey(ur => ur.OutboxEventId).IsRequired();
     }
 }
