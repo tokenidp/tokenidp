@@ -1,6 +1,7 @@
 ﻿using IDP.Projection.HealthChecks;
 using IDP.Projection.Mappers;
 using IDP.Projection.Projectors;
+using IDP.Projection.Queries;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

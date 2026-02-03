@@ -1,4 +1,4 @@
-﻿namespace IDP.Projection.Workers;
+﻿namespace IDP.Projection.Queries;
 
 public sealed record ClaimedOutboxRow(long Id);
 
