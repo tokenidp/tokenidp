@@ -1,6 +1,6 @@
 ﻿using IDP.Infrastructure.Abstractions;
 
-namespace IDP.Projection;
+namespace IDP.Projection.Mappers;
 
 public class OutboxConsumerRouter : IOutboxConsumerRouter
 {

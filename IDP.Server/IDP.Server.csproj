@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="9.0.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="9.0.9" />
     <PackageReference Include="NLog" Version="6.0.6" />

@@ -4,6 +4,8 @@
 @using IDP.Core.Abstractions
 @using IDP.Core.Model
 @using IDP.Core.OAuth
+@using IDP.Foundation.Exceptions
+@using IDP.Server.Middlewares
 @using Microsoft.Extensions.Logging
 
 @page "/authorize"
@@ -14,7 +16,7 @@
 @inject LoadService LoadService
 @inject NavigationManager Navigation
 @inject IAuthorizationCodeUseCase AuthUseCase
-@inject IClientUseCase ClientUseCase;
+@inject IAuthorizationRequestValidator AuthorizationValidator;
 @inject IJSRuntime JSRuntime
 @inject ILogger<Authorize> logger
 
@@ -64,10 +66,10 @@ else
     private sealed class LoginModel
     {
         [Required(ErrorMessage = "Username is required.")]
-        public string UserName { get; set; }
+        public string UserName { get; set; } = default!;
 
         [Required(ErrorMessage = "Password is required.")]
-        public string Password { get; set; }
+        public string Password { get; set; } = default!;
     }
 
     private bool isRequestValid = true;
@@ -102,70 +104,32 @@ else
                      : kvp.Value.ToString() ?? ""
                  );
 
-            QueryParams.TryGetValue("state", out state);
+            QueryParams.TryGetValue("state", out state!);
+            QueryParams.TryGetValue("response_type", out responseType!);
+            QueryParams.TryGetValue("client_id", out clientId!);
+            QueryParams.TryGetValue("redirect_uri", out redirectUri!);
+            QueryParams.TryGetValue("scope", out requestedScopes!);
+            QueryParams.TryGetValue("code_challenge", out codeChallenge!);
+            QueryParams.TryGetValue("code_challenge_method", out codeChallengeMethod!);
 
-            if (!QueryParams.TryGetValue("client_id", out clientId) || string.IsNullOrWhiteSpace(clientId))
+            try
             {
-                SetRequestError("invalid_request", "Missing client_id.");
-                return;
+                AuthorizationRequest request = new()
+                {
+                    ClientId = clientId,
+                    RedirectUri = redirectUri,
+                    Scopes = requestedScopes,
+                    ResponseType = responseType
+                };
+
+                await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
+            }
+            catch (AuthorizationRequestException ex)
+            {
+                SetRequestError(ex.Error, ex.ErrorDescription, ex.AllowRedirect);
             }
 
-            var client = await ClientUseCase.ValidateClient(clientId);
 
-            if (!client.IsValidClient)
-            {
-                SetRequestError("unauthorized_client", "Invalid client_id.", allowRedirect: false);
-                return;
-            }
-
-            if (!QueryParams.TryGetValue("redirect_uri", out redirectUri) || string.IsNullOrWhiteSpace(redirectUri))
-            {
-                SetRequestError("invalid_request", "Missing redirect_uri.");
-                return;
-            }
-
-            if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out _))
-            {
-                SetRequestError("invalid_request", "Invalid redirect_uri.");
-                return;
-            }
-
-            QueryParams.TryGetValue("response_type", out responseType);
-            if (!string.Equals(responseType, "code", StringComparison.Ordinal))
-            {
-                SetRequestError("unsupported_response_type", "response_type must be 'code'.");
-                return;
-            }
-
-            QueryParams.TryGetValue("scope", out requestedScopes);
-            if (string.IsNullOrWhiteSpace(requestedScopes))
-            {
-                SetRequestError("invalid_request", "Missing scope.");
-                return;
-            }
-
-            var allowedScopes = client.Scopes
-                .ToHashSet(StringComparer.Ordinal);
-
-            var requestedScopesHashSet = requestedScopes
-                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .ToHashSet(StringComparer.Ordinal);
-
-            var invalidScopes = requestedScopesHashSet.Except(allowedScopes).ToArray();
-            if (invalidScopes.Length > 0)
-            {
-                SetRequestError("invalid_scope", $"Invalid scope: {string.Join(" ", invalidScopes)}.");
-                return;
-            }
-
-            if (!requestedScopesHashSet.Contains("openid"))
-            {
-                SetRequestError("invalid_scope", "Missing 'openid' scope.");
-                return;
-            }
-
-            QueryParams.TryGetValue("code_challenge", out codeChallenge);
-            QueryParams.TryGetValue("code_challenge_method", out codeChallengeMethod);
         }
         else
         {
@@ -190,7 +154,7 @@ else
     {
         ErrorMessage = string.Empty;
 
-        AuthRequest request = new()
+        AuthorizationRequest request = new()
         {
             UserName = loginModel.UserName,
             Password = loginModel.Password,

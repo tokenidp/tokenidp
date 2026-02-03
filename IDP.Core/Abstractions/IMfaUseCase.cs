@@ -2,9 +2,9 @@
 
 public interface IMfaUseCase
 {
-    Task<AuthResponse> GenerateMfaCode(AuthRequest request, int userId);
+    Task<AuthorizationResponse> GenerateMfaCode(AuthorizationRequest request, int userId);
 
-    Task<(AuthRequest?, AuthResponse)> VerifyMfaRequest(MfaRequest request);
+    Task<(AuthorizationRequest?, AuthorizationResponse)> VerifyMfaRequest(MfaRequest request);
 
-    Task<AuthResponse> ResendMfaCode(MfaRequest request);
+    Task<AuthorizationResponse> ResendMfaCode(MfaRequest request);
 }

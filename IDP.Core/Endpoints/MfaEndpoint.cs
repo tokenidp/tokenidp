@@ -16,7 +16,7 @@ internal class MfaEndpoint : IEndpointDefinition
 
             _logger.LogInfo("Mfa completed for user: {UserId}", request.UserId);
 
-            return ApiResult<AuthResponse>.Success(authResponse);
+            return ApiResult<AuthorizationResponse>.Success(authResponse);
         })
         .WithName("VerifyMfa")
         .WithTags("VerifyMfa");
@@ -39,7 +39,7 @@ internal class MfaEndpoint : IEndpointDefinition
 
             _logger.LogInfo("Resend Mfa Code process completed for user: {UserId}", request.UserId);
 
-            return Results.Ok(ApiResult<AuthResponse>.Success(response));
+            return Results.Ok(ApiResult<AuthorizationResponse>.Success(response));
         })
         .WithName("ResendMfa")
         .WithTags("ResendMfa");

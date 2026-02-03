@@ -5,7 +5,7 @@ using IDP.Foundation.Contracts;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace IDP.Server;
+namespace IDP.Server.RESTClients;
 
 public class AuthenticationClient : IDisposable
 {
@@ -23,7 +23,7 @@ public class AuthenticationClient : IDisposable
         _logger = logger;
     }
 
-    public async Task<AuthResponseDto> AuthenticateAsync(AuthRequest request,
+    public async Task<AuthResponseDto> AuthenticateAsync(AuthorizationRequest request,
         CancellationToken cancellationToken = default)
     {
         try

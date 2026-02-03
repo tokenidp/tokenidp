@@ -2,26 +2,26 @@
 
 namespace IDP.Core.UseCases;
 
-internal sealed class TokenGrantUseCase
+internal sealed class TokenGrantUseCase : ITokenGrantUseCase
 {
-    private readonly IClientUseCase _clientUseCase;
+    private readonly GrantTypeValidatorUseCase _grantTypeValidator;
     private readonly TokenGrantFactory _tokenGrantFactory;
     private readonly IAppLogger<TokenGrantUseCase> _logger;
 
     public TokenGrantUseCase(TokenGrantFactory tokenGrantFactory,
         IAppLogger<TokenGrantUseCase> logger,
-        IClientUseCase clientUseCase)
+        GrantTypeValidatorUseCase grantTypeValidator)
     {
         _tokenGrantFactory = tokenGrantFactory;
         _logger = logger;
-        _clientUseCase = clientUseCase;
+        _grantTypeValidator = grantTypeValidator;
     }
 
-    internal async Task<IResult> GetAccessToken(TokenRequest request)
+    public async Task<IResult> GetAccessToken(TokenRequest request)
     {
         _logger.LogInfo("GetAccessToken called for ClientId: {ClientId} from IP: {IP}", request.ClientId, request.IpAddress);
 
-        if (!await _clientUseCase.ValidateGrantType(request.GrantType, request.ClientId))
+        if (!await _grantTypeValidator.ValidateGrantType(request.GrantType, request.ClientId))
         {
             var errorResult = ApiResult<ApiError>.Failure(
                            ApiError.Failure("Invalid grant type."));

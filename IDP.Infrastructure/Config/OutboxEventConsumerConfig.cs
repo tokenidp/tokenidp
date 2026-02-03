@@ -10,7 +10,7 @@ internal sealed class OutboxEventConsumerConfig
         builder.ToTable("OutboxEventConsumers");
 
         builder.HasKey(x => x.Id);
-     
+
         builder.HasOne(e => e.OutboxEvent)
             .WithMany(e => e.OutboxEventConsumers)
             .HasForeignKey(ur => ur.OutboxEventId)

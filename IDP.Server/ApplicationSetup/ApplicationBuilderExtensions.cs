@@ -1,5 +1,6 @@
 ﻿using Admin.Core;
 using Admin.Core.Endpoints;
+using HealthChecks.UI.Client;
 using IDP.Core;
 using IDP.Core.Endpoints;
 using IDP.Foundation.Abstractions;
@@ -7,10 +8,13 @@ using IDP.Foundation.Options;
 using IDP.Foundation.Primitives;
 using IDP.Infrastructure;
 using IDP.Projection;
+using IDP.Projection.HealthChecks;
 using IDP.Server.Middlewares;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using System.Text.Json.Serialization;
 
@@ -96,6 +100,8 @@ public static class ApplicationBuilderExtensions
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         });
 
+        AddHealthChecks(builder, connectionStringName);
+
         return builder;
     }
 
@@ -109,7 +115,28 @@ public static class ApplicationBuilderExtensions
 
         app.RegisterAdminEndpoints();
 
+        app.MapHealthChecks("/health");
+
+        //app.MapHealthChecks("/health", new HealthCheckOptions
+        //{
+        //    Predicate = _ => true,
+        //    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        //});
+
         return app;
+    }
+
+    private static void AddHealthChecks(WebApplicationBuilder builder, string connectionStringName)
+    {
+        builder.Services.AddHealthChecks()
+            .AddCheck("self", () => HealthCheckResult.Healthy())
+            .AddCheck<AuthorizationEndpointHealthCheck>("authorization")
+            .AddCheck<TokenEndpointHealthCheck>("token")
+            .AddCheck<TokenWorkerHealthCheck>("token_worker")
+            .AddCheck<ActivityWorkerHealthCheck>("activity_worker")
+            .AddSqlServer(connectionString: builder.Configuration.GetConnectionString(connectionStringName)!,
+             name: "sql",
+             failureStatus: HealthStatus.Unhealthy);
     }
 
     private static void ConfigureTokenOptions(

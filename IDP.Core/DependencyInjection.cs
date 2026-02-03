@@ -21,7 +21,7 @@ public static class DependencyInjection
 
     private static void AddUseCases(IServiceCollection services)
     {
-        services.AddScoped<IClientUseCase, ClientUseCase>();
+        services.AddScoped<GrantTypeValidatorUseCase>();
         services.AddScoped<UserInfoUseCase>();
         services.AddScoped<TokenIssuerUseCase>();
         services.AddScoped<RevokeTokenUseCase>();
@@ -43,8 +43,10 @@ public static class DependencyInjection
                 sp.GetRequiredService<IMfaUseCase>(),
                 sp.GetRequiredService<IAuthorizationCodeStore>(),
                 sp.GetRequiredService<TokenContextUseCase>(),
-                sp.GetRequiredService<IClientUseCase>(),
-                sp.GetRequiredService<TenantUserMfaPolicy>()));
+                sp.GetRequiredService<TenantUserMfaPolicy>(),
+                sp.GetRequiredService<IClientStore>()));
+
+        services.AddScoped<IAuthorizationRequestValidator, AuthorizationRequestValidator>();
     }
 
     private static void AddMfaService(this IServiceCollection services)
@@ -63,7 +65,11 @@ public static class DependencyInjection
     private static void AddGrantHandlers(IServiceCollection services)
     {
         services.AddScoped<TokenGrantFactory>();
-        services.AddScoped<TokenGrantUseCase>();
+
+        services.AddScoped<ITokenGrantUseCase>(sp =>
+           new TokenGrantUseCase(sp.GetRequiredService<TokenGrantFactory>(),
+               sp.GetRequiredService<IAppLogger<TokenGrantUseCase>>(),
+               sp.GetRequiredService<GrantTypeValidatorUseCase>()));
 
         services.AddScoped<RefreshTokenGrantHandler>();
         services.AddScoped<AuthorizationCodeGrantHandler>();

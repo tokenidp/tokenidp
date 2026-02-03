@@ -40,7 +40,7 @@ internal class ActivityProjector
         switch (evt.EventType)
         {
             case nameof(JwtTokenIssuedEvent):
-                activity = OnTokenIssued(evt,ct);
+                activity = OnTokenIssued(evt, ct);
                 break;
             case nameof(ReferenceTokenIssuedEvent):
                 activity = OnReferenceIssued(evt, ct);

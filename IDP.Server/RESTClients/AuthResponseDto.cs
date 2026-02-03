@@ -1,4 +1,4 @@
-﻿namespace IDP.Foundation.Contracts;
+﻿namespace IDP.Server.RESTClients;
 
 public class AuthResponseDto
 {

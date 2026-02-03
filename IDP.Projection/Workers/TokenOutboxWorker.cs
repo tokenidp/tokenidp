@@ -1,4 +1,6 @@
-﻿using IDP.Projection.Projectors;
+﻿using IDP.Projection.HealthChecks;
+using IDP.Projection.Mappers;
+using IDP.Projection.Projectors;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -15,11 +17,15 @@ internal sealed class TokenOutboxWorker : BackgroundService
     private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(30);
     private const int MaxRetries = 5;
     private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(1);
+    private readonly TokenWorkerState _state;
 
-    public TokenOutboxWorker(IServiceScopeFactory scopeFactory, IAppLogger<TokenOutboxWorker> logger)
+    public TokenOutboxWorker(IServiceScopeFactory scopeFactory,
+        IAppLogger<TokenOutboxWorker> logger,
+        TokenWorkerState state)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _state = state;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -30,6 +36,8 @@ internal sealed class TokenOutboxWorker : BackgroundService
         {
             try
             {
+                _state.Heartbeat();
+
                 await ExecuteCycleAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

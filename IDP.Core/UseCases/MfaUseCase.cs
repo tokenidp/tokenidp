@@ -27,7 +27,7 @@ internal sealed class MfaUseCase : IMfaUseCase
         _currentUserService = currentUserService;
     }
 
-    public async Task<AuthResponse> GenerateMfaCode(AuthRequest request, int userId)
+    public async Task<AuthorizationResponse> GenerateMfaCode(AuthorizationRequest request, int userId)
     {
         var correlationId = Guid.NewGuid().ToString();
 
@@ -58,10 +58,10 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         await _identityStore.SaveChangesAsync();
 
-        return AuthResponse.Success(userId, correlationId, true);
+        return AuthorizationResponse.Success(userId, correlationId, true);
     }
 
-    public async Task<(AuthRequest?, AuthResponse)> VerifyMfaRequest(MfaRequest request)
+    public async Task<(AuthorizationRequest?, AuthorizationResponse)> VerifyMfaRequest(MfaRequest request)
     {
         var preAuthorization = await _preAuthorizationRepo
             .GetPreAuthorization(request.CorrelationId, request.UserId);
@@ -70,12 +70,12 @@ internal sealed class MfaUseCase : IMfaUseCase
         {
             var message = $"Mfa code not found or expired for UserId: {request.UserId} and Code:{request.Code}";
             _logger.LogWarning(message);
-            return (default, AuthResponse.Failure(message));
+            return (default, AuthorizationResponse.Failure(message));
         }
 
-        var authResponse = AuthResponse.Success(preAuthorization.UserId, preAuthorization.CorrelationId, true);
+        var authResponse = AuthorizationResponse.Success(preAuthorization.UserId, preAuthorization.CorrelationId, true);
 
-        var authRequest = AuthRequest.Create(preAuthorization.ClientId,
+        var authRequest = AuthorizationRequest.Create(preAuthorization.ClientId,
             preAuthorization.RedirectUri,
             preAuthorization.CodeChallenge,
             preAuthorization.CodeChallengeMethod,
@@ -90,7 +90,7 @@ internal sealed class MfaUseCase : IMfaUseCase
         return (authRequest, authResponse);
     }
 
-    public async Task<AuthResponse> ResendMfaCode(MfaRequest request)
+    public async Task<AuthorizationResponse> ResendMfaCode(MfaRequest request)
     {
         _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
 
@@ -103,7 +103,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
             _logger.LogWarning(message);
 
-            return AuthResponse.Failure(message);
+            return AuthorizationResponse.Failure(message);
         }
 
         var mfaCode = MfaCodeGenerator.GenerateMfaCode();
@@ -122,7 +122,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         await _identityStore.SaveChangesAsync();
 
-        return AuthResponse.Success(request.UserId, request.CorrelationId, true);
+        return AuthorizationResponse.Success(request.UserId, request.CorrelationId, true);
     }
 
     private async Task SendNotification(int tenantId,

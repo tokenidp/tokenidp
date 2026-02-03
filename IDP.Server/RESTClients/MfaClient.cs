@@ -7,7 +7,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 
-namespace IDP.Web.Authentication;
+namespace IDP.Server.RESTClients;
 
 public class MfaClient : IDisposable
 {
@@ -22,14 +22,14 @@ public class MfaClient : IDisposable
         _logger = logger;
     }
 
-    public async Task<AuthResponse> ResendMfaCodeAsync(MfaRequest request,
+    public async Task<AuthorizationResponse> ResendMfaCodeAsync(MfaRequest request,
        CancellationToken cancellationToken = default)
     {
         try
         {
             if (request == null)
             {
-                return AuthResponse.Failure("Request object cannot be empty.");
+                return AuthorizationResponse.Failure("Request object cannot be empty.");
             }
 
             using var content = new StringContent(
@@ -46,15 +46,15 @@ public class MfaClient : IDisposable
             {
                 var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(30);
 
-                return AuthResponse.Failure($"Too many attempts. Please try again after {retryAfter.TotalSeconds} seconds.");
+                return AuthorizationResponse.Failure($"Too many attempts. Please try again after {retryAfter.TotalSeconds} seconds.");
             }
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AuthResponse>(
+                var result = await response.Content.ReadFromJsonAsync<AuthorizationResponse>(
                     cancellationToken: cancellationToken);
 
-                return result ?? AuthResponse.Failure("Received empty response from MFA service");
+                return result ?? AuthorizationResponse.Failure("Received empty response from MFA service");
             }
 
             var error = await TryReadErrorResponse(response, cancellationToken);
@@ -76,23 +76,23 @@ public class MfaClient : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Resend MFA failed");
-            return AuthResponse.Failure($"Resend MFA failed: {ex.Message}");
+            return AuthorizationResponse.Failure($"Resend MFA failed: {ex.Message}");
         }
     }
 
-    public async Task<AuthResponse> VerifyMfaAsync(MfaRequest request,
+    public async Task<AuthorizationResponse> VerifyMfaAsync(MfaRequest request,
         CancellationToken cancellationToken = default)
     {
         try
         {
             if (request == null)
             {
-                return AuthResponse.Failure("Request object cannot be empty.");
+                return AuthorizationResponse.Failure("Request object cannot be empty.");
             }
 
             if (string.IsNullOrWhiteSpace(request.Code) || request.Code.Length != 6)
             {
-                return AuthResponse.Failure("Invalid MFA code format. Must be 6 digits.");
+                return AuthorizationResponse.Failure("Invalid MFA code format. Must be 6 digits.");
             }
 
             using var content = new StringContent(
@@ -109,15 +109,15 @@ public class MfaClient : IDisposable
             {
                 var retryAfter = response.Headers.RetryAfter?.Delta ?? TimeSpan.FromSeconds(30);
 
-                return AuthResponse.Failure($"Too many attempts. Please try again after {retryAfter.TotalSeconds} seconds.");
+                return AuthorizationResponse.Failure($"Too many attempts. Please try again after {retryAfter.TotalSeconds} seconds.");
             }
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<AuthResponse>(
+                var result = await response.Content.ReadFromJsonAsync<AuthorizationResponse>(
                     cancellationToken: cancellationToken);
 
-                return result ?? AuthResponse.Failure("Received empty response from MFA service");
+                return result ?? AuthorizationResponse.Failure("Received empty response from MFA service");
             }
 
             var error = await TryReadErrorResponse(response, cancellationToken);
@@ -139,7 +139,7 @@ public class MfaClient : IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "MFA verification failed");
-            return AuthResponse.Failure($"MFA verification failed: {ex.Message}");
+            return AuthorizationResponse.Failure($"MFA verification failed: {ex.Message}");
         }
     }
 

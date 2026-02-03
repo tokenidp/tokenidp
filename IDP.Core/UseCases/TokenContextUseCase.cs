@@ -7,15 +7,15 @@ internal class TokenContextUseCase
     private readonly IIdentityStore _identityStore;
     private readonly IRoleStore _roleService;
     private readonly IAppLogger<TokenContextUseCase> _logger;
-    private readonly IClientUseCase _clientUseCase;
+    private readonly IClientStore _clientStore;
 
     public TokenContextUseCase(IRoleStore roleService,
-        IClientUseCase clientUseCase,
+        IClientStore clientStore,
         IAppLogger<TokenContextUseCase> logger,
         IIdentityStore identityStore)
     {
         _roleService = roleService;
-        _clientUseCase = clientUseCase;
+        _clientStore = clientStore;
         _logger = logger;
         _identityStore = identityStore;
     }
@@ -46,7 +46,7 @@ internal class TokenContextUseCase
 
         var distinctRoles = userRoles.Distinct().ToArray();
 
-        var client = await _clientUseCase.GetClient(clientId);
+        var client = await _clientStore.GetByClientId(clientId);
 
         if (client == null)
         {

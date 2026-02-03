@@ -9,7 +9,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
     private readonly IIdentityStore _identityService;
     private readonly IAuthorizationCodeStore _authorizationCodeStore;
     private readonly IMfaUseCase _mfaUseCase;
-    private readonly IClientUseCase _clientUseCase;
+    private readonly IClientStore _clientStore;
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
@@ -19,28 +19,28 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         IMfaUseCase mfaUseCase,
         IAuthorizationCodeStore authorizationCodeStore,
         TokenContextUseCase tokenContextUseCase,
-        IClientUseCase clientUseCase,
-        TenantUserMfaPolicy mfaPolicy)
+        TenantUserMfaPolicy mfaPolicy,
+        IClientStore clientStore)
     {
         _identityService = identityService;
         _logger = appLogger;
         _mfaUseCase = mfaUseCase;
         _authorizationCodeStore = authorizationCodeStore;
         _tokenContextUseCase = tokenContextUseCase;
-        _clientUseCase = clientUseCase;
         _mfaPolicy = mfaPolicy;
+        _clientStore = clientStore;
     }
 
-    public async Task<AuthResponse> Authenticate(AuthRequest request)
+    public async Task<AuthorizationResponse> Authenticate(AuthorizationRequest request)
     {
         var context = await _identityService.Authenticate(request.UserName, request.Password);
 
         if (!context.IsSuccess)
         {
-            return AuthResponse.Failure(context.Error);
+            return AuthorizationResponse.Failure(context.Error);
         }
 
-        AuthResponse authResponse = default!;
+        AuthorizationResponse authResponse = default!;
 
         var checkTwoFactorEnabled = await _mfaPolicy.IsMfaRequiredAsync(context);
 
@@ -58,7 +58,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         return authResponse;
     }
 
-    public async Task<AuthResponse> VerifyMfaCode(MfaRequest request)
+    public async Task<AuthorizationResponse> VerifyMfaCode(MfaRequest request)
     {
         var (authRequest, authResponse) = await _mfaUseCase.VerifyMfaRequest(request);
 
@@ -89,7 +89,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             throw new UnauthorizedAccessException("Invalid code verifier.");
         }
 
-        var validationResult = await _clientUseCase.ValidateClient(tokenRequest.ClientId);
+        var validationResult = await _clientStore.GetClientValidation(tokenRequest.ClientId);
 
         if (validationResult != null && !validationResult.IsValidClient)
         {
@@ -105,7 +105,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         return tokenInfo;
     }
 
-    private async Task<AuthResponse> GenerateAuthorizationCode(AuthRequest request, int userId)
+    private async Task<AuthorizationResponse> GenerateAuthorizationCode(AuthorizationRequest request, int userId)
     {
         var code = Guid.NewGuid().ToString();
         _logger.LogDebug("Generated authorization code: {Code}", code);
@@ -125,7 +125,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         _logger.LogInfo("Saved authorization code {Id} for user {UserId} - Client: {ClientId}.",
             id, userId, request.ClientId);
 
-        return AuthResponse.Success(code);
+        return AuthorizationResponse.Success(code);
     }
 
     private async Task<AuthorizationCode> ValidateAuthorizationCode(string code)

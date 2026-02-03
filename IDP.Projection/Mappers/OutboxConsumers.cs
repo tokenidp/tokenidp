@@ -1,4 +1,4 @@
-﻿namespace IDP.Projection;
+﻿namespace IDP.Projection.Mappers;
 
 internal class OutboxConsumers
 {

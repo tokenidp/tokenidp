@@ -1,4 +1,5 @@
-﻿using Admin.Core.Clients.UseCases;
+﻿using Admin.Core.Activities.UseCases;
+using Admin.Core.Clients.UseCases;
 using Admin.Core.Configurations;
 using Admin.Core.Permissions.UseCases;
 using Admin.Core.Roles.UseCases;
@@ -49,5 +50,8 @@ public static class DependencyInjection
         services.AddScoped<TokenQueryUseCase>();
         services.AddScoped<TokenLookupsUseCase>();
         services.AddScoped<TokenCommandUseCase>();
+
+        services.AddScoped<ActivityQueryUseCase>();
+        services.AddScoped<ActivityLookupsUseCase>();
     }
 }

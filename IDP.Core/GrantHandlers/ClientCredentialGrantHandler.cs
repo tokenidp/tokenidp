@@ -1,4 +1,5 @@
 ﻿using IDP.Core.UseCases;
+using IDP.Foundation.Abstractions.Stores;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,16 +10,16 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 {
     private const string GrantTypeValue = "client_credentials";
 
-    private readonly IClientUseCase _clientService;
+    private readonly IClientStore _clientStore;
     private readonly TokenIssuerUseCase _tokenService;
     private readonly IAppLogger<ClientCredentialGrantHandler> _logger;
 
     public ClientCredentialGrantHandler(
-        IClientUseCase clientService,
+        IClientStore clientStore,
         TokenIssuerUseCase tokenService,
         IAppLogger<ClientCredentialGrantHandler> logger)
     {
-        _clientService = clientService;
+        _clientStore = clientStore;
         _tokenService = tokenService;
         _logger = logger;
     }
@@ -63,8 +64,8 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 
     private async Task<dynamic> LoadClientAsync(string clientId)
     {
-        // TODO: replace with real client lookup (database/cache/service).
-        var client = await _clientService.GetClient(clientId);
+        var client = await _clientStore.GetClientValidation(clientId);
+
         if (client is null)
         {
             LogInvalidClient(clientId, "not found");

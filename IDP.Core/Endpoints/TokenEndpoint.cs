@@ -10,7 +10,7 @@ internal class TokenEndpoint : IEndpointDefinition
 
         authGroup.MapPost("", static async (HttpContext httpContext,
             TokenRequest request,
-            TokenGrantUseCase accessTokenUseCase) =>
+            ITokenGrantUseCase accessTokenUseCase) =>
         {
             string ipAddress = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
