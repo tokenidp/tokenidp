@@ -1,6 +1,8 @@
-﻿namespace IDP.Domain.ReadModels;
+﻿using IDP.Domain.ReadModels.Enums;
 
-public sealed class Activity
+namespace IDP.Domain.ReadModels;
+
+public sealed class Activity : ITenant
 {
     public long Id { get; private set; }
     public long OutboxEventId { get; private set; }

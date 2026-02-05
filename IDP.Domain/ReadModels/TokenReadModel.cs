@@ -1,6 +1,6 @@
 ﻿namespace IDP.Domain.ReadModels;
 
-public sealed class TokenReadModel
+public sealed class TokenReadModel : ITenant
 {
     public Guid Id { get; private set; }
     public long OutboxEventId { get; private set; }
@@ -10,7 +10,8 @@ public sealed class TokenReadModel
     public byte[]? TokenIdHash { get; private set; }
 
     public string TokenType { get; private set; } = default!;
-    public string ClientId { get; private set; } = default!;
+    public string GrantType { get; private set; } = default!;
+    public int ClientId { get; private set; } = default!;
 
     public int? UserId { get; private set; }
     public string? Subject { get; private set; }
@@ -43,7 +44,8 @@ public sealed class TokenReadModel
         string sourceType,
         byte[]? tokenIdHash,
         string tokenType,
-        string clientId,
+        string grantType,
+        int clientId,
         int? userId,
         string? subject,
         DateTime issuedAt,
@@ -72,6 +74,7 @@ public sealed class TokenReadModel
             SourceType = sourceType,
             TokenIdHash = tokenIdHash,
             TokenType = tokenType,
+            GrantType = grantType,
             ClientId = clientId,
             UserId = userId,
             Subject = subject,

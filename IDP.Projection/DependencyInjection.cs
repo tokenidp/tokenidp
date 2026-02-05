@@ -1,5 +1,5 @@
 ﻿using IDP.Infrastructure.Abstractions;
-using IDP.Projection.HealthChecks;
+using IDP.Projection.HealthChecks.States;
 using IDP.Projection.Mappers;
 using IDP.Projection.Projectors;
 using IDP.Projection.Workers;
@@ -23,6 +23,7 @@ public static class DependencyInjection
 
         services.AddHostedService<TokenOutboxWorker>();
         services.AddHostedService<ActivityOutboxWorker>();
+        services.AddHostedService<DashboardMetricsWorker>();
 
         services.AddSingleton<TokenWorkerState>();
         services.AddSingleton<ActivityWorkerState>();

@@ -89,7 +89,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             throw new UnauthorizedAccessException("Invalid code verifier.");
         }
 
-        var validationResult = await _clientStore.GetClientValidation(tokenRequest.ClientId);
+        var validationResult = await _clientStore.GetClientShortInfo(tokenRequest.ClientId);
 
         if (validationResult != null && !validationResult.IsValidClient)
         {

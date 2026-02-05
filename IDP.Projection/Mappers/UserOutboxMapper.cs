@@ -1,4 +1,6 @@
-﻿namespace IDP.Projection.Mappers;
+﻿using IDP.Domain.ReadModels.Enums;
+
+namespace IDP.Projection.Mappers;
 
 internal sealed class UserOutboxMapper : IOutboxMapper
 {

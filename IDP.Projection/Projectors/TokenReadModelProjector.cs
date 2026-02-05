@@ -1,15 +1,20 @@
-﻿namespace IDP.Projection.Projectors;
+﻿using IDP.Foundation.Abstractions.Stores;
+
+namespace IDP.Projection.Projectors;
 
 internal sealed class TokenReadModelProjector
 {
     private readonly IApplicationDbContext _db;
+    private readonly IClientStore _clientStore;
     private IAppLogger<TokenReadModelProjector> _appLogger;
 
     public TokenReadModelProjector(IApplicationDbContext db,
-        IAppLogger<TokenReadModelProjector> appLogger)
+        IAppLogger<TokenReadModelProjector> appLogger,
+        IClientStore clientStore)
     {
         _db = db;
         _appLogger = appLogger;
+        _clientStore = clientStore;
     }
 
     public async Task ProjectAsync(OutboxEvent evt, CancellationToken ct)
@@ -93,6 +98,8 @@ internal sealed class TokenReadModelProjector
             throw new InvalidOperationException(
                 $"Token not found for TokenId={tokenId}");
 
+        var client = await _clientStore.GetClientShortInfo(token.ClientId);
+
         var read = TokenReadModel.Create(
             outboxEventId: evt.Id,
             tenantId: token.TenantId,
@@ -100,7 +107,8 @@ internal sealed class TokenReadModelProjector
             sourceType: sourceType,
             tokenIdHash: null,
             tokenType: token.TokenType.ToString(),
-            clientId: token.ClientId,
+            grantType: token.GrantType.ToString(),
+            clientId: client.Id,
             userId: token.UserId,
             subject: token.UserId.ToString(),
             issuedAt: token.IssuedAt,

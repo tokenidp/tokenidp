@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.ReadModels;
+using IDP.Domain.ReadModels.Enums;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace IDP.Infrastructure.Config;

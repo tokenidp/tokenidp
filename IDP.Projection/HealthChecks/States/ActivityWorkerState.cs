@@ -1,4 +1,4 @@
-﻿namespace IDP.Projection.HealthChecks;
+﻿namespace IDP.Projection.HealthChecks.States;
 
 public sealed class ActivityWorkerState
 {

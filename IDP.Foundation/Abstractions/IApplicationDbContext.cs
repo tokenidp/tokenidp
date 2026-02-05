@@ -39,6 +39,9 @@ public interface IApplicationDbContext
     DbSet<TokenSearch> TokenSearch { get; }
     DbSet<TokenReadModel> TokenReadModel { get; }
     DbSet<Activity> Activities { get; }
+    DbSet<DashboardMetric> DashboardMetrics { get; }
+    DbSet<DashboardMetricsCheckpoint> DashboardMetricsCheckpoints { get; }
+    DbSet<DashboardMetricRanking> DashboardMetricRankings { get; }
 
     DatabaseFacade Database { get; }
 

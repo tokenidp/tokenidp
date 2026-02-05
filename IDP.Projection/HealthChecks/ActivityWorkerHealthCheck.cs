@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using IDP.Projection.HealthChecks.States;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace IDP.Projection.HealthChecks;
 

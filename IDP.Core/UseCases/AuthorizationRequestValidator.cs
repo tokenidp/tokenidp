@@ -16,7 +16,7 @@ public sealed class AuthorizationRequestValidator
         AuthorizationRequest request,
         CancellationToken ct)
     {
-        var client = await _clientStore.GetClientValidation(request.ClientId);
+        var client = await _clientStore.GetClientShortInfo(request.ClientId);
 
         if (client == null || !client.IsValidClient)
         {

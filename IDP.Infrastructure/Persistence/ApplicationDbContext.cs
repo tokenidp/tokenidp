@@ -56,6 +56,9 @@ internal partial class ApplicationDbContext : IdentityDbContext<User, Role, int>
     public DbSet<TokenSearch> TokenSearch { get; set; }
     public DbSet<TokenReadModel> TokenReadModel { get; set; }
     public DbSet<Activity> Activities { get; set; }
+    public DbSet<DashboardMetric> DashboardMetrics { get; set; }
+    public DbSet<DashboardMetricsCheckpoint> DashboardMetricsCheckpoints { get; set; }
+    public DbSet<DashboardMetricRanking> DashboardMetricRankings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

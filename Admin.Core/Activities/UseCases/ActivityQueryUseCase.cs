@@ -1,5 +1,5 @@
 using Admin.Core.Common;
-using IDP.Domain.ReadModels;
+using IDP.Domain.ReadModels.Enums;
 
 namespace Admin.Core.Activities.UseCases;
 

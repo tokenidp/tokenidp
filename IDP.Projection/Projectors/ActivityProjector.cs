@@ -1,4 +1,6 @@
-﻿namespace IDP.Projection.Projectors;
+﻿using IDP.Domain.ReadModels.Enums;
+
+namespace IDP.Projection.Projectors;
 
 internal class ActivityProjector
 {

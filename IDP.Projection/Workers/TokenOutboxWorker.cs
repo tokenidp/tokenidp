@@ -1,4 +1,4 @@
-﻿using IDP.Projection.HealthChecks;
+﻿using IDP.Projection.HealthChecks.States;
 using IDP.Projection.Mappers;
 using IDP.Projection.Projectors;
 using IDP.Projection.Queries;

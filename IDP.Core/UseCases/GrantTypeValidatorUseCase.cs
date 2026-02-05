@@ -18,7 +18,7 @@ internal sealed class GrantTypeValidatorUseCase
     {
         _logger.LogInfo("Validate Grant type {GrantType} for client:{ClientId}", grantType, clientId);
 
-        var client = await _clientStore.GetClientValidation(clientId);
+        var client = await _clientStore.GetClientShortInfo(clientId);
 
         if (client.GrantTypes == null || client.GrantTypes.Count == 0)
         {

@@ -115,13 +115,13 @@ public static class ApplicationBuilderExtensions
 
         app.RegisterAdminEndpoints();
 
-        app.MapHealthChecks("/health");
+        //app.MapHealthChecks("/health");
 
-        //app.MapHealthChecks("/health", new HealthCheckOptions
-        //{
-        //    Predicate = _ => true,
-        //    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-        //});
+        app.MapHealthChecks("/health", new HealthCheckOptions
+        {
+            Predicate = _ => true,
+            ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+        });
 
         return app;
     }

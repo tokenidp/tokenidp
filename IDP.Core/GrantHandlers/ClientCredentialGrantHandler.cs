@@ -64,7 +64,7 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 
     private async Task<dynamic> LoadClientAsync(string clientId)
     {
-        var client = await _clientStore.GetClientValidation(clientId);
+        var client = await _clientStore.GetClientShortInfo(clientId);
 
         if (client is null)
         {

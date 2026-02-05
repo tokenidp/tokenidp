@@ -1,4 +1,4 @@
-﻿namespace IDP.Domain.ReadModels;
+﻿namespace IDP.Domain.ReadModels.Enums;
 
 
 public enum ActivityActorType

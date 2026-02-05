@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Activities.UseCases;
 using Admin.Core.Clients.UseCases;
 using Admin.Core.Configurations;
+using Admin.Core.Dashboard;
 using Admin.Core.Permissions.UseCases;
 using Admin.Core.Roles.UseCases;
 using Admin.Core.Settings.UseCases;
@@ -53,5 +54,7 @@ public static class DependencyInjection
 
         services.AddScoped<ActivityQueryUseCase>();
         services.AddScoped<ActivityLookupsUseCase>();
+
+        services.AddScoped<DashboardQueryUseCase>();
     }
 }
