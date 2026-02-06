@@ -1,5 +1,5 @@
-﻿global using IDP.Domain.AggregateRoots.Clients;
-global using IDP.Domain.AggregateRoots.Lookups;
+﻿global using Admin.Core;
+global using IDP.Domain.AggregateRoots.Clients;
 global using IDP.Domain.AggregateRoots.Roles;
 global using IDP.Domain.AggregateRoots.Tenants;
 global using IDP.Domain.AggregateRoots.Users;
@@ -16,4 +16,3 @@ global using Microsoft.AspNetCore.Identity;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using System.Reflection;
-global using Admin.Core;

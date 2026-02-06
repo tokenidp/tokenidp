@@ -1,6 +1,6 @@
 using Admin.Core.Common;
 using Admin.Core.Configurations;
-using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.Configurations;
 using System.Transactions;
 
 namespace Admin.Core.Settings.UseCases;

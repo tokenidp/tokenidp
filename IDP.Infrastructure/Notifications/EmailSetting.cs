@@ -1,15 +1,16 @@
-﻿using IDP.Foundation.Abstractions.Stores;
+﻿using IDP.Domain.AggregateRoots.Configurations;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Notifications;
 
 internal sealed class EmailSetting : IEmailSetting
 {
-    private readonly ILookupStore _lookupService;
-    private IEnumerable<LookupValue>? _settings;
+    private readonly IConfigurationStore _configService;
+    private IEnumerable<ConfigurationShortInfo>? _settings;
 
-    public EmailSetting(ILookupStore lookupService)
+    public EmailSetting(IConfigurationStore configService)
     {
-        _lookupService = lookupService;
+        _configService = configService;
 
         ApiKey = string.Empty;
         SmtpServer = string.Empty;
@@ -37,8 +38,8 @@ internal sealed class EmailSetting : IEmailSetting
 
     public async Task PopulateEmailSettings(int tenantId)
     {
-        _settings = await _lookupService
-            .GeTenantLookupsByType(tenantId, "EmailSettings");
+        _settings = await _configService
+            .GetTenantConfigurations(tenantId, ConfigurationScopes.Notification);
 
         SetApiKey();
         SetSmtpServer();
@@ -55,88 +56,88 @@ internal sealed class EmailSetting : IEmailSetting
 
     private void SetApiKey()
     {
-        var apikey = _settings?.Where(l => l.LookupCode == "ApiKey")
-            .Select(s => s.Value).FirstOrDefault();
+        var apikey = _settings?.Where(l => l.ConfigKey == "ApiKey")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         ApiKey = apikey ?? ApiKey;
     }
 
     private void SetSmtpServer()
     {
-        var smtpServer = _settings?.Where(l => l.LookupCode == "SmtpServer")
-            .Select(s => s.Value).FirstOrDefault();
+        var smtpServer = _settings?.Where(l => l.ConfigKey == "SmtpServer")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpServer = smtpServer ?? SmtpServer;
     }
 
     private void SetSmtpPort()
     {
-        var smtpPort = _settings?.Where(l => l.LookupCode == "SmtpPort")
-            .Select(s => Convert.ToInt32(s.Value)).FirstOrDefault();
+        var smtpPort = _settings?.Where(l => l.ConfigKey == "SmtpPort")
+            .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         SmtpPort = smtpPort ?? SmtpPort;
     }
 
     private void SetSmtpUsername()
     {
-        var smtpUsername = _settings?.Where(l => l.LookupCode == "SmtpUsername")
-            .Select(s => s.Value).FirstOrDefault();
+        var smtpUsername = _settings?.Where(l => l.ConfigKey == "SmtpUsername")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpUsername = smtpUsername ?? SmtpUsername;
     }
 
     private void SetSmtpPassword()
     {
-        var smtpPassword = _settings?.Where(l => l.LookupCode == "SmtpPassword")
-            .Select(s => s.Value).FirstOrDefault();
+        var smtpPassword = _settings?.Where(l => l.ConfigKey == "SmtpPassword")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpPassword = smtpPassword ?? SmtpPassword;
     }
 
     private void SetSmtpUseSsl()
     {
-        var smtpUseSsl = _settings?.Where(l => l.LookupCode == "SmtpUseSsl")
-            .Select(s => Convert.ToBoolean(s.Value)).FirstOrDefault();
+        var smtpUseSsl = _settings?.Where(l => l.ConfigKey == "SmtpUseSsl")
+            .Select(s => Convert.ToBoolean(s.ConfigValue)).FirstOrDefault();
 
         SmtpUseSsl = smtpUseSsl ?? SmtpUseSsl;
     }
 
     private void SetFromEmail()
     {
-        var fromEmail = _settings?.Where(l => l.LookupCode == "FromEmail")
-            .Select(s => s.Value).FirstOrDefault();
+        var fromEmail = _settings?.Where(l => l.ConfigKey == "FromEmail")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         FromEmail = fromEmail ?? FromEmail;
     }
 
     private void SetFromName()
     {
-        var fromName = _settings?.Where(l => l.LookupCode == "FromName")
-            .Select(s => s.Value).FirstOrDefault();
+        var fromName = _settings?.Where(l => l.ConfigKey == "FromName")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         FromName = fromName ?? FromName;
     }
 
     private void SetRetryAttempts()
     {
-        var retryAttempts = _settings?.Where(l => l.LookupCode == "RetryAttempts")
-            .Select(s => Convert.ToInt32(s.Value)).FirstOrDefault();
+        var retryAttempts = _settings?.Where(l => l.ConfigKey == "RetryAttempts")
+            .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         RetryAttempts = retryAttempts ?? RetryAttempts;
     }
 
     private void SetRetryDelay()
     {
-        var retryDelay = _settings?.Where(l => l.LookupCode == "RetryDelay")
-            .Select(s => Convert.ToInt32(s.Value)).FirstOrDefault();
+        var retryDelay = _settings?.Where(l => l.ConfigKey == "RetryDelay")
+            .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         RetryDelay = retryDelay ?? RetryDelay;
     }
 
     private void SetEmailProviderType()
     {
-        var providerType = _settings?.Where(l => l.LookupCode == "EmailProviderType")
-            .Select(s => s.Value).FirstOrDefault();
+        var providerType = _settings?.Where(l => l.ConfigKey == "EmailProviderType")
+            .Select(s => s.ConfigValue).FirstOrDefault();
 
         if (providerType != null)
         {

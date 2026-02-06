@@ -22,7 +22,7 @@ internal sealed class ClientStore : IClientStore
         _currentUserService = currentUserService;
     }
 
-    public async Task<ClientValidationSnapshot> GetByClientId(string clientId)
+    public async Task<ClientValidationSnapshot> GetActiveByClientId(string clientId)
     {
         _logger.LogDebug("GetClient client: {ClientId}", clientId);
 
@@ -54,7 +54,7 @@ internal sealed class ClientStore : IClientStore
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-            .Where(x => x.Id == clientId && x.IsActive)
+            .Where(x => x.Id == clientId)
             .Select(ClientShortInfoProjection.Projection)
             .FirstOrDefaultAsync();
 
@@ -77,7 +77,7 @@ internal sealed class ClientStore : IClientStore
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-            .Where(x => x.ClientId == clientId && x.IsActive)
+            .Where(x => x.ClientId == clientId)
             .Select(ClientShortInfoProjection.Projection)
             .FirstOrDefaultAsync();
 

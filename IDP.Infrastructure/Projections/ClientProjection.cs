@@ -1,11 +1,13 @@
-﻿using System.Linq.Expressions;
+﻿using IDP.Core.Model;
+using System.Linq.Expressions;
 
 namespace IDP.Infrastructure.Projections;
 
 internal static class ClientProjection
 {
     public static Expression<Func<Client, ClientValidationSnapshot>> ValidationSnapshot =>
-        client => new ClientValidationSnapshot(
+        client => new ClientValidationSnapshot
+        (
             client.ClientId,
             client.ClientName,
             client.TenantId,
@@ -26,6 +28,19 @@ internal static class ClientProjection
             client.AuthorizationCodeLifetime,
             client.RefreshTokenExpiration,
             client.ClientSecretExpiry
+        );
+}
+
+internal static class ClientShortInfoProjection
+{
+    public static Expression<Func<Client, ClientShortInfo>> Projection =>
+        client => new ClientShortInfo
+        (
+            client.Id,
+            client.ClientName,
+            client.RedirectUri,
+            client.ClientScopes.Select(s => s.Scope),
+            client.ClientGrantTypes.Select(g => g.AllowedGrantType)
         );
 }
 

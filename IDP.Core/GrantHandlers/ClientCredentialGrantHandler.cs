@@ -1,7 +1,6 @@
 ﻿using IDP.Core.UseCases;
 using IDP.Foundation.Abstractions.Stores;
-using System.Security.Claims;
-using System.Security.Cryptography;
+using IDP.Foundation.Security;
 using System.Text;
 
 namespace IDP.Core.GrantHandlers;
@@ -10,167 +9,102 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 {
     private const string GrantTypeValue = "client_credentials";
 
-    private readonly IClientStore _clientStore;
+    private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly TokenIssuerUseCase _tokenService;
     private readonly IAppLogger<ClientCredentialGrantHandler> _logger;
 
     public ClientCredentialGrantHandler(
-        IClientStore clientStore,
+        TokenContextUseCase tokenContextUseCase,
         TokenIssuerUseCase tokenService,
         IAppLogger<ClientCredentialGrantHandler> logger)
     {
-        _clientStore = clientStore;
+        _tokenContextUseCase = tokenContextUseCase;
         _tokenService = tokenService;
         _logger = logger;
     }
 
     public async Task<TokenResponse> HandleAsync(TokenRequest request)
     {
-        var normalizedRequest = NormalizeRequest(request);
-        var client = await LoadClientAsync(normalizedRequest.ClientId);
+        var normalized = NormalizeRequest(request);
 
-        ValidateClientState(client, normalizedRequest.ClientId);
-        ValidateClientSecret(normalizedRequest.ClientSecret, client.ClientSecret, normalizedRequest.ClientId);
+        var tokenContext = await _tokenContextUseCase.BuildClientCredentialTokenContextAsync(normalized.ClientId);
 
-        var scopes = ResolveScopes(normalizedRequest.Scope, client.Scopes, normalizedRequest.ClientId);
-        var claims = BuildClientClaims(normalizedRequest.ClientId);
+        ValidateClientSecret(normalized.ClientSecret, tokenContext.ActiveSecretHashes.FirstOrDefault(), normalized.ClientId);
 
-        return await IssueTokenAsync(client, claims, scopes, normalizedRequest.IpAddress);
+        var scopes = ResolveScopes(normalized.Scope, tokenContext.Scopes, normalized.ClientId);
+
+        var token = await _tokenService.IssueTokenAsync(tokenContext);
+
+        _logger.LogInfo("Client credentials token issued. ClientId={ClientId}, Scopes={Scopes}",
+            normalized.ClientId,
+            string.Join(' ', scopes));
+
+        return token;
     }
 
     private static NormalizedRequest NormalizeRequest(TokenRequest request)
     {
         if (request is null)
-        {
             throw new GrantValidationException("invalid_request", "Request is missing.");
-        }
 
         if (!string.Equals(request.GrantType, GrantTypeValue, StringComparison.Ordinal))
-        {
             throw new GrantValidationException("unsupported_grant_type", "Invalid grant_type.");
-        }
 
         if (string.IsNullOrWhiteSpace(request.ClientId))
-        {
             throw new GrantValidationException("invalid_request", "client_id is required.");
-        }
 
         return new NormalizedRequest(
             request.ClientId.Trim(),
             request.Scope,
             request.IpAddress,
-            request.ClientSecret);
-    }
-
-    private async Task<dynamic> LoadClientAsync(string clientId)
-    {
-        var client = await _clientStore.GetClientShortInfo(clientId);
-
-        if (client is null)
-        {
-            LogInvalidClient(clientId, "not found");
-            throw new GrantValidationException("invalid_client", "Client not found.");
-        }
-
-        return client;
-    }
-
-    private void ValidateClientState(dynamic client, string clientId)
-    {
-        if (!client.IsActive)
-        {
-            LogInvalidClient(clientId, "inactive");
-            throw new GrantValidationException("invalid_client", "Client is inactive.");
-        }
+            request.ClientSecret
+        );
     }
 
     private void ValidateClientSecret(string? providedSecret, string? storedSecret, string clientId)
     {
-        if (!ValidateClientSecret(providedSecret, storedSecret))
+        if (!AreSecretsEqual(providedSecret, storedSecret))
         {
-            LogInvalidClient(clientId, "secret mismatch");
+            _logger.LogWarning("Client {ClientId} rejected: {Reason}.", clientId, "secret mismatch");
+
             throw new GrantValidationException("invalid_client", "Client secret is invalid.");
         }
     }
 
-    private HashSet<string> ResolveScopes(string? requestedScope, string clientScopes, string clientId)
-    {
-        var requestedScopes = ParseScopes(requestedScope);
-        var allowedScopes = ParseScopes(clientScopes);
-
-        if (requestedScopes.Count == 0)
-        {
-            requestedScopes = allowedScopes;
-        }
-
-        var invalidScopes = requestedScopes
-            .Except(allowedScopes, StringComparer.Ordinal)
-            .ToArray();
-
-        if (invalidScopes.Length > 0)
-        {
-            _logger.LogWarning("Invalid scopes requested for client {ClientId}: {Scopes}", clientId, invalidScopes);
-            throw new GrantValidationException("invalid_scope", "One or more scopes are not allowed.");
-        }
-
-        return requestedScopes;
-    }
-
-    private static List<Claim> BuildClientClaims(string clientId)
-    {
-        return new List<Claim>
-        {
-            new("sub", clientId),
-            new("client_id", clientId)
-        };
-    }
-
-    private async Task<TokenResponse> IssueTokenAsync(
-        dynamic client,
-        List<Claim> claims,
-        HashSet<string> scopes,
-        string? ipAddress)
-    {
-        var scopeString = string.Join(' ', scopes);
-
-        // TODO: issue token using your real token service.
-        //return await _tokenService.CreateClientCredentialTokenAsync(
-        //    client,
-        //    claims,
-        //    scopeString,
-        //    ipAddress);
-        return await Task.FromResult(default(TokenResponse));
-    }
-
-    private static HashSet<string> ParseScopes(string? scope)
-    {
-        if (string.IsNullOrWhiteSpace(scope))
-        {
-            return new HashSet<string>(StringComparer.Ordinal);
-        }
-
-        return scope
-            .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
-            .ToHashSet(StringComparer.Ordinal);
-    }
-
-    private static bool ValidateClientSecret(string? providedSecret, string? storedSecret)
+    private static bool AreSecretsEqual(string? providedSecret, string? storedSecret)
     {
         if (string.IsNullOrWhiteSpace(providedSecret) || string.IsNullOrWhiteSpace(storedSecret))
-        {
             return false;
-        }
+
+        providedSecret = SecretHasher.HashSecret(providedSecret);
 
         var providedBytes = Encoding.UTF8.GetBytes(providedSecret);
         var storedBytes = Encoding.UTF8.GetBytes(storedSecret);
 
-        return providedBytes.Length == storedBytes.Length &&
-            CryptographicOperations.FixedTimeEquals(providedBytes, storedBytes);
+        return SecretHasher.FixedTimeEquals(providedBytes, storedBytes);
     }
 
-    private void LogInvalidClient(string clientId, string reason)
+    private HashSet<string> ResolveScopes(string? requestedScope, string[] allowedScopes, string clientId)
     {
-        _logger.LogWarning("Client {ClientId} rejected: {Reason}.", clientId, reason);
+        var requested = requestedScope?
+             .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
+             .ToHashSet(StringComparer.Ordinal);
+
+        var allowed = allowedScopes.ToHashSet(StringComparer.Ordinal);
+
+        if (requested?.Count == 0)
+            requested = allowed;
+
+        var invalid = requested?.Except(allowed, StringComparer.Ordinal).ToArray();
+
+        if (invalid?.Length > 0)
+        {
+            _logger.LogWarning("Invalid scopes requested for client {ClientId}: {Scopes}", clientId, invalid);
+
+            throw new GrantValidationException("invalid_scope", "One or more scopes are not allowed.");
+        }
+
+        return requested!;
     }
 
     private sealed record NormalizedRequest(
@@ -181,12 +115,12 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 
     public sealed class GrantValidationException : Exception
     {
+        public string Error { get; }
+
         public GrantValidationException(string error, string description)
             : base(description)
         {
             Error = error;
         }
-
-        public string Error { get; }
     }
 }

@@ -1,5 +1,5 @@
-﻿using IDP.Domain.AggregateRoots;
-using IDP.Domain.AggregateRoots.Authorization;
+﻿using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Domain.AggregateRoots.Outbox;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
@@ -26,8 +26,6 @@ public interface IApplicationDbContext
     DbSet<RefreshToken> RefreshTokens { get; }
     DbSet<OutboxEvent> OutboxEvents { get; }
     DbSet<OutboxEventConsumer> OutboxEventConsumers { get; }
-    DbSet<LookupType> LookupTypes { get; }
-    DbSet<LookupValue> LookupValues { get; }
     DbSet<Configuration> Configurations { get; }
     DbSet<UserRole> UserRoles { get; }
     DbSet<Role> Roles { get; }

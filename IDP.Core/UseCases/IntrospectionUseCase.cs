@@ -33,12 +33,15 @@ internal sealed class IntrospectionUseCase
             return IntrospectionResponse.Create();
         }
 
-        _logger.LogDebug("Valid token found for user {UserId}", referenceToken.UserId);
+        _logger.LogDebug("Valid token found for client {client}", referenceToken.ClientId);
+
+        var roles = referenceToken.Roles ?? string.Empty;
 
         return IntrospectionResponse.Create(
             referenceToken.UserId,
+            referenceToken.ClientId,
             referenceToken.TenantId,
             referenceToken.Scope,
-            referenceToken.Roles.Split(","));
+            roles.Split(","));
     }
 }

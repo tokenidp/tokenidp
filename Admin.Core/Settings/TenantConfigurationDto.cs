@@ -1,4 +1,4 @@
-using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.Configurations;
 
 namespace Admin.Core.Configurations;
 

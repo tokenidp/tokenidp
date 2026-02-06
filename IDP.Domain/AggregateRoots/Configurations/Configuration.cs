@@ -1,6 +1,6 @@
 ﻿using IDP.Domain.Specifications;
 
-namespace IDP.Domain.AggregateRoots;
+namespace IDP.Domain.AggregateRoots.Configurations;
 
 public class Configuration : AggregateRoot<int>, ITenant
 {

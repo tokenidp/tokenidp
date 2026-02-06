@@ -46,7 +46,7 @@ internal class TokenContextUseCase
 
         var distinctRoles = userRoles.Distinct().ToArray();
 
-        var client = await _clientStore.GetByClientId(clientId);
+        var client = await _clientStore.GetActiveByClientId(clientId);
 
         if (client == null)
         {
@@ -69,6 +69,34 @@ internal class TokenContextUseCase
             distinctRoles,
             client.Scopes.ToArray(),
             client.Audiences.ToArray());
+
+        return userInfo;
+    }
+
+    internal async Task<TokenContext> BuildClientCredentialTokenContextAsync(string clientId)
+    {
+        _logger.LogInfo("Generating token context for token for client:{clientId}", clientId);
+
+        var client = await _clientStore.GetActiveByClientId(clientId);
+
+        if (client == null)
+        {
+            _logger.LogWarning("Client not found.");
+
+            throw new NotFoundException("Client not found.");
+        }
+
+        var userInfo = TokenContext.Create(
+            client.TenantId,
+            client.ClientName,
+            clientId,
+            client.TokenType,
+            client.ClientSecretExpiry ?? 0,
+            client.AccessTokenLifetime,
+            client.RefreshTokenExpiration,
+            client.Scopes.ToArray(),
+            client.Audiences.ToArray(),
+            client.ActiveSecretHashes);
 
         return userInfo;
     }

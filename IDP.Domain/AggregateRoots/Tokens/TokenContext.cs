@@ -4,7 +4,7 @@ namespace IDP.Domain.AggregateRoots.Tokens;
 
 public class TokenContext
 {
-    public int UserId { get; private set; }
+    public int? UserId { get; private set; }
     public int TenantId { get; private set; }
     public string ClientName { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
@@ -21,6 +21,7 @@ public class TokenContext
     public string[] Scopes { get; private set; } = default!;
     public string[] Audiences { get; private set; } = default!;
     public string[] Roles { get; private set; } = Array.Empty<string>();
+    public IReadOnlySet<string> ActiveSecretHashes { get; private set; } = default!;
 
     public static TokenContext Create(int userId,
         int tenantId,
@@ -51,6 +52,35 @@ public class TokenContext
             Scopes = scope,
             Audiences = audience,
             IpAddress = ipAddress
+        };
+    }
+
+    public static TokenContext Create(
+        int tenantId,
+        string clientName,      
+        string clientId,
+        TokenTypes tokenType,
+        int clientSecretExpiry,
+        int accessTokenLifetime,
+        int refreshTokenExpiration,     
+        string[] scope,
+        string[] audience,
+        IReadOnlySet<string> secrets,
+        string ipAddress = "")
+    {
+        return new TokenContext()
+        {
+            TenantId = tenantId,
+            ClientName = clientName,
+            ClientId = clientId,
+            TokenType = tokenType,
+            ClientSecretExpiry = clientSecretExpiry,
+            AccessTokenLifetime = accessTokenLifetime,
+            RefreshTokenExpiration = refreshTokenExpiration,
+            Scopes = scope,
+            Audiences = audience,
+            IpAddress = ipAddress,
+            ActiveSecretHashes = secrets
         };
     }
 

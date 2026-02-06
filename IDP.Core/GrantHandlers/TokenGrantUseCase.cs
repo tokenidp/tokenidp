@@ -1,6 +1,6 @@
-﻿using IDP.Core.GrantHandlers;
+﻿using IDP.Core.UseCases;
 
-namespace IDP.Core.UseCases;
+namespace IDP.Core.GrantHandlers;
 
 internal sealed class TokenGrantUseCase : ITokenGrantUseCase
 {

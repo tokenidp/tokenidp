@@ -1,4 +1,5 @@
-﻿using IDP.Domain.AggregateRoots.Permissions;
+﻿using IDP.Domain.AggregateRoots.Configurations;
+using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Tenants;

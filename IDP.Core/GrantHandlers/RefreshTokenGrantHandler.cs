@@ -43,13 +43,13 @@ internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
             throw new NotFoundException("Refresh token not found.");
         }
 
-        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(request.ClientId, existingToken.UserId);
+        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(request.ClientId, existingToken.UserId ?? 0);
 
-        _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}", request.ClientId, request.IpAddress);
+        _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}", request.ClientId, request.IpAddress ?? string.Empty);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 
-        _logger.LogInfo("Successfully saved new refresh token for user {UserId}", existingToken.UserId);
+        _logger.LogInfo("Successfully saved new refresh token for client {clientId}", existingToken.ClientId);
 
         return token;
     }

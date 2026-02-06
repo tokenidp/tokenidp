@@ -29,17 +29,22 @@ internal sealed class TokenIssuerUseCase
 
         var token = Token.CreateToken(context);
 
+        var isClientCredentials = Enum.Equals(context.GrantType, GrantTypes.client_credentials);
+
         switch (context.TokenType)
         {
             case TokenTypes.JWT:
                 {
                     var tokenResponse = CreateAccessToken(context, token.ExpiresAt, token.Id.ToString());
 
-                    var refreshToken = await IssueRefreshToken(token, context);
+                    if (!isClientCredentials)
+                    {
+                        var refreshToken = await IssueRefreshToken(token, context);
 
-                    tokenResponse.AddRefreshToken(refreshToken);
+                        tokenResponse.AddRefreshToken(refreshToken);
+                    }
 
-                    token.IssueJwt(context.ClientName, context.UserName);
+                    token.IssueJwt(context.ClientName);
 
                     await _tokenStore.CreateToken(token);
 
@@ -53,9 +58,12 @@ internal sealed class TokenIssuerUseCase
 
                     token.AddReferenceToken(hashToken, context.ClientName, context.UserName);
 
-                    var refreshToken = await IssueRefreshToken(token, context);
+                    if (!isClientCredentials)
+                    {
+                        var refreshToken = await IssueRefreshToken(token, context);
 
-                    tokenResponse.AddRefreshToken(refreshToken);
+                        tokenResponse.AddRefreshToken(refreshToken);
+                    }
 
                     await _tokenStore.CreateToken(token);
 
@@ -98,22 +106,22 @@ internal sealed class TokenIssuerUseCase
 
         _logger.LogDebug("Created refresh token entity with expiry {Expiry}", context.RefreshExpiresAt);
 
-        await _tokenStore.RemoveOldRefreshTokens(context.UserId, context.IpAddress, context.RefreshTokenExpiration);
+        await _tokenStore.RemoveOldRefreshTokens(context.UserId ?? 0, context.IpAddress, context.RefreshTokenExpiration);
 
-        _logger.LogDebug("Removed old refresh tokens for user {UserId}", context.UserId);
+        _logger.LogDebug("Removed old refresh tokens for client {clientId}", context.ClientId);
 
         return newRefreshToken;
     }
 
     private TokenResponse CreateAccessToken(TokenContext tokenInfo, DateTime expiresAt, string tokenId)
     {
-        _logger.LogDebug("Creating token (ID: {TokenId}) for {UserId} with roles: {Roles}",
-            tokenId, tokenInfo.UserId, string.Join(",", tokenInfo.Roles));
+        _logger.LogDebug("Creating token for client {clientId}", tokenInfo.ClientId);
 
         var accessToken = _tokenGenerator.CreateAccessToken(
             expiresAt,
             tokenId,
-            tokenInfo.UserId.ToString(),
+            tokenInfo.ClientId,
+            tokenInfo.UserId,
             tokenInfo.UserName,
             tokenInfo.TenantId.ToString(),
             tokenInfo.Audiences,
@@ -124,39 +132,45 @@ internal sealed class TokenIssuerUseCase
 
         var idToken = CreateIDToken(tokenInfo);
 
-        return TokenResponse.Create(tokenInfo.UserId, accessToken, expiresAt, idToken);
+        return TokenResponse.Success(tokenInfo.UserId, accessToken, expiresAt, idToken);
     }
 
     private TokenResponse CreateReferenceToken(TokenContext tokenInfo, DateTime expiresAt)
     {
         var token = Guid.NewGuid().ToString();
 
-        _logger.LogDebug("Creating access token for user {UserId} with expiry {Expiry}",
-            tokenInfo.UserId, expiresAt);
+        _logger.LogDebug("Creating refresh token for user {UserId} with expiry {Expiry}",
+            tokenInfo.UserId ?? 0, expiresAt);
 
         _logger.LogDebug("Access token saved to database with ID: {TokenId}",
             $"{token.SubstringSafe(0, 5)}...");
 
         var idToken = CreateIDToken(tokenInfo);
 
-        return TokenResponse.Create(tokenInfo.UserId, token, expiresAt, idToken);
+        return TokenResponse.Success(tokenInfo.UserId, token, expiresAt, idToken);
     }
 
-    private string CreateIDToken(TokenContext tokenInfo)
+    private string? CreateIDToken(TokenContext context)
     {
+        var isClientCredentials = Enum.Equals(context.GrantType, GrantTypes.client_credentials);
+
+        if (isClientCredentials)
+        {
+            return default;
+        }
         var tokenId = Guid.NewGuid().ToString();
 
-        var expiresAt = DateTime.UtcNow.AddMinutes(tokenInfo.AccessTokenLifetime);
+        var expiresAt = DateTime.UtcNow.AddMinutes(context.AccessTokenLifetime);
 
-        _logger.LogDebug("Creating id token (ID: {TokenId}) for {UserId} ",
-            tokenId, tokenInfo.UserId);
+        _logger.LogDebug("Creating id token (ID: {TokenId}) ", tokenId);
 
         var idToken = _tokenGenerator.CreateIDToken(
             expiresAt,
             tokenId,
-            tokenInfo.UserId.ToString(),
-            tokenInfo.UserName,
-            new[] { tokenInfo.ClientId });
+            context.ClientId,
+            context.UserId,
+            context.UserName,
+            new[] { context.ClientId });
 
         _logger.LogDebug("Token will expire at {ExpirationTime}", expiresAt);
 

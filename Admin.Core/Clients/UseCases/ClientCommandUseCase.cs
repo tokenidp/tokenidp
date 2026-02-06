@@ -1,5 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+﻿using IDP.Foundation.Security;
 
 namespace Admin.Core.Clients.UseCases;
 
@@ -238,7 +237,7 @@ internal sealed class ClientCommandUseCase
             return Result.Success(0);
         }
 
-        var hash = HashSecret(secret);
+        var hash = SecretHasher.HashSecret(secret);
         var expiresAt = clientSecretExpiry.HasValue
             ? DateTime.UtcNow.AddDays(clientSecretExpiry.Value)
             : (DateTime?)null;
@@ -334,13 +333,5 @@ internal sealed class ClientCommandUseCase
         }
 
         return combined;
-    }
-
-    private static string HashSecret(string secret)
-    {
-        using var sha = SHA256.Create();
-        var bytes = Encoding.UTF8.GetBytes(secret);
-        var hashBytes = sha.ComputeHash(bytes);
-        return Convert.ToBase64String(hashBytes);
     }
 }

@@ -1,5 +1,5 @@
-﻿using IDP.Domain.AggregateRoots;
-using IDP.Domain.AggregateRoots.Authorization;
+﻿using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Domain.AggregateRoots.Outbox;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
@@ -42,8 +42,6 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
     public DbSet<ReferenceToken> ReferenceTokens { get; set; }
     public DbSet<OutboxEvent> OutboxEvents { get; set; }
     public DbSet<OutboxEventConsumer> OutboxEventConsumers { get; set; }
-    public DbSet<LookupType> LookupTypes { get; set; }
-    public DbSet<LookupValue> LookupValues { get; set; }
     public DbSet<Configuration> Configurations { get; set; }
     public DbSet<UserRolePermission> UserRolePermissions { get; set; }
     public DbSet<UserSearch> UsersSearch { get; set; }

@@ -50,7 +50,7 @@ public static class DependencyInjection
         services.AddScoped<IClientStore, ClientStore>();
         services.AddScoped<IIdentityStore, IdentityStore>();
         services.AddScoped<IRoleStore, RoleStore>();
-        services.AddScoped<ILookupStore, LookupStore>();
+        services.AddScoped<IConfigurationStore, ConfigurationStore>();
         services.AddScoped<IPreAuthorizationStore, PreAuthorizationStore>();
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();

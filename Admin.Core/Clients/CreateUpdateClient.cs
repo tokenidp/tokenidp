@@ -15,7 +15,6 @@ internal class CreateUpdateClient
     public ClientTypes ClientType { get; set; }
     public AppTypes AppType { get; set; }
     public TokenTypes AccessTokenType { get; set; }
-
     public string? LogoutRedirectUri { get; set; }
     public bool IsActive { get; set; }
     public int? ClientSecretExpiry { get; set; }

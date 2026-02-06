@@ -9,7 +9,7 @@ internal static class PermissionLookupMapper
             {
                 Key = value.ToString(),
                 Value = value.ToString()
-            })
+            }).Where(s => s.Key != "ApiResource" && s.Key != "ApiScope")
             .ToList();
     }
 }

@@ -1,5 +1,6 @@
 using Admin.Core.Common;
 using Admin.Core.Configurations;
+using IDP.Domain.AggregateRoots.Configurations;
 
 namespace Admin.Core.Settings.UseCases;
 
@@ -62,7 +63,7 @@ internal sealed class ConfigurationsQueryUseCase
                 {
                     return new SearchCriteria
                     {
-                        ColumnName = nameof(IDP.Domain.AggregateRoots.Configuration.Scope),
+                        ColumnName = nameof(Configuration.Scope),
                         Value = c.Value,
                         ColumnType = SearchColumnType.String
                     };
@@ -72,7 +73,7 @@ internal sealed class ConfigurationsQueryUseCase
                 {
                     return new SearchCriteria
                     {
-                        ColumnName = nameof(IDP.Domain.AggregateRoots.Configuration.ValueType),
+                        ColumnName = nameof(Configuration.ValueType),
                         Value = c.Value,
                         ColumnType = SearchColumnType.String
                     };
@@ -99,17 +100,17 @@ internal sealed class ConfigurationsQueryUseCase
     {
         if (string.IsNullOrWhiteSpace(sortColumn))
         {
-            return nameof(IDP.Domain.AggregateRoots.Configuration.ConfigKey);
+            return nameof(Configuration.ConfigKey);
         }
 
         if (string.Equals(sortColumn, "Key", StringComparison.OrdinalIgnoreCase))
         {
-            return nameof(IDP.Domain.AggregateRoots.Configuration.ConfigKey);
+            return nameof(Configuration.ConfigKey);
         }
 
         if (string.Equals(sortColumn, "Value", StringComparison.OrdinalIgnoreCase))
         {
-            return nameof(IDP.Domain.AggregateRoots.Configuration.ConfigValue);
+            return nameof(Configuration.ConfigValue);
         }
 
         return sortColumn;

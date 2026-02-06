@@ -3,6 +3,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Xml.Linq;
 
 namespace IDP.Core.Security;
 
@@ -39,21 +40,27 @@ internal sealed class JwtTokenGenerator
     internal string CreateAccessToken(
         DateTime expireAt,
         string tokenId,
-        string userId,
+        string clientId,
+        int? userId,
         string userName,
         string tenantId,
         string[] audiences,
-        string[] scopes,
+        string[]? scopes,
         IEnumerable<string>? roles)
     {
         var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, userId),
+            new(JwtRegisteredClaimNames.Sub, userId == null ? clientId : userId.Value.ToString()),
             new(JwtRegisteredClaimNames.Jti, tokenId),
-            new(JwtRegisteredClaimNames.UniqueName, userName),
             new("uid", tenantId),
-            new("scope", string.Join(" ",scopes))
         };
+
+        if (scopes != null)
+        {
+            claims.Add(new("scope", string.Join(" ", scopes)));
+        }
+
+        AddIfPresent(claims, JwtRegisteredClaimNames.UniqueName, userName);
 
         // Add roles if present
         if (roles is not null)
@@ -82,13 +89,15 @@ internal sealed class JwtTokenGenerator
     internal string CreateIDToken(
         DateTime expireAt,
         string tokenId,
-        string userId,
+        string clientId,
+        int? userId,
         string userName,
         string[] audiences)
     {
         return CreateIDToken(
             expireAt,
             tokenId,
+            clientId,
             userId,
             audiences,
             name: userName,
@@ -113,7 +122,8 @@ internal sealed class JwtTokenGenerator
     internal string CreateIDToken(
         DateTime expireAt,
         string? tokenId,
-        string userId,
+        string clientId,
+        int? userId,
         string[] audiences,
         string? name,
         string? email,
@@ -122,7 +132,7 @@ internal sealed class JwtTokenGenerator
     {
         var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, userId)
+            new(JwtRegisteredClaimNames.Sub, userId == null ? clientId : userId.Value.ToString())
         };
 
         if (!string.IsNullOrWhiteSpace(tokenId))

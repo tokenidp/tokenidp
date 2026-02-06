@@ -3,10 +3,11 @@ using IDP.Domain.DomainEvents.Tokens;
 using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Tokens;
+
 public sealed class Token : AggregateRoot<Guid>
 {
     public int TenantId { get; private set; }
-    public int UserId { get; private set; }
+    public int? UserId { get; private set; }
     public string ClientId { get; private set; } = default!;
 
     public TokenStatus TokenStatus { get; private set; }
@@ -52,14 +53,12 @@ public sealed class Token : AggregateRoot<Guid>
             Roles = string.Join(" ", ctx.Roles)
         };
 
-        token.SetCreated(ctx.UserId);
+        token.SetCreated(ctx.UserId ?? 1);
 
         return token;
     }
 
-    public void IssueJwt(
-        string clientName,
-        string userName)
+    public void IssueJwt(string clientName)
     {
         AddDomainEvent(
             new JwtTokenIssuedEvent(Id,
