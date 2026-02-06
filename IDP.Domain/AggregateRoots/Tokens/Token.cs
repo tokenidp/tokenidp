@@ -2,6 +2,7 @@
 using IDP.Domain.DomainEvents.Tokens;
 using IDP.Domain.Specifications;
 
+namespace IDP.Domain.AggregateRoots.Tokens;
 public sealed class Token : AggregateRoot<Guid>
 {
     public int TenantId { get; private set; }

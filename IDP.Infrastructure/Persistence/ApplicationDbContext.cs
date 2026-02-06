@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
 
-internal partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
+public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
@@ -139,7 +139,7 @@ internal partial class ApplicationDbContext : IdentityDbContext<User, Role, int>
     }
 }
 
-internal partial class ApplicationDbContext
+public partial class ApplicationDbContext
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 

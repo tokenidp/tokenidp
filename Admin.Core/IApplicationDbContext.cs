@@ -1,8 +1,11 @@
-﻿using IDP.Domain.AggregateRoots.Outbox;
+﻿using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.Authorization;
+using IDP.Domain.AggregateRoots.Outbox;
+using IDP.Domain.AggregateRoots.Permissions;
+using IDP.Domain.AggregateRoots.Tokens;
 using IDP.Domain.ReadModels;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
-namespace IDP.Foundation.Abstractions;
+namespace Admin.Core;
 
 public interface IApplicationDbContext
 {
@@ -26,24 +29,25 @@ public interface IApplicationDbContext
     DbSet<LookupType> LookupTypes { get; }
     DbSet<LookupValue> LookupValues { get; }
     DbSet<Configuration> Configurations { get; }
-    DbSet<UserRolePermission> UserRolePermissions { get; }
-    DbSet<UserSearch> UsersSearch { get; }
-    DbSet<RoleSearch> RolesSearch { get; }
-    DbSet<TenantSearch> TenantsSearch { get; }
-    DbSet<ConfigurationSearch> ConfigurationsSearch { get; }
     DbSet<UserRole> UserRoles { get; }
     DbSet<Role> Roles { get; }
     DbSet<User> Users { get; }
     DbSet<UserAddress> UserAddresses { get; }
     DbSet<UserContact> UserContacts { get; }
+
+    // ------------Read Models-------------------
+
     DbSet<TokenSearch> TokenSearch { get; }
     DbSet<TokenReadModel> TokenReadModel { get; }
+    DbSet<UserRolePermission> UserRolePermissions { get; }
+    DbSet<ConfigurationSearch> ConfigurationsSearch { get; }
+    DbSet<UserSearch> UsersSearch { get; }
+    DbSet<RoleSearch> RolesSearch { get; }
+    DbSet<TenantSearch> TenantsSearch { get; }
     DbSet<Activity> Activities { get; }
     DbSet<DashboardMetric> DashboardMetrics { get; }
     DbSet<DashboardMetricsCheckpoint> DashboardMetricsCheckpoints { get; }
     DbSet<DashboardMetricRanking> DashboardMetricRankings { get; }
-
-    DatabaseFacade Database { get; }
 
     void AddDomainEvent(IDomainEvent domainEvent);
     void ClearDomainEvents();

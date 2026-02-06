@@ -1,20 +1,21 @@
 ﻿using IDP.Projection.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using NLog;
 
 namespace IDP.Projection.Workers;
 
 public sealed class DashboardMetricsWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ILogger<DashboardMetricsWorker> _logger;
+    private readonly IAppLogger<DashboardMetricsWorker> _logger;
+    private readonly string _workerId = $"{Environment.MachineName}:Dashboard:{Guid.NewGuid():N}";
 
-    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan Interval = TimeSpan.FromMinutes(10);
 
     public DashboardMetricsWorker(
         IServiceScopeFactory scopeFactory,
-        ILogger<DashboardMetricsWorker> logger)
+        IAppLogger<DashboardMetricsWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
@@ -22,25 +23,34 @@ public sealed class DashboardMetricsWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
+        _logger.LogInfo("DashboardMetricsWorker started. WorkerId={WorkerId}", _workerId);
+
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                await ProcessHourlyMetricsAsync(stoppingToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Dashboard metrics worker failed");
-            }
+            var correlationId = Guid.NewGuid().ToString();
 
-            await Task.Delay(Interval, stoppingToken);
+            using (ScopeContext.PushProperty("CorrelationId", correlationId))
+            {
+                try
+                {
+                    await ProcessHourlyMetricsAsync(stoppingToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Dashboard metrics worker failed");
+                }
+
+                await Task.Delay(Interval, stoppingToken);
+            }
         }
     }
 
     private async Task ProcessHourlyMetricsAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var now = DateTime.UtcNow;
 
@@ -64,7 +74,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
     }
 
     private async Task ProcessTenantHourlyMetricsAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         DateTime bucketStart,
         DateTime bucketEnd,
@@ -75,7 +85,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
             new TokensIssuedMetric(),
             new TokensIssuedPerClientMetric(),
             new AuthenticationMetrics(),
-           
+
         };
 
         foreach (var calculator in calculators)
@@ -110,7 +120,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
     }
 
     private static async Task UpdateCheckpointAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         string metricKey,
         DateTime processedUntil,
         CancellationToken ct)

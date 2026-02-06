@@ -5,7 +5,7 @@ namespace IDP.Projection.Metrics;
 internal static class DashboardMetricRankingWriter
 {
     public static async Task UpsertAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         string metricKey,
         TimeBucketType bucketType,

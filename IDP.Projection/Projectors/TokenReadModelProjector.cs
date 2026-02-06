@@ -4,11 +4,11 @@ namespace IDP.Projection.Projectors;
 
 internal sealed class TokenReadModelProjector
 {
-    private readonly IApplicationDbContext _db;
+    private readonly ApplicationDbContext _db;
     private readonly IClientStore _clientStore;
     private IAppLogger<TokenReadModelProjector> _appLogger;
 
-    public TokenReadModelProjector(IApplicationDbContext db,
+    public TokenReadModelProjector(ApplicationDbContext db,
         IAppLogger<TokenReadModelProjector> appLogger,
         IClientStore clientStore)
     {

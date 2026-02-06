@@ -1,5 +1,7 @@
 using System.Security;
 
+namespace IDP.Domain.AggregateRoots.Tokens;
+
 public class RefreshToken : Entity<Guid>
 {
     public Guid TokenId { get; private set; }

@@ -5,7 +5,7 @@ namespace IDP.Projection.Metrics;
 internal sealed class Authentication15MinAsync
 {
     public async Task CalculateAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         DateTime bucketStart15,
         DateTime bucketEnd15,

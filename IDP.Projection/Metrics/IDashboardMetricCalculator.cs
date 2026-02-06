@@ -3,7 +3,7 @@
 public interface IDashboardMetricCalculator
 {
     Task CalculateAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         DateTime bucketStart,
         DateTime bucketEnd,

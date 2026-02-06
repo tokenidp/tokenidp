@@ -1,12 +1,6 @@
-﻿global using IDP.Domain.AggregateRoots;
-global using IDP.Domain.AggregateRoots.Authorization;
+﻿global using IDP.Domain.AggregateRoots.Authorization;
 global using IDP.Domain.AggregateRoots.Clients;
 global using IDP.Domain.AggregateRoots.Lookups;
-global using IDP.Domain.AggregateRoots.Permissions;
-global using IDP.Domain.AggregateRoots.Roles;
-global using IDP.Domain.AggregateRoots.Tenants;
 global using IDP.Domain.AggregateRoots.Tokens;
 global using IDP.Domain.AggregateRoots.Users;
 global using IDP.Domain.Base;
-global using IDP.Domain.ComplexTypes;
-global using Microsoft.EntityFrameworkCore;

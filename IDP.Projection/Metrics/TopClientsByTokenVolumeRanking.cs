@@ -7,7 +7,7 @@ public sealed class TopClientsByTokenVolumeRanking
     private const int TopN = 10;
 
     public async Task CalculateAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         DateTime bucketStart,
         DateTime bucketEnd,

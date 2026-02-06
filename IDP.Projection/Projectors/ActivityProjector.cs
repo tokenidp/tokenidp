@@ -4,10 +4,10 @@ namespace IDP.Projection.Projectors;
 
 internal class ActivityProjector
 {
-    private readonly IApplicationDbContext _db;
+    private readonly ApplicationDbContext _db;
     private IAppLogger<ActivityProjector> _appLogger;
 
-    public ActivityProjector(IApplicationDbContext db,
+    public ActivityProjector(ApplicationDbContext db,
         IAppLogger<ActivityProjector> appLogger)
     {
         _db = db;

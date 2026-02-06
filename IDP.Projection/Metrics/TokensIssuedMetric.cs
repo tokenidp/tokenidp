@@ -5,7 +5,7 @@ namespace IDP.Projection.Metrics;
 public sealed class TokensIssuedMetric : IDashboardMetricCalculator
 {
     public async Task CalculateAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         int tenantId,
         DateTime bucketStart,
         DateTime bucketEnd,

@@ -5,6 +5,7 @@ using IDP.Projection.Queries;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using NLog;
 
 namespace IDP.Projection.Workers;
 
@@ -17,7 +18,7 @@ internal sealed class TokenOutboxWorker : BackgroundService
     private const int BatchSize = 100;
     private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(30);
     private const int MaxRetries = 5;
-    private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(1);
+    private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(10);
     private readonly TokenWorkerState _state;
 
     public TokenOutboxWorker(IServiceScopeFactory scopeFactory,
@@ -31,25 +32,32 @@ internal sealed class TokenOutboxWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInfo("OutboxWorker started. WorkerId={WorkerId}", _workerId);
+        await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
+        _logger.LogInfo("TokenOutboxWorker started. WorkerId={WorkerId}", _workerId);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            try
-            {
-                _state.Heartbeat();
+            var correlationId = Guid.NewGuid().ToString();
 
-                await ExecuteCycleAsync(stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            using (ScopeContext.PushProperty("CorrelationId", correlationId))
             {
-                _logger.LogInfo("OutboxWorker stopping gracefully");
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogFatal(ex, "OutboxWorker crashed. Restarting in 5s");
-                await SafeDelay(TimeSpan.FromSeconds(5), stoppingToken);
+                try
+                {
+                    _state.Heartbeat();
+
+                    await ExecuteCycleAsync(stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogInfo("OutboxWorker stopping gracefully");
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogFatal(ex, "OutboxWorker crashed. Restarting in 5s");
+                    await SafeDelay(TimeSpan.FromSeconds(5), stoppingToken);
+                }
             }
         }
     }
@@ -70,7 +78,7 @@ internal sealed class TokenOutboxWorker : BackgroundService
     private async Task<List<long>> ClaimBatchAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         var now = DateTime.UtcNow;
 
@@ -90,7 +98,7 @@ internal sealed class TokenOutboxWorker : BackgroundService
     private async Task ProcessBatchAsync(List<long> ids, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var projector = scope.ServiceProvider.GetRequiredService<TokenReadModelProjector>();
 
         var consumerName = OutboxConsumers.TokenReadModel;

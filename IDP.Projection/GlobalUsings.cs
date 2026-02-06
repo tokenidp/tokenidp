@@ -7,3 +7,4 @@ global using IDP.Domain.Specifications;
 global using IDP.Foundation.Abstractions;
 global using Microsoft.EntityFrameworkCore;
 global using System.Text.Json;
+global using IDP.Infrastructure.Persistence;

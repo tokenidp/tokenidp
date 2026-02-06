@@ -1,4 +1,6 @@
-﻿namespace IDP.Infrastructure.Config;
+﻿using IDP.Domain.AggregateRoots.Tokens;
+
+namespace IDP.Infrastructure.Config;
 
 internal class TokenConfig : IEntityTypeConfiguration<Token>
 {
