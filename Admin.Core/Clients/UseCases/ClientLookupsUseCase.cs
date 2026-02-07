@@ -29,7 +29,6 @@ internal sealed class ClientLookupsUseCase
             () => Task.FromResult(new ClientLookups
             {
                 AppTypes = ClientLookupMapper.MapAppTypes(),
-                ClientTypes = ClientLookupMapper.MapClientTypes(),
                 TokenTypes = ClientLookupMapper.MapTokenTypes(),
                 ClientScopes = ClientLookupMapper.MapClientScopes()
             }),

@@ -12,7 +12,6 @@ internal class CreateUpdateClient
     [Required]
     public required string RedirectUri { get; set; }
     public string? Description { get; set; }
-    public ClientTypes ClientType { get; set; }
     public AppTypes AppType { get; set; }
     public TokenTypes AccessTokenType { get; set; }
     public string? LogoutRedirectUri { get; set; }

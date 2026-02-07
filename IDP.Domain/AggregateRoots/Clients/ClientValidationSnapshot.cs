@@ -10,7 +10,6 @@ public class ClientValidationSnapshot
     public bool IsActive { get; }
     public string RedirectUri { get; private set; } = string.Empty;
     public string? LogoutRedirectUri { get; private set; }
-    public ClientTypes ClientType { get; private set; }
     public TokenTypes TokenType { get; }
     public IReadOnlySet<GrantTypes> GrantTypes { get; }
     public IReadOnlySet<string> Scopes { get; }
@@ -28,7 +27,6 @@ public class ClientValidationSnapshot
         bool isActive,
         string redirectUri,
         string? logoutRedirectUri,
-        ClientTypes clientType,
         TokenTypes tokenType,
         IEnumerable<GrantTypes> grantTypes,
         IEnumerable<string> scopes,
@@ -45,7 +43,6 @@ public class ClientValidationSnapshot
         IsActive = isActive;
         RedirectUri = redirectUri;
         LogoutRedirectUri = logoutRedirectUri;
-        ClientType = clientType;
         TokenType = tokenType;
         GrantTypes = grantTypes.ToHashSet();
         Scopes = scopes.ToHashSet();

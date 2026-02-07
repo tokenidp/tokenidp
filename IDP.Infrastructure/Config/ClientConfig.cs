@@ -13,11 +13,6 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
                 v => v.ToString(),
                 v => Enum.Parse<TokenTypes>(v));
 
-        builder.Property(p => p.ClientType)
-            .HasConversion(
-                v => v.ToString(),
-                v => Enum.Parse<ClientTypes>(v));
-
         builder.Property(p => p.AppType)
             .HasConversion(
                 v => v.ToString(),

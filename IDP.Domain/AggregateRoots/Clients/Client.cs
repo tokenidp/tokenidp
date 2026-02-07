@@ -7,7 +7,6 @@ public class Client : AggregateRoot<int>, ITenant
     public string ClientId { get; private set; } = default!;
     public string ClientName { get; private set; } = default!;
     public string? Description { get; private set; }
-    public ClientTypes ClientType { get; private set; }
     public AppTypes AppType { get; private set; }
     public TokenTypes TokenType { get; private set; }
     public int TenantId { get; private set; }
@@ -38,7 +37,6 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        ClientTypes clientType,
         AppTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -57,7 +55,6 @@ public class Client : AggregateRoot<int>, ITenant
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
-        ClientType = clientType;
         AppType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
@@ -82,7 +79,6 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        ClientTypes clientType,
         AppTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -112,7 +108,6 @@ public class Client : AggregateRoot<int>, ITenant
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
-        ClientType = clientType;
         AppType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
@@ -194,7 +189,6 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        ClientTypes clientType,
         AppTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -229,7 +223,6 @@ public class Client : AggregateRoot<int>, ITenant
             clientId.Trim(),
             clientName.Trim(),
             description?.Trim(),
-            clientType,
             appType,
             tokenType,
             redirectUri.Trim(),
