@@ -129,11 +129,9 @@ public sealed class EmailDispatcherWorker : BackgroundService
             var attemptStarted = DateTime.UtcNow;
 
             try
-            {
-                // Render if TemplateRef/Hybrid without subject/body
+            {               
                 if (email.PayloadMode is EmailPayloadMode.TemplateRef or EmailPayloadMode.Hybrid)
-                {
-                    // If rendered bodies already exist (Hybrid), you can decide to skip re-render.
+                {        
                     if (string.IsNullOrWhiteSpace(email.Subject) && !string.IsNullOrWhiteSpace(email.TemplateKey))
                     {
                         var (subject, html, text) = await renderer!.RenderAsync(
@@ -146,27 +144,34 @@ public sealed class EmailDispatcherWorker : BackgroundService
                     }
                 }
 
+                var attempt = EmailDeliveryAttempt.Start(emailMessageId: email.Id,
+                    attemptNo: email.AttemptCount + 1,
+                    provider: email.Provider,
+                    nowUtc: DateTime.UtcNow);
+
                 var result = await emailNotification.SendAsync(email, ct);
 
                 if (result.Success)
                 {
                     email.MarkSent(result.ProviderMessageId ?? string.Empty);
+                    attempt.MarkSuccess(result.ProviderMessageId, DateTime.UtcNow);
                     _logger.LogInfo("Email sent. Id={Id} Tenant={TenantId}", email.Id, email.TenantId);
                 }
                 else if (result.PermanentFailure)
                 {
                     email.MarkPermanentFailure(result.Error ?? "Permanent failure");
-                    _logger.LogWarning("Email permanent failure. Id={Id} Error={Error}", email.Id, result.Error);
+                    attempt.MarkPermanentFailure(result.Error!, DateTime.UtcNow);
+                    _logger.LogWarning("Email permanent failure. Id={Id} Error={Error}", email.Id, result.Error!);
                 }
                 else
                 {
                     var next = retrySchedule.ComputeNextAttemptUtc(email.AttemptCount + 1, DateTime.UtcNow);
                     email.MarkTransientFailure(result.Error ?? "Transient failure", next);
+                    attempt.MarkTransientFailure(result.Error!, DateTime.UtcNow);
                     _logger.LogWarning("Email transient failure. Id={Id} Next={NextAttempt}", email.Id, next);
                 }
 
-                // Optional: write attempt log
-                // db.Set<EmailDeliveryAttempt>().Add(...)
+                db.EmailDeliveryAttempts.Add(attempt);
 
                 await db.SaveChangesAsync(ct);
             }

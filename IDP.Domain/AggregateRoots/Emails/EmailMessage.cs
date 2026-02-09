@@ -2,12 +2,11 @@
 
 namespace IDP.Domain.AggregateRoots.Emails;
 
-public sealed class EmailMessage
+public sealed class EmailMessage : AggregateRoot<long>, ITenant
 {
     private readonly List<EmailRecipient> _recipients = new();
     private readonly List<EmailAttachment> _attachments = new();
 
-    public long Id { get; private set; }
     public int TenantId { get; private set; }
     public string MessageKey { get; private set; } = string.Empty;
 
@@ -29,11 +28,6 @@ public sealed class EmailMessage
 
     public Guid? CorrelationId { get; private set; }
     public string? Tags { get; private set; }
-
-    public DateTime CreatedAtUtc { get; private set; }
-    public int CreateBy { get; private set; }
-    public DateTime UpdatedAtUtc { get; private set; }
-    public int UpdatedBy { get; private set; }
 
     public DateTime? ScheduledAtUtc { get; private set; }
     public DateTime? NextAttemptAtUtc { get; private set; }
@@ -91,7 +85,6 @@ public sealed class EmailMessage
             Subject = subject,
             BodyHtml = bodyHtml,
             BodyText = bodyText,
-            CreatedAtUtc = DateTime.UtcNow,
             ScheduledAtUtc = scheduledAtUtc,
             MaxAttempts = maxAttempts,
             CorrelationId = correlationId,
@@ -133,7 +126,6 @@ public sealed class EmailMessage
             FromName = fromName,
             TemplateKey = template.TemplateKey.Trim(),
             TemplateModelJson = template.ModelJson,
-            CreatedAtUtc = DateTime.UtcNow,
             ScheduledAtUtc = scheduledAtUtc,
             MaxAttempts = maxAttempts,
             CorrelationId = correlationId,

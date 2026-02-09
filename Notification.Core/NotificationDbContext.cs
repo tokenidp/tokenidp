@@ -18,6 +18,7 @@ public partial class NotificationDbContext : DbContext
     public DbSet<EmailMessage> EmailMessages { get; set; }
     public DbSet<EmailRecipient> EmailRecipients { get; set; }
     public DbSet<EmailAttachment> EmailAttachments { get; set; }
+    public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
