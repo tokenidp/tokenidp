@@ -1,0 +1,31 @@
+﻿namespace Notification.Core.Primitives;
+
+internal static class EmailTemplates
+{
+    public const string MfaCodeHtml = @"
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Your Verification Code</title>
+    </head>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #2563eb; margin-bottom: 16px;'>Your Verification Code</h2>
+            <p>Hi <%NAME%>,</p>
+            <p>Use the following code to verify your identity:</p>
+            <div style='font-size: 24px; font-weight: bold; color: #2563eb; margin: 20px 0; padding: 10px 0; letter-spacing: 2px;'>
+                <%MFA_CODE%>
+            </div>
+            <p>This code expires in <strong style='color: #dc2626;'>10 minutes</strong>. Do not share it with anyone.</p>
+            <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
+                <p>If you didn't request this, please ignore this email.</p>
+                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>";
+
+    public const string MfaCodeSubject = "Your verification code";
+}
+

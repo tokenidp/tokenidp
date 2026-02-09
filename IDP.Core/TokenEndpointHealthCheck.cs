@@ -1,5 +1,4 @@
-﻿using IDP.Core.UseCases;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace IDP.Core;
 

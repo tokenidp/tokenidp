@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Common;
+using IDP.Domain.AggregateRoots.Tokens;
 
 namespace Admin.Core.Tokens.UseCases;
 

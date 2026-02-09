@@ -20,7 +20,7 @@ internal static class ConfigurationProjection
         t.Id,
         t.TenantId,
         t.ConfigKey,
-        t.ConfigValue,      
+        t.ConfigValue,
         t.ValueType,
         t.Scope.ToString(),
         t.IsEditable

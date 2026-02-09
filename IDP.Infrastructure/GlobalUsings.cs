@@ -11,7 +11,6 @@ global using IDP.Foundation.Abstractions;
 global using IDP.Foundation.Contracts;
 global using IDP.Foundation.Exceptions;
 global using IDP.Foundation.Extensions;
-global using IDP.Foundation.Primitives;
 global using Microsoft.AspNetCore.Identity;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -1,4 +1,5 @@
-﻿using IDP.Foundation.Abstractions.Stores;
+﻿using IDP.Domain.AggregateRoots.Clients;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Core.UseCases;
 

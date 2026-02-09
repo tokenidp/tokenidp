@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.DomainEvents.Tokens;
+﻿namespace IDP.Domain.DomainEvents.Tokens;
 
 public sealed record JwtTokenIssuedEvent(
     Guid TokenId,

@@ -15,7 +15,7 @@ internal static class DashboardMetricWriter
         string? dimension,
         CancellationToken ct)
     {
-        if(dimension == string.Empty)
+        if (dimension == string.Empty)
         {
             dimension = null;
         }
@@ -25,7 +25,7 @@ internal static class DashboardMetricWriter
                 m.MetricKey == metricKey &&
                 m.BucketType == bucketType &&
                 m.BucketStart == bucketStartUtc &&
-                m.DimensionKey == dimension,            
+                m.DimensionKey == dimension,
                 ct);
 
         if (existing == null)

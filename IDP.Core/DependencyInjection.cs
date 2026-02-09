@@ -1,6 +1,7 @@
 ﻿using IDP.Core.GrantHandlers;
 using IDP.Core.Policies;
 using IDP.Core.UseCases;
+using IDP.Domain.AggregateRoots.Clients;
 using IDP.Foundation.Abstractions.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,11 +56,10 @@ public static class DependencyInjection
 
         services.AddScoped<IMfaUseCase>(sp =>
             new MfaUseCase(sp.GetRequiredService<IIdentityStore>(),
-                sp.GetRequiredService<IEmailSetting>(),
                 sp.GetRequiredService<IPreAuthorizationStore>(),
-                sp.GetRequiredService<EmailProviderFactory>(),
                 sp.GetRequiredService<IAppLogger<MfaUseCase>>(),
-                sp.GetRequiredService<ICurrentUserService>()));
+                sp.GetRequiredService<ICurrentUserService>(),
+                sp.GetRequiredService<IEmailQueueStore>()));
     }
 
     private static void AddGrantHandlers(IServiceCollection services)

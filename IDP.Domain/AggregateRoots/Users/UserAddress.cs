@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.AggregateRoots.Users;
+﻿namespace IDP.Domain.AggregateRoots.Users;
 
 public class UserAddress : Entity<int>
 {
@@ -9,7 +7,7 @@ public class UserAddress : Entity<int>
     [Required]
     public AddressTypes AddressType { get; private set; }
     [Required, MaxLength(200)]
-    public string AddressLine1 { get; private set; }
+    public string AddressLine1 { get; private set; } = default!;
     [MaxLength(200)]
     public string? AddressLine2 { get; private set; }
     [Required, MaxLength(100)]
@@ -22,7 +20,7 @@ public class UserAddress : Entity<int>
     public string Country { get; private set; } = null!;
     [Required]
     public bool IsActive { get; private set; } = true;
-    public virtual User User { get; private set; }
+    public virtual User User { get; private set; } = default!;
 
     protected UserAddress() { }
 

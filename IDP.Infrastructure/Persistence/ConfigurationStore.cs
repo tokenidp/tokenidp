@@ -1,5 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Clients;
-using IDP.Domain.AggregateRoots.Configurations;
+﻿using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Projections;
 

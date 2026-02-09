@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Tokens.UseCases;
+﻿using IDP.Domain.AggregateRoots.Tokens;
+
+namespace Admin.Core.Tokens.UseCases;
 
 internal sealed class TokenLookupsUseCase
 {

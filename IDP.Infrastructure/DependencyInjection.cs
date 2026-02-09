@@ -1,6 +1,5 @@
 ﻿using IDP.Core.OAuth;
 using IDP.Foundation.Abstractions.Stores;
-using IDP.Infrastructure.Notifications;
 using IDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +14,6 @@ public static class DependencyInjection
     {
         AddPersistence(services, configuration, connectionStringName);
         AddStores(services);
-        AddEmailServices(services);
     }
 
     private static void AddPersistence(IServiceCollection services,
@@ -55,22 +53,5 @@ public static class DependencyInjection
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
-    }
-
-    private static void AddEmailServices(IServiceCollection services)
-    {
-        services.AddScoped<SmtpEmail>();
-        services.AddScoped<SendGridEmail>();
-        services.AddScoped<EmailProviderFactory>();
-        services.AddScoped<IEmailSetting, EmailSetting>();
-
-        services.AddTransient<Func<EmailProviderType, IEmailNotification>>(serviceProvider => key =>
-        {
-            return key switch
-            {
-                EmailProviderType.SendGrid => serviceProvider.GetRequiredService<SendGridEmail>(),
-                _ => serviceProvider.GetRequiredService<SmtpEmail>()
-            };
-        });
     }
 }

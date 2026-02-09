@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Notification.Core;
 using System.Text.Json.Serialization;
 
 namespace IDP.Server.ApplicationSetup;
@@ -93,6 +94,8 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddAuthentication(builder.Configuration, builder.Environment);
 
         builder.Services.AddProjectionServices(builder.Configuration);
+
+        builder.Services.AddNotificationServices(builder.Configuration, connectionStringName);
 
         builder.Services.ConfigureHttpJsonOptions(options =>
         {

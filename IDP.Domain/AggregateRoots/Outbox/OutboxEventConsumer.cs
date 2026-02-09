@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.AggregateRoots.Outbox;
+﻿namespace IDP.Domain.AggregateRoots.Outbox;
 
 public sealed class OutboxEventConsumer
 {

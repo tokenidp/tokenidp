@@ -1,5 +1,4 @@
 ﻿using IDP.Domain.AggregateRoots.Configurations;
-using IDP.Domain.Specifications;
 
 namespace IDP.Foundation.Abstractions.Stores;
 

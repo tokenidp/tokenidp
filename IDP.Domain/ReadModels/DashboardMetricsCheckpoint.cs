@@ -8,7 +8,7 @@ public sealed class DashboardMetricsCheckpoint
 
     public DateTime UpdatedAt { get; private set; }
 
-    private DashboardMetricsCheckpoint() { } 
+    private DashboardMetricsCheckpoint() { }
 
     private DashboardMetricsCheckpoint(string metricKey, DateTime lastProcessedUtc)
     {

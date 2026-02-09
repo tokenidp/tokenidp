@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.AggregateRoots.Permissions;
+﻿namespace IDP.Domain.AggregateRoots.Permissions;
 
 public sealed class Permission : AggregateRoot<int>, ITenant
 {

@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Tokens;
+﻿using IDP.Domain.AggregateRoots.Tokens;
+
+namespace Admin.Core.Tokens;
 
 internal sealed class TokenListItem
 {

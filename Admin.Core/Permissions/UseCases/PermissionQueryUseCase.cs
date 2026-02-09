@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Common;
+using IDP.Domain.AggregateRoots.Permissions;
 
 namespace Admin.Core.Permissions.UseCases;
 

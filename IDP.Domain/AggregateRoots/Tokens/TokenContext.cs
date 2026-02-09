@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.AggregateRoots.Tokens;
+﻿namespace IDP.Domain.AggregateRoots.Tokens;
 
 public class TokenContext
 {
@@ -57,12 +55,12 @@ public class TokenContext
 
     public static TokenContext Create(
         int tenantId,
-        string clientName,      
+        string clientName,
         string clientId,
         TokenTypes tokenType,
         int clientSecretExpiry,
         int accessTokenLifetime,
-        int refreshTokenExpiration,     
+        int refreshTokenExpiration,
         string[] scope,
         string[] audience,
         IReadOnlySet<string> secrets,

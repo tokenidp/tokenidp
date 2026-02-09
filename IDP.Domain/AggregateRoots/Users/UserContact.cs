@@ -29,7 +29,7 @@ public class UserContact : Entity<int>
     [Required]
     public bool IsActive { get; private set; } = true;
 
-    public virtual User User { get; private set; }
+    public virtual User User { get; private set; } = default!;
 
     protected UserContact() { }
 

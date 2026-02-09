@@ -1,5 +1,4 @@
 ﻿using IDP.Domain.ReadModels;
-using Microsoft.Identity.Client;
 
 namespace IDP.Infrastructure.Config;
 

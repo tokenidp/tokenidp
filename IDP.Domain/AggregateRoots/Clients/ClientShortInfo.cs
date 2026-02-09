@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Core.Model;
+﻿namespace IDP.Core.Model;
 
 public class ClientShortInfo
 {

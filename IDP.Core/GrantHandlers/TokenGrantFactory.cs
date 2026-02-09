@@ -1,4 +1,6 @@
-﻿namespace IDP.Core.GrantHandlers;
+﻿using IDP.Domain.AggregateRoots.Clients;
+
+namespace IDP.Core.GrantHandlers;
 
 internal sealed class TokenGrantFactory
 {

@@ -1,4 +1,4 @@
-﻿using IDP.Domain.Specifications;
+﻿using IDP.Domain.AggregateRoots.Tokens;
 
 namespace IDP.Domain.ComplexTypes;
 

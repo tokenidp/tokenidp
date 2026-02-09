@@ -1,6 +1,4 @@
-﻿using IDP.Domain.Specifications;
-
-namespace IDP.Domain.AggregateRoots.Clients;
+﻿namespace IDP.Domain.AggregateRoots.Clients;
 
 public class ClientValidationSnapshot
 {

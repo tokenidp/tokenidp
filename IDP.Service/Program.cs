@@ -48,7 +48,7 @@ try
     app.UseCors(policy => policy
         .AllowAnyMethod()
         .AllowAnyHeader()
-        .WithOrigins("http://localhost:3000") // replace with your actual client URL
+        .WithOrigins("http://localhost:82") // replace with your actual client URL
         .AllowCredentials()
     );
 

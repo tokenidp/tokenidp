@@ -8,8 +8,8 @@ public class ConfigurationShortInfo
     public string ConfigValue { get; private set; } = string.Empty;
     public ValueTypes ValueType { get; private set; }
 
-    public ConfigurationShortInfo(string configKey, 
-        string configValue, 
+    public ConfigurationShortInfo(string configKey,
+        string configValue,
         ValueTypes valueType)
     {
         ConfigKey = configKey;

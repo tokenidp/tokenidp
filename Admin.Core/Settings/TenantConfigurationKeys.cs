@@ -1,3 +1,5 @@
+using IDP.Domain.AggregateRoots.Configurations;
+
 namespace Admin.Core.Configurations;
 
 internal static class TenantConfigurationKeys

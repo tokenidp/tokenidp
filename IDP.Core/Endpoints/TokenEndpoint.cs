@@ -1,6 +1,4 @@
-﻿using IDP.Core.UseCases;
-
-namespace IDP.Core.Endpoints;
+﻿namespace IDP.Core.Endpoints;
 
 internal class TokenEndpoint : IEndpointDefinition
 {

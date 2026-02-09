@@ -5,6 +5,6 @@ global using IDP.Domain.DomainEvents.Users;
 global using IDP.Domain.ReadModels;
 global using IDP.Domain.Specifications;
 global using IDP.Foundation.Abstractions;
+global using IDP.Infrastructure.Persistence;
 global using Microsoft.EntityFrameworkCore;
 global using System.Text.Json;
-global using IDP.Infrastructure.Persistence;

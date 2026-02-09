@@ -41,10 +41,10 @@ internal class PasswordGrantHandler : ITokenGrantHandler
 
         if (checkTwoFactorEnabled)
         {
-            var authRequest = AuthorizationRequest.Create(request.ClientId, 
-                request.RedirectUri, 
-                string.Empty, 
-                string.Empty, 
+            var authRequest = AuthorizationRequest.Create(request.ClientId,
+                request.RedirectUri,
+                string.Empty,
+                string.Empty,
                 request.Scope);
 
             var authResponse = await _mfaUseCase.GenerateMfaCode(authRequest, context.UserId);

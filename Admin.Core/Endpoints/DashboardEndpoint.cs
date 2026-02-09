@@ -18,11 +18,11 @@ internal class DashboardEndpoint : IEndpointDefinition
         authGroup.MapGet("", async (DashboardQueryUseCase useCase,
             HttpContext httpContext) =>
         {
-             var response = await useCase.GetDashboard(CancellationToken.None);
+            var response = await useCase.GetDashboard(CancellationToken.None);
 
-             return EndpointResultMapper.ToOkOrError(response);
+            return EndpointResultMapper.ToOkOrError(response);
 
-         })
+        })
          .WithName("Dashboard")
          .WithTags("Dashboard");
     }

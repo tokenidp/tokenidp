@@ -1,15 +1,13 @@
-using IDP.Domain.AggregateRoots.Configurations;
-
 namespace Admin.Core.Configurations;
 
 public class ConfigurationDetail
 {
-    public ConfigurationDetail(int id, 
-        int tenantId, 
-        string configKey, 
-        string configValue, 
-        ValueTypes valueType, 
-        string? scope, 
+    public ConfigurationDetail(int id,
+        int tenantId,
+        string configKey,
+        string configValue,
+        ValueTypes valueType,
+        string? scope,
         bool isEditable)
     {
         Id = id;

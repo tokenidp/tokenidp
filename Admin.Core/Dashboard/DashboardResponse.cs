@@ -8,7 +8,7 @@ internal class DashboardResponse
     public int TotalLoginAttempts { get; set; }
     public int SuccessfulLogins { get; set; }
     public int FailedLogins { get; set; }
-    public int MfaChallenge {  get; set; }  
+    public int MfaChallenge { get; set; }
     public int AccountLockout { get; set; }
     public int MultipleFailedLogin { get; set; }
     public int SuspiciousActivity { get; set; }

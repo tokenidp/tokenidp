@@ -1,4 +1,5 @@
 ﻿using IDP.Core.UseCases;
+using IDP.Domain.AggregateRoots.Clients;
 
 namespace IDP.Core.GrantHandlers;
 

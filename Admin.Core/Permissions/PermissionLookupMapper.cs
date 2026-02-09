@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Permissions;
+﻿using IDP.Domain.AggregateRoots.Permissions;
+
+namespace Admin.Core.Permissions;
 
 internal static class PermissionLookupMapper
 {
