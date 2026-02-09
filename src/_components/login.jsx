@@ -1,23 +1,22 @@
 import React, { useEffect } from "react";
 
-const AUTH_BASE_URL =
-  process.env.REACT_APP_AUTH_BASE_URL || "https://localhost:5001/";
-const CLIENT_ID = process.env.REACT_APP_OAUTH_CLIENT_ID || "";
+const AUTH_BASE_URL = process.env.REACT_APP_AUTH_BASE_URL;
+const CLIENT_ID = process.env.REACT_APP_OAUTH_CLIENT_ID;
 const REDIRECT_URI =
   process.env.REACT_APP_OAUTH_REDIRECT_URI ||
   `${window.location.origin}/oauth/callback`;
-const SCOPE =
-  process.env.REACT_APP_OAUTH_SCOPE ||
-  "openid profile email offline_access";
-const CODE_VERIFIER_KEY =
-  process.env.REACT_APP_OAUTH_CODE_VERIFIER_KEY || "pkce_code_verifier";
+const SCOPE = process.env.REACT_APP_OAUTH_SCOPE;
+const CODE_VERIFIER_KEY = process.env.REACT_APP_OAUTH_CODE_VERIFIER_KEY;
 
 function base64UrlEncode(bytes) {
   let binary = "";
   bytes.forEach((byte) => {
     binary += String.fromCharCode(byte);
   });
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 function generateCodeVerifier() {
@@ -60,7 +59,9 @@ function Login() {
         <div className="login-section row overflow-hidden mx-3">
           <div className="col-12 p-4 text-center">
             <h1>Redirecting to sign-in…</h1>
-            <p className="text-muted">Please wait while we connect to Identity.</p>
+            <p className="text-muted">
+              Please wait while we connect to Identity.
+            </p>
           </div>
         </div>
       </section>

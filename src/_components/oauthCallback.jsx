@@ -4,12 +4,14 @@ import { LOGIN } from "../_constants/actions";
 import useApiClient from "../_hooks/useApiClient";
 import { useAuth } from "../_hooks/useAuth";
 
-const AUTH_BASE_URL = process.env.REACT_APP_AUTH_BASE_URL || "http://localhost:81/";
-const APP_BASE_URL = process.env.REACT_APP_BASE_URL|| "http://localhost:81/";
+const AUTH_BASE_URL = process.env.REACT_APP_AUTH_BASE_URL;
+const APP_BASE_URL = process.env.REACT_APP_BASE_URL;
 const CLIENT_ID = process.env.REACT_APP_OAUTH_CLIENT_ID || "";
-const REDIRECT_URI = process.env.REACT_APP_OAUTH_REDIRECT_URI || `${window.location.origin}/oauth/callback`;
-const SCOPE = process.env.REACT_APP_OAUTH_SCOPE || "openid profile email offline_access";
-const CODE_VERIFIER_KEY = process.env.REACT_APP_OAUTH_CODE_VERIFIER_KEY || "pkce_code_verifier";
+const REDIRECT_URI =
+  process.env.REACT_APP_OAUTH_REDIRECT_URI ||
+  `${window.location.origin}/oauth/callback`;
+const SCOPE = process.env.REACT_APP_OAUTH_SCOPE;
+const CODE_VERIFIER_KEY = process.env.REACT_APP_OAUTH_CODE_VERIFIER_KEY;
 
 const extractToken = (payload) => {
   if (!payload || typeof payload !== "object") return {};
@@ -77,21 +79,19 @@ function OAuthCallback() {
           throw new Error("Token response did not include an access token.");
         }
 
-        console.log("Access Token:", accessToken); // For debugging purposes only
-        
         const userInfoResponse = await appApi.get("admin/user/permissions", {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
-        console.log("userInfoResponse:", userInfoResponse); // For debugging purposes only
-
         const userInfoResult = userInfoResponse?.data;
         if (userInfoResult?.isSuccess === false) {
-          throw new Error(userInfoResult?.error?.error || "Unable to load user permissions.");
+          throw new Error(
+            userInfoResult?.error?.error || "Unable to load user permissions.",
+          );
         }
 
         const userInfo = userInfoResult?.value || {};
-        var permissions = extractClaims(userInfo)
+        var permissions = extractClaims(userInfo);
 
         dispatch({
           type: LOGIN,
@@ -111,7 +111,6 @@ function OAuthCallback() {
 
         sessionStorage.removeItem(CODE_VERIFIER_KEY);
         navigate("/dashboard", { replace: true });
-
       } catch (err) {
         setError(err.message || "Unable to complete sign-in.");
       }
