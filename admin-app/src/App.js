@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import Login from "./_components/login";
-import PageView from "./_components/common/pageView";
+import "./_assets/portal.css";
 import Roles from "./_components/roles/roles";
 import RolesLayout from "./_components/roles/rolesLayout";
 import AddEditRole from "./_components/roles/addEditRole";
@@ -14,12 +13,10 @@ import PrivateRoute from "./_components/privateRoute";
 import AddEditUser from "./_components/users/addEditUser";
 import NoMatch from "./_components/noMatch";
 import UnAuthorized from "./_components/unauthorized";
-import "./_assets/portal.css";
 import ApplicationsList from "./_components/applications/applicationsList";
 import ApplicationCreate from "./_components/applications/applicationCreate";
 import ApplicationsLayout from "./_components/applications/applicationsLayout";
 import ApplicationEdit from "./_components/applications/applicationEdit";
-import OAuthCallback from "./_components/oauthCallback";
 import Dashboard from "./_components/dashboard/Dashboard";
 import AdminDashboard from "./_components/admin-dashboard/AdminDashboard";
 import TenantsLayout from "./_components/tenants/tenantsLayout";
@@ -34,6 +31,8 @@ import SettingsLayout from "./_components/settings/settingsLayout";
 import AddPermission from "./_components/permissions/addPermission";
 import PermissionsList from "./_components/permissions/permissionsList";
 import PermissionsLayout from "./_components/permissions/permissionsLayout";
+import { AuthCallback } from "@tokentresor/idp-react";
+import { LoginPage } from "./_components/LoginPage"; // simple UI, not OAuth logic
 
 function App() {
   const [claimId, setClaimId] = useState(0);
@@ -47,9 +46,9 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LandingLayout />} />
-        <Route exact path="/login" element={<Login />} />
-        <Route path="/oauth/callback" element={<OAuthCallback />} />
         <Route element={<DefaultLayout onClick={onClick} />}>
           <Route element={<PrivateRoute />}>
             <Route

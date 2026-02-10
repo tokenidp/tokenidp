@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../_hooks/useAuth";
+import { useAuth } from "@tokentresor/idp-react";
 
 function normalizePermissions(user) {
   const rawPerms = user?.permissions ?? user?.Permissions ?? [];
@@ -29,7 +29,7 @@ function normalizePermissions(user) {
  * - requiredAllOf: array of permission keys; user must have ALL
  */
 function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
-  const [user] = useAuth();
+  const user = useAuth();
   const location = useLocation();
 
   if (!user?.isAuthenticated) {

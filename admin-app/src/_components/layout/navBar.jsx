@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "../../_hooks/useAuth";
+import { useAuth } from "@tokentresor/idp-react";
 import useTree from "../../_hooks/useTree";
 
 function NavBar({ onClick, isOpen, onNavigate }) {
-  const [user] = useAuth();
+  const user = useAuth();
   const { createTree } = useTree();
   const [openGroup, setOpenGroup] = useState(null);
   const location = useLocation();

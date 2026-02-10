@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo } from "react";
 import axios from "axios";
 import { trackPromise } from "react-promise-tracker";
-import { useAuth } from "./useAuth";
+import { useAuth } from "@tokentresor/idp-react";
 import { useGlobalError } from "./useGlobalError";
 
-const defaultBaseURL =
-  process.env.REACT_APP_BASE_URL || "https://localhost:5001/";
+const defaultBaseURL = process.env.REACT_APP_BASE_URL;
 
 const useApiClient = (options = {}) => {
-  const [user] = useAuth();
+  const user = useAuth();
   const { setError } = useGlobalError();
   const { baseURL = defaultBaseURL, skipAuth = false, track = true } = options;
 
@@ -16,7 +15,8 @@ const useApiClient = (options = {}) => {
 
   useEffect(() => {
     const interceptorId = apiClient.interceptors.request.use((config) => {
-      const token = user?.token || user?.Token;
+      const token = user?.accessToken || user?.access_token;
+      console.log("accessToken:", token);
       if (!skipAuth && token && !config.headers?.Authorization) {
         config.headers = {
           ...config.headers,
@@ -27,23 +27,30 @@ const useApiClient = (options = {}) => {
     });
 
     return () => apiClient.interceptors.request.eject(interceptorId);
-  }, [apiClient, skipAuth, user?.token]);
+  }, [apiClient, skipAuth, user?.accessToken]);
 
   const run = useCallback(
     (promise) => (track ? trackPromise(promise) : promise),
-    [track]
+    [track],
   );
 
   const request = useCallback(
     async (method, endPoint, data, config) => {
       const headers = { ...(config?.headers || {}) };
-      const token = user?.token || user?.Token;
+      const token = user?.accessToken || user?.access_token;
+      console.log("accessToken:", token);
       if (!skipAuth && token && !headers.Authorization) {
         headers.Authorization = `Bearer ${token}`;
       }
       try {
         return await run(
-          apiClient.request({ method, url: endPoint, data, ...config, headers })
+          apiClient.request({
+            method,
+            url: endPoint,
+            data,
+            ...config,
+            headers,
+          }),
         );
       } catch (error) {
         const status = error?.response?.status;
@@ -80,32 +87,32 @@ const useApiClient = (options = {}) => {
         throw error;
       }
     },
-    [apiClient, run, setError, skipAuth, user?.token]
+    [apiClient, run, setError, skipAuth, user?.token],
   );
 
   const get = useCallback(
     (endPoint, config) => request("get", endPoint, undefined, config),
-    [request]
+    [request],
   );
 
   const post = useCallback(
     (endPoint, data, config) => request("post", endPoint, data, config),
-    [request]
+    [request],
   );
 
   const put = useCallback(
     (endPoint, data, config) => request("put", endPoint, data, config),
-    [request]
+    [request],
   );
 
   const patch = useCallback(
     (endPoint, data, config) => request("patch", endPoint, data, config),
-    [request]
+    [request],
   );
 
   const deleteRequest = useCallback(
     (endPoint, config) => request("delete", endPoint, undefined, config),
-    [request]
+    [request],
   );
 
   return { get, post, put, patch, deleteRequest };

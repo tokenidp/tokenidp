@@ -11,6 +11,7 @@
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.2",
     "@testing-library/user-event": "^14.5.2",
+    "@tokentresor/idp-react": "file:../idp-sdk/tokentresor-idp-react-0.1.0.tgz",
     "axios": "^1.6.8",
     "loadash": "^1.0.0",
     "prop-types": "^15.8.1",

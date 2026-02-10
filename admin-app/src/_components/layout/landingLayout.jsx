@@ -1,16 +1,14 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../_hooks/useAuth";
+import { useAuth } from "@tokentresor/idp-react";
 
 function LandingLayout() {
-  const [user] = useAuth();
+  const auth = useAuth();
 
-  if (!user) {
+  if (!auth) {
     return null;
   }
 
-  const destination = user.isAuthenticated
-    ? "/dashboard" || "/"
-    : "/login";
+  const destination = auth.isAuthenticated ? "/dashboard" || "/" : "/login";
 
   return <Navigate to={destination} replace />;
 }

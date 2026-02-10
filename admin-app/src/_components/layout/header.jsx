@@ -1,24 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../_hooks/useAuth";
-import { LOGOUT } from "../../_constants/actions";
+import { useAuth } from "@tokentresor/idp-react";
 
 function Header({ onToggleSidebar }) {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [user, dispatch] = useAuth();
+  const user  = useAuth();
 
   useEffect(() => {
     setName(user.userName);
   }, [user]);
 
   function logout() {
-    dispatch({
-      type: LOGOUT,
-      payload: {
-        user: {},
-      },
-    });
+    user.logout();
     navigate("/login");
   }
 
