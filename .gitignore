@@ -1,5 +1,3 @@
 /admin-app/node_modules/
-/build/
 /idp-sdk/node_modules/
 /idp-sdk/dist/
-/idp-sdk/build/
