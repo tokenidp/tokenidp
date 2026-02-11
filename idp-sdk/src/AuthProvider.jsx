@@ -210,11 +210,7 @@ export function IdpAuthProvider({ children, config }) {
         if (!accessToken)
           throw new Error("Token response did not include an access token.");
 
-        let expiresInSeconds = expiresIn * 60;
-
-        const expiresAt = expiresInSeconds
-          ? Date.now() + expiresInSeconds * 1000
-          : 0;
+        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : 0;
 
         // permissions/user info
         const userInfoResult = await loadUserPermissions(
@@ -282,11 +278,7 @@ export function IdpAuthProvider({ children, config }) {
         if (!accessToken)
           throw new Error("Refresh response did not include an access token.");
 
-        let expiresInSeconds = expiresIn * 60;
-
-        const expiresAt = expiresInSeconds
-          ? Date.now() + expiresInSeconds * 1000
-          : 0;
+        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : 0;
 
         dispatch({
           type: "TOKENS_UPDATED",

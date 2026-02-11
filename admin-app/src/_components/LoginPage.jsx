@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@tokentresor/idp-react";
+import { useAuth } from "tokentresor-idp-react";
 
 export function LoginPage() {
   const auth = useAuth();

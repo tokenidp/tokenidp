@@ -5,7 +5,7 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { GlobalErrorProvider } from "./_hooks/useGlobalError";
 import Spinner from "./_components/common/spinner";
-import { IdpAuthProvider } from "@tokentresor/idp-react";
+import { IdpAuthProvider } from "tokentresor-idp-react";
 
 const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);

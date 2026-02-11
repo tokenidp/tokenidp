@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "@tokentresor/idp-react";
+import { useAuth } from "tokentresor-idp-react";
 
 function normalizePermissions(user) {
   const rawPerms = user?.permissions ?? user?.Permissions ?? [];

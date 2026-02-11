@@ -1,6 +1,6 @@
 import { usePromiseTracker } from "react-promise-tracker";
 import { ThreeDots } from "react-loader-spinner";
-import { useAuth } from "@tokentresor/idp-react";
+import { useAuth } from "tokentresor-idp-react";
 
 function Spinner() {
   const auth = useAuth();

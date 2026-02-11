@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { useAuth } from "@tokentresor/idp-react";
+import { useAuth } from "tokentresor-idp-react";
 import useTree from "../../_hooks/useTree";
 
 function NavBar({ onClick, isOpen, onNavigate }) {

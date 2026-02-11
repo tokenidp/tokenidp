@@ -58,3 +58,97 @@ npm install @smartdevcon/idp-react
 
 yarn add @smartdevcon/idp-react
 
+
+
+
+
+
+
+SDK
+
+npx tsup
+
+npm pack
+
+
+
+Admin App
+
+npm install "D:\\Solutions\\VSCode\\React-App\\idp-sdk\\tokentresor-idp-react-0.1.0.tgz"
+
+
+
+Wrap App with Provider
+
+
+
+import { IdpAuthProvider } from "tokentresor-idp-react";
+
+
+
+<IdpAuthProvider
+
+&nbsp;     config={{
+
+&nbsp;       authority: process.env.REACT\_APP\_AUTH\_BASE\_URL,
+
+&nbsp;       clientId: process.env.REACT\_APP\_OAUTH\_CLIENT\_ID,
+
+&nbsp;       redirectUri: process.env.REACT\_APP\_OAUTH\_REDIRECT\_URI,
+
+&nbsp;       postLoginRedirectUri: "/dashboard",
+
+&nbsp;       scope: process.env.REACT\_APP\_OAUTH\_SCOPE,
+
+&nbsp;       storage: "localStorage",
+
+&nbsp;     }}
+
+&nbsp;   >
+
+&nbsp;	<App />
+
+</IdpAuthProvider>
+
+
+
+var auth  = useAuth();
+
+
+
+Add Login Button
+
+
+
+import { useAuth } from "@smartdevcon/idp-react";
+
+
+
+export function Login() {
+
+&nbsp; const { login, isAuthenticated, user } = useAuth();
+
+
+
+&nbsp; if (isAuthenticated) {
+
+&nbsp;   return <div>Welcome {user?.profile?.name}</div>;
+
+&nbsp; }
+
+
+
+&nbsp; return <button onClick={login}>Login</button>;
+
+}
+
+
+
+Add Callback Route
+
+
+
+<Route path="/callback" element={<AuthCallback />} />
+
+
+

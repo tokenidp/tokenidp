@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@tokentresor/idp-react";
+import { useAuth } from "tokentresor-idp-react";
 
 function Header({ onToggleSidebar }) {
   const navigate = useNavigate();
