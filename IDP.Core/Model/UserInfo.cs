@@ -49,7 +49,7 @@ internal class UserInfo
             PreferredUserName = user.UserName ?? string.Empty,
             PhoneNumber = user.PhoneNumber ?? string.Empty,
             PhoneNumberVerified = user.PhoneNumberConfirmed,
-            UpdatedAt = user.UpdatedOn ?? user.CreatedOn
+            UpdatedAt = user.UpdatedAtUtc ?? user.CreatedAtUtc
         };
     }
 }

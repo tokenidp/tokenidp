@@ -6,20 +6,20 @@ public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
     public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
 
     public void SetCreated(int userId)
     {
         CreatedBy = userId;
-        CreatedOn = DateTime.UtcNow;
+        CreatedAtUtc = DateTime.UtcNow;
     }
 
     public void SetUpdated(int userId)
     {
         UpdatedBy = userId;
-        UpdatedOn = DateTime.UtcNow;
+        UpdatedAtUtc = DateTime.UtcNow;
     }
 
     public void AddDomainEvent(IDomainEvent domainEvent)

@@ -12,8 +12,8 @@ public class UserShortInfo
     public bool EmailConfirmed { get; private set; }
     public string PhoneNumber { get; private set; } = default!;
     public bool PhoneNumberConfirmed { get; private set; }
-    public DateTime CreatedOn { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
+    public DateTime? UpdatedAtUtc  { get; private set; }
 
     private UserShortInfo() { }
 
@@ -40,8 +40,8 @@ public class UserShortInfo
         LastName = lastName;
         PhoneNumber = phoneNumber;
         PhoneNumberConfirmed = phoneNumberVerified;
-        CreatedOn = createdOn;
-        UpdatedOn = updatedOn;
+        CreatedAtUtc = createdOn;
+        UpdatedAtUtc = updatedOn;
 
     }
 }

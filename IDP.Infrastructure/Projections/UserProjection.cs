@@ -16,7 +16,7 @@ internal static class UserProjection
             user.LastName,
             user.PhoneNumber ?? string.Empty,
             user.PhoneNumberConfirmed,
-            user.CreatedOn,
-            user.UpdatedOn
+            user.CreatedAtUtc,
+            user.UpdatedAtUtc
             );
 }

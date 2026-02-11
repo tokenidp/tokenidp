@@ -217,9 +217,9 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
 public partial class User
 {
     public int CreatedBy { get; private set; }
-    public DateTime CreatedOn { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
     public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedOn { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
 
     public string FullName
     {
@@ -350,13 +350,13 @@ public partial class User
 
     public void SetCreated(int userId)
     {
-        CreatedOn = DateTime.UtcNow;
+        CreatedAtUtc = DateTime.UtcNow;
         CreatedBy = userId;
     }
 
     public void SetUpdated(int userId)
     {
-        UpdatedOn = DateTime.UtcNow;
+        UpdatedAtUtc = DateTime.UtcNow;
         UpdatedBy = userId;
     }
 

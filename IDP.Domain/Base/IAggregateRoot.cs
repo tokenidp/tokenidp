@@ -5,9 +5,9 @@ public interface IAggregateRoot
     IReadOnlyCollection<IDomainEvent> DomainEvents { get; }
 
     public int CreatedBy { get; }
-    public DateTime CreatedOn { get; }
+    public DateTime CreatedAtUtc { get; }
     public int? UpdatedBy { get; }
-    public DateTime? UpdatedOn { get; }
+    public DateTime? UpdatedAtUtc { get; }
 
     void SetCreated(int userId);
 

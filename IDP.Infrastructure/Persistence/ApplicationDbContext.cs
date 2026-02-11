@@ -128,7 +128,7 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
                 case EntityState.Modified:
 
                     entry.Property(x => x.CreatedBy).IsModified = false;
-                    entry.Property(x => x.CreatedOn).IsModified = false;
+                    entry.Property(x => x.CreatedAtUtc).IsModified = false;
 
                     entry.Entity.SetUpdated(_currentUserService.UserId);
                     break;

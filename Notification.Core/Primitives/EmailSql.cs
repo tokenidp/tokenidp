@@ -27,7 +27,7 @@ public static class EmailSql
                     AND (ScheduledAtUtc IS NULL OR ScheduledAtUtc <= @now)
                     AND (NextAttemptAtUtc IS NULL OR NextAttemptAtUtc <= @now)
                     AND (LockedUntilUtc IS NULL OR LockedUntilUtc < @now)
-                ORDER BY Priority ASC, CreatedOn ASC
+                ORDER BY Priority ASC, CreatedAtUtc ASC
             )
             UPDATE m
             SET
