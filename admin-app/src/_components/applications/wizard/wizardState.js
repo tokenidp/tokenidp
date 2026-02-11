@@ -4,12 +4,57 @@ export const fallbackAppTypes = [
   { label: "Desktop", value: "2", icon: "fa fa-desktop" },
   { label: "WebApp", value: "3", icon: "fa fa-window-maximize" },
   { label: "Backend", value: "4", icon: "fa fa-robot" },
+  { label: "Device/IOT (Under Development)", value: "5", icon: "fa fa-microchip" },
 ];
 
+export const getGrantTypeDisplayLabel = (value) => {
+  switch (value) {
+    case "authorization_code":
+      return "Authorization Code";
+    case "client_credentials":
+      return "Client Credentials";
+    case "refresh_token":
+      return "Refresh Token";
+    case "device_code":
+      return "Device Code";
+    case "ciba":
+      return "CIBA";
+    default:
+      return String(value);
+  }
+};
+
 export const fallbackGrantTypes = [
-  { value: 0, label: "authorization_code", icon: "fa fa-key" },
-  { value: 2, label: "client_credentials", icon: "fa fa-server" },
-  { value: 1, label: "refresh_token", icon: "fa fa-sync" },
+  {
+    id: 0,
+    key: "authorization_code",
+    value: getGrantTypeDisplayLabel("authorization_code"),
+    icon: "fa fa-key",
+  },
+  {
+    id: 2,
+    key: "client_credentials",
+    value: getGrantTypeDisplayLabel("client_credentials"),
+    icon: "fa fa-server",
+  },
+  {
+    id: 1,
+    key: "refresh_token",
+    value: getGrantTypeDisplayLabel("refresh_token"),
+    icon: "fa fa-sync",
+  },
+  {
+    id: 3,
+    key: "device_code",
+    value: getGrantTypeDisplayLabel("device_code"),
+    icon: "fa fa-mobile-screen",
+  },
+  {
+    id: 4,
+    key: "ciba",
+    value: getGrantTypeDisplayLabel("ciba"),
+    icon: "fa fa-link",
+  },
 ];
 
 export const fallbackScopes = [

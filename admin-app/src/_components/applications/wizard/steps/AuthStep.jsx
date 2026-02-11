@@ -8,21 +8,15 @@ function AuthStep({
   onRegenerateSecret,
   grantTypes,
   toggleGrant,
-  fallbackGrantTypes,
+  grantOptions,
   allowedGrants,
   hasInsecureGrant,
   grantError,
-  appType,
+  isDeviceIot,
+  isWebClient,
 }) {
-  const grantMeta = {
-    0: { label: "Authorization Code", sublabel: "authorization_code" },
-    1: { label: "Refresh Token", sublabel: "refresh_token" },
-    2: { label: "Client Credentials", sublabel: "client_credentials" },
-  };
-
-  const isBackendApp = appType === "4";
   const hasAuthCode = grantTypes.includes(0);
-  const secretLocked = isPublicClient;
+  const secretLocked = isPublicClient || isDeviceIot;
 
   return (
     <div className="row g-4 justify-content-center">
@@ -101,41 +95,44 @@ function AuthStep({
             <div className="auth-field">
               <label className="form-label fw-semibold">OAuth Grants</label>
               <div className="row g-2">
-                {fallbackGrantTypes.map((grant) => {
-                  const meta = grantMeta[grant.value];
-                  const isClientCredentials = grant.value === 2;
-                  const isRefreshToken = grant.value === 1;
-                  const disabledByAppType =
-                    isClientCredentials ? !isBackendApp : !allowedGrants.has(grant.value);
+                {grantOptions.map((grant) => {
+                  const isRefreshToken = grant.id === 1;
+                  const disabledByAppType = !allowedGrants.has(grant.id);
                   const disabledByDependency = isRefreshToken && !hasAuthCode;
                   const disabled = disabledByAppType || disabledByDependency;
-                  const reason = isClientCredentials
-                    ? "Available only for Backend (machine-to-machine) applications."
-                    : isRefreshToken && !hasAuthCode
-                      ? "Enable Authorization Code to use refresh_token."
+                  const reason = disabledByDependency
+                    ? "Enable Authorization Code to use refresh_token."
+                    : disabledByAppType
+                      ? grant.id === 2
+                        ? "Available only for Backend (machine-to-machine) applications."
+                        : grant.id === 3
+                          ? "Available for Mobile, Desktop, and Device/IOT applications."
+                          : grant.id === 4
+                            ? "Available only for Web applications."
+                            : "Not supported for this application type."
                       : null;
                   return (
-                    <div className="col-12" key={grant.value}>
+                    <div className="col-12" key={grant.id}>
                       <div
                         className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
-                          grantTypes.includes(grant.value) ? "option-card-active" : ""
+                          grantTypes.includes(grant.id) ? "option-card-active" : ""
                         } ${disabled ? "is-locked" : ""}`}
                       >
                         <input
                           className="form-check-input mt-1"
                           type="checkbox"
-                          id={`grant-${grant.value}`}
-                          checked={grantTypes.includes(grant.value)}
-                          onChange={() => toggleGrant(grant.value)}
+                          id={`grant-${grant.id}`}
+                          checked={grantTypes.includes(grant.id)}
+                          onChange={() => toggleGrant(grant.id)}
                           disabled={disabled}
-                          aria-label={`${meta.label} grant`}
+                          aria-label={`${grant.value} grant`}
                         />
                         <label
                           className="form-check-label w-100"
-                          htmlFor={`grant-${grant.value}`}
+                          htmlFor={`grant-${grant.id}`}
                         >
-                          <div className="grant-title">{meta.label}</div>
-                          <div className="grant-sublabel">{meta.sublabel}</div>
+                          <div className="grant-title">{grant.value}</div>
+                          <div className="grant-sublabel">{grant.key}</div>
                           {disabled && reason && (
                             <div className="grant-reason">{reason}</div>
                           )}
@@ -148,7 +145,18 @@ function AuthStep({
               <div className="form-text">
                 Grant types are prefiltered based on app type selection.
               </div>
-              {isPublicClient && (
+              {isWebClient && (
+                <div className="form-text text-muted">
+                  CIBA is an advanced grant for decoupled authentication journeys.
+                </div>
+              )}
+              {isDeviceIot && (
+                <div className="form-text text-muted">
+                  Device/IOT is under development: display QR code and user code hints in the
+                  device activation UX.
+                </div>
+              )}
+              {isPublicClient && !isDeviceIot && (
                 <div className="form-text text-muted">
                   Public clients must use PKCE with Authorization Code flow.
                 </div>

@@ -37,6 +37,23 @@ const stepFields = {
   [WizardStep.Review]: [],
 };
 
+const GrantType = {
+  AuthorizationCode: 0,
+  RefreshToken: 1,
+  ClientCredentials: 2,
+  DeviceCode: 3,
+  Ciba: 4,
+};
+
+const isDeviceIotLabel = (label) => /device[\s_/-]*iot/i.test(String(label || ""));
+
+const formatAppTypeLabel = (label) => {
+  if (isDeviceIotLabel(label)) {
+    return "Device/IOT (Under Development)";
+  }
+  return String(label || "");
+};
+
 function ApplicationWizard({
   initialValues,
   onSubmit,
@@ -108,13 +125,16 @@ function ApplicationWizard({
       2: "Installed desktop apps. Uses PKCE. No client secret.",
       3: "Server-rendered apps. Can securely store client secrets.",
       4: "Machine-to-machine services. Uses client credentials.",
+      5: "Device/IOT flow is under development. Device Code only.",
     };
     if (normalized.length) {
       return normalized.map((option) => ({
         ...option,
         value: String(option.key ?? ""),
-        label: option.value,
-        helper: helperText[option.key],
+        label: formatAppTypeLabel(option.value),
+        helper: isDeviceIotLabel(option.value)
+          ? helperText[5]
+          : helperText[option.key],
         icon:
           option.value?.toLowerCase() === "spa"
             ? "fa fa-globe"
@@ -124,12 +144,14 @@ function ApplicationWizard({
                 ? "fa fa-desktop"
                 : option.value?.toLowerCase() === "webapp"
                   ? "fa fa-window-maximize"
-                : "fa fa-robot",
+                  : isDeviceIotLabel(option.value)
+                    ? "fa fa-microchip"
+                    : "fa fa-robot",
       }));
     }
     return fallbackAppTypes.map((option) => ({
       ...option,
-      helper: helperText[option.value],
+      helper: isDeviceIotLabel(option.label) ? helperText[5] : helperText[option.value],
     }));
   }, [lookups?.appTypes]);
 
@@ -160,71 +182,129 @@ function ApplicationWizard({
     return fallbackScopes;
   }, [lookups?.scopes]);
 
-  const isPublicClient = appType === "0" || appType === "1" || appType === "2";
+  const selectedAppType = useMemo(
+    () => appTypeOptions.find((option) => String(option.value) === String(appType)),
+    [appTypeOptions, appType]
+  );
+  const selectedAppTypeLabel = String(selectedAppType?.label || "");
+
+  const isSpa = appType === "0" || selectedAppTypeLabel.toLowerCase() === "spa";
+  const isMobile = appType === "1" || selectedAppTypeLabel.toLowerCase() === "mobile";
+  const isDesktop = appType === "2" || selectedAppTypeLabel.toLowerCase() === "desktop";
+  const isWeb = appType === "3" || selectedAppTypeLabel.toLowerCase().includes("web");
+  const isBackend = appType === "4" || selectedAppTypeLabel.toLowerCase().includes("backend");
+  const isDeviceIot = appType === "5" || isDeviceIotLabel(selectedAppTypeLabel);
+
+  const isPublicClient = isSpa || isMobile || isDesktop;
 
   const allowedGrants = useMemo(() => {
-    if (appType === "4") return new Set([2]);
-    if (appType === "3") return new Set([0, 1]);
-    if (appType === "0" || appType === "1" || appType === "2")
-      return new Set([0, 1]);
-    return new Set([0, 1, 2]);
-  }, [appType]);
+    if (isBackend) return new Set([GrantType.ClientCredentials]);
+    if (isWeb) return new Set([GrantType.AuthorizationCode, GrantType.RefreshToken, GrantType.Ciba]);
+    if (isDesktop) {
+      return new Set([
+        GrantType.AuthorizationCode,
+        GrantType.RefreshToken,
+        GrantType.DeviceCode,
+      ]);
+    }
+    if (isMobile || isSpa) {
+      return new Set([GrantType.AuthorizationCode, GrantType.RefreshToken]);
+    }
+    if (isDeviceIot) return new Set([GrantType.DeviceCode]);
+    return new Set([
+      GrantType.AuthorizationCode,
+      GrantType.RefreshToken,
+      GrantType.ClientCredentials,
+      GrantType.DeviceCode,
+      GrantType.Ciba,
+    ]);
+  }, [isBackend, isWeb, isDesktop, isMobile, isSpa, isDeviceIot]);
+
+  const authGrantOptions = useMemo(() => {
+    if (isBackend) {
+      return fallbackGrantTypes.filter((grant) => grant.id === GrantType.ClientCredentials);
+    }
+    if (isDeviceIot) {
+      return fallbackGrantTypes.filter((grant) => grant.id === GrantType.DeviceCode);
+    }
+    return fallbackGrantTypes;
+  }, [isBackend, isDeviceIot]);
 
   useEffect(() => {
     setGrantTypes((prev) => {
       let next = prev.filter((grant) => allowedGrants.has(grant));
-      if (appType === "4" && !next.includes(2)) {
-        next = [...next, 2];
+      if (isBackend && !next.includes(GrantType.ClientCredentials)) {
+        next = [...next, GrantType.ClientCredentials];
       }
-      if (isPublicClient && !next.includes(0)) {
-        next = [...next, 0];
+      if (isDeviceIot && !next.includes(GrantType.DeviceCode)) {
+        next = [...next, GrantType.DeviceCode];
+      }
+      if ((isSpa || isMobile || isDesktop) && !next.includes(GrantType.AuthorizationCode)) {
+        next = [...next, GrantType.AuthorizationCode];
       }
       return next;
     });
-  }, [allowedGrants, appType, isPublicClient]);
+  }, [allowedGrants, isBackend, isDeviceIot, isSpa, isMobile, isDesktop]);
 
   useEffect(() => {
-    if (isPublicClient) {
+    if (isPublicClient || isDeviceIot) {
       setValue("clientSecret", "", { shouldDirty: true });
       setValue("clientSecretExpiry", "", { shouldDirty: true });
     }
-  }, [isPublicClient, setValue]);
+  }, [isPublicClient, isDeviceIot, setValue]);
 
   const hasInsecureGrant = useMemo(() => {
-    if (isPublicClient && grantTypes.includes(2)) {
-      return true;
-    }
-    if ((appType === "0" || appType === "1") && grantTypes.includes(2)) {
-      return true;
-    }
-    return false;
-  }, [appType, grantTypes, isPublicClient]);
+    return grantTypes.some((grant) => !allowedGrants.has(grant));
+  }, [allowedGrants, grantTypes]);
 
   const [grantError, setGrantError] = useState("");
 
   const validateGrantSelection = () => {
     const clientSecretValue = getValues("clientSecret");
-    if (isPublicClient && clientSecretValue) {
+    if ((isPublicClient || isDeviceIot) && clientSecretValue) {
       setGrantError("Public clients cannot have client secrets.");
       return false;
     }
-    if (isPublicClient && grantTypes.includes(2)) {
+    if (isPublicClient && grantTypes.includes(GrantType.ClientCredentials)) {
       setGrantError("Public clients cannot use client_credentials.");
       return false;
     }
-    if ((appType === "0" || appType === "1" || appType === "2") && grantTypes.includes(2)) {
+    if ((isSpa || isMobile || isDesktop) && grantTypes.includes(GrantType.ClientCredentials)) {
       setGrantError("SPA, Mobile, and Desktop apps cannot use client_credentials.");
       return false;
     }
-    if (appType === "4" && !grantTypes.includes(2)) {
+    if (grantTypes.includes(GrantType.Ciba) && (isPublicClient || isBackend || isDeviceIot)) {
+      setGrantError("CIBA is supported for Web applications only.");
+      return false;
+    }
+    if (
+      grantTypes.includes(GrantType.DeviceCode) &&
+      (isSpa || isWeb || isBackend)
+    ) {
+      setGrantError("Device Code is supported for Mobile and Desktop clients.");
+      return false;
+    }
+    if (isBackend && !grantTypes.includes(GrantType.ClientCredentials)) {
       setGrantError("Backend apps must support client_credentials.");
       return false;
     }
-    if (isPublicClient && !grantTypes.includes(0)) {
+    if (isDeviceIot && !grantTypes.includes(GrantType.DeviceCode)) {
+      setGrantError("Device/IOT clients must use device_code.");
+      return false;
+    }
+    const unsupportedGrant = grantTypes.find((grant) => !allowedGrants.has(grant));
+    if (unsupportedGrant !== undefined) {
+      setGrantError("Selected grant type is not allowed for this application type.");
+      return false;
+    }
+    if ((isSpa || isMobile || isDesktop) && !grantTypes.includes(GrantType.AuthorizationCode)) {
       setGrantError("Public clients must use authorization_code with PKCE.");
       return false;
     }
-    if (grantTypes.includes(1) && !grantTypes.includes(0)) {
+    if (
+      grantTypes.includes(GrantType.RefreshToken) &&
+      !grantTypes.includes(GrantType.AuthorizationCode)
+    ) {
       setGrantError("refresh_token requires authorization_code.");
       return false;
     }
@@ -236,7 +316,19 @@ function ApplicationWizard({
     if (grantError) {
       validateGrantSelection();
     }
-  }, [appType, grantTypes, isPublicClient, grantError]);
+  }, [
+    appType,
+    grantTypes,
+    isPublicClient,
+    isDeviceIot,
+    isSpa,
+    isMobile,
+    isDesktop,
+    isWeb,
+    isBackend,
+    grantError,
+    allowedGrants,
+  ]);
 
   const toggleGrant = (value) => {
     setGrantTypes((prev) => {
@@ -350,16 +442,17 @@ function ApplicationWizard({
           <AuthStep
             register={register}
             isPublicClient={isPublicClient}
+            isDeviceIot={isDeviceIot}
+            isWebClient={isWeb}
             showSecret={showSecret}
             setShowSecret={setShowSecret}
             onRegenerateSecret={regenerateSecret}
             grantTypes={grantTypes}
             toggleGrant={toggleGrant}
-            fallbackGrantTypes={fallbackGrantTypes}
+            grantOptions={authGrantOptions}
             allowedGrants={allowedGrants}
             hasInsecureGrant={hasInsecureGrant}
             grantError={grantError}
-            appType={appType}
           />
         );
       case WizardStep.Redirects:

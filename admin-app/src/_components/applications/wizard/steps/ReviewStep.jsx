@@ -27,12 +27,6 @@ function ReviewStep({
 }) {
   const [confirmed, setConfirmed] = useState(false);
 
-  const grantLabelMap = {
-    authorization_code: "Authorization Code",
-    refresh_token: "Refresh Token",
-    client_credentials: "Client Credentials",
-  };
-
   const scopeLabelMap = {
     openid: "OpenID",
     profile: "Profile",
@@ -41,10 +35,10 @@ function ReviewStep({
   };
 
   const grantLabels = fallbackGrantTypes
-    .filter((grant) => grantTypes.includes(grant.value))
+    .filter((grant) => grantTypes.includes(grant.id))
     .map((grant) => ({
-      label: grantLabelMap[grant.label] || grant.label,
-      raw: grant.label,
+      label: grant.value,
+      raw: grant.key,
     }));
 
   const scopeLabels = scopeOptions
