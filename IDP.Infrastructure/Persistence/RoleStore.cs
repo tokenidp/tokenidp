@@ -28,24 +28,24 @@ internal sealed class RoleStore : IRoleStore
         return userRoles;
     }
 
-    public async Task<ApiResult<bool>> HasPermission(int userId, string claim)
+    public async Task<ApiResult<bool>> HasPermission(int userId, string permission)
     {
-        _logger.LogDebug("Checking authorization for user {UserId} and claim {Claim}", userId, claim);
+        _logger.LogDebug("Checking authorization for user {UserId} and claim {Claim}", userId, permission);
 
-        var cacheKey = CacheKeys.USER_CLAIM.FormatCacheKey(userId, claim);
+        var cacheKey = CacheKeys.USER_CLAIM.FormatCacheKey(userId, permission);
 
         var hasPermission = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var claimValue = await _dbContext.UserRolePermissions
               .Where(c => c.UserId == userId
-                           && c.Permissionkey == claim
+                           && c.Permissionkey == permission
                            && c.IsAllowed)
               .Select(c => c.IsAllowed)
               .FirstOrDefaultAsync();
 
             return claimValue;
 
-        }, new TimeSpan(0, 15, 0));
+        }, new TimeSpan(0, 60, 0));
 
         _logger.LogDebug("Cache hit for claim authorization {CacheKey}", cacheKey);
 
@@ -73,7 +73,7 @@ internal sealed class RoleStore : IRoleStore
 
             return !string.IsNullOrEmpty(assignedRole);
 
-        }, new TimeSpan(0, 15, 0));
+        }, new TimeSpan(0, 60, 0));
 
         _logger.LogDebug("Cache hit for role membership {CacheKey}", cacheKey);
 

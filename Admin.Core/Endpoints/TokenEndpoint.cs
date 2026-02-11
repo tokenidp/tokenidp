@@ -24,6 +24,10 @@ internal class TokenEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tokens.view"
+         })
          .WithName("Tokens")
          .WithTags("Tokens");
 
@@ -50,6 +54,10 @@ internal class TokenEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tokens.view"
+        })
         .WithName("TokenById")
         .WithTags("TokenById");
 
@@ -63,6 +71,10 @@ internal class TokenEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tokens.delete"
+        })
         .WithName("TokenRevoke")
         .WithTags("TokenRevoke");
 
@@ -75,6 +87,10 @@ internal class TokenEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tokens.delete"
+         })
         .WithName("TokenExpire")
         .WithTags("TokenExpire");
     }

@@ -2,6 +2,7 @@
 using Admin.Core.Users.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Admin.Core.Endpoints;
 
@@ -12,7 +13,7 @@ internal class UserEndpoint : IEndpointDefinition
         var authGroup = app.MapGroup("/admin/user")
             .RequireAuthorization(new AuthorizeAttribute
             {
-                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme,
             })
             .AddEndpointFilter<EndpointValidationFilter>();
 
@@ -23,6 +24,10 @@ internal class UserEndpoint : IEndpointDefinition
             var response = await userService.GetUsers(data, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "users.view"
         })
         .WithName("Users")
         .WithTags("Users");
@@ -40,6 +45,9 @@ internal class UserEndpoint : IEndpointDefinition
             var response = await userService.GetUserById(id, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
+        }).RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "users.view"
         })
         .WithName("UserById")
         .WithTags("UserById");
@@ -65,6 +73,10 @@ internal class UserEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "users.add"
+         })
         .WithName("CreateUser")
         .WithTags("CreateUser");
 
@@ -82,6 +94,10 @@ internal class UserEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "users.edit"
+         })
         .WithName("UpdateUser")
         .WithTags("UpdateUser");
 
@@ -99,6 +115,10 @@ internal class UserEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "users.edit"
+         })
         .WithName("UpdateUserStatus")
         .WithTags("UpdateUserStatus");
 

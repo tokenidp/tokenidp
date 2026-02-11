@@ -23,6 +23,10 @@ internal class ClientEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.view"
+        })
         .WithName("Clients")
         .WithTags("Clients");
 
@@ -38,6 +42,10 @@ internal class ClientEndpoint : IEndpointDefinition
             var response = await useCase.GetClientById(id);
 
             return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.view"
         })
         .WithName("ClientById")
         .WithTags("ClientById");
@@ -62,6 +70,10 @@ internal class ClientEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.add"
+        })
         .WithName("CreateClient")
         .WithTags("CreateClient");
 
@@ -79,6 +91,10 @@ internal class ClientEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.edit"
+        })
         .WithName("UpdateClient")
         .WithTags("UpdateClient");
 
@@ -95,6 +111,10 @@ internal class ClientEndpoint : IEndpointDefinition
             var response = await useCase.DeleteClient(id, httpContext.RequestAborted);
 
             return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.delete"
         })
         .WithName("DeleteClient")
         .WithTags("DeleteClient");

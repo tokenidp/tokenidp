@@ -23,6 +23,10 @@ internal class DashboardEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
 
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "dashboard.view"
+         })
          .WithName("Dashboard")
          .WithTags("Dashboard");
     }

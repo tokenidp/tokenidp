@@ -22,6 +22,10 @@ internal class ActivityEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "activities.view"
+        })
         .WithName("Activities")
         .WithTags("Activities");
 
@@ -31,6 +35,10 @@ internal class ActivityEndpoint : IEndpointDefinition
             var response = await useCase.GetLookups(httpContext.RequestAborted);
 
             return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "activities.view"
         })
        .WithName("ActivityLookups")
        .WithTags("ActivityLookups");

@@ -25,6 +25,10 @@ internal class RoleEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.view"
+         })
         .WithName("Roles")
         .WithTags("Roles");
 
@@ -46,6 +50,10 @@ internal class RoleEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.view"
+         })
         .WithName("RoleById")
         .WithTags("RoleById");
 
@@ -59,6 +67,10 @@ internal class RoleEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.add"
+         })
         .WithName("CreateRole")
         .WithTags("CreateRole");
 
@@ -76,6 +88,10 @@ internal class RoleEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.edit"
+         })
         .WithName("UpdateRole")
         .WithTags("UpdateRole");
 
@@ -92,6 +108,10 @@ internal class RoleEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.delete"
+         })
         .WithName("DeleteRole")
         .WithTags("DeleteRole");
     }

@@ -22,6 +22,14 @@ internal class PermissionEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.edit"
+         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "roles.add"
+         })
         .WithName("Permissions")
         .WithTags("Permissions");
 
@@ -32,6 +40,10 @@ internal class PermissionEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "permissions.view"
+         })
         .WithName("PagedPermissions")
         .WithTags("PagedPermissions");
 
@@ -46,6 +58,10 @@ internal class PermissionEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "permissions.add"
+         })
         .WithName("CreatePermission")
         .WithTags("CreatePermission");
 
@@ -62,6 +78,10 @@ internal class PermissionEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "permissions.edit"
+         })
         .WithName("UpdatePermission")
         .WithTags("UpdatePermission");
 
@@ -82,6 +102,10 @@ internal class PermissionEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "permissions.view"
+         })
         .WithName("PermissionbyId")
         .WithTags("PermissionbyId");
 

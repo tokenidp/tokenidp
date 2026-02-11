@@ -10,6 +10,8 @@ using IDP.Infrastructure;
 using IDP.Projection;
 using IDP.Projection.HealthChecks;
 using IDP.Server.Middlewares;
+using IDP.Server.Security;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
@@ -104,6 +106,9 @@ public static class ApplicationBuilderExtensions
         });
 
         AddHealthChecks(builder, connectionStringName);
+
+        builder.Services.AddSingleton<IAuthorizationPolicyProvider, CustomAuthorizationPolicyProvider>();
+        builder.Services.AddScoped<IAuthorizationHandler, DynamicRolePolicyHandler>();
 
         return builder;
     }

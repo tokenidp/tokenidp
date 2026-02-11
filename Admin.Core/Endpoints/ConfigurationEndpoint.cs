@@ -23,6 +23,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.GetTenantConfigurations(data, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "settings.view"
+         })
         .WithName("TenantConfigurations")
         .WithTags("TenantConfigurations");
 
@@ -39,6 +43,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.GetConfigurationById(id, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "settings.view"
+         })
         .WithName("TenantConfigurationById")
         .WithTags("TenantConfigurationById");
 
@@ -49,6 +57,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.GetConfigurationByKey(key, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "settings.view"
+         })
         .WithName("TenantConfigurationByKey")
         .WithTags("TenantConfigurationByKey");
 
@@ -59,6 +71,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.CreateConfiguration(configuration, httpContext.RequestAborted);
             var location = response.IsSuccess ? $"configuration/{configuration.ConfigKey}" : string.Empty;
             return EndpointResultMapper.ToCreatedOrError(response, location);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "settings.add"
         })
         .WithName("CreateTenantConfiguration")
         .WithTags("CreateTenantConfiguration");
@@ -76,6 +92,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.UpdateConfiguration(id, configuration, httpContext.RequestAborted);
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "settings.edit"
+        })
         .WithName("UpdateTenantConfiguration")
         .WithTags("UpdateTenantConfiguration");
 
@@ -92,6 +112,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.DeleteConfiguration(id, httpContext.RequestAborted);
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "settings.delete"
+        })
         .WithName("DeleteTenantConfiguration")
         .WithTags("DeleteTenantConfiguration");
 
@@ -102,6 +126,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             var response = await useCase.UpsertConfiguration(configuration, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "settings.edit"
+        })
         .WithName("UpsertTenantConfiguration")
         .WithTags("UpsertTenantConfiguration");
 
@@ -111,6 +139,10 @@ internal class ConfigurationEndpoint : IEndpointDefinition
         {
             var response = await useCase.BulkUpdate(request, httpContext.RequestAborted);
             return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "settings.edit"
         })
         .WithName("BulkUpdateTenantConfigurations")
         .WithTags("BulkUpdateTenantConfigurations");

@@ -24,6 +24,10 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tenants.view"
+         })
         .WithName("Tenants")
         .WithTags("Tenants");
 
@@ -41,6 +45,10 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tenants.view"
+         })
         .WithName("TenantById")
         .WithTags("TenantById");
 
@@ -64,6 +72,10 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToCreatedOrError(response, location);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tenants.add"
+         })
         .WithName("CreateTenant")
         .WithTags("CreateTenant");
 
@@ -81,6 +93,10 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tenants.edit"
+         })
         .WithName("UpdateTenant")
         .WithTags("UpdateTenant");
 
@@ -98,6 +114,10 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToNoContentOrError(response);
         })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "tenants.delete"
+         })
         .WithName("DeleteTenant")
         .WithTags("DeleteTenant");
     }
