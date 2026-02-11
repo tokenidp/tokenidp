@@ -21,5 +21,5 @@ export const defaultAuthConfig = {
   // refresh behavior
   autoRefresh: true,
   // refresh skew in seconds (refresh token slightly before expiry)
-  refreshSkewSeconds: 60,
+  refreshSkewSeconds: 180,
 };

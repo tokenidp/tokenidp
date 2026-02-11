@@ -22,7 +22,7 @@
     "react-promise-tracker": "^2.1.0",
     "react-router-dom": "^6.26.2",
     "react-scripts": "^5.0.1",
-    "tokentresor-idp-react": "file:../idp-sdk/tokentresor-idp-react-0.2.2.tgz",
+    "tokentresor-idp-react": "file:../idp-sdk/tokentresor-idp-react-0.2.3.tgz",
     "web-vitals": "^2.1.4"
   },
   "overrides": {
