@@ -31,7 +31,6 @@ function normalizePermissions(user) {
 function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   const user = useAuth();
   const location = useLocation();
-
   if (!user?.isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
@@ -48,8 +47,8 @@ function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   const permissionEntries = Array.isArray(user?.permissions)
     ? user.permissions
     : Array.isArray(user?.Permissions)
-    ? user.Permissions
-    : [];
+      ? user.Permissions
+      : [];
 
   const hasRoutePermission = permissionEntries.some((perm) => {
     const url = perm?.url || perm?.Url;

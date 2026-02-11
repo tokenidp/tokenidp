@@ -75,6 +75,7 @@ export function IdpAuthProvider({ children, config }) {
   }, [state, storage, mergedConfig.storageKey]);
 
   const refreshTimerRef = useRef(null);
+  const refreshInFlightRef = useRef(false);
 
   function clearRefreshTimer() {
     if (refreshTimerRef.current) {
@@ -83,31 +84,47 @@ export function IdpAuthProvider({ children, config }) {
     }
   }
 
+  async function tryRefreshWithRetry(retries, retryDelayMs) {
+    try {
+      await api.refresh();
+      return true;
+    } catch (err) {
+      if (retries > 0) {
+        await new Promise((res) => setTimeout(res, retryDelayMs));
+        return tryRefreshWithRetry(retries - 1, retryDelayMs);
+      }
+      return false;
+    }
+  }
+
   function scheduleAutoRefresh(nextExpiresAtMs) {
     clearRefreshTimer();
-    if (!mergedConfig.autoRefresh) return;
-    if (!nextExpiresAtMs) return;
+    if (!mergedConfig.autoRefresh || !nextExpiresAtMs) return;
 
     const skewMs = (mergedConfig.refreshSkewSeconds || 60) * 1000;
     const delay = Math.max(0, nextExpiresAtMs - Date.now() - skewMs);
 
-    refreshTimerRef.current = setTimeout(() => {
-      api.refresh().catch(() => {
-        // refresh failure -> logout to be safe
+    refreshTimerRef.current = setTimeout(async () => {
+      if (refreshInFlightRef.current) return;
+      refreshInFlightRef.current = true;
+
+      const ok = await tryRefreshWithRetry(1, 5000); // 👈 1 retry
+
+      refreshInFlightRef.current = false;
+
+      if (!ok) {
         api.logout();
-      });
+      }
     }, delay);
   }
 
   useEffect(() => {
-    if (state.isAuthenticated && state.expiresAt) {
-      scheduleAutoRefresh(state.expiresAt);
-    } else {
+    if (!state.isAuthenticated || !state.expiresAt) return;
+    scheduleAutoRefresh(state.expiresAt);
+    return () => {
       clearRefreshTimer();
-    }
+    };
   }, [state.isAuthenticated, state.expiresAt]);
-
-  useEffect(() => () => clearRefreshTimer(), []);
 
   const api = useMemo(() => {
     return {
@@ -180,20 +197,24 @@ export function IdpAuthProvider({ children, config }) {
             codeVerifier: verifier,
             scope: mergedConfig.scope,
           });
-
-          console.log("Token payload:", tokenPayload);
         } catch (e) {
           console.error("exchangeAuthorizationCode failed:", e);
           console.error("Status:", e?.status);
           console.error("Data:", e?.data);
           throw e;
         }
+
         const { accessToken, refreshToken, expiresIn, idToken } =
           extractToken(tokenPayload);
 
         if (!accessToken)
           throw new Error("Token response did not include an access token.");
-        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : 0;
+
+        let expiresInSeconds = expiresIn * 60;
+
+        const expiresAt = expiresInSeconds
+          ? Date.now() + expiresInSeconds * 1000
+          : 0;
 
         // permissions/user info
         const userInfoResult = await loadUserPermissions(
@@ -261,7 +282,11 @@ export function IdpAuthProvider({ children, config }) {
         if (!accessToken)
           throw new Error("Refresh response did not include an access token.");
 
-        const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : 0;
+        let expiresInSeconds = expiresIn * 60;
+
+        const expiresAt = expiresInSeconds
+          ? Date.now() + expiresInSeconds * 1000
+          : 0;
 
         dispatch({
           type: "TOKENS_UPDATED",

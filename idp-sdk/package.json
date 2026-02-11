@@ -1,6 +1,6 @@
 {
   "name": "@tokentresor/idp-react",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "files": [
@@ -19,7 +19,8 @@
     "tsup": "^8.0.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsup",
+    "pack": "npm run build && npm pack"
   },
   "keywords": [],
   "author": "",

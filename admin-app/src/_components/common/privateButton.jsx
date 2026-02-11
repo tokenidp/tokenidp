@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../_hooks/useAuth";
+import { useAuth } from "@tokentresor/idp-react";
 
 function PrivateButton(props) {
-  const [user] = useAuth();
+  const user = useAuth();
   const [isPermissionExist, setPermissionExist] = useState(false);
 
   useEffect(() => {

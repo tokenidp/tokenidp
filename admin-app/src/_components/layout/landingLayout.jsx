@@ -10,6 +10,8 @@ function LandingLayout() {
 
   const destination = auth.isAuthenticated ? "/dashboard" || "/" : "/login";
 
+  console.log("LandingLayout: redirecting to ", destination);
+
   return <Navigate to={destination} replace />;
 }
 
