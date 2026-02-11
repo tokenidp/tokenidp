@@ -9,7 +9,7 @@ public partial class NotificationDbContext : DbContext
 {
     private readonly IAppLogger<NotificationDbContext> _appLogger;
 
-    public NotificationDbContext(DbContextOptions options,
+    public NotificationDbContext(DbContextOptions<NotificationDbContext> options,
         IAppLogger<NotificationDbContext> appLogger) : base(options)
     {
         _appLogger = appLogger;

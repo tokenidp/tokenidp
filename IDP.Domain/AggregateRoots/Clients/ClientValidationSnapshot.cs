@@ -4,16 +4,16 @@ public class ClientValidationSnapshot
 {
     public string ClientId { get; }
     public string ClientName { get; }
-    public int TenantId { get; private set; }
+    public int TenantId { get; }
     public bool IsActive { get; }
-    public string RedirectUri { get; private set; } = string.Empty;
-    public string? LogoutRedirectUri { get; private set; }
+    public string RedirectUri { get; } = string.Empty;
+    public string? LogoutRedirectUri { get; }
     public TokenTypes TokenType { get; }
     public IReadOnlySet<GrantTypes> GrantTypes { get; }
     public IReadOnlySet<string> Scopes { get; }
     public IReadOnlySet<string> Audiences { get; }
     public IReadOnlySet<string> ActiveSecretHashes { get; }
-    public int? ClientSecretExpiry { get; private set; }
+    public int? ClientSecretExpiry { get; }
     public int AccessTokenLifetime { get; }
     public int AuthorizationCodeLifetime { get; }
     public int RefreshTokenExpiration { get; }

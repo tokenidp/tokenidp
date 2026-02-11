@@ -38,7 +38,8 @@ internal class EmailQueueStore : IEmailQueueStore
             await CancelPendingAsync(email.TenantId, email.MessageKey, "Superseded", ct);
         }
 
-        _db.Add(email);
+        _db.EmailMessages.Add(email);
+
         await _db.SaveChangesAsync(ct);
     }
 }

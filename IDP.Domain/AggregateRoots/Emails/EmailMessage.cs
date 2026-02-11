@@ -4,7 +4,7 @@ namespace IDP.Domain.AggregateRoots.Emails;
 
 public sealed class EmailMessage : AggregateRoot<long>, ITenant
 {
-    private readonly List<EmailRecipient> _recipients = new();
+    private readonly List<Emails.EmailRecipient> _recipients = new();
     private readonly List<EmailAttachment> _attachments = new();
 
     public int TenantId { get; private set; }
@@ -47,7 +47,7 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
     public DateTime? CancelledAtUtc { get; private set; }
     public string? CancelReason { get; private set; }
 
-    public IReadOnlyCollection<EmailRecipient> Recipients => _recipients.AsReadOnly();
+    public IReadOnlyCollection<Emails.EmailRecipient> Recipients => _recipients.AsReadOnly();
     public IReadOnlyCollection<EmailAttachment> Attachments => _attachments.AsReadOnly();
 
     private EmailMessage() { } // EF

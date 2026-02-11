@@ -36,6 +36,7 @@ public class TokenResponse
     public static TokenResponse Success(
         int? userId,
         string token,
+        int expireIn,
         DateTime expiry,
         string? idToken)
         => new TokenResponse
@@ -44,7 +45,8 @@ public class TokenResponse
             AccessToken = token,
             IDToken = idToken,
             ExpireAt = expiry,
-            IsSuccess = true
+            IsSuccess = true,
+            ExpireIn = expireIn
         };
 
     public static TokenResponse Failure(string errorCode, string? description = null)

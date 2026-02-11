@@ -58,8 +58,7 @@ public static class DependencyInjection
             new MfaUseCase(sp.GetRequiredService<IIdentityStore>(),
                 sp.GetRequiredService<IPreAuthorizationStore>(),
                 sp.GetRequiredService<IAppLogger<MfaUseCase>>(),
-                sp.GetRequiredService<ICurrentUserService>(),
-                sp.GetRequiredService<IEmailQueueStore>()));
+                sp.GetRequiredService<ICurrentUserService>()));
     }
 
     private static void AddGrantHandlers(IServiceCollection services)

@@ -45,8 +45,8 @@ public class TokenContext
             TokenType = tokenType,
             Roles = roles,
             ClientSecretExpiry = clientSecretExpiry,
-            AccessTokenLifetime = accessTokenLifetime,
-            RefreshTokenExpiration = refreshTokenExpiration,
+            AccessTokenLifetime = accessTokenLifetime * 60,
+            RefreshTokenExpiration = refreshTokenExpiration * 60,
             Scopes = scope,
             Audiences = audience,
             IpAddress = ipAddress
@@ -73,8 +73,8 @@ public class TokenContext
             ClientId = clientId,
             TokenType = tokenType,
             ClientSecretExpiry = clientSecretExpiry,
-            AccessTokenLifetime = accessTokenLifetime,
-            RefreshTokenExpiration = refreshTokenExpiration,
+            AccessTokenLifetime = accessTokenLifetime * 60,
+            RefreshTokenExpiration = refreshTokenExpiration * 60,
             Scopes = scope,
             Audiences = audience,
             IpAddress = ipAddress,
@@ -85,12 +85,12 @@ public class TokenContext
     public void SetTokenDates()
     {
         IssuedAt = DateTime.UtcNow;
-        ExpiresAt = DateTime.UtcNow.AddMinutes(AccessTokenLifetime);
+        ExpiresAt = DateTime.UtcNow.AddSeconds(AccessTokenLifetime);
     }
 
     public void SetRefreshTokenExpiry()
     {
-        RefreshExpiresAt = DateTime.UtcNow.AddHours(RefreshTokenExpiration);
+        RefreshExpiresAt = DateTime.UtcNow.AddMinutes(RefreshTokenExpiration);
     }
 
     public void AddAuthorizedScopes(string scope)

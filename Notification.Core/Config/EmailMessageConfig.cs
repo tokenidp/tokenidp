@@ -24,19 +24,20 @@ public sealed class EmailMessageConfig : IEntityTypeConfiguration<EmailMessage>
         b.Property(x => x.Status).HasConversion<byte>();
         b.Property(x => x.PayloadMode).HasConversion<byte>();
 
-        // collections are private fields
-        b.HasMany<EmailRecipient>("_recipients")
-            .WithOne()
-            .HasForeignKey(r => r.EmailMessageId)
-            .OnDelete(DeleteBehavior.Cascade);
+        b.HasMany(x => x.Recipients)
+        .WithOne()
+        .HasForeignKey(a => a.EmailMessageId)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        b.Navigation("_recipients").UsePropertyAccessMode(PropertyAccessMode.Field);
+        b.Navigation(x => x.Recipients)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        b.HasMany<EmailAttachment>("_attachments")
-            .WithOne()
-            .HasForeignKey(a => a.EmailMessageId)
-            .OnDelete(DeleteBehavior.Cascade);
+        b.HasMany(x => x.Attachments)
+        .WithOne()
+        .HasForeignKey(a => a.EmailMessageId)
+        .OnDelete(DeleteBehavior.Cascade);
 
-        b.Navigation("_attachments").UsePropertyAccessMode(PropertyAccessMode.Field);
+        b.Navigation(x => x.Attachments)
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

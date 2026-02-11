@@ -28,6 +28,9 @@ internal sealed class TokenIssuerUseCase
     {
         context.SetTokenDates();
 
+        _logger.LogDebug("Token Expire At: {ExpiresAt}", context.ExpiresAt);
+        _logger.LogDebug("Access Token Lifetime: {AccessTokenLifetime}", context.AccessTokenLifetime);
+
         var token = Token.CreateToken(context);
 
         var isClientCredentials = Enum.Equals(context.GrantType, GrantTypes.client_credentials);
@@ -133,7 +136,7 @@ internal sealed class TokenIssuerUseCase
 
         var idToken = CreateIDToken(tokenInfo);
 
-        return TokenResponse.Success(tokenInfo.UserId, accessToken, expiresAt, idToken);
+        return TokenResponse.Success(tokenInfo.UserId, accessToken, tokenInfo.AccessTokenLifetime, expiresAt, idToken);
     }
 
     private TokenResponse CreateReferenceToken(TokenContext tokenInfo, DateTime expiresAt)
@@ -148,7 +151,7 @@ internal sealed class TokenIssuerUseCase
 
         var idToken = CreateIDToken(tokenInfo);
 
-        return TokenResponse.Success(tokenInfo.UserId, token, expiresAt, idToken);
+        return TokenResponse.Success(tokenInfo.UserId, token, tokenInfo.AccessTokenLifetime, expiresAt, idToken);
     }
 
     private string? CreateIDToken(TokenContext context)

@@ -15,7 +15,7 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
     private readonly IOutboxMapperResolver _resolver;
     private readonly IOutboxConsumerRouter _consumerRouter;
-    public ApplicationDbContext(DbContextOptions options,
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
         ICurrentUserService currentUserService,
         IAppLogger<ApplicationDbContext> appLogger,
         IOutboxMapperResolver resolver,
