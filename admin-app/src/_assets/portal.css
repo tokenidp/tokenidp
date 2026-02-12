@@ -335,6 +335,16 @@ table td i {
   text-align: right;
 }
 
+.wizard-status-aligned {
+  width: 100%;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.wizard-status-aligned .wizard-status-help {
+  max-width: 100%;
+}
+
 .wizard-status-help {
   font-size: 12px;
   color: #64748b;

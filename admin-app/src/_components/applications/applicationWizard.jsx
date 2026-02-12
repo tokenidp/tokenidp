@@ -521,21 +521,6 @@ function ApplicationWizard({
   return (
     <FormProvider {...methods}>
       <div className="card-surface form-surface">
-        <div className="d-flex justify-content-end mb-3">
-          <div className="wizard-status">
-            <span
-              className="status-pill status-pill-warning"
-              title="Draft applications are not active until setup is complete."
-              aria-label="Draft applications are not active until setup is complete."
-            >
-              Status: Draft
-            </span>
-            <div className="wizard-status-help">
-              This application will not be usable until you complete setup and
-              activate it.
-            </div>
-          </div>
-        </div>
         <WizardHeader
           stepIndex={stepIndex}
           steps={wizardSteps}
@@ -548,6 +533,25 @@ function ApplicationWizard({
           </div>
         )}
         <form onSubmit={handleSubmit(submitForm)}>
+          {mode === "add" && (
+            <div className="row g-4 justify-content-center">
+              <div className="col-12 col-lg-8 col-xl-7">
+                <div className="wizard-status wizard-status-aligned mb-1">
+                  <span
+                    className="status-pill status-pill-warning"
+                    title="Draft applications are not active until setup is complete."
+                    aria-label="Draft applications are not active until setup is complete."
+                  >
+                    Status: Draft
+                  </span>
+                  <div className="wizard-status-help">
+                    This application will not be usable until you complete setup and
+                    activate it.
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="pt-2">{renderStep()}</div>
           <WizardFooter
             canGoBack={canGoBack}
