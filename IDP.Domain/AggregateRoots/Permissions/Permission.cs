@@ -7,6 +7,7 @@ public sealed class Permission : AggregateRoot<int>, ITenant
             System.Text.RegularExpressions.RegexOptions.Compiled);
 
     private readonly List<RolePermission> _rolePermissions = new();
+    private readonly List<Permission> _children = new();
 
     public int TenantId { get; private set; }
     public int? ParentId { get; private set; }
@@ -24,12 +25,15 @@ public sealed class Permission : AggregateRoot<int>, ITenant
 
     public Tenant Tenant { get; private set; } = default!;
 
+    public Permission? Parent { get; private set; }
+    public IReadOnlyCollection<Permission> Children => _children.AsReadOnly();
     public IReadOnlyCollection<RolePermission> RolePermissions =>
     _rolePermissions.AsReadOnly();
 
     private Permission() { }
 
     public Permission(
+        int tenantId,
         int? parentId,
         int sequence,
         string permissionKey,
@@ -55,6 +59,7 @@ public sealed class Permission : AggregateRoot<int>, ITenant
 
         Enum.TryParse<ControlTypes>(controlType, ignoreCase: true, out var parsedControlType);
 
+        TenantId = tenantId;
         ParentId = parentId;
         Sequence = sequence;
         PermissionKey = permissionKey;
@@ -64,6 +69,7 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         ControlType = parsedControlType;
         IsActive = isActive;
         IsSystem = false;
+        SetCreated(1);
     }
 
     public Result Update(
@@ -187,5 +193,10 @@ public sealed class Permission : AggregateRoot<int>, ITenant
             return validation;
 
         return ParseControlType(controlType);
+    }
+
+    public void AddChild(Permission child)
+    {
+        _children.Add(child);
     }
 }

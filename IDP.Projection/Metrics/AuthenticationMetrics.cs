@@ -14,8 +14,8 @@ public sealed class AuthenticationMetrics : IDashboardMetricCalculator
         var counts = await db.Activities
             .Where(a =>
                 a.TenantId == tenantId &&
-                a.CreatedOn >= bucketStart &&
-                a.CreatedOn < bucketEnd &&
+                a.CreatedAtUtc >= bucketStart &&
+                a.CreatedAtUtc < bucketEnd &&
                 (a.EventType == ActivityEventType.LoginSucceeded ||
                  a.EventType == ActivityEventType.LoginFailed ||
                  a.EventType == ActivityEventType.MfaChallengeSent ||

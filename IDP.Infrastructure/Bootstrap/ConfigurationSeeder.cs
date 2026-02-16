@@ -1,0 +1,42 @@
+﻿using Admin.Core.Bootstrap;
+using Admin.Core.Configurations;
+using IDP.Domain.AggregateRoots.Configurations;
+
+namespace IDP.Infrastructure.Bootstrap;
+
+internal class ConfigurationSeeder : IConfigurationSeeder
+{
+    public async Task CreateAsync(IApplicationDbContext db, 
+        int tenantId, 
+        CreateUpdateConfiguration command, 
+        CancellationToken ct)
+    {
+        var createResult = Configuration.Create(
+           tenantId,
+           command.ConfigKey,
+           command.ConfigValue,
+           command.ValueType,
+           command.Scope,
+           command.IsEditable,
+           out var configuration);
+
+        db.Configurations.Add(configuration!);
+
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<bool> ExistsAsync(IApplicationDbContext db, 
+        int tenantId, 
+        string configKey, 
+        string scope, 
+        CancellationToken ct)
+    {
+        var isExist = await db.Configurations
+            .AsNoTracking()
+            .AnyAsync(t => t.TenantId == tenantId 
+            && t.ConfigKey == configKey 
+            && t.Scope.ToString() == scope, ct);
+
+        return isExist;
+    }
+}

@@ -6,5 +6,6 @@ public enum AppTypes
     Mobile,
     Desktop,
     WebApp,
-    Backend
+    Backend,
+    DeviceIoT
 }

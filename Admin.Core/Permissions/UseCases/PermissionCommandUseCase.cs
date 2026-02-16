@@ -53,9 +53,11 @@ internal class PermissionCommandUseCase
 
         var currentSequence = await _dbContext.Permissions
             .MaxAsync(x => (int?)x.Sequence, cancellationToken) ?? 0;
+
         var nextSequence = currentSequence + 1;
 
         var permission = new Permission(
+            tenantId: _currentUserService.TenantId,
             parentId: request.ParentId,
             sequence: nextSequence,
             permissionKey: normalizedKey,

@@ -11,6 +11,7 @@ public class Configuration : AggregateRoot<int>, ITenant
     public bool IsEditable { get; private set; }
     public ValueTypes ValueType { get; private set; }
     public ConfigurationScopes Scope { get; private set; }
+    public int EffectiveUserId { get; private set; }
 
     public virtual Tenant Tenant { get; private set; } = default!;
 

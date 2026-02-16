@@ -112,6 +112,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
 
         await UpdateCheckpointAsync(
             db,
+            tenantId,
             metricKey: "hourly_metrics",
             processedUntil: bucketEnd,
             ct);
@@ -121,6 +122,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
 
     private static async Task UpdateCheckpointAsync(
         ApplicationDbContext db,
+        int tenantId,
         string metricKey,
         DateTime processedUntil,
         CancellationToken ct)
@@ -130,7 +132,7 @@ public sealed class DashboardMetricsWorker : BackgroundService
 
         if (checkpoint == null)
         {
-            checkpoint = DashboardMetricsCheckpoint.Create(
+            checkpoint = DashboardMetricsCheckpoint.Create(tenantId,
                 metricKey,
                 processedUntil);
 

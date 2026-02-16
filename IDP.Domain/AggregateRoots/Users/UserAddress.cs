@@ -2,23 +2,14 @@
 
 public class UserAddress : Entity<int>
 {
-    [Required]
     public int UserId { get; private set; }
-    [Required]
     public AddressTypes AddressType { get; private set; }
-    [Required, MaxLength(200)]
     public string AddressLine1 { get; private set; } = default!;
-    [MaxLength(200)]
     public string? AddressLine2 { get; private set; }
-    [Required, MaxLength(100)]
-    public string City { get; private set; } = null!;
-    [MaxLength(100)]
-    public string? State { get; private set; }
-    [MaxLength(20)]
-    public string? PostalCode { get; private set; }
-    [Required, MaxLength(100)]
-    public string Country { get; private set; } = null!;
-    [Required]
+    public string City { get; private set; } = default!;
+    public string State { get; private set; } = default!;
+    public string PostalCode { get; private set; } = default!;
+    public string Country { get; private set; } = default!;
     public bool IsActive { get; private set; } = true;
     public virtual User User { get; private set; } = default!;
 

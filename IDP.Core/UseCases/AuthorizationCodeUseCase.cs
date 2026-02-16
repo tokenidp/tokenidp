@@ -77,7 +77,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         _logger.LogInfo("Token request received for ClientId: {ClientId} with Code: {Code}",
             tokenRequest.ClientId, tokenRequest.Code ?? string.Empty);
 
-        var authorizationCode = await ValidateAuthorizationCode(tokenRequest.Code!);
+        var authorizationCode = await ValidateAuthorizationCode(tokenRequest.Code!, tokenRequest.ClientId);
 
         var calculatedCodeChallenge = PkceHelper.CalculateCodeChallenge(tokenRequest.CodeVerifier!);
 
@@ -128,9 +128,9 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         return AuthorizationResponse.Success(code);
     }
 
-    private async Task<AuthorizationCode> ValidateAuthorizationCode(string code)
+    private async Task<AuthorizationCode> ValidateAuthorizationCode(string code, string clientId)
     {
-        var authorizationCode = await _authorizationCodeStore.GetByCode(code);
+        var authorizationCode = await _authorizationCodeStore.GetByCode(code, clientId);
 
         if (authorizationCode == null || authorizationCode.Expiry <= DateTime.UtcNow
             || authorizationCode.IsUsed || authorizationCode.Code != code)

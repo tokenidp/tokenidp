@@ -4,14 +4,14 @@ using System.Security.Claims;
 
 namespace IDP.Server;
 
-internal class CurrentUserService : ICurrentUserService
+internal class HttpCurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public string? IpAddress { get; }
     public string? UserAgent { get; }
 
-    public CurrentUserService(IHttpContextAccessor httpContextAccessor)
+    public HttpCurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
 

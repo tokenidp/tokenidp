@@ -2,11 +2,9 @@
 
 namespace IDP.Domain.ReadModels;
 
-public sealed class Activity : ITenant
+public sealed class Activity : Entity<long>, ITenant
 {
-    public long Id { get; private set; }
     public long OutboxEventId { get; private set; }
-
     public int TenantId { get; private set; }
     public ActivityCategory Category { get; private set; }
     public ActivityEventType EventType { get; private set; }
@@ -27,7 +25,7 @@ public sealed class Activity : ITenant
     public string? IpAddress { get; private set; }
     public string? UserAgent { get; private set; }
 
-    public DateTime CreatedOn { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
 
     private Activity() { }
 
@@ -90,7 +88,7 @@ public sealed class Activity : ITenant
             UserAgent = userAgent?.Trim(),
 
             OutboxEventId = outboxEventId,
-            CreatedOn = DateTime.UtcNow
+            CreatedAtUtc = DateTime.UtcNow
         };
     }
 }

@@ -20,7 +20,7 @@ internal sealed class ActivityListItem
         activity => new ActivityListItem
         {
             Id = activity.Id,
-            Timestamp = activity.CreatedOn,
+            Timestamp = activity.CreatedAtUtc,
             EventType = activity.EventType.ToString(),
             Category = activity.Category.ToString(),
             Severity = activity.Severity.ToString(),

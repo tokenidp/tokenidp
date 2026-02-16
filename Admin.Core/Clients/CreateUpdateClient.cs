@@ -2,15 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Admin.Core.Clients;
 
-internal class CreateUpdateClient
+public class CreateUpdateClient
 {
     public int Id { get; set; }
-    [Required]
-    public required string ClientId { get; set; }
-    [Required]
-    public required string ClientName { get; set; }
-    [Required]
-    public required string RedirectUri { get; set; }
+    public string ClientId { get; set; } = default!;
+    public string ClientName { get; set; } = default!;
+    public string RedirectUri { get; set; } = default!;
     public string? Description { get; set; }
     public AppTypes AppType { get; set; }
     public TokenTypes AccessTokenType { get; set; }

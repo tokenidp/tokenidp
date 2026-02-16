@@ -27,6 +27,15 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
         _consumerRouter = consumerRouter;
     }
 
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+        ICurrentUserService currentUserService) : base(options)
+    {
+        _currentUserService = currentUserService;
+        _appLogger = NullAppLogger<ApplicationDbContext>.Instance;
+        _resolver = NullOutboxMapperResolver.Instance;
+        _consumerRouter = NullOutboxConsumerRouter.Instance;
+    }
+
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
@@ -122,7 +131,9 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
             {
                 case EntityState.Added:
 
-                    entry.Entity.SetCreated(_currentUserService.UserId);
+                    entry.Entity.SetCreated(_currentUserService.UserId > 0 
+                        ? _currentUserService.UserId 
+                        : entry.Entity.CreatedBy );
                     break;
 
                 case EntityState.Modified:

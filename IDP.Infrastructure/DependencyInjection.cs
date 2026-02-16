@@ -1,8 +1,13 @@
-﻿using IDP.Core.OAuth;
+﻿using Admin.Core.Bootstrap;
+using IDP.Core.OAuth;
 using IDP.Foundation.Abstractions.Stores;
+using IDP.Infrastructure.Bootstrap;
 using IDP.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace IDP.Infrastructure;
 
@@ -14,6 +19,7 @@ public static class DependencyInjection
     {
         AddPersistence(services, configuration, connectionStringName);
         AddStores(services);
+        AddBootstrapServices(services, configuration);
     }
 
     private static void AddPersistence(IServiceCollection services,
@@ -53,5 +59,36 @@ public static class DependencyInjection
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
+    }
+
+    private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<BootstrapOptions>(configuration.GetSection("Bootstrap"));
+
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+        services.AddScoped<IClientProvisioningService, ClientProvisioningService>();
+        services.AddScoped<IRoleProvisioningService, RoleProvisioningService>();
+        services.AddScoped<IPermissionSeeder, PermissionSeeder>();
+        services.AddScoped<IUserProvisioningService, UserProvisioningService>();
+        services.AddScoped<IConfigurationSeeder, ConfigurationSeeder>();
+
+        services.AddScoped<ISystemBootstrapper, SystemBootstrapper>();
+    }
+
+    public static async Task EnsureSystemBootstrap(this WebApplication app, string connectionStringName)
+    {
+        var opts = app.Services.GetRequiredService<IOptions<BootstrapOptions>>().Value;
+
+        if (!app.Environment.IsProduction() && opts.Enable)
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                await db.Database.MigrateAsync();
+
+                var bootstrapper = scope.ServiceProvider.GetRequiredService<ISystemBootstrapper>();
+                await bootstrapper.BootstrapAsync(CancellationToken.None, connectionStringName);
+            }
+        }
     }
 }

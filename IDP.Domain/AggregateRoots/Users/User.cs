@@ -12,15 +12,16 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
 
     public int TenantId { get; private set; }
     public UserStatus StatusId { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
-
+    public string FirstName { get; private set; } = default!;
+    public string LastName { get; private set; } = default!;
+    public string? UserCode { get; private set; }    
+    public int EffectiveUserId { get; private set; }
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
     public IReadOnlyCollection<UserContact> UserContacts => _userContacts.AsReadOnly();
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    public virtual Tenant Tenant { get; private set; }
+    public virtual Tenant Tenant { get; private set; } = default!;
 
     protected User() : base() { }
 

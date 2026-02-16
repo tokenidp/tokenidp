@@ -15,8 +15,8 @@ internal sealed class Authentication15MinAsync
             .Where(a =>
                 a.TenantId == tenantId &&
                 a.EventType == ActivityEventType.LoginFailed &&
-                a.CreatedOn >= bucketStart15 &&
-                a.CreatedOn < bucketEnd15)
+                a.CreatedAtUtc >= bucketStart15 &&
+                a.CreatedAtUtc < bucketEnd15)
             .CountAsync(ct);
 
         await DashboardMetricWriter.UpsertAsync(

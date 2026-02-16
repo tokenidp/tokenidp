@@ -1,6 +1,6 @@
 ﻿namespace Admin.Core.Users;
 
-internal class UserDetail
+public class UserDetail
 {
     internal static Expression<Func<User, UserDetail>> Projection =>
     user => new UserDetail()
@@ -77,7 +77,7 @@ internal class UserDetail
     public List<UserContactDetail> Contacts { get; set; } = new();
 }
 
-internal class UserAddressDetail
+public class UserAddressDetail
 {
     public required string AddressType { get; set; }
     public string AddressLine1 { get; set; } = string.Empty;
@@ -89,7 +89,7 @@ internal class UserAddressDetail
     public bool IsActive { get; set; } = true;
 }
 
-internal class UserContactDetail
+public class UserContactDetail
 {
     public string ContactType { get; set; } = string.Empty;
     public string? Relationship { get; set; }

@@ -21,6 +21,7 @@ public partial class Tenant : AggregateRoot<int>
     public SubscriptionTypes? SubscriptionType { get; private set; }
     public AuthenticationModes? AuthenticationMode { get; private set; }
     public bool IsActive { get; private set; }
+    public int EffectiveUserId { get; private set; }
     public virtual ICollection<Client> Clients { get; private set; }
     public virtual ICollection<Configuration> Configurations { get; private set; }
     public virtual ICollection<User> Users { get; private set; }

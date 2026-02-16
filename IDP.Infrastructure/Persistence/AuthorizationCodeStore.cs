@@ -32,7 +32,7 @@ internal sealed class AuthorizationCodeStore : IAuthorizationCodeStore
         return authorizationCode.Id;
     }
 
-    public async Task<AuthorizationCode?> GetByCode(string code)
+    public async Task<AuthorizationCode?> GetByCode(string code, string clientId)
     {
         var cacheKey = CacheKeys.AUTHORIZATION.FormatCacheKey(code);
 
@@ -41,7 +41,8 @@ internal sealed class AuthorizationCodeStore : IAuthorizationCodeStore
         if (authorizationCode == null)
         {
             authorizationCode = await _applicationDbContext.AuthorizationCodes
-                .FirstOrDefaultAsync(x => x.Code == code && x.Expiry > DateTime.UtcNow && !x.IsUsed);
+                .FirstOrDefaultAsync(x => x.ClientId == clientId && x.Code == code
+                && x.Expiry > DateTime.UtcNow && !x.IsUsed);
         }
 
         return authorizationCode;

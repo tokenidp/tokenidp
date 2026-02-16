@@ -6,38 +6,99 @@ namespace Notification.Core.Config;
 
 public sealed class EmailMessageConfig : IEntityTypeConfiguration<EmailMessage>
 {
-    public void Configure(EntityTypeBuilder<EmailMessage> b)
+    public void Configure(EntityTypeBuilder<EmailMessage> builder)
     {
-        b.ToTable("EmailMessage", "dbo");
-        b.HasKey(x => x.Id);
+        builder.ToTable("EmailMessages");
 
-        b.Property(x => x.MessageKey).HasMaxLength(120).IsRequired();
-        b.HasIndex(x => new { x.TenantId, x.MessageKey }).IsUnique();
+        builder.HasKey(x => x.Id);
 
-        b.Property(x => x.Provider).HasMaxLength(30);
-        b.Property(x => x.FromAddress).HasMaxLength(150);
-        b.Property(x => x.FromName).HasMaxLength(100);
-        b.Property(x => x.Subject).HasMaxLength(250);
-        b.Property(x => x.TemplateKey).HasMaxLength(100);
-        b.Property(x => x.Tags).HasMaxLength(250);
+        builder.Property(x => x.Id)
+            .ValueGeneratedOnAdd();
 
-        b.Property(x => x.Status).HasConversion<byte>();
-        b.Property(x => x.PayloadMode).HasConversion<byte>();
+        builder.Property(x => x.MessageKey)
+            .HasMaxLength(120)
+            .IsRequired();
 
-        b.HasMany(x => x.Recipients)
+        builder.Property(x => x.Provider)
+            .HasMaxLength(30);
+
+        builder.Property(x => x.FromAddress)
+            .HasMaxLength(150);
+
+        builder.Property(x => x.FromName)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.Subject)
+            .HasMaxLength(250);
+
+        builder.Property(x => x.TemplateKey)
+            .HasMaxLength(100);
+
+        builder.Property(x => x.ProviderMessageId)
+            .HasMaxLength(200);
+
+        builder.Property(x => x.Tags)
+            .HasMaxLength(250);
+
+        builder.Property(x => x.LastError)
+            .HasMaxLength(2000);
+
+        builder.Property(x => x.CancelReason)
+            .HasMaxLength(500);
+
+        builder.Property(x => x.CreatedAtUtc)
+            .IsRequired();
+
+        builder.Property(x => x.CreatedBy)
+           .IsRequired();
+
+        builder.Property(x => x.AttemptCount)
+            .IsRequired();
+
+        builder.Property(x => x.MaxAttempts)
+            .IsRequired();
+
+        builder.Property(x => x.Status).HasConversion<byte>();
+        builder.Property(x => x.PayloadMode).HasConversion<byte>();
+
+        builder.HasMany(x => x.Recipients)
         .WithOne()
         .HasForeignKey(a => a.EmailMessageId)
         .OnDelete(DeleteBehavior.Cascade);
 
-        b.Navigation(x => x.Recipients)
+        builder.Navigation(x => x.Recipients)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        b.HasMany(x => x.Attachments)
+        builder.HasMany(x => x.Attachments)
         .WithOne()
         .HasForeignKey(a => a.EmailMessageId)
         .OnDelete(DeleteBehavior.Cascade);
 
-        b.Navigation(x => x.Attachments)
+        builder.Navigation(x => x.Attachments)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
+
+        // Optional: idempotency / deduplication
+        builder.HasIndex(x => new { x.TenantId, x.MessageKey })
+            .IsUnique()
+            .HasDatabaseName("IX_EmailMessages_Tenant_MessageKey");
+
+        // Worker dequeue hot path
+        builder.HasIndex(x => new
+        {
+            x.Status,
+            x.NextAttemptAtUtc,
+            x.LockedUntilUtc,
+            x.Priority,
+            x.CreatedAtUtc
+        })
+        .HasDatabaseName("IX_EmailMessages_Dequeue");
+
+        // Tenant admin filtering
+        builder.HasIndex(x => new { x.TenantId, x.Status, x.CreatedAtUtc })
+            .HasDatabaseName("IX_EmailMessages_Tenant_Status_Time");
+
+        // Retry scheduling
+        builder.HasIndex(x => new { x.Status, x.NextAttemptAtUtc })
+            .HasDatabaseName("IX_EmailMessages_Retry");
     }
 }

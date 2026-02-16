@@ -1,6 +1,6 @@
 namespace Admin.Core.Roles;
 
-internal class CreateUpdateRole
+public class CreateUpdateRole
 {
     public int Id { get; set; }
     public required string RoleName { get; set; }

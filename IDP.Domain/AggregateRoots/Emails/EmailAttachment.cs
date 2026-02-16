@@ -13,6 +13,8 @@ public sealed class EmailAttachment
     public byte[]? Content { get; private set; }
     public string? BlobPath { get; private set; }
 
+    public EmailMessage EmailMessage { get; private set; } = default!;
+
     private EmailAttachment() { }
 
     public static EmailAttachment Inline(string fileName, string contentType, byte[] content)

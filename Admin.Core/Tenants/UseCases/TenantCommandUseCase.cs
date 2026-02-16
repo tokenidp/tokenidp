@@ -122,6 +122,7 @@ internal sealed class TenantCommandUseCase
         if (tenant == null)
         {
             _logger.LogWarning("Tenant not found for update: {TenantId}", id);
+
             return ApiResult<int>.Failure(ApiError.Failure("NotFound",
                 "Tenant not found for the Id {0}".FormatString(id)));
         }

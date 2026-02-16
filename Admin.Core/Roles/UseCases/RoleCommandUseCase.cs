@@ -54,7 +54,7 @@ internal class RoleCommandUseCase
         foreach (var permission in permissions)
         {
             var permissionResult = role.AddPermission(
-                tenantPermissionId: permission.TenantPermissionId,
+                tenantPermissionId: permission.PermissionId,
                 permissionKey: permission.PermissionKey,
                 isAllowed: permission.IsAllowed
             );
@@ -147,7 +147,7 @@ internal class RoleCommandUseCase
             if (existingPermission is null)
             {
                 permissionResult = role.AddPermission(
-                    tenantPermissionId: permission.TenantPermissionId,
+                    tenantPermissionId: permission.PermissionId,
                     permissionKey: permission.PermissionKey,
                     isAllowed: permission.IsAllowed);
             }

@@ -19,8 +19,9 @@ public class Role : IdentityRole<int>, IAggregateRoot, ITenant
     public int? UpdatedBy { get; private set; }
     public DateTime? UpdatedAtUtc { get; private set; }
 
+    public int EffectiveUserId { get; private set; }
+
     public IReadOnlyCollection<RolePermission> RolePermissions => _rolePermissions.AsReadOnly();
-    public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public Role() : base() { }

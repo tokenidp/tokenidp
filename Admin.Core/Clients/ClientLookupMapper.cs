@@ -1,4 +1,6 @@
-﻿namespace Admin.Core.Clients;
+﻿using IDP.Domain.AggregateRoots.Emails;
+
+namespace Admin.Core.Clients;
 
 internal static class ClientLookupMapper
 {
@@ -31,6 +33,25 @@ internal static class ClientLookupMapper
             {
                 Key = scope,
                 Value = scope
+            })
+            .ToList();
+    }
+
+    public static List<LookupItem> MapGrantTypes()
+    {
+        return Enum.GetValues<GrantTypes>()
+            .Select(value => new LookupItem
+            {
+                Key = value.ToString(),
+                Value = value switch
+                {
+                    GrantTypes.authorization_code => "Authorization Code",
+                    GrantTypes.client_credentials => "Client Credentials",
+                    GrantTypes.refresh_token => "Refresh Token",
+                    GrantTypes.device_code => "Device Code",
+                    GrantTypes.ciba => "Ciba",
+                    _ => value.ToString()
+                }
             })
             .ToList();
     }

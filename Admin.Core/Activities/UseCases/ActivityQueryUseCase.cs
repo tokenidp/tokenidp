@@ -67,7 +67,7 @@ internal sealed class ActivityQueryUseCase
         if (!string.IsNullOrWhiteSpace(startDateCriteria?.Value) &&
             DateTime.TryParse(startDateCriteria.Value, out var startDate))
         {
-            query = query.Where(activity => activity.CreatedOn >= startDate.Date);
+            query = query.Where(activity => activity.CreatedAtUtc >= startDate.Date);
         }
 
         var endDateCriteria = criterias.FirstOrDefault(c =>
@@ -77,7 +77,7 @@ internal sealed class ActivityQueryUseCase
             DateTime.TryParse(endDateCriteria.Value, out var endDate))
         {
             var inclusiveEnd = endDate.Date.AddDays(1).AddTicks(-1);
-            query = query.Where(activity => activity.CreatedOn <= inclusiveEnd);
+            query = query.Where(activity => activity.CreatedAtUtc <= inclusiveEnd);
         }
 
         criterias = criterias

@@ -30,7 +30,8 @@ internal sealed class ClientLookupsUseCase
             {
                 AppTypes = ClientLookupMapper.MapAppTypes(),
                 TokenTypes = ClientLookupMapper.MapTokenTypes(),
-                ClientScopes = ClientLookupMapper.MapClientScopes()
+                ClientScopes = ClientLookupMapper.MapClientScopes(),
+                GrantTypes = ClientLookupMapper.MapGrantTypes()
             }),
             TimeSpan.FromMinutes(10));
 

@@ -2,31 +2,17 @@
 
 public class UserContact : Entity<int>
 {
-    [Required]
     public int UserId { get; private set; }
-    [MaxLength(50)]
     public string? Relationship { get; private set; } // e.g., Parent, Spouse, Guardian
-    [Required, MaxLength(50)]
     public string ContactType { get; private set; } = null!; // e.g., Email, Mobile, WorkPhone
-    [MaxLength(256)]
-    public string? Email { get; private set; }
-    [Required, MaxLength(50)]
-    public string? PhoneNumber { get; private set; }
-    [MaxLength(200)]
+    public string Email { get; private set; } = default!;
+    public string PhoneNumber { get; private set; } = default!;
     public string? AddressLine1 { get; private set; }
-    [MaxLength(200)]
     public string? AddressLine2 { get; private set; }
-    [MaxLength(100)]
     public string? City { get; private set; }
-
-    [MaxLength(100)]
     public string? State { get; private set; }
-    [MaxLength(20)]
     public string? PostalCode { get; private set; }
-    [MaxLength(100)]
     public string? Country { get; private set; }
-
-    [Required]
     public bool IsActive { get; private set; } = true;
 
     public virtual User User { get; private set; } = default!;
@@ -36,8 +22,8 @@ public class UserContact : Entity<int>
     private UserContact(
         string contactType,
         string? relationship,
-        string? email,
-        string? phoneNumber,
+        string email,
+        string phoneNumber,
         string? addressLine1,
         string? addressLine2,
         string? city,
@@ -62,8 +48,8 @@ public class UserContact : Entity<int>
     public static Result Create(
         string contactType,
         string? relationship,
-        string? email,
-        string? phoneNumber,
+        string email,
+        string phoneNumber,
         string? addressLine1,
         string? addressLine2,
         string? city,
@@ -84,8 +70,8 @@ public class UserContact : Entity<int>
         contact = new UserContact(
             contactType.Trim(),
             relationship?.Trim(),
-            email?.Trim(),
-            phoneNumber?.Trim(),
+            email.Trim(),
+            phoneNumber.Trim(),
             addressLine1?.Trim(),
             addressLine2?.Trim(),
             city?.Trim(),

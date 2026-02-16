@@ -2,13 +2,44 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Admin.Core.Tenants;
 
-internal class CreateUpdateTenant
+public class CreateUpdateTenant
 {
+    public CreateUpdateTenant(string tenantName, 
+        string? tenantCode, 
+        string? email, 
+        string? theme, 
+        string? logoUrl,
+        string? primaryColor, 
+        string? defaultLanguage, 
+        string? loginText, 
+        bool? twoFactorEnabled, 
+        int? twoFactorCodeExpiry, 
+        string? homePageUrl, 
+        bool isActive, 
+        TenantTypes tenantType, 
+        SubscriptionTypes subscriptionType,
+        AuthenticationModes authenticationMode)
+    {
+        TenantName = tenantName;
+        TenantCode = tenantCode;
+        Email = email;
+        Theme = theme;
+        LogoUrl = logoUrl;
+        PrimaryColor = primaryColor;
+        DefaultLanguage = defaultLanguage;
+        LoginText = loginText;
+        TwoFactorEnabled = twoFactorEnabled;
+        TwoFactorCodeExpiry = twoFactorCodeExpiry;
+        HomePageUrl = homePageUrl;
+        IsActive = isActive;
+        TenantType = tenantType;
+        SubscriptionType = subscriptionType;
+        AuthenticationMode = authenticationMode;
+    }
+
     public int Id { get; set; }
-    [Required]
-    public required string TenantName { get; set; }
-    public string? TenantCode { get; set; }
-    [EmailAddress]
+    public string TenantName { get; set; }
+    public string TenantCode { get; set; } = string.Empty;
     public string? Email { get; set; }
     public string? Theme { get; set; }
     public string? LogoUrl { get; set; }

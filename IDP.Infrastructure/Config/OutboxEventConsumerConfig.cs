@@ -10,14 +10,35 @@ internal sealed class OutboxEventConsumerConfig
         builder.ToTable("OutboxEventConsumers");
 
         builder.HasKey(x => x.Id);
+        builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
-        builder.HasOne(e => e.OutboxEvent)
+        builder.Property(x => x.OutboxEventId).IsRequired();
+        builder.Property(x => x.ConsumerName).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Status).IsRequired();
+        builder.Property(x => x.RetryCount).IsRequired();
+
+        builder.HasOne<OutboxEvent>()
             .WithMany(e => e.OutboxEventConsumers)
-            .HasForeignKey(ur => ur.OutboxEventId)
-            .IsRequired();
+            .HasForeignKey(x => x.OutboxEventId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Property(p => p.Status)
-            .HasConversion<byte>();
+        // Exactly-once per consumer per event
+        builder.HasIndex(x => new { x.OutboxEventId, x.ConsumerName })
+            .IsUnique()
+            .HasDatabaseName("IX_OutboxEventConsumers_Event_Consumer");
+
+        // Worker dequeue hot path
+        builder.HasIndex(x => new
+        {
+            x.Status,
+            x.NextAttemptAt,
+            x.LockedUntil
+        })
+        .HasDatabaseName("IX_OutboxEventConsumers_Dequeue");
+
+        // Consumer-specific debugging
+        builder.HasIndex(x => new { x.ConsumerName, x.Status, x.NextAttemptAt })
+            .HasDatabaseName("IX_OutboxEventConsumers_ByConsumer");
     }
 }
 

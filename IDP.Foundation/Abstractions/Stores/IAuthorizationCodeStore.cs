@@ -6,5 +6,5 @@ public interface IAuthorizationCodeStore
 
     Task<int> Update(AuthorizationCode authorizationCode);
 
-    Task<AuthorizationCode?> GetByCode(string code);
+    Task<AuthorizationCode?> GetByCode(string code, string clientId);
 }

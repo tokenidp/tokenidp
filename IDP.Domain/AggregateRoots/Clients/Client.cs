@@ -25,6 +25,7 @@ public class Client : AggregateRoot<int>, ITenant
     public virtual ICollection<ClientGrantType> ClientGrantTypes { get; private set; } = default!;
     public virtual ICollection<ClientSecret> ClientSecrets { get; private set; } = default!;
     public virtual ICollection<ClientAudience> ClientAudiences { get; private set; } = default!;
+    public virtual ICollection<ClientApiResource> ClientApiResources { get; private set; } = default!;
 
     private Client()
     {

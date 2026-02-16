@@ -74,7 +74,7 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddHttpContextAccessor();
 
-        builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+        builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
 
         builder.Services.AddScoped<LoadService>();
 
