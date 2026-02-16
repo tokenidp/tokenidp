@@ -1,7 +1,8 @@
-﻿namespace IDP.Domain.AggregateRoots.Emails;
+﻿namespace Notification.Core.Templates;
 
-public sealed class EmailTemplate : AggregateRoot<long>, ITenant
-{           
+public sealed class EmailTemplate
+{   
+    public int Id { get; private set; }
     public int TenantId { get; private set; }
     public string TemplateKey { get; private set; } = string.Empty;
 
@@ -11,6 +12,11 @@ public sealed class EmailTemplate : AggregateRoot<long>, ITenant
 
     public bool IsActive { get; private set; }
     public int Version { get; private set; }
+
+    public int CreatedBy { get; private set; }
+    public DateTime CreatedAtUtc { get; private set; }
+    public int? UpdatedBy { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
 
     private EmailTemplate() { } // for ORM
 
