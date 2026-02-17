@@ -10,7 +10,6 @@ var logger = LogManager.Setup()
 
 try
 {
-
     var builder = WebApplication.CreateBuilder(args);
 
     // Remove default providers
@@ -60,10 +59,9 @@ try
     app.MapRazorComponents<App>()
        .AddInteractiveServerRenderMode();
 
-    app.UseTokenTresor();
+    await app.UseTokenTresorAsync("Identity_DB");
 
     await app.RunAsync();
-
 }
 catch (Exception ex)
 {

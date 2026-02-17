@@ -3,23 +3,35 @@ using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Users;
 
-public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
+public partial class User : AggregateRoot<int>, ITenant
 {
     private readonly List<UserRole> _userRoles = new();
     private readonly List<UserAddress> _userAddresses = new();
     private readonly List<UserContact> _userContacts = new();
-    private readonly List<IDomainEvent> _domainEvents = new();
 
+    public string UserName { get; private set; } = default!;
+    public string NormalizedUserName { get; private set; } = default!;
+    public string Email { get; private set; } = default!;
+    public bool EmailConfirmed { get; private set; }
+    public string NormalizedEmail { get; private set; } = default!;
+    public string PasswordHash { get; private set; } = default!;
+    public int AccessFailedCount { get; private set; }
+    public string? PhoneNumber { get; private set; }
+    public bool PhoneNumberConfirmed { get; private set; }
+    public bool TwoFactorEnabled { get; private set; }
+    public bool LockoutEnabled { get; private set; }
+    public DateTimeOffset? LockoutEnd { get; private set; }
+    public string SecurityStamp { get; private set; } = Guid.NewGuid().ToString("N");
+    public string ConcurrencyStamp { get; private set; } = Guid.NewGuid().ToString("N");
     public int TenantId { get; private set; }
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; } = default!;
     public string LastName { get; private set; } = default!;
-    public string? UserCode { get; private set; }    
+    public string? UserCode { get; private set; }
     public int EffectiveUserId { get; private set; }
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
     public IReadOnlyCollection<UserContact> UserContacts => _userContacts.AsReadOnly();
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public virtual Tenant Tenant { get; private set; } = default!;
 
@@ -48,16 +60,6 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
         StatusId = UserStatus.Active;
 
         SyncRoles(roles);
-    }
-
-    public void AddDomainEvent(IDomainEvent domainEvent)
-    {
-        _domainEvents.Add(domainEvent);
-    }
-
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
     }
 
     public Result UpdateProfile(
@@ -164,6 +166,21 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
         return Result.Success(0);
     }
 
+    public void ApplyIdentityFlags(bool lookoutEnabled, 
+        bool twoFactorEnabled, 
+        bool emailConfirmed, 
+        bool phoneNumberConfirmed, 
+        int accessFailedCount,
+        DateTimeOffset? lookoutEnd)
+    {
+        LockoutEnabled = lookoutEnabled;
+        TwoFactorEnabled = twoFactorEnabled;
+        EmailConfirmed = emailConfirmed;
+        PhoneNumberConfirmed = phoneNumberConfirmed;
+        AccessFailedCount = accessFailedCount;
+        LockoutEnd = lookoutEnd;
+    }
+
     private void SyncRoles(IEnumerable<int> roles)
     {
         var desiredRoles = new HashSet<int>(roles ?? Array.Empty<int>());
@@ -213,15 +230,17 @@ public partial class User : IdentityUser<int>, IAggregateRoot, ITenant
             ? Result.Failure(code, message)
             : Result.Success(0);
     }
+
+    public void SetPasswordHash(string hash) => PasswordHash = hash;
+    public void IncrementAccessFailed() => AccessFailedCount++;
+    public void ResetAccessFailed() => AccessFailedCount = 0;
+    public void LockUntil(DateTimeOffset until) => LockoutEnd = until;
+    public bool IsLockedOut() => LockoutEnabled && LockoutEnd.HasValue && LockoutEnd > DateTimeOffset.UtcNow;
+    public void RotateSecurityStamp() => SecurityStamp = Guid.NewGuid().ToString("N");
 }
 
 public partial class User
 {
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedAtUtc { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedAtUtc { get; private set; }
-
     public string FullName
     {
         get
@@ -259,9 +278,7 @@ public partial class User
             userAgent);
     }
 
-    public void LockAccount(
-        string reason,
-        Guid correlationId)
+    public void LockAccount(string reason, Guid correlationId)
     {
         LockoutEnabled = true;
 
@@ -301,9 +318,7 @@ public partial class User
             userAgent);
     }
 
-    public void MarkMfaChallengeSent(
-        Guid correlationId,
-        string? ipAddress)
+    public void MarkMfaChallengeSent(Guid correlationId, string? ipAddress)
     {
         RecordAuthenticationEvent(
             AuthenticationAction.MfaChallenge,
@@ -314,9 +329,7 @@ public partial class User
             userAgent: "system");
     }
 
-    public void MarkMfaValidated(
-        Guid correlationId,
-        string? ipAddress)
+    public void MarkMfaValidated(Guid correlationId, string? ipAddress)
     {
         RecordAuthenticationEvent(
             AuthenticationAction.MfaChallenge,
@@ -347,18 +360,6 @@ public partial class User
             correlationId,
             ipAddress: "system",
             userAgent: "system");
-    }
-
-    public void SetCreated(int userId)
-    {
-        CreatedAtUtc = DateTime.UtcNow;
-        CreatedBy = userId;
-    }
-
-    public void SetUpdated(int userId)
-    {
-        UpdatedAtUtc = DateTime.UtcNow;
-        UpdatedBy = userId;
     }
 
     private void RecordAuthenticationEvent(

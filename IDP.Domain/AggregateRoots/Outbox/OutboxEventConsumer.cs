@@ -1,6 +1,6 @@
 ﻿namespace IDP.Domain.AggregateRoots.Outbox;
 
-public sealed class OutboxEventConsumer
+public class OutboxEventConsumer
 {
     public long Id { get; private set; }
     public long OutboxEventId { get; private set; }
@@ -14,7 +14,7 @@ public sealed class OutboxEventConsumer
     public string? LockedBy { get; private set; }
     public string? LastError { get; private set; }
 
-    public OutboxEvent OutboxEvent { get; private set; } = default!;
+    public virtual OutboxEvent OutboxEvent { get; private set; } = default!;
 
     private OutboxEventConsumer() { }
 

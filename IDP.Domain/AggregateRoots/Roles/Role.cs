@@ -1,28 +1,23 @@
 ﻿
 namespace IDP.Domain.AggregateRoots.Roles;
 
-public class Role : IdentityRole<int>, IAggregateRoot, ITenant
+public class Role : AggregateRoot<int>, ITenant
 {
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
-    private readonly List<IDomainEvent> _domainEvents = new();
 
+    public string? Name { get; set; }
+    public string? NormalizedName { get; set; }
+    public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }
     public string RoleDescription { get; private set; }
-
     public bool IsActive { get; private set; }
     public bool IsEditable { get; private set; }
     public bool IsDeleted { get; private set; }
 
-    public int CreatedBy { get; private set; }
-    public DateTime CreatedAtUtc { get; private set; }
-    public int? UpdatedBy { get; private set; }
-    public DateTime? UpdatedAtUtc { get; private set; }
-
     public int EffectiveUserId { get; private set; }
 
     public IReadOnlyCollection<RolePermission> RolePermissions => _rolePermissions.AsReadOnly();
-    public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public Role() : base() { }
 
@@ -38,16 +33,6 @@ public class Role : IdentityRole<int>, IAggregateRoot, ITenant
         IsActive = isActive;
         IsDeleted = false;
         IsEditable = true;
-    }
-
-    public void AddDomainEvent(IDomainEvent domainEvent)
-    {
-        _domainEvents.Add(domainEvent);
-    }
-
-    public void ClearDomainEvents()
-    {
-        _domainEvents.Clear();
     }
 
     public Result Update(string name,
@@ -186,17 +171,5 @@ public class Role : IdentityRole<int>, IAggregateRoot, ITenant
         }
 
         return Result.Success(id: 0);
-    }
-
-    public void SetCreated(int userId)
-    {
-        CreatedAtUtc = DateTime.UtcNow;
-        CreatedBy = userId;
-    }
-
-    public void SetUpdated(int userId)
-    {
-        UpdatedAtUtc = DateTime.UtcNow;
-        UpdatedBy = userId;
     }
 }

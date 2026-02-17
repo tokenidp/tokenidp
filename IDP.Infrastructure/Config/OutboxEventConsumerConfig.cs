@@ -17,10 +17,10 @@ internal sealed class OutboxEventConsumerConfig
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.RetryCount).IsRequired();
 
-        builder.HasOne<OutboxEvent>()
+        builder.HasOne(o => o.OutboxEvent)
             .WithMany(e => e.OutboxEventConsumers)
             .HasForeignKey(x => x.OutboxEventId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
         // Exactly-once per consumer per event
         builder.HasIndex(x => new { x.OutboxEventId, x.ConsumerName })

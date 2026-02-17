@@ -1,30 +1,31 @@
 ﻿using Admin.Core.Permissions;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace Admin.Core.Users.UseCases;
 
 internal class UserPermissionsUseCase
 {
-    private readonly UserManager<User> _userManager;
+    private readonly IIdentityStore _identityStore;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<UserPermissionsUseCase> _logger;
 
     public UserPermissionsUseCase(ICurrentUserService currentUserService,
-        UserManager<User> userManager,
         IApplicationDbContext applicationDbContext,
-        IAppLogger<UserPermissionsUseCase> logger)
+        IAppLogger<UserPermissionsUseCase> logger,
+        IIdentityStore identityStore)
     {
         _currentUserService = currentUserService;
-        _userManager = userManager;
         _dbContext = applicationDbContext;
         _logger = logger;
+        _identityStore = identityStore;
     }
 
     public async Task<ApiResult<UserPermission>> GetUserPermissions()
     {
         _logger.LogDebug("Fetching user info for: {UserId}", _currentUserService.UserId);
 
-        var user = await _userManager.FindByIdAsync(_currentUserService.UserId.ToString());
+        var user = await _identityStore.GetUserById(_currentUserService.UserId);
 
         if (user == null)
         {

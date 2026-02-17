@@ -2,7 +2,7 @@
 
 namespace IDP.Domain.AggregateRoots.Outbox;
 
-public sealed class OutboxEvent : AggregateRoot<long>
+public class OutboxEvent : AggregateRoot<long>
 {
     private readonly List<OutboxEventConsumer> _consumers = new();
 

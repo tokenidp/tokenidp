@@ -1,5 +1,6 @@
 ﻿using Admin.Core.Activities.UseCases;
 using Admin.Core.Clients.UseCases;
+using Admin.Core.Common;
 using Admin.Core.Configurations;
 using Admin.Core.Dashboard;
 using Admin.Core.Permissions.UseCases;
@@ -56,5 +57,12 @@ public static class DependencyInjection
         services.AddScoped<ActivityLookupsUseCase>();
 
         services.AddScoped<DashboardQueryUseCase>();
+
+        services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<ILookupNormalizer, UpperInvariantLookupNormalizer>();
+
+        services.AddScoped<PasswordService>();
+        services.AddScoped<UserNormalizationService>();
+        services.AddScoped<LockoutPolicy>();
     }
 }

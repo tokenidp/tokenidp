@@ -8,5 +8,13 @@ public interface IIdentityStore
 
     Task<UserShortInfo> GetUserShortInfo(int id);
 
-    Task<int> SaveChangesAsync();
+    Task<int> CreateUser(User user, string password);
+
+    Task<int> UpdateUser(User user);
+
+    Task<User?> GetUserAggregateAsync(int id, CancellationToken ct);
+
+    Task<bool> EmailExistsAsync(int excludeUserId, string normalizedEmail, CancellationToken ct);
+
+    Task<bool> UserNameExistsAsync(int excludeUserId, string normalizedUserName, CancellationToken ct);
 }

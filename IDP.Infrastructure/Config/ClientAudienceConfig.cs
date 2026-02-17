@@ -13,10 +13,10 @@ internal class ClientAudienceConfig : IEntityTypeConfiguration<ClientAudience>
         builder.Property(x => x.Name).HasMaxLength(50).IsRequired();
         builder.Property(x => x.IsActive).IsRequired();
 
-        builder.HasOne<Client>()
+        builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientAudiences)
             .HasForeignKey(x => x.ClientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
         builder.HasIndex(x => new { x.ClientId, x.Name })
             .IsUnique()

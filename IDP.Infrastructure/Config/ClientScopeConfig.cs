@@ -11,10 +11,10 @@ internal class ClientScopeConfig : IEntityTypeConfiguration<ClientScope>
 
         builder.Property(x => x.Scope).HasMaxLength(50).IsRequired();
 
-        builder.HasOne<Client>()
+        builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientScopes)
             .HasForeignKey(x => x.ClientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
         // Prevent duplicate grant types per client
         builder.HasIndex(x => new { x.ClientId, x.Scope })

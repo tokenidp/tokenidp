@@ -5,11 +5,10 @@ using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
 using IDP.Domain.ReadModels;
 using IDP.Infrastructure.Abstractions;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace IDP.Infrastructure.Persistence;
 
-public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, IApplicationDbContext
+public partial class ApplicationDbContext : DbContext, IApplicationDbContext
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
@@ -57,6 +56,8 @@ public partial class ApplicationDbContext : IdentityDbContext<User, Role, int>, 
     public DbSet<RoleSearch> RolesSearch { get; set; }
     public DbSet<TenantSearch> TenantsSearch { get; set; }
     public DbSet<ConfigurationSearch> ConfigurationsSearch { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }

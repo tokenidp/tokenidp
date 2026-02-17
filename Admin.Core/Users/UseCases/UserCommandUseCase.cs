@@ -1,23 +1,21 @@
-﻿using Admin.Core.Common;
+﻿using IDP.Foundation.Abstractions.Stores;
 
 namespace Admin.Core.Users.UseCases;
 
 internal class UserCommandUseCase
 {
-    private readonly UserManager<User> _userManager;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IIdentityStore _identityStore;
     private readonly IAppLogger<UserCommandUseCase> _logger;
 
     public UserCommandUseCase(ICurrentUserService currentUserService,
         UserManager<User> userManager,
-        IApplicationDbContext applicationDbContext,
-        IAppLogger<UserCommandUseCase> logger)
+        IAppLogger<UserCommandUseCase> logger,
+        IIdentityStore identityStore)
     {
         _currentUserService = currentUserService;
-        _userManager = userManager;
-        _dbContext = applicationDbContext;
         _logger = logger;
+        _identityStore = identityStore;
     }
 
     public async Task<ApiResult<int>> CreateUser(
@@ -35,12 +33,8 @@ internal class UserCommandUseCase
         var normalizedUserName = request.UserName.Trim();
         var normalizedEmail = request.Email.Trim();
 
-        var userNameExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.UserName != null &&
-                u.UserName.ToLower() == normalizedUserName.ToLower(),
-                cancellationToken);
+        var userNameExists = await _identityStore
+            .UserNameExistsAsync(0, normalizedUserName, cancellationToken);
 
         if (userNameExists)
         {
@@ -48,12 +42,7 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.username.duplicate", "User name already exists."));
         }
 
-        var emailExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.Email != null &&
-                u.Email.ToLower() == normalizedEmail.ToLower(),
-                cancellationToken);
+        var emailExists = await _identityStore.EmailExistsAsync(0, normalizedEmail, cancellationToken);
 
         if (emailExists)
         {
@@ -83,7 +72,12 @@ internal class UserCommandUseCase
             user.UpdateStatus(parsedStatus);
         }
 
-        ApplyIdentityFlags(user, request);
+        user.ApplyIdentityFlags(request.LockoutEnabled,
+                            request.TwoFactorEnabled,
+                            request.EmailConfirmed,
+                            request.PhoneNumberConfirmed,
+                            request.AccessFailedCount,
+                            request.LockoutEnd);
 
         var addressResult = BuildAddresses(request.Addresses, out var addresses);
         if (!addressResult.IsSuccess)
@@ -100,11 +94,11 @@ internal class UserCommandUseCase
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
 
-        var result = await _userManager.CreateAsync(user, request.Password);
+        var result = await _identityStore.CreateUser(user, request.Password);
 
         _logger.LogInfo("User created with Id {UserId}", user.Id);
 
-        return result.ToApiResult(user.Id);
+        return ApiResult<int>.Success(user.Id);
     }
 
     public async Task<ApiResult<int>> UpdateUser(
@@ -114,11 +108,7 @@ internal class UserCommandUseCase
     {
         _logger.LogDebug("Updating user {UserId}", id);
 
-        var user = await _dbContext.Users
-            .Include(u => u.UserRoles)
-            .Include(u => u.UserAddresses)
-            .Include(u => u.UserContacts)
-            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        var user = await _identityStore.GetUserAggregateAsync(id, cancellationToken);
 
         if (user == null)
         {
@@ -134,13 +124,7 @@ internal class UserCommandUseCase
         }
 
         var normalizedEmail = request.Email.Trim();
-        var emailExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.Id != id &&
-                u.Email != null &&
-                u.Email.ToLower() == normalizedEmail.ToLower(),
-                cancellationToken);
+        var emailExists = await _identityStore.EmailExistsAsync(id, normalizedEmail, cancellationToken);
 
         if (emailExists)
         {
@@ -175,7 +159,12 @@ internal class UserCommandUseCase
 
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
-        ApplyIdentityFlags(user, request);
+        user.ApplyIdentityFlags(request.LockoutEnabled,
+            request.TwoFactorEnabled,
+            request.EmailConfirmed,
+            request.PhoneNumberConfirmed,
+            request.AccessFailedCount,
+            request.LockoutEnd);
 
         if (!string.IsNullOrWhiteSpace(request.Status) &&
             Enum.TryParse<UserStatus>(request.Status, true, out var parsedStatus))
@@ -183,11 +172,11 @@ internal class UserCommandUseCase
             user.UpdateStatus(parsedStatus);
         }
 
-        var result = await _userManager.UpdateAsync(user);
+        var result = await _identityStore.UpdateUser(user);
 
         _logger.LogInfo("User updated {UserId}", id);
 
-        return result.ToApiResult(user.Id);
+        return ApiResult<int>.Success(user.Id);
     }
 
     public async Task<ApiResult<int>> UpdateUserStatus(
@@ -197,40 +186,29 @@ internal class UserCommandUseCase
     {
         _logger.LogDebug("Updating user status for {UserId}", id);
 
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+        var user = await _identityStore.GetUserById(id);
 
         if (user == null)
         {
             _logger.LogWarning("User not found for status update: {UserId}", id);
+
             return ApiResult<int>.Failure(ApiError.Failure("NotFound",
                 "User not found for the Id {0}".FormatString(id)));
         }
 
         user.UpdateStatus(request.Status);
 
-        var result = await _userManager.UpdateAsync(user);
+        var result = await _identityStore.UpdateUser(user);
 
         _logger.LogInfo("User status updated {UserId}", id);
 
-        return result.ToApiResult(user.Id);
+        return ApiResult<int>.Success(user.Id);
     }
 
     private static ApiResult<int> FailureFromResult(Result result)
     {
         return ApiResult<int>.Failure(
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
-    }
-
-    private static void ApplyIdentityFlags(User user, UserDetail request)
-    {
-        user.LockoutEnabled = request.LockoutEnabled;
-        user.TwoFactorEnabled = request.TwoFactorEnabled;
-        user.EmailConfirmed = request.EmailConfirmed;
-        user.PhoneNumberConfirmed = request.PhoneNumberConfirmed;
-
-        user.AccessFailedCount = request.AccessFailedCount;
-
-        user.LockoutEnd = request.LockoutEnd;
     }
 
     private static Result BuildAddresses(

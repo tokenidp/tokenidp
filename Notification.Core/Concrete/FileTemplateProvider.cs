@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.AggregateRoots.Emails;
+using Notification.Core.Templates;
 
 namespace Notification.Core.Concrete;
 internal sealed class FileTemplateProvider

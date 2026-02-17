@@ -113,7 +113,7 @@ public static class ApplicationBuilderExtensions
         return builder;
     }
 
-    public static WebApplication UseTokenTresor(this WebApplication app)
+    public static async Task<WebApplication> UseTokenTresorAsync(this WebApplication app, string connectionStringName = "")
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -124,6 +124,8 @@ public static class ApplicationBuilderExtensions
         app.RegisterAdminEndpoints();
 
         //app.MapHealthChecks("/health");
+
+        await app.EnsureSystemBootstrap(connectionStringName);
 
         app.MapHealthChecks("/health", new HealthCheckOptions
         {

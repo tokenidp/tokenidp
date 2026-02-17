@@ -14,10 +14,10 @@ public sealed class ClientSecretConfig : IEntityTypeConfiguration<ClientSecret>
         builder.Property(x => x.ExpiresAt).IsRequired();
         builder.Property(x => x.IsRevoked).IsRequired();
 
-        builder.HasOne<Client>()
+        builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientSecrets)
             .HasForeignKey(x => x.ClientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
         // Hot path: validate active secret for client
         builder.HasIndex(x => new { x.ClientId, x.IsRevoked, x.ExpiresAt })

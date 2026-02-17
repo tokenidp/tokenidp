@@ -1,18 +1,22 @@
 ﻿using Admin.Core.Bootstrap;
+using Admin.Core.Common;
 using Admin.Core.Users;
 
 namespace IDP.Infrastructure.Bootstrap;
 
 internal class UserProvisioningService : IUserProvisioningService
 {
-    private readonly UserManager<User> _userManager;
+    private readonly PasswordService _passwordService;
 
-    public UserProvisioningService(UserManager<User> userManager)
+    public UserProvisioningService(PasswordService passwordService)
     {
-        _userManager = userManager;
+        _passwordService = passwordService;
     }
 
-    public async Task<User> CreateAsync(IApplicationDbContext db, int tenantId, UserDetail command, CancellationToken ct)
+    public async Task<User> CreateAsync(IApplicationDbContext db, 
+        int tenantId, 
+        UserDetail command, 
+        CancellationToken ct)
     {
         var createResult = User.Create(
             tenantId,
@@ -31,12 +35,19 @@ internal class UserProvisioningService : IUserProvisioningService
             user!.UpdateStatus(parsedStatus);
         }
 
-        await _userManager.CreateAsync(user!, command.Password!);
+        _passwordService.SetPassword(user!, command.Password!);
+
+        db.Users.Add(user!);
+
+        await db.SaveChangesAsync();
 
         return user!;
     }
 
-    public async Task<User?> ExistsAsync(IApplicationDbContext db, int tenantId, string userName, CancellationToken ct)
+    public async Task<User?> ExistsAsync(IApplicationDbContext db, 
+        int tenantId, 
+        string userName, 
+        CancellationToken ct)
     {
         var existingUser = await db.Users
                     .AsNoTracking()

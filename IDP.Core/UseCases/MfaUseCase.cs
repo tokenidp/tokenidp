@@ -56,7 +56,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
 
-        await _identityStore.SaveChangesAsync();
+        await _identityStore.UpdateUser(user);
 
         return AuthorizationResponse.Success(userId, correlationId, true);
     }
@@ -85,7 +85,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         user.MarkMfaValidated(_currentUserService.CorrelationId, _currentUserService.IpAddress);
 
-        await _identityStore.SaveChangesAsync();
+        await _identityStore.UpdateUser(user);
 
         return (authRequest, authResponse);
     }
@@ -120,7 +120,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
 
-        await _identityStore.SaveChangesAsync();
+        await _identityStore.UpdateUser(user);
 
         return AuthorizationResponse.Success(request.UserId, request.CorrelationId, true);
     }

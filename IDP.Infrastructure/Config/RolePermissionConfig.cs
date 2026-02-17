@@ -15,11 +15,13 @@ internal class RolePermissionConfig : IEntityTypeConfiguration<RolePermission>
         builder.HasOne(e => e.Role)
         .WithMany(e => e.RolePermissions)
         .HasForeignKey(ur => ur.RoleId)
-        .IsRequired();
+        .IsRequired()
+        .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.Permission)
        .WithMany(e => e.RolePermissions)
        .HasForeignKey(ur => ur.PermissionId)
-       .IsRequired();
+       .IsRequired()
+       .OnDelete(DeleteBehavior.NoAction);
     }
 }

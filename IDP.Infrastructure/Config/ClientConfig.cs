@@ -26,6 +26,31 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
 
+        builder.HasMany(a => a.ClientAudiences)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
+        builder.HasMany(a => a.ClientGrantTypes)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
+        builder.HasMany(a => a.ClientApiResources)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
+        builder.HasMany(a => a.ClientScopes)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
+        builder.HasMany(a => a.ClientSecrets)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
         builder.HasIndex(x => x.ClientId)
             .IsUnique()
             .HasDatabaseName("IX_Clients_ClientId");

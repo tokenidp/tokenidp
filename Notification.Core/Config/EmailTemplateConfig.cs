@@ -1,6 +1,7 @@
 ﻿using IDP.Domain.AggregateRoots.Emails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Notification.Core.Templates;
 
 namespace Notification.Core.Config;
 

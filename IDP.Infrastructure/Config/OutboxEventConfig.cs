@@ -18,6 +18,11 @@ internal class OutboxEventConfig : IEntityTypeConfiguration<OutboxEvent>
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CorrelationId).IsRequired();
 
+        builder.HasMany(s => s.OutboxEventConsumers)
+            .WithOne(e => e.OutboxEvent)
+            .HasForeignKey(ur => ur.OutboxEventId)
+            .IsRequired();
+
         // Tenant isolation
         builder.HasIndex(x => new { x.TenantId, x.CreatedAtUtc })
             .HasDatabaseName("IX_OutboxEvents_Tenant_Time");

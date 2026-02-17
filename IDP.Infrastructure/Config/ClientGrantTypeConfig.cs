@@ -11,10 +11,10 @@ internal class ClientGrantTypeConfig : IEntityTypeConfiguration<ClientGrantType>
 
         builder.Property(x => x.AllowedGrantType).HasMaxLength(50).IsRequired();
 
-        builder.HasOne<Client>()
+        builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientGrantTypes)
             .HasForeignKey(x => x.ClientId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
         // Prevent duplicate grant types per client
         builder.HasIndex(x => new { x.ClientId, x.AllowedGrantType })
