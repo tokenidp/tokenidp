@@ -23,6 +23,14 @@ internal class PermissionSeeder : IPermissionSeeder
             isActive: true
         );
 
+        if (command.ChildPermissions == null || command.ChildPermissions.Count == 0)
+        {
+            db.Permissions.Add(permission);
+            await db.SaveChangesAsync(ct);
+
+            return permission;
+        }
+
         foreach (var child in command.ChildPermissions)
         {
             var childPermission = new Permission(
@@ -38,19 +46,22 @@ internal class PermissionSeeder : IPermissionSeeder
             );
             permission.AddChild(childPermission);
 
+            if (child.ChildPermissions == null || child.ChildPermissions.Count == 0)
+                continue;
+
             foreach (var deeper in child.ChildPermissions)
             {
                 childPermission.AddChild(
-                new Permission(
-                        tenantId: tenantId,
-                        parentId: deeper.ParentId,
-                        sequence: deeper.Sequence,
-                        permissionKey: deeper.PermissionKey,
-                        permissionName: deeper.PermissionName,
-                        accessUrl: deeper.AccessUrl,
-                        icon: deeper.Icon,
-                        controlType: deeper.ControlType,
-                        isActive: true
+                    new Permission(
+                            tenantId: tenantId,
+                            parentId: deeper.ParentId,
+                            sequence: deeper.Sequence,
+                            permissionKey: deeper.PermissionKey,
+                            permissionName: deeper.PermissionName,
+                            accessUrl: deeper.AccessUrl,
+                            icon: deeper.Icon,
+                            controlType: deeper.ControlType,
+                            isActive: true
                 ));
             }
         }

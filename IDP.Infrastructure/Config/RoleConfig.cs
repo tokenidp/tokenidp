@@ -11,7 +11,7 @@ internal class RoleConfig : IEntityTypeConfiguration<Role>
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(e => e.Name).HasColumnName("RoleName").HasMaxLength(100).IsRequired();
-        builder.Property(x => x.NormalizedName).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.NormalizedName).HasMaxLength(100);
         builder.Property(x => x.RoleDescription).HasMaxLength(250);
 
         builder.Property(x => x.ConcurrencyStamp).HasMaxLength(100).IsRequired(false).IsConcurrencyToken();

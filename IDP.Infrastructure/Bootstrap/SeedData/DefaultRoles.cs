@@ -19,6 +19,35 @@ internal class DefaultRoles
             };
 
             rolePermissions.Add(rolePermission);
+
+            if (permission.Children == null || permission.Children.Count == 0)
+            {
+                continue;
+            }
+
+            foreach (var child in permission.Children)
+            {
+                CreateUpdateRolePermission childPermission = new CreateUpdateRolePermission()
+                {
+                    PermissionId = child.Id,
+                    RoleId = 0,
+                    PermissionKey = child.PermissionKey,
+                    IsAllowed = true
+                };
+                rolePermissions.Add(childPermission);
+
+                foreach (var deeper in child.Children)
+                {
+                    CreateUpdateRolePermission deeperPermission = new CreateUpdateRolePermission()
+                    {
+                        PermissionId = deeper.Id,
+                        RoleId = 0,
+                        PermissionKey = deeper.PermissionKey,
+                        IsAllowed = true
+                    };
+                    rolePermissions.Add(deeperPermission);
+                }
+            }
         }
 
         CreateUpdateRole adminRole = new()

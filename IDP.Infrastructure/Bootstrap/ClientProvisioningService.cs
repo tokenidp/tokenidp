@@ -6,8 +6,8 @@ namespace IDP.Infrastructure.Bootstrap;
 internal class ClientProvisioningService : IClientProvisioningService
 {
     public async Task CreateAsync(IApplicationDbContext db, 
-        int tenantId, 
-        CreateUpdateClient command, 
+        int tenantId,
+        CreateUpdateClient command,
         CancellationToken ct)
     {
         var createResult = Client.Create(
@@ -35,6 +35,10 @@ internal class ClientProvisioningService : IClientProvisioningService
         BuildGrantTypes(command.GrantTypes, out var grants);
 
         BuildAudiences(command.Audiences, out var audiences);
+
+        client!.ReplaceScopes(scopes);
+        client!.ReplaceGrantTypes(grants);
+        client!.ReplaceAudiences(audiences);
 
         db.Clients.Add(client!);
 

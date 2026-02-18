@@ -1,5 +1,6 @@
 ﻿using Admin.Core.Bootstrap;
 using IDP.Core.OAuth;
+using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Bootstrap;
 using IDP.Infrastructure.Persistence;
@@ -32,13 +33,6 @@ public static class DependencyInjection
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<ApplicationDbContext>());
-
-        services.AddIdentity<User, Role>(options =>
-        {
-            options.User.RequireUniqueEmail = true;
-        })
-        .AddEntityFrameworkStores<ApplicationDbContext>();
-        //.AddDefaultTokenProviders();
 
         services.AddMemoryCache();
         services.AddCors();
@@ -87,7 +81,12 @@ public static class DependencyInjection
                 await db.Database.MigrateAsync();
 
                 var bootstrapper = scope.ServiceProvider.GetRequiredService<ISystemBootstrapper>();
-                await bootstrapper.BootstrapAsync(CancellationToken.None, connectionStringName);
+
+                var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+                var connectionString = configuration.GetConnectionString(connectionStringName);
+
+                await bootstrapper.BootstrapAsync(CancellationToken.None, connectionString!);
             }
         }
     }

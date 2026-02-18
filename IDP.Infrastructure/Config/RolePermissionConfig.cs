@@ -7,7 +7,7 @@ internal class RolePermissionConfig : IEntityTypeConfiguration<RolePermission>
         builder.ToTable("RolePermissions");
 
         builder.HasKey(p => new { p.Id });
-        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(x => x.PermissionKey).HasMaxLength(50).IsRequired();
         builder.Property(x => x.IsAllowed).IsRequired();
@@ -19,7 +19,7 @@ internal class RolePermissionConfig : IEntityTypeConfiguration<RolePermission>
         .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(e => e.Permission)
-       .WithMany(e => e.RolePermissions)
+       .WithMany()
        .HasForeignKey(ur => ur.PermissionId)
        .IsRequired()
        .OnDelete(DeleteBehavior.NoAction);

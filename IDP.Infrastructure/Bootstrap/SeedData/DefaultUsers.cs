@@ -11,7 +11,7 @@ internal static class DefaultUsers
         Email = "admin@system.local",
         FirstName = "System",
         LastName = "Administrator",
-        Phone = null,
+        Phone = "123456789",
 
         Status = "Active",
         EmailConfirmed = true,

@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Permissions;
+using System.Linq;
 
 namespace IDP.Infrastructure.Bootstrap.SeedData;
 
@@ -15,6 +16,7 @@ internal class DefaultPermissions
 
         //NavGroups
         var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
+        userManagement.ChildPermissions = new();
         userManagement.ChildPermissions.AddRange(usersView, rolesView, permissionsView);
 
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-clipboard-list me-2"));
@@ -28,14 +30,20 @@ internal class DefaultPermissions
 
         //Actions
         int i = 11;
-        foreach (var permission in allPermissions)
+        foreach (var permission in allPermissions
+            .Where(p => p.PermissionName != "Dashboard" && p.PermissionName != "Activities"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
             {
-                permission.ChildPermissions = new List<CreateUpdatePermission>();
+                permission.ChildPermissions = new();
 
                 string parent = permission.PermissionName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()!;
                 string singular = parent.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? parent[..^1] : parent;
+
+                if(!parent.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+                {
+                    parent = parent.Insert(parent.Length, "s");
+                }
 
                 if (permission.PermissionName.Contains("Token"))
                 {
@@ -49,9 +57,9 @@ internal class DefaultPermissions
                 else
                 {
                     ++i;
-                    var addPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.add", $"Create {parent}", $"{parent.ToLower()}/add{singular.ToLower()}");
+                    var addPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.add", $"Create {parent}", $"/{parent.ToLower()}/add{singular.ToLower()}");
                     ++i;
-                    var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"{parent.ToLower()}/edit{singular.ToLower()}");
+                    var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"/{parent.ToLower()}/edit{singular.ToLower()}");
 
                     permission.ChildPermissions.AddRange(addPermission, editPermission);
                 }
@@ -60,19 +68,19 @@ internal class DefaultPermissions
             {
                 foreach (var childPermission in permission.ChildPermissions)
                 {
-                    childPermission.ChildPermissions = new List<CreateUpdatePermission>();
+                    childPermission.ChildPermissions = new();
 
                     string parent = childPermission.PermissionName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()!;
                     string singular = parent.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? parent[..^1] : parent;
 
                     ++i;
-                    var addPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.add", $"Create {parent}", $"{parent.ToLower()}/add{singular.ToLower()}");
+                    var addPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.add", $"Create {parent}", $"/{parent.ToLower()}/add{singular.ToLower()}");
                     ++i;
-                    var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"{parent.ToLower()}/edit{singular.ToLower()}");
+                    var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"/{parent.ToLower()}/edit{singular.ToLower()}");
 
                     childPermission.ChildPermissions.AddRange(addPermission, editPermission);
 
-                    if (permission.PermissionName == "Roles")
+                    if (childPermission.PermissionName.Contains("Roles"))
                     {
                         ++i;
                         var deletePermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.delete", $"Delete {parent}");

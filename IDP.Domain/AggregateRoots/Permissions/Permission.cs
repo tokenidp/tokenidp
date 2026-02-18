@@ -6,7 +6,6 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         new("^[a-z0-9]+([._][a-z0-9]+)*$",
             System.Text.RegularExpressions.RegexOptions.Compiled);
 
-    private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<Permission> _children = new();
 
     public int TenantId { get; private set; }
@@ -27,8 +26,6 @@ public sealed class Permission : AggregateRoot<int>, ITenant
 
     public Permission? Parent { get; private set; }
     public IReadOnlyCollection<Permission> Children => _children.AsReadOnly();
-    public IReadOnlyCollection<RolePermission> RolePermissions =>
-    _rolePermissions.AsReadOnly();
 
     private Permission() { }
 

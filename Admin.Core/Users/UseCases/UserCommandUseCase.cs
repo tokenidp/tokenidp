@@ -9,7 +9,6 @@ internal class UserCommandUseCase
     private readonly IAppLogger<UserCommandUseCase> _logger;
 
     public UserCommandUseCase(ICurrentUserService currentUserService,
-        UserManager<User> userManager,
         IAppLogger<UserCommandUseCase> logger,
         IIdentityStore identityStore)
     {

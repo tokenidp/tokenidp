@@ -22,10 +22,10 @@ internal class UserContactConfig : IEntityTypeConfiguration<UserContact>
         builder.Property(x => x.Country).HasMaxLength(100);
         builder.Property(x => x.IsActive).IsRequired();
 
-        builder.HasOne<User>()
+        builder.HasOne(u => u.User)
             .WithMany(u => u.UserContacts)
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade)
+            .OnDelete(DeleteBehavior.NoAction)
             .IsRequired();
 
         // Fast lookup for profile load

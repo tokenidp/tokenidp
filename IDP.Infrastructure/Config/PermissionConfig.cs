@@ -38,8 +38,8 @@ internal class PermissionConfig : IEntityTypeConfiguration<Permission>
             .HasDatabaseName("IX_Permissions_Tenant_Parent_Sequence");
 
         // Self-referencing hierarchy
-        builder.HasOne<Permission>()
-            .WithMany()
+        builder.HasOne(p => p.Parent)
+            .WithMany(p => p.Children)
             .HasForeignKey(x => x.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
     }

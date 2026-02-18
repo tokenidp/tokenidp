@@ -10,10 +10,10 @@ public partial class User : AggregateRoot<int>, ITenant
     private readonly List<UserContact> _userContacts = new();
 
     public string UserName { get; private set; } = default!;
-    public string NormalizedUserName { get; private set; } = default!;
+    public string? NormalizedUserName { get; private set; } = default!;
     public string Email { get; private set; } = default!;
     public bool EmailConfirmed { get; private set; }
-    public string NormalizedEmail { get; private set; } = default!;
+    public string? NormalizedEmail { get; private set; } = default!;
     public string PasswordHash { get; private set; } = default!;
     public int AccessFailedCount { get; private set; }
     public string? PhoneNumber { get; private set; }

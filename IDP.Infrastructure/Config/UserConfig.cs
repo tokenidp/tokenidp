@@ -12,10 +12,10 @@ internal class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.FirstName).HasMaxLength(50).IsRequired();
         builder.Property(x => x.LastName).HasMaxLength(50).IsRequired();
         builder.Property(x => x.UserName).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.NormalizedUserName).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.NormalizedUserName).HasMaxLength(50);
 
         builder.Property(x => x.Email).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.NormalizedEmail).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.NormalizedEmail).HasMaxLength(100);
 
         builder.Property(x => x.PasswordHash).HasMaxLength(256).IsRequired();
         builder.Property(x => x.PhoneNumber).HasMaxLength(20);

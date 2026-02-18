@@ -37,12 +37,12 @@ internal class SystemBootstrapper : ISystemBootstrapper
         _bootstrapOptions = options.Value;
     }
 
-    public async Task BootstrapAsync(CancellationToken ct, string connectionStringName)
+    public async Task BootstrapAsync(CancellationToken ct, string connectionString)
     {
         _logger.LogInfo("IDP Bootstrap started...");
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(connectionStringName)
+            .UseSqlServer(connectionString)
             .Options;
 
         var systemUser = new SystemCurrentUserService();
@@ -134,7 +134,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         int adminRoleId,
         CancellationToken ct)
     {
-        const string adminUserName = "ADMIN";
+        const string adminUserName = "Admin";
 
         var existing = await _users.ExistsAsync(db, tenantId, adminUserName, ct);
         if (existing != null)

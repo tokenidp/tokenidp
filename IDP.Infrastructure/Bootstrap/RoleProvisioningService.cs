@@ -5,7 +5,10 @@ namespace IDP.Infrastructure.Bootstrap;
 
 internal class RoleProvisioningService : IRoleProvisioningService
 {
-    public async Task<Role> CreateAsync(IApplicationDbContext db, int tenantId, CreateUpdateRole command, CancellationToken ct)
+    public async Task<Role> CreateAsync(IApplicationDbContext db,
+        int tenantId,
+        CreateUpdateRole command,
+        CancellationToken ct)
     {
         var role = new Role(
             tenantId: tenantId,
@@ -15,9 +18,10 @@ internal class RoleProvisioningService : IRoleProvisioningService
         );
 
         var permissions = command.RolePermissions ?? new List<CreateUpdateRolePermission>();
+
         foreach (var permission in permissions)
         {
-            var permissionResult = role.AddPermission(
+            role.AddPermission(
                 tenantPermissionId: permission.PermissionId,
                 permissionKey: permission.PermissionKey,
                 isAllowed: permission.IsAllowed
@@ -31,11 +35,15 @@ internal class RoleProvisioningService : IRoleProvisioningService
         return role;
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db, int tenantId, string roleName, CancellationToken ct)
+    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+        int tenantId,
+        string roleName,
+        CancellationToken ct)
     {
         var isExist = await db.Roles
                     .AsNoTracking()
-                    .AnyAsync(t => t.TenantId == tenantId && t.Name == roleName, ct);
+                    .AnyAsync(t => t.TenantId == tenantId
+                    && t.Name == roleName, ct);
 
         return isExist;
     }

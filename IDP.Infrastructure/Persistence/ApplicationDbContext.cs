@@ -14,6 +14,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
     private readonly IOutboxMapperResolver _resolver;
     private readonly IOutboxConsumerRouter _consumerRouter;
+
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
         ICurrentUserService currentUserService,
         IAppLogger<ApplicationDbContext> appLogger,
@@ -26,7 +27,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
         _consumerRouter = consumerRouter;
     }
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+    internal ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
         ICurrentUserService currentUserService) : base(options)
     {
         _currentUserService = currentUserService;

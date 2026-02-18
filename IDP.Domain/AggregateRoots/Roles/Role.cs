@@ -10,14 +10,14 @@ public class Role : AggregateRoot<int>, ITenant
     public string? NormalizedName { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }
-    public string RoleDescription { get; private set; }
+    public string? RoleDescription { get; private set; } = default!;
     public bool IsActive { get; private set; }
     public bool IsEditable { get; private set; }
     public bool IsDeleted { get; private set; }
 
     public int EffectiveUserId { get; private set; }
 
-    public IReadOnlyCollection<RolePermission> RolePermissions => _rolePermissions.AsReadOnly();
+    public virtual IReadOnlyCollection<RolePermission> RolePermissions => _rolePermissions.AsReadOnly();
 
     public Role() : base() { }
 
@@ -80,7 +80,7 @@ public class Role : AggregateRoot<int>, ITenant
                 $"Permission '{permissionKey}' already exists.");
         }
 
-        _rolePermissions.Add(new RolePermission(0, tenantPermissionId, permissionKey, isAllowed));
+        _rolePermissions.Add(new RolePermission(tenantPermissionId, permissionKey, isAllowed));
 
         return Result.Success(id: Id);
     }

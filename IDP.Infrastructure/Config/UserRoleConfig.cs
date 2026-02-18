@@ -9,15 +9,15 @@ internal class UserRoleConfig : IEntityTypeConfiguration<UserRole>
         builder.HasKey(p => new { p.Id });
         builder.Property(p => p.Id).ValueGeneratedOnAdd();
 
-        builder.HasOne<User>()
+        builder.HasOne(u => u.User)
             .WithMany(u => u.UserRoles)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<Role>()
+        builder.HasOne(r => r.Role)
             .WithMany()
             .HasForeignKey(x => x.RoleId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         // Prevent duplicate assignments
         builder.HasIndex(x => new { x.UserId, x.RoleId })

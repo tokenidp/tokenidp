@@ -31,11 +31,13 @@ internal class ConfigurationSeeder : IConfigurationSeeder
         string scope, 
         CancellationToken ct)
     {
+        Enum.TryParse<ConfigurationScopes>(scope, ignoreCase: true, out var result);
+
         var isExist = await db.Configurations
             .AsNoTracking()
             .AnyAsync(t => t.TenantId == tenantId 
             && t.ConfigKey == configKey 
-            && t.Scope.ToString() == scope, ct);
+            && t.Scope == result, ct);
 
         return isExist;
     }

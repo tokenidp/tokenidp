@@ -16,12 +16,10 @@ public class RolePermission : Entity<int>
     private RolePermission() : base() { }
 
     internal RolePermission(
-        int roleId,
         int permissionId,
         string permissionKey,
         bool isAllowed)
     {
-        RoleId = roleId;
         PermissionId = permissionId;
         PermissionKey = permissionKey;
         IsAllowed = isAllowed;
