@@ -24,32 +24,11 @@
   <ItemGroup>
     <Folder Include="Scripts\" />
   </ItemGroup>
-
+  
   <ItemGroup>
-    <None Update="Scripts\usp_MarkExpiredTokens.sql">
+    <Content Include="Scripts\**\*.sql">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\usp_PurgeOldTokens.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vConfigurationSearch.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vRoleSearch.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vTenantSearch.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vTokenSearch.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vUserRolePermissions.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Scripts\vUserSearch.sql">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>
