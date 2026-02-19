@@ -11,7 +11,7 @@ internal static class DefaultClients
             ClientId = "idp-admin",
             ClientName = "IDP Admin Portal",
             Description = "Administrative client for managing the Identity Platform",
-            AppType = AppTypes.SPA,
+            AppType = ClientTypes.SPA,
             AccessTokenType = TokenTypes.JWT,
             RedirectUri = redirectUri,
             LogoutRedirectUri = logoutRedirectUri,

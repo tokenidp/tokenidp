@@ -11,5 +11,4 @@ public interface IEmailQueueStore
        CancellationToken ct);
 
     Task EnqueueAsync(EmailMessage email, CancellationToken ct);
-
 }

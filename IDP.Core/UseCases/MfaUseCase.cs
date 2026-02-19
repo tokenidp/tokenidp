@@ -141,10 +141,7 @@ internal sealed class MfaUseCase : IMfaUseCase
         var emailMessage = EmailMessage.CreateTemplate(
             tenantId: tenantId,
             messageKey: $"mfa:{tenantId}:{fullName}:{mfaCode}",
-            recipients: new[]
-            {
-                new Domain.AggregateRoots.Emails.ValueObjects.EmailRecipient(RecipientType.To, new EmailAddress(email!), fullName)
-            },
+            new Domain.AggregateRoots.Emails.ValueObjects.EmailRecipient(new EmailAddress(email!), fullName),
             template: new EmailTemplateRef("MFA_CODE", modelJson),
             priority: 3,
             maxAttempts: 10,

@@ -12,7 +12,7 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.ClientId).HasMaxLength(100).IsRequired();
         builder.Property(x => x.ClientName).HasMaxLength(200).IsRequired();
 
-        builder.Property(x => x.AppType).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.ClientType).HasMaxLength(50).IsRequired();
         builder.Property(x => x.TokenType).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
 
@@ -25,6 +25,16 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.RefreshTokenExpiration).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
+
+        builder.Property(p => p.TokenType)
+            .HasConversion(
+                v => v.ToString(),
+                v => Enum.Parse<TokenTypes>(v));
+
+        builder.Property(p => p.ClientType)
+            .HasConversion(
+                v => v.ToString(),
+                v => Enum.Parse<ClientTypes>(v));
 
         builder.HasMany(a => a.ClientAudiences)
             .WithOne(e => e.Client)
@@ -64,7 +74,7 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
             .HasDatabaseName("IX_Clients_ByTenant");
 
         // Admin UI searches
-        builder.HasIndex(x => new { x.TenantId, x.AppType, x.TokenType, x.IsActive, x.ClientName })
+        builder.HasIndex(x => new { x.TenantId, x.ClientType, x.TokenType, x.IsActive, x.ClientName })
             .HasDatabaseName("IX_Clients_Lookup");
     }
 }

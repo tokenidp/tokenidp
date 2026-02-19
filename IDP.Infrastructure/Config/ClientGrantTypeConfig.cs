@@ -9,7 +9,12 @@ internal class ClientGrantTypeConfig : IEntityTypeConfiguration<ClientGrantType>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
-        builder.Property(x => x.AllowedGrantType).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.AllowedGrantType).HasMaxLength(32).IsRequired();
+
+        builder.Property(p => p.AllowedGrantType)
+            .HasConversion(
+                v => v.ToString(),
+                v => (GrantTypes)Enum.Parse(typeof(GrantTypes), v));
 
         builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientGrantTypes)

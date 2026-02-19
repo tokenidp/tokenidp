@@ -24,7 +24,7 @@ public sealed record EmailAddress
     public override string ToString() => Value;
 }
 
-public sealed record EmailRecipient(RecipientType Type, EmailAddress Address, string? DisplayName);
+public sealed record EmailRecipient(EmailAddress Address, string? DisplayName);
 
 public sealed record EmailTemplateRef(string TemplateKey, string? ModelJson);
 

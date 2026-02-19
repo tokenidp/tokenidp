@@ -5,6 +5,7 @@ using IDP.Projection.Projectors;
 using IDP.Projection.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Notification.Core.Worker;
 
 namespace IDP.Projection;
 
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddHostedService<TokenOutboxWorker>();
         services.AddHostedService<ActivityOutboxWorker>();
         services.AddHostedService<DashboardMetricsWorker>();
+        services.AddHostedService<EmailDispatcherWorker>();
 
         services.AddSingleton<TokenWorkerState>();
         services.AddSingleton<ActivityWorkerState>();

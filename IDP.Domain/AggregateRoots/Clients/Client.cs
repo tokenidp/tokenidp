@@ -5,7 +5,7 @@ public class Client : AggregateRoot<int>, ITenant
     public string ClientId { get; private set; } = default!;
     public string ClientName { get; private set; } = default!;
     public string? Description { get; private set; }
-    public AppTypes AppType { get; private set; }
+    public ClientTypes ClientType { get; private set; }
     public TokenTypes TokenType { get; private set; }
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = default!;
@@ -36,7 +36,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        AppTypes appType,
+        ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
         string? logoutRedirectUri,
@@ -54,7 +54,7 @@ public class Client : AggregateRoot<int>, ITenant
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
-        AppType = appType;
+        ClientType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
         LogoutRedirectUri = logoutRedirectUri;
@@ -78,7 +78,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        AppTypes appType,
+        ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
         string? logoutRedirectUri,
@@ -107,7 +107,7 @@ public class Client : AggregateRoot<int>, ITenant
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
-        AppType = appType;
+        ClientType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
         LogoutRedirectUri = logoutRedirectUri;
@@ -188,7 +188,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
-        AppTypes appType,
+        ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
         string? logoutRedirectUri,

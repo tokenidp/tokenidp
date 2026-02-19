@@ -1,5 +1,6 @@
 ﻿using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Configurations;
+using IDP.Domain.AggregateRoots.Emails;
 using IDP.Domain.AggregateRoots.Outbox;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
@@ -58,6 +59,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<TenantSearch> TenantsSearch { get; set; }
     public DbSet<ConfigurationSearch> ConfigurationsSearch { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<UserCodeSequence> UserCodeSequences { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
@@ -68,6 +70,8 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<DashboardMetric> DashboardMetrics { get; set; }
     public DbSet<DashboardMetricsCheckpoint> DashboardMetricsCheckpoints { get; set; }
     public DbSet<DashboardMetricRanking> DashboardMetricRankings { get; set; }
+    public DbSet<EmailMessage> EmailMessages { get; set; }
+    public DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

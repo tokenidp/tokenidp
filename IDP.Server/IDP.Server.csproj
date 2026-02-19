@@ -33,7 +33,6 @@
     <ProjectReference Include="..\IDP.Foundation\IDP.Foundation.csproj" />
     <ProjectReference Include="..\IDP.Infrastructure\IDP.Infrastructure.csproj" />
     <ProjectReference Include="..\IDP.Projection\IDP.Projection.csproj" />
-    <ProjectReference Include="..\Notification.Core\Notification.Core.csproj" />
   </ItemGroup>
 
 </Project>

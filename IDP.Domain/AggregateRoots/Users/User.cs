@@ -27,7 +27,7 @@ public partial class User : AggregateRoot<int>, ITenant
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; } = default!;
     public string LastName { get; private set; } = default!;
-    public string? UserCode { get; private set; }
+    public string UserCode { get; private set; }
     public int EffectiveUserId { get; private set; }
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
@@ -179,6 +179,11 @@ public partial class User : AggregateRoot<int>, ITenant
         PhoneNumberConfirmed = phoneNumberConfirmed;
         AccessFailedCount = accessFailedCount;
         LockoutEnd = lookoutEnd;
+    }
+
+    public void GenerateUserCode(int value)
+    {
+        UserCode = $"USR-{DateTime.UtcNow:yyyy}-{value:D6}";
     }
 
     private void SyncRoles(IEnumerable<int> roles)

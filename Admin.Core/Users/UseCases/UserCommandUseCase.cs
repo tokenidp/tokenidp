@@ -7,14 +7,17 @@ internal class UserCommandUseCase
     private readonly ICurrentUserService _currentUserService;
     private readonly IIdentityStore _identityStore;
     private readonly IAppLogger<UserCommandUseCase> _logger;
+    private readonly IUserCodeGenerator _userCodeGenerator;
 
     public UserCommandUseCase(ICurrentUserService currentUserService,
         IAppLogger<UserCommandUseCase> logger,
-        IIdentityStore identityStore)
+        IIdentityStore identityStore,
+        IUserCodeGenerator userCodeGenerator)
     {
         _currentUserService = currentUserService;
         _logger = logger;
         _identityStore = identityStore;
+        _userCodeGenerator = userCodeGenerator;
     }
 
     public async Task<ApiResult<int>> CreateUser(
@@ -70,6 +73,11 @@ internal class UserCommandUseCase
         {
             user.UpdateStatus(parsedStatus);
         }
+
+        var nextValue = await _userCodeGenerator
+            .GenerateNextValueAsync(_currentUserService.TenantId, cancellationToken);
+
+        user.GenerateUserCode(nextValue);
 
         user.ApplyIdentityFlags(request.LockoutEnabled,
                             request.TwoFactorEnabled,

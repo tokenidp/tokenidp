@@ -1,8 +1,12 @@
 ﻿using Admin.Core.Bootstrap;
+using Admin.Core.Users;
 using IDP.Core.OAuth;
-using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Bootstrap;
+using IDP.Infrastructure.Emails;
+using IDP.Infrastructure.Emails.Abstractions;
+using IDP.Infrastructure.Emails.Concrete;
+using IDP.Infrastructure.Emails.Primitives;
 using IDP.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +25,7 @@ public static class DependencyInjection
         AddPersistence(services, configuration, connectionStringName);
         AddStores(services);
         AddBootstrapServices(services, configuration);
+        AddEmailServices(services);
     }
 
     private static void AddPersistence(IServiceCollection services,
@@ -53,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
+        services.AddScoped<IUserCodeGenerator, UserCodeGenerator>();
     }
 
     private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)
@@ -67,6 +73,26 @@ public static class DependencyInjection
         services.AddScoped<IConfigurationSeeder, ConfigurationSeeder>();
 
         services.AddScoped<ISystemBootstrapper, SystemBootstrapper>();
+    }
+
+    private static void AddEmailServices(IServiceCollection services)
+    {
+        services.AddScoped<SmtpEmailSender>();
+        services.AddScoped<SendGridEmailSender>();
+        services.AddScoped<EmailProviderFactory>();
+        services.AddScoped<EmailConfigurationProvider>();
+        services.AddScoped<IEmailQueueStore, EmailQueueStore>();
+        services.AddScoped<IRetrySchedule, ExponentialRetrySchedule>();
+        services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
+
+        services.AddTransient<Func<EmailProviderType, IEmailSender>>(serviceProvider => key =>
+        {
+            return key switch
+            {
+                EmailProviderType.SendGrid => serviceProvider.GetRequiredService<SendGridEmailSender>(),
+                _ => serviceProvider.GetRequiredService<SmtpEmailSender>()
+            };
+        });
     }
 
     public static async Task EnsureSystemBootstrap(this WebApplication app, string connectionStringName)

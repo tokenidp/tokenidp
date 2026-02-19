@@ -102,8 +102,8 @@ namespace IDP.Infrastructure.Migrations
 
                     b.Property<string>("ClientId")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("CodeChallenge")
                         .IsRequired()
@@ -128,6 +128,10 @@ namespace IDP.Infrastructure.Migrations
 
                     b.Property<DateTime>("Expiry")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("GrantType")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("Is2FAVerified")
                         .HasColumnType("bit");
@@ -179,10 +183,6 @@ namespace IDP.Infrastructure.Migrations
                     b.Property<int>("AccessTokenLifetime")
                         .HasColumnType("int");
 
-                    b.Property<int>("AppType")
-                        .HasMaxLength(50)
-                        .HasColumnType("int");
-
                     b.Property<int>("AuthorizationCodeLifetime")
                         .HasColumnType("int");
 
@@ -198,6 +198,11 @@ namespace IDP.Infrastructure.Migrations
 
                     b.Property<int?>("ClientSecretExpiry")
                         .HasColumnType("int");
+
+                    b.Property<string>("ClientType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
@@ -239,9 +244,10 @@ namespace IDP.Infrastructure.Migrations
                     b.Property<TimeSpan?>("TimeWindow")
                         .HasColumnType("time");
 
-                    b.Property<int>("TokenType")
+                    b.Property<string>("TokenType")
+                        .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -261,7 +267,7 @@ namespace IDP.Infrastructure.Migrations
                     b.HasIndex("ClientId", "IsActive")
                         .HasDatabaseName("IX_Clients_ClientId_IsActive");
 
-                    b.HasIndex("TenantId", "AppType", "TokenType", "IsActive", "ClientName")
+                    b.HasIndex("TenantId", "ClientType", "TokenType", "IsActive", "ClientName")
                         .HasDatabaseName("IX_Clients_Lookup");
 
                     b.ToTable("Clients", (string)null);
@@ -334,9 +340,10 @@ namespace IDP.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AllowedGrantType")
-                        .HasMaxLength(50)
-                        .HasColumnType("int");
+                    b.Property<string>("AllowedGrantType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
@@ -387,7 +394,6 @@ namespace IDP.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Description")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
@@ -489,6 +495,192 @@ namespace IDP.Infrastructure.Migrations
                     b.ToTable("Configurations", (string)null);
                 });
 
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Emails.EmailDeliveryAttempt", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AttemptNo")
+                        .HasColumnType("int");
+
+                    b.Property<long>("EmailMessageId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Error")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("FinishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("Outcome")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmailMessageId")
+                        .HasDatabaseName("IX_EmailDeliveryAttempts_MessageId");
+
+                    b.HasIndex("EmailMessageId", "AttemptNo")
+                        .IsUnique()
+                        .HasDatabaseName("IX_EmailDeliveryAttempts_Message_AttemptNo");
+
+                    b.ToTable("EmailDeliveryAttempts", (string)null);
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Emails.EmailMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("BodyHtml")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BodyText")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CorrelationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("FailedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FromAddress")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("FromName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("LockedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LockedUntilUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MaxAttempts")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MessageKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<DateTime?>("NextAttemptAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("PayloadMode")
+                        .HasColumnType("tinyint");
+
+                    b.Property<byte>("Priority")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Provider")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("ProviderMessageId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ScheduledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Tags")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("TemplateKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TemplateModelJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ToAddress")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc")
+                        .HasDatabaseName("IX_EmailMessages_Retry");
+
+                    b.HasIndex("TenantId", "MessageKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_EmailMessages_Tenant_MessageKey");
+
+                    b.HasIndex("TenantId", "Status", "CreatedAtUtc")
+                        .HasDatabaseName("IX_EmailMessages_Tenant_Status_Time");
+
+                    b.HasIndex("Status", "NextAttemptAtUtc", "LockedUntilUtc", "Priority", "CreatedAtUtc")
+                        .HasDatabaseName("IX_EmailMessages_Dequeue");
+
+                    b.ToTable("EmailMessages", (string)null);
+                });
+
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Outbox.OutboxEvent", b =>
                 {
                     b.Property<long>("Id")
@@ -578,7 +770,8 @@ namespace IDP.Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LockedBy")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime?>("LockedUntil")
                         .HasColumnType("datetime2");
@@ -828,8 +1021,8 @@ namespace IDP.Infrastructure.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("LoginText")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(200)
@@ -1154,7 +1347,9 @@ namespace IDP.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserCode")
-                        .HasColumnType("nvarchar(450)");
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("UserName")
                         .IsRequired()
@@ -1172,8 +1367,7 @@ namespace IDP.Infrastructure.Migrations
 
                     b.HasIndex("TenantId", "UserCode")
                         .IsUnique()
-                        .HasDatabaseName("IX_Users_Tenant_UserCode")
-                        .HasFilter("[UserCode] IS NOT NULL");
+                        .HasDatabaseName("IX_Users_Tenant_UserCode");
 
                     b.HasIndex("TenantId", "UserName")
                         .IsUnique()
@@ -1242,6 +1436,17 @@ namespace IDP.Infrastructure.Migrations
                         .HasDatabaseName("IX_UserAddresses_User_Active");
 
                     b.ToTable("UserAddresses", (string)null);
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserCodeSequence", b =>
+                {
+                    b.Property<int>("LastValue")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.ToTable("UserCodeSequences", (string)null);
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserContact", b =>

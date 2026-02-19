@@ -22,6 +22,7 @@ public class UserDetail
         LockoutEnd = user.LockoutEnd,
         SecurityStamp = user.SecurityStamp,
         ConcurrencyStamp = user.ConcurrencyStamp,
+        UserCode = user.UserCode,
         Roles = user.UserRoles.Select(s => s.RoleId).ToArray(),
         Addresses = user.UserAddresses
             .Select(address => new UserAddressDetail
@@ -72,6 +73,7 @@ public class UserDetail
     public DateTimeOffset? LockoutEnd { get; set; }
     public string? SecurityStamp { get; set; }
     public string? ConcurrencyStamp { get; set; }
+    public string UserCode { get; set; } = default!;
     public int[] Roles { get; set; } = new int[0];
     public List<UserAddressDetail> Addresses { get; set; } = new();
     public List<UserContactDetail> Contacts { get; set; } = new();

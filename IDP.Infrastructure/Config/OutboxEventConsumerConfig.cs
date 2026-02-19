@@ -16,6 +16,7 @@ internal sealed class OutboxEventConsumerConfig
         builder.Property(x => x.ConsumerName).HasMaxLength(100).IsRequired();
         builder.Property(x => x.Status).IsRequired();
         builder.Property(x => x.RetryCount).IsRequired();
+        builder.Property(x => x.LockedBy).HasMaxLength(100);
 
         builder.HasOne(o => o.OutboxEvent)
             .WithMany(e => e.OutboxEventConsumers)

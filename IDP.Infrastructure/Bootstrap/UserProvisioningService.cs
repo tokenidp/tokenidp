@@ -35,6 +35,8 @@ internal class UserProvisioningService : IUserProvisioningService
             user!.UpdateStatus(parsedStatus);
         }
 
+        user.GenerateUserCode(0);
+
         _passwordService.SetPassword(user!, command.Password!);
 
         db.Users.Add(user!);

@@ -6,7 +6,7 @@ internal static class ClientLookupMapper
 {
     public static List<LookupItem> MapAppTypes()
     {
-        return Enum.GetValues<AppTypes>()
+        return Enum.GetValues<ClientTypes>()
             .Select(value => new LookupItem
             {
                 Key = ((int)value).ToString(),

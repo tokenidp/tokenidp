@@ -17,7 +17,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         builder.Property(x => x.LogoUrl).HasMaxLength(200);
         builder.Property(x => x.HomePageUrl).HasMaxLength(200);
         builder.Property(x => x.DefaultLanguage).HasMaxLength(10);
-        builder.Property(x => x.LoginText).HasMaxLength(250);
+        builder.Property(x => x.LoginText).HasMaxLength(500);
 
         builder.Property(x => x.IsActive).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();

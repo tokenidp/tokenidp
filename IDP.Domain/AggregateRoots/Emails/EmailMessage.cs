@@ -4,15 +4,14 @@ namespace IDP.Domain.AggregateRoots.Emails;
 
 public sealed class EmailMessage : AggregateRoot<long>, ITenant
 {
-    private readonly List<Emails.EmailRecipient> _recipients = new();
-    private readonly List<EmailAttachment> _attachments = new();
-
     public int TenantId { get; private set; }
     public string MessageKey { get; private set; } = string.Empty;
 
     public EmailStatus Status { get; private set; }
     public byte Priority { get; private set; }
-    public EmailPayloadMode PayloadMode { get; private set; }
+    public EmailPayloadMode PayloadMode { get; private set; }    
+    public string ToAddress { get; private set; } = string.Empty;
+    public string? DisplayName { get; private set; }
 
     public string? Provider { get; private set; }
 
@@ -47,59 +46,12 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
     public DateTime? CancelledAtUtc { get; private set; }
     public string? CancelReason { get; private set; }
 
-    public IReadOnlyCollection<Emails.EmailRecipient> Recipients => _recipients.AsReadOnly();
-    public IReadOnlyCollection<EmailAttachment> Attachments => _attachments.AsReadOnly();
-
     private EmailMessage() { } // EF
-
-    public static EmailMessage CreateRendered(
-        int tenantId,
-        string messageKey,
-        IEnumerable<ValueObjects.EmailRecipient> recipients,
-        string subject,
-        string? bodyHtml,
-        string? bodyText,
-        string? provider = null,
-        string? fromAddress = null,
-        string? fromName = null,
-        byte priority = 5,
-        int maxAttempts = 10,
-        DateTime? scheduledAtUtc = null,
-        Guid? correlationId = null,
-        string? tags = null)
-    {
-        if (string.IsNullOrWhiteSpace(messageKey)) throw new ArgumentException("MessageKey is required.");
-        if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject is required.");
-        if (recipients is null) throw new ArgumentNullException(nameof(recipients));
-
-        var msg = new EmailMessage
-        {
-            TenantId = tenantId,
-            MessageKey = messageKey.Trim(),
-            Status = EmailStatus.Pending,
-            Priority = priority,
-            PayloadMode = EmailPayloadMode.RenderedBodies,
-            Provider = provider,
-            FromAddress = fromAddress,
-            FromName = fromName,
-            Subject = subject,
-            BodyHtml = bodyHtml,
-            BodyText = bodyText,
-            ScheduledAtUtc = scheduledAtUtc,
-            MaxAttempts = maxAttempts,
-            CorrelationId = correlationId,
-            Tags = tags
-        };
-
-        msg.AddRecipients(recipients);
-        msg.ValidatePayload();
-        return msg;
-    }
 
     public static EmailMessage CreateTemplate(
         int tenantId,
         string messageKey,
-        IEnumerable<ValueObjects.EmailRecipient> recipients,
+        ValueObjects.EmailRecipient recipient,
         EmailTemplateRef template,
         string? provider = null,
         string? fromAddress = null,
@@ -132,31 +84,17 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
             Tags = tags
         };
 
-        msg.AddRecipients(recipients);
+        msg.AddRecipients(recipient);
         msg.ValidatePayload();
         return msg;
     }
 
-    public void AddRecipients(IEnumerable<ValueObjects.EmailRecipient> recipients)
+    public void AddRecipients(ValueObjects.EmailRecipient recipient)
     {
-        var list = recipients.ToList();
-        if (list.Count == 0) throw new InvalidOperationException("At least one recipient is required.");
+        if (recipient == null) throw new InvalidOperationException("At least one recipient is required.");
 
-        foreach (var r in list)
-        {
-            _recipients.Add(EmailRecipient.Create(r.Type, r.Address.Value, r.DisplayName));
-        }
-    }
-
-    public void AddAttachmentInline(string fileName, string contentType, byte[] content)
-    {
-        if (content is null || content.Length == 0) throw new ArgumentException("Attachment content required.");
-        _attachments.Add(EmailAttachment.Inline(fileName, contentType, content));
-    }
-
-    public void AddAttachmentBlobRef(string fileName, string contentType, long sizeBytes, string blobPath)
-    {
-        _attachments.Add(EmailAttachment.BlobRef(fileName, contentType, sizeBytes, blobPath));
+        ToAddress = recipient.Address.Value;
+        DisplayName = recipient.DisplayName;
     }
 
     public void Cancel(string reason)
@@ -232,7 +170,7 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
 
     private void ValidatePayload()
     {
-        if (_recipients.Count == 0) throw new InvalidOperationException("Recipients required.");
+        if (string.IsNullOrEmpty(ToAddress)) throw new InvalidOperationException("Recipients required.");
 
         switch (PayloadMode)
         {

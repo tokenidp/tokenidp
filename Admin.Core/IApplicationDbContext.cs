@@ -1,5 +1,6 @@
 ﻿using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Configurations;
+using IDP.Domain.AggregateRoots.Emails;
 using IDP.Domain.AggregateRoots.Outbox;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Domain.AggregateRoots.Tokens;
@@ -30,8 +31,14 @@ public interface IApplicationDbContext
     DbSet<UserRole> UserRoles { get; }
     DbSet<Role> Roles { get; }
     DbSet<User> Users { get; }
+    DbSet<UserCodeSequence> UserCodeSequences { get; }
     DbSet<UserAddress> UserAddresses { get; }
     DbSet<UserContact> UserContacts { get; }
+
+    // ------------Emails-------------------
+
+    DbSet<EmailMessage> EmailMessages { get; }
+    DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts { get; }
 
     // ------------Read Models-------------------
 

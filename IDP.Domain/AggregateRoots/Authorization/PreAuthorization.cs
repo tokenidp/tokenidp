@@ -8,6 +8,7 @@ public class PreAuthorization : AggregateRoot<int>
     public string RedirectUri { get; private set; } = default!;
     public string CodeChallenge { get; private set; } = default!;
     public string CodeChallengeMethod { get; private set; } = default!;//Default is SHA-256 
+    public string? GrantType { get; private set; } = default!;
     public string Scopes { get; private set; } = default!;
     public string MfaCode { get; private set; } = default!;
     public DateTime Expiry { get; private set; }
