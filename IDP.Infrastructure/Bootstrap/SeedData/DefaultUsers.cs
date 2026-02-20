@@ -4,10 +4,10 @@ namespace IDP.Infrastructure.Bootstrap.SeedData;
 
 internal static class DefaultUsers
 {
-    public static UserDetail Admin(string tempPassword) => new()
+    public static UserDetail Admin(string adminName, string tempPassword) => new()
     {
-        UserName = "admin",
-        NormalizedUserName = "ADMIN",
+        UserName = adminName,
+        NormalizedUserName = adminName.ToUpper(),
         Email = "admin@system.local",
         FirstName = "System",
         LastName = "Administrator",

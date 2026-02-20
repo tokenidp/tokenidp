@@ -134,7 +134,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         int adminRoleId,
         CancellationToken ct)
     {
-        const string adminUserName = "Admin";
+        string adminUserName = _bootstrapOptions.AdminName;
 
         var existing = await _users.ExistsAsync(db, tenantId, adminUserName, ct);
         if (existing != null)
@@ -149,7 +149,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
             throw new InvalidOperationException(
                 "Bootstrap AdminTempPassword is not configured.");
 
-        var adminUser = DefaultUsers.Admin(tempPassword);
+        var adminUser = DefaultUsers.Admin(adminUserName, tempPassword);
 
         adminUser.Roles.Append(adminRoleId);
 
