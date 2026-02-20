@@ -18,7 +18,7 @@ try
     // Add NLog as the ONLY provider
     builder.Host.UseNLog();
 
-    builder.AddTokenTresorServices("Identity_DB", "admin.api");
+    builder.AddTresorAuthServices("Identity_DB", "admin.api");
 
     //builder.AddTokenTresorServices(
     //    connectionStringName: "DefaultConnection",
@@ -59,7 +59,7 @@ try
     app.MapRazorComponents<App>()
        .AddInteractiveServerRenderMode();
 
-    await app.UseTokenTresorAsync("Identity_DB");
+    await app.UseTresorAuthAsync("Identity_DB");
 
     await app.RunAsync();
 }

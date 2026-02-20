@@ -24,13 +24,13 @@ namespace IDP.Server.ApplicationSetup;
 
 public static class ApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddTokenTresorServices(
+    public static WebApplicationBuilder AddTresorAuthServices(
         this WebApplicationBuilder builder,
         string connectionStringName,
         string audience)
-        => builder.AddTokenTresorServices(connectionStringName, audience, null);
+        => builder.AddTresorAuthServices(connectionStringName, audience, null);
 
-    public static WebApplicationBuilder AddTokenTresorServices(
+    public static WebApplicationBuilder AddTresorAuthServices(
         this WebApplicationBuilder builder,
         string connectionStringName,
         string audience,
@@ -110,7 +110,7 @@ public static class ApplicationBuilderExtensions
         return builder;
     }
 
-    public static async Task<WebApplication> UseTokenTresorAsync(this WebApplication app, string connectionStringName = "")
+    public static async Task<WebApplication> UseTresorAuthAsync(this WebApplication app, string connectionStringName = "")
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
