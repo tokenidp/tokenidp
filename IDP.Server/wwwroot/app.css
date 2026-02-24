@@ -1,13 +1,36 @@
-﻿/* Base Styles */
+﻿/* =========================
+   Design Tokens (Themeable)
+   ========================= */
 :root {
     --primary: #1e3a8a;
+    --primary-hover: #163075;
+    --primary-focus: rgba(30, 58, 138, 0.35);
+    --secondary-bg: #ffffff;
+    --secondary-border: #e5e7eb;
+    --secondary-text: #111827;
+    --secondary-hover-bg: #fafafa;
+    --secondary-hover-border: #d1d5db;
+    --secondary-focus-ring: rgba(30, 58, 138, 0.25);
     --border: #e5e7eb;
     --text: #111827;
     --muted: #6b6b6b;
     --bg1: #ffffff;
-    --bg2: #fff3d6;
+    --bg2: #f1f4f9;
+    --focus-ring: rgba(30, 58, 138, 0.25);
+    --success-bg: #ecfdf5;
+    --success-text: #065f46;
+    --success-border: #a7f3d0;
+    --danger-bg: #f8d7da;
+    --danger-text: #721c24;
+    --danger-border: #f5c6cb;
+    --spinner: var(--primary);
+    --primary-color: var(--primary);
+    --success-color: #28a745;
 }
 
+/* =========================
+   Base Styles
+   ========================= */
 * {
     box-sizing: border-box;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -16,15 +39,18 @@
 body {
     margin: 0;
     min-height: 100vh;
-    background: radial-gradient( circle at top left, #eef3fb 0%, #f7f9fc 45%, #f1f4f9 100% );
+    background: radial-gradient(circle at top left, #eef3fb 0%, #f7f9fc 45%, #f1f4f9 100%);
     display: flex;
     font-family: "Manrope", "DM Sans", "Segoe UI", sans-serif;
-    color: #0f172a;
+    color: #0f172a; /* kept as-is from your original */
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
 
+/* =========================
+   Logo / Card
+   ========================= */
 .logo {
     width: 48px;
     height: 48px;
@@ -54,6 +80,9 @@ body {
         font-weight: 625;
     }
 
+/* =========================
+   Fields
+   ========================= */
 .field {
     margin-bottom: 14px;
 }
@@ -73,6 +102,9 @@ body {
         font-size: 14px;
     }
 
+/* =========================
+   Options Row
+   ========================= */
 .options-row {
     display: flex;
     justify-content: space-between;
@@ -86,19 +118,44 @@ body {
         text-decoration: none;
     }
 
+/* =========================
+   Alerts
+   ========================= */
 .alert {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
     padding: 10px;
     border-radius: 6px;
     font-size: 14px;
     margin-bottom: 14px;
 }
 
+.alert-danger {
+    color: var(--danger-text);
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* You had this in original CSS too */
+.alert-success {
+    color: var(--success-color);
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* =========================
+   Primary Button
+   ========================= */
 .btn-primary {
     width: 100%;
     background: var(--primary);
@@ -113,7 +170,7 @@ body {
 }
 
     .btn-primary:hover {
-        background-color: #e85f2f; /* slightly darker */
+        background-color: var(--primary-hover); /* was hard-coded */
         box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
         transform: translateY(-1px);
     }
@@ -121,7 +178,7 @@ body {
     /* Keyboard focus */
     .btn-primary:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(255, 108, 55, 0.35);
+        box-shadow: 0 0 0 3px var(--primary-focus); /* was hard-coded */
     }
 
     .btn-primary:active {
@@ -129,6 +186,9 @@ body {
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     }
 
+/* =========================
+   Divider
+   ========================= */
 .divider {
     text-align: center;
     font-size: 13px;
@@ -136,11 +196,14 @@ body {
     margin: 10px 0;
 }
 
+/* =========================
+   Secondary Button
+   ========================= */
 .btn-secondary {
     position: relative;
     width: 100%;
-    background: #fff;
-    border: 1px solid var(--border);
+    background: var(--secondary-bg);
+    border: 1px solid var(--secondary-border);
     padding: 10px 14px;
     border-radius: 6px;
     font-size: 14px;
@@ -149,16 +212,20 @@ body {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    justify-content: center; /* 🔑 center text */
-
+    justify-content: center; /* center text */
     transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.12s ease, background-color 0.15s ease;
 }
 
     .btn-secondary:hover {
-        border-color: #d1d5db;
+        border-color: var(--secondary-hover-border);
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
         transform: translateY(-1px);
-        background-color: #fafafa;
+        background-color: var(--secondary-hover-bg);
+    }
+
+    .btn-secondary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--secondary-focus-ring);
     }
 
     .btn-secondary .btn-icon {
@@ -180,6 +247,9 @@ body {
         flex-shrink: 0;
     }
 
+/* =========================
+   Footer / Legal
+   ========================= */
 .footer {
     margin-top: 18px;
     font-size: 13px;
@@ -199,24 +269,9 @@ body {
     text-align: center;
 }
 
-.alert-danger {
-    color: #721c24;
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
-.alert-success {
-    color: var(--success-color);
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
+/* =========================
+   MFA Container
+   ========================= */
 .mfa-container {
     max-width: 470px;
     width: 100%;
@@ -231,7 +286,7 @@ body {
     transform: translate(-50%, -50%);
 }
 
-/* Rest of your existing CSS remains the same */
+/* Code inputs */
 .code-input-container {
     display: flex;
     justify-content: space-between;
@@ -249,9 +304,9 @@ body {
 }
 
     .code-input:focus {
-        border-color: #007bff;
+        border-color: var(--primary); /* was #007bff */
         outline: none;
-        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        box-shadow: 0 0 0 2px var(--focus-ring); /* was rgba(0, 123, 255, 0.25) */
     }
 
     .code-input.invalid {
@@ -273,6 +328,7 @@ body {
     }
 }
 
+/* Buttons inside MFA screen */
 .button-container {
     display: flex;
     justify-content: space-between;
@@ -290,11 +346,12 @@ body {
         font-size: 1rem;
     }
 
+    /* Original formatting kept (note: there was a line-break in your source) */
     .button-container
     .btn-secondary {
         padding: 12px;
-        color: white;
-        border: none;
+        color: white; /* NOTE: kept as-is from your original */
+        border: none; /* NOTE: overrides btn-secondary border */
         border-radius: 8px;
         font-size: 1rem;
         font-weight: 600;
@@ -303,6 +360,7 @@ body {
         margin-top: 0.5rem;
     }
 
+/* Validation / Messages */
 .validation-message {
     color: #dc3545;
     margin-bottom: 1rem;
@@ -324,6 +382,9 @@ body {
     text-decoration: none;
 }
 
+/* =========================
+   Loading Overlay
+   ========================= */
 .loading-overlay {
     position: fixed;
     top: 0;
@@ -343,7 +404,7 @@ body {
     width: 70px;
     height: 70px;
     border: 6px solid #d0d7e4;
-    border-top-color: #2563eb;
+    border-top-color: var(--spinner); /* was #2563eb */
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
 }
@@ -351,7 +412,7 @@ body {
 .loading-text {
     margin-top: 16px;
     font-weight: 600;
-    color: #1f3c88;
+    color: var(--primary); /* was #1f3c88 */
     letter-spacing: 0.5px;
 }
 

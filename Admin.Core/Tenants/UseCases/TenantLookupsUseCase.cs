@@ -29,8 +29,7 @@ internal sealed class TenantLookupsUseCase
             () => Task.FromResult(new TenantLookups
             {
                 Statuses = TenantLookupMapper.MapTenantStatuses(),
-                TenantTypes = TenantLookupMapper.MapTenantTypes(),
-                SubscriptionTypes = TenantLookupMapper.MapSubscriptionTypes(),
+                ExternalProviders = TenantLookupMapper.MapExternalProviders(),
                 AuthenticationModes = TenantLookupMapper.MapAuthenticationModes()
             }),
             TimeSpan.FromMinutes(10));

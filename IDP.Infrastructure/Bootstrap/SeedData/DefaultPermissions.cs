@@ -10,23 +10,22 @@ internal class DefaultPermissions
         List<CreateUpdatePermission> allPermissions = new();
 
         //NavLinks
-        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavLink", 9, "/users", "fa-users me-2");
-        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavLink", 10, "/roles", "fa-shield-alt me-2");
-        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavLink", 11, "/permissions", "fa-shield me-2");
+        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavLink", 8, "/users", "fa-users me-2");
+        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavLink", 9, "/roles", "fa-shield-alt me-2");
+        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavLink", 10, "/permissions", "fa-shield me-2");
 
         //NavGroups
         var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
         userManagement.ChildPermissions = new();
         userManagement.ChildPermissions.AddRange(usersView, rolesView, permissionsView);
 
-        allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-clipboard-list me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "tenants.view", "Tenant Management", "NavGroup", 3, "/tenants", "fa-building me-2"));
         allPermissions.Add(userManagement);
         allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 4, "/tokens", "fa-id-badge me-2"));
         allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 6, "/activities", "fa-clipboard-list me-2"));
         allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 7, "/settings", "fa-cog me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 8, "/settings", "fa-cog me-2"));
 
         //Actions
         int i = 11;

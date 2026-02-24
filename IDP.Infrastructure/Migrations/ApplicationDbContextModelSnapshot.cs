@@ -991,18 +991,11 @@ namespace IDP.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AuthenticationMode")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("CreatedBy")
                         .HasColumnType("int");
-
-                    b.Property<string>("DefaultLanguage")
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<int>("EffectiveUserId")
                         .ValueGeneratedOnAddOrUpdate()
@@ -1013,27 +1006,8 @@ namespace IDP.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("HomePageUrl")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LoginText")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("LogoUrl")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("PrimaryColor")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int?>("SubscriptionType")
-                        .HasColumnType("int");
 
                     b.Property<string>("TenantCode")
                         .IsRequired()
@@ -1044,19 +1018,6 @@ namespace IDP.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("TenantType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Theme")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("TwoFactorCodeExpiry")
-                        .HasColumnType("int");
-
-                    b.Property<bool?>("TwoFactorEnabled")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
@@ -1083,9 +1044,109 @@ namespace IDP.Infrastructure.Migrations
                     b.ToTable("Tenants", (string)null);
                 });
 
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantAuthSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowLocalLogin")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowSelfRegistration")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AuthenticationMode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("RequireEmailVerification")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "AuthenticationMode");
+
+                    b.ToTable("TenantAuthSettings", (string)null);
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantExternalProvider", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("bit");
+
+                    b.Property<byte>("ProviderType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProviderType")
+                        .IsUnique();
+
+                    b.ToTable("TenantExternalProviders", (string)null);
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantUISetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DefaultLanguage")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("LoginText")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Theme")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("TenantUISettings", (string)null);
+                });
+
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tokens.ReferenceToken", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("TokenHash")
@@ -1111,6 +1172,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tokens.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ConsumedAt")
@@ -1151,6 +1213,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tokens.Token", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Audience")
@@ -1251,6 +1314,26 @@ namespace IDP.Infrastructure.Migrations
                         .HasDatabaseName("IX_Tokens_Revoke_ByUser");
 
                     b.ToTable("Tokens", (string)null);
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.CodeSequence", b =>
+                {
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SequenceKey")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("LastValue")
+                        .HasColumnType("int");
+
+                    b.HasKey("TenantId", "SequenceKey");
+
+                    b.HasIndex("TenantId", "SequenceKey")
+                        .IsUnique();
+
+                    b.ToTable("CodeSequences", (string)null);
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.User", b =>
@@ -1436,17 +1519,6 @@ namespace IDP.Infrastructure.Migrations
                         .HasDatabaseName("IX_UserAddresses_User_Active");
 
                     b.ToTable("UserAddresses", (string)null);
-                });
-
-            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserCodeSequence", b =>
-                {
-                    b.Property<int>("LastValue")
-                        .HasColumnType("int");
-
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
-
-                    b.ToTable("UserCodeSequences", (string)null);
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserContact", b =>
@@ -2064,6 +2136,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.ReadModels.TokenReadModel", b =>
                 {
                     b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Audience")
@@ -2177,7 +2250,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Clients.Client", b =>
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
-                        .WithMany("Clients")
+                        .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2251,7 +2324,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Configurations.Configuration", b =>
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
-                        .WithMany("Configurations")
+                        .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2278,7 +2351,7 @@ namespace IDP.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
-                        .WithMany("Permissions")
+                        .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2286,15 +2359,6 @@ namespace IDP.Infrastructure.Migrations
                     b.Navigation("Parent");
 
                     b.Navigation("Tenant");
-                });
-
-            modelBuilder.Entity("IDP.Domain.AggregateRoots.Roles.Role", b =>
-                {
-                    b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", null)
-                        .WithMany("Roles")
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Roles.RolePermission", b =>
@@ -2314,6 +2378,107 @@ namespace IDP.Infrastructure.Migrations
                     b.Navigation("Permission");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantAuthSetting", b =>
+                {
+                    b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
+                        .WithOne("TenantAuthSetting")
+                        .HasForeignKey("IDP.Domain.AggregateRoots.Tenants.TenantAuthSetting", "TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("IDP.Domain.AggregateRoots.Tenants.TwoFactorPolicy", "TwoFactor", b1 =>
+                        {
+                            b1.Property<int>("TenantAuthSettingId")
+                                .HasColumnType("int");
+
+                            b1.Property<int?>("CodeExpiry")
+                                .HasColumnType("int")
+                                .HasColumnName("TwoFactorCodeExpiry");
+
+                            b1.Property<bool>("IsEnabled")
+                                .HasColumnType("bit")
+                                .HasColumnName("TwoFactorEnabled");
+
+                            b1.HasKey("TenantAuthSettingId");
+
+                            b1.ToTable("TenantAuthSettings");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantAuthSettingId");
+                        });
+
+                    b.Navigation("Tenant");
+
+                    b.Navigation("TwoFactor")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantExternalProvider", b =>
+                {
+                    b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
+                        .WithMany("TenantExternalProviders")
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("IDP.Domain.AggregateRoots.Tenants.OidcClientConfig", "OidcConfig", b1 =>
+                        {
+                            b1.Property<int>("TenantExternalProviderId")
+                                .HasColumnType("int");
+
+                            b1.Property<string>("Authority")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("nvarchar(250)")
+                                .HasColumnName("Authority");
+
+                            b1.Property<string>("CallbackPath")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("nvarchar(250)")
+                                .HasColumnName("CallbackPath");
+
+                            b1.Property<string>("ClientId")
+                                .IsRequired()
+                                .HasMaxLength(250)
+                                .HasColumnType("nvarchar(250)")
+                                .HasColumnName("ClientId");
+
+                            b1.Property<string>("ClientSecret")
+                                .HasMaxLength(250)
+                                .HasColumnType("nvarchar(250)")
+                                .HasColumnName("ClientSecret");
+
+                            b1.Property<string>("Scopes")
+                                .IsRequired()
+                                .HasMaxLength(500)
+                                .HasColumnType("nvarchar(500)")
+                                .HasColumnName("Scopes");
+
+                            b1.HasKey("TenantExternalProviderId");
+
+                            b1.ToTable("TenantExternalProviders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantExternalProviderId");
+                        });
+
+                    b.Navigation("OidcConfig");
+
+                    b.Navigation("Tenant");
+                });
+
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.TenantUISetting", b =>
+                {
+                    b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
+                        .WithOne("TenantUISetting")
+                        .HasForeignKey("IDP.Domain.AggregateRoots.Tenants.TenantUISetting", "TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tenant");
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tokens.ReferenceToken", b =>
@@ -2339,7 +2504,7 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.User", b =>
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Tenants.Tenant", "Tenant")
-                        .WithMany("Users")
+                        .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2418,15 +2583,13 @@ namespace IDP.Infrastructure.Migrations
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tenants.Tenant", b =>
                 {
-                    b.Navigation("Clients");
+                    b.Navigation("TenantAuthSetting")
+                        .IsRequired();
 
-                    b.Navigation("Configurations");
+                    b.Navigation("TenantExternalProviders");
 
-                    b.Navigation("Permissions");
-
-                    b.Navigation("Roles");
-
-                    b.Navigation("Users");
+                    b.Navigation("TenantUISetting")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Tokens.Token", b =>

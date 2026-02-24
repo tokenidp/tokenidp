@@ -62,7 +62,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithName("TenantLookups")
         .WithTags("TenantLookups");
 
-        authGroup.MapPost("/", async (CreateUpdateTenant tenant,
+        authGroup.MapPost("/", async (TenantDetail tenant,
             TenantCommandUseCase useCase,
             HttpContext httpContext) =>
         {
@@ -79,7 +79,7 @@ internal class TenantEndpoint : IEndpointDefinition
         .WithName("CreateTenant")
         .WithTags("CreateTenant");
 
-        authGroup.MapPut("/{id}", async (int id, CreateUpdateTenant tenant,
+        authGroup.MapPut("/{id}", async (int id, TenantDetail tenant,
             TenantCommandUseCase useCase,
             HttpContext httpContext) =>
         {

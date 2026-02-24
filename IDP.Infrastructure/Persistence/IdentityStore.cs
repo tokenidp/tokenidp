@@ -58,7 +58,7 @@ internal sealed class IdentityStore : IIdentityStore
 
                 await _applicationDbContext.SaveChangesAsync();
 
-                return AuthenticationContext.Failure($"User with {userName} not found.");
+                return AuthenticationContext.Failure($"Invalid username or password");
             }
 
             _logger.LogDebug("Found user {UserId} for authentication", user.Id);
@@ -78,7 +78,7 @@ internal sealed class IdentityStore : IIdentityStore
 
                 await UpdateUser(user);
 
-                return AuthenticationContext.Failure($"Credentials for '{userName} aren't valid.");
+                return AuthenticationContext.Failure($"Invalid username or password");
             }
 
             _logger.LogInfo("Successful authentication for user {UserId}", user.Id);

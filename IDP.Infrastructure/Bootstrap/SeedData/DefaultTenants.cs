@@ -4,21 +4,18 @@ namespace IDP.Infrastructure.Bootstrap.SeedData;
 
 internal class DefaultTenants
 {
-    public static readonly CreateUpdateTenant SystemTenant = new(
-         tenantName: "system",
-         tenantCode: "System001",
-         email: "admin@system.local",
-         theme: "default",
-         logoUrl: "default",
-         primaryColor: "#0F172A",
-         defaultLanguage: "en",
-         loginText: "Identity Platform Administration",
-         twoFactorEnabled: true,
-         twoFactorCodeExpiry: 300,
-         homePageUrl: "/dashboard",
-         isActive: true,
-         tenantType: TenantTypes.Internal,
-         subscriptionType: SubscriptionTypes.Paid,
-         authenticationMode: AuthenticationModes.Local
-     );
+    public static readonly TenantDetail SystemTenant = new TenantDetail
+    {
+        TenantName = "system",
+        TenantCode= "System001",
+        Email = "admin@system.local",        
+        IsActive =  true,
+        AuthSettings = new TenantAuthSettingDetail()
+        {
+            AuthenticationMode = AuthenticationModes.Local,
+            AllowLocalLogin = true,
+            TwoFactorEnabled = false,
+            TwoFactorCodeExpiry = 300
+        }
+    };
 }

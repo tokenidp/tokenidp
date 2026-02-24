@@ -24,11 +24,11 @@ internal sealed class TenantStore : ITenantStore
         var hasTwoFactorEnabled = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             return await _dbContext.Tenants.Where(t => t.Id == tenantId)
-            .Select(s => s.TwoFactorEnabled)
+            .Select(s => s.TenantAuthSetting.TwoFactor.IsEnabled)
             .FirstOrDefaultAsync();
 
         }, new TimeSpan(0, 15, 0));
 
-        return hasTwoFactorEnabled ?? false;
+        return hasTwoFactorEnabled;
     }
 }

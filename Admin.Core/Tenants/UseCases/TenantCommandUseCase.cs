@@ -5,26 +5,28 @@ internal sealed class TenantCommandUseCase
     private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantCommandUseCase> _logger;
+    private readonly ICodeSequenceGenerator _codeGenerator;
 
     public TenantCommandUseCase(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
-        IAppLogger<TenantCommandUseCase> logger)
+        IAppLogger<TenantCommandUseCase> logger,
+        ICodeSequenceGenerator codeGenerator)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
+        _codeGenerator = codeGenerator;
     }
 
     public async Task<ApiResult<int>> CreateTenant(
-        CreateUpdateTenant request,
+        TenantDetail request,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Creating tenant {TenantName} by user {UserId}",
             request.TenantName, _currentUserService.UserId);
 
         var tenantName = request.TenantName?.Trim() ?? string.Empty;
-        var tenantCode = await ResolveTenantCode(request.TenantCode, tenantName, cancellationToken);
 
         var nameExists = await _dbContext.Tenants
             .AsNoTracking()
@@ -36,85 +38,78 @@ internal sealed class TenantCommandUseCase
                 ApiError.Failure("tenant.name.duplicate", "Tenant name already exists."));
         }
 
-        var codeExists = await _dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(t => t.TenantCode.ToLower() == tenantCode.ToLower(), cancellationToken);
+        var authSettings = TenantAuthSetting.Create(0);
 
-        if (codeExists)
-        {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("tenant.code.duplicate", "Tenant code already exists."));
-        }
+        authSettings.SetAuthenticationMode(request.AuthSettings.AuthenticationMode);
+
+        if (request.AuthSettings.AllowLocalLogin) authSettings.EnableLocalLogin();
+        else authSettings.DisableLocalLogin();
+
+        if (request.AuthSettings.RequireEmailVerification) authSettings.RequireVerifiedEmail();
+        else authSettings.AllowUnverifiedEmail();
+
+        if (request.AuthSettings.AllowSelfRegistration) authSettings.EnableSelfRegistration();
+        else authSettings.DisableSelfRegistration();
+
+        if (request.AuthSettings.TwoFactorEnabled)
+            authSettings.EnableTwoFactor(TimeSpan.FromMinutes(request.AuthSettings.TwoFactorCodeExpiry ?? 5));
+        else
+            authSettings.DisableTwoFactor();
+
+        var tenantUISetting = TenantUISetting.Create(request.UISetting.Theme,
+            request.UISetting.LogoUrl,
+            request.UISetting.PrimaryColor,
+            request.UISetting.DefaultLanguage,
+            request.UISetting.LoginText);
 
         var createResult = Tenant.Create(
-            tenantName,
-            tenantCode,
-            request.Email?.Trim(),
-            request.Theme?.Trim(),
-            request.LogoUrl?.Trim(),
-            request.PrimaryColor?.Trim(),
-            request.DefaultLanguage?.Trim(),
-            request.LoginText?.Trim(),
-            request.TwoFactorEnabled,
-            request.TwoFactorCodeExpiry,
-            request.HomePageUrl?.Trim(),
-            request.IsActive,
-            request.TenantType,
-            request.SubscriptionType,
-            request.AuthenticationMode,
+            tenantName: tenantName,
+            email: request.Email?.Trim(),
+            isActive: request.IsActive,
+            authSetting: authSettings,
+            tenantUISetting: tenantUISetting,
             out var tenant);
 
-        if (!createResult.IsSuccess || tenant == null)
+        if (!createResult.IsSuccess || tenant is null)
         {
             return FailureFromResult(createResult);
         }
 
-        //var roles = await _dbContext.Roles.Where(s => s.IsEditable).ToListAsync();
+        var nextValue = await _codeGenerator
+            .NextTenantCodeAsync(_currentUserService.TenantId, cancellationToken);
 
-        //var claims = await _dbContext.Permissions.ToListAsync();
+        tenant.GenerateTenantCode(nextValue);
 
-        //var configurations = await _dbContext.Configurations.Where(s => s.IsEditable).ToListAsync();
+        foreach (var p in request.Providers)
+        {
+            var config = OidcClientConfig.Create(
+                clientId: p.ClientId,
+                authority: new Uri(p.Authority),
+                scopes: p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+                callbackPath: p.CallbackPath,
+                clientSecret: p.ClientSecret);
 
-        //foreach (var role in roles)
-        //{
-        //    tenant.AddTenantRoles(role.Name, role.RoleDescription);
-        //}
+            var addResult = tenant.AddExternalProvider(p.ProviderType, config);
+            if (!addResult.IsSuccess)
+                return FailureFromResult(addResult);
 
-        //foreach (var claim in claims)
-        //{
-        //    //tenant.AddPermission(claim.Id);
-        //}
-
-        //foreach (var configuration in configurations)
-        //{
-        //    tenant.AddTenantConfigurations(configuration.ConfigKey,
-        //        configuration.ConfigValue,
-        //        configuration.IsEditable);
-        //}
+            if (!p.Enabled)
+                tenant.DisableExternalProvider(p.ProviderType);
+        }
 
         _dbContext.Tenants.Add(tenant);
-
         await _dbContext.SaveChangesAsync(cancellationToken);
-
-        //await AddRolePermissions(tenant);
 
         _logger.LogInfo("Tenant created with Id {TenantId}", tenant.Id);
 
         return ApiResult<int>.Success(tenant.Id);
     }
 
-    public async Task<ApiResult<int>> UpdateTenant(
-        int id,
-        CreateUpdateTenant request,
+    public async Task<ApiResult<int>> UpdateTenant(int id,
+        TenantDetail request,
         CancellationToken cancellationToken = default)
     {
         _logger.LogDebug("Updating tenant {TenantId}", id);
-
-        if (_currentUserService.TenantId > 0 && id != _currentUserService.TenantId)
-        {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
-        }
 
         var tenant = await _dbContext.Tenants
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
@@ -128,6 +123,7 @@ internal sealed class TenantCommandUseCase
         }
 
         var tenantName = request.TenantName?.Trim() ?? string.Empty;
+
         var nameExists = await _dbContext.Tenants
             .AsNoTracking()
             .AnyAsync(t => t.Id != id &&
@@ -140,33 +136,64 @@ internal sealed class TenantCommandUseCase
                 ApiError.Failure("tenant.name.duplicate", "Tenant name already exists."));
         }
 
-        if (!string.IsNullOrWhiteSpace(request.TenantCode) &&
-            !string.Equals(tenant.TenantCode, request.TenantCode.Trim(), StringComparison.OrdinalIgnoreCase))
-        {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("tenant.code.immutable", "Tenant code cannot be changed."));
-        }
-
-        var updateResult = tenant.UpdateTenant(
+        var updateResult = tenant.UpdateTenantProfile(
             tenantName,
             request.Email?.Trim(),
-            request.Theme?.Trim(),
-            request.LogoUrl?.Trim(),
-            request.PrimaryColor?.Trim(),
-            request.DefaultLanguage?.Trim(),
-            request.LoginText?.Trim(),
-            request.TwoFactorEnabled,
-            request.TwoFactorCodeExpiry,
-            request.HomePageUrl?.Trim(),
-            request.IsActive,
-            request.TenantType,
-            request.SubscriptionType,
-            request.AuthenticationMode);
+            request.IsActive);
 
         if (!updateResult.IsSuccess)
         {
             return ApiResult<int>.Failure(
                 updateResult.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
+        }
+
+        tenant.TenantUISetting.Update(request.UISetting.Theme,
+            request.UISetting.LogoUrl,
+            request.UISetting.PrimaryColor,
+            request.UISetting.DefaultLanguage,
+            request.UISetting.LoginText);
+
+        tenant.ConfigureAuthSettings(auth =>
+        {
+            auth.SetAuthenticationMode(request.AuthSettings.AuthenticationMode);
+
+            if (request.AuthSettings.AllowLocalLogin) auth.EnableLocalLogin();
+            else auth.DisableLocalLogin();
+
+            if (request.AuthSettings.RequireEmailVerification) auth.RequireVerifiedEmail();
+            else auth.AllowUnverifiedEmail();
+
+            if (request.AuthSettings.AllowSelfRegistration) auth.EnableSelfRegistration();
+            else auth.DisableSelfRegistration();
+
+            if (request.AuthSettings.TwoFactorEnabled)
+                auth.EnableTwoFactor(TimeSpan.FromMinutes(request.AuthSettings.TwoFactorCodeExpiry ?? 5));
+            else
+                auth.DisableTwoFactor();
+        });
+
+        foreach (var p in request.Providers)
+        {
+            var config = OidcClientConfig.Create(
+                p.ClientId,
+                new Uri(p.Authority),
+                p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
+                p.CallbackPath,
+                p.ClientSecret);
+
+            if (!tenant.TenantExternalProviders.Any(x => x.ProviderType == p.ProviderType))
+            {
+                tenant.AddExternalProvider(p.ProviderType, config);
+            }
+            else
+            {
+                tenant.UpdateExternalProviderConfig(p.ProviderType, config);
+            }
+
+            if (p.Enabled)
+                tenant.EnableExternalProvider(p.ProviderType);
+            else
+                tenant.DisableExternalProvider(p.ProviderType);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -218,67 +245,9 @@ internal sealed class TenantCommandUseCase
         return ApiResult<int>.Success(tenant.Id);
     }
 
-    private async Task<string> ResolveTenantCode(
-        string? tenantCode,
-        string tenantName,
-        CancellationToken cancellationToken)
-    {
-        var normalized = tenantCode?.Trim();
-        if (!string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized.ToUpperInvariant();
-        }
-
-        var baseCode = new string(tenantName.Where(char.IsLetterOrDigit).ToArray())
-            .ToUpperInvariant();
-
-        if (string.IsNullOrWhiteSpace(baseCode))
-        {
-            baseCode = "TENANT";
-        }
-
-        baseCode = baseCode.Length >= 4 ? baseCode[..4] : baseCode.PadRight(4, 'X');
-        var candidate = baseCode;
-        var suffix = 1;
-
-        while (await _dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(t => t.TenantCode.ToLower() == candidate.ToLower(), cancellationToken))
-        {
-            candidate = $"{baseCode}{suffix:00}";
-            suffix++;
-        }
-
-        return candidate;
-    }
-
     private static ApiResult<int> FailureFromResult(Result result)
     {
         return ApiResult<int>.Failure(
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
-    }
-
-    private async Task AddRolePermissions(Tenant tenant)
-    {
-        _logger.LogDebug("Adding role permissions for tenant {TenantId}", tenant.Id);
-
-        List<RolePermission> roleClaims = new();
-
-        //foreach (var role in tenant.Roles)
-        //{
-        //    roleClaims = (from ct in tenant.TenantPermissions
-        //                  select new RolePermission
-        //                  (
-        //                     role.Id,
-        //                      ct.Id
-
-        //                  )).ToList();
-        //}
-
-        _dbContext.RolePermissions.AddRange(roleClaims);
-
-        await _dbContext.SaveChangesAsync();
-
-        _logger.LogDebug("Role permissions added for tenant {TenantId}", tenant.Id);
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Admin.Core.Bootstrap;
-using Admin.Core.Users;
 using IDP.Core.OAuth;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Bootstrap;
@@ -58,7 +57,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
-        services.AddScoped<IUserCodeGenerator, UserCodeGenerator>();
+        services.AddScoped<ICodeSequenceGenerator, CodeSequenceGenerator>();
     }
 
     private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)

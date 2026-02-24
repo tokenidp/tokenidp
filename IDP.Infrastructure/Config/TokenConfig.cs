@@ -9,7 +9,7 @@ internal class TokenConfig : IEntityTypeConfiguration<Token>
         builder.ToTable("Tokens");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.ClientId).HasMaxLength(100).IsRequired();
 
         builder.Property(x => x.TokenStatus).HasMaxLength(20).IsRequired()

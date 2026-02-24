@@ -60,19 +60,11 @@ internal class UserPermissionsUseCase
 
         _logger.LogDebug("Found {ClaimCount} claims for user {UserId}",
             permissions.Count, _currentUserService.UserId);
-
-        var tenant = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == user.TenantId);
-
-        if (tenant == null)
-        {
-            _logger.LogWarning("Tenant not found for user {UserId}", _currentUserService.UserId);
-        }
-
+      
         var userInfo = UserPermission.Create(
             user.Id,
             user.TenantId,
             user.FullName,
-            tenant?.HomePageUrl ?? string.Empty,
             permissions);
 
         _logger.LogInfo("Successfully compiled user info for {UserId}", _currentUserService.UserId);

@@ -19,23 +19,12 @@ internal static class TenantLookupMapper
         };
     }
 
-    public static List<LookupItem> MapTenantTypes()
+    public static List<LookupItem> MapExternalProviders()
     {
-        return Enum.GetValues<TenantTypes>()
+        return Enum.GetValues<ExternalProviderTypes>()
             .Select(value => new LookupItem
             {
-                Key = ((int)value).ToString(),
-                Value = value.ToString()
-            })
-            .ToList();
-    }
-
-    public static List<LookupItem> MapSubscriptionTypes()
-    {
-        return Enum.GetValues<SubscriptionTypes>()
-            .Select(value => new LookupItem
-            {
-                Key = ((int)value).ToString(),
+                Key = value.ToString(),
                 Value = value.ToString()
             })
             .ToList();

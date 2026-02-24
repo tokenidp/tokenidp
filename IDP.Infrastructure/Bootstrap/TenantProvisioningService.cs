@@ -5,27 +5,39 @@ namespace IDP.Infrastructure.Bootstrap;
 
 internal class TenantProvisioningService : ITenantProvisioningService
 {
-    public async Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db, 
-        CreateUpdateTenant command, 
+    public async Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db,
+        TenantDetail command,
         CancellationToken ct)
     {
+        var authSettings = TenantAuthSetting.Create(0);
+
+        authSettings.SetAuthenticationMode(command.AuthSettings.AuthenticationMode);
+
+        if (command.AuthSettings.AllowLocalLogin) authSettings.EnableLocalLogin();
+        else authSettings.DisableLocalLogin();
+
+        if (command.AuthSettings.RequireEmailVerification) authSettings.RequireVerifiedEmail();
+        else authSettings.AllowUnverifiedEmail();
+
+        if (command.AuthSettings.AllowSelfRegistration) authSettings.EnableSelfRegistration();
+        else authSettings.DisableSelfRegistration();
+
+        if (command.AuthSettings.TwoFactorEnabled)
+            authSettings.EnableTwoFactor(TimeSpan.FromMinutes(command.AuthSettings.TwoFactorCodeExpiry ?? 300));
+        else
+            authSettings.DisableTwoFactor();
+
+        var uiSetting = TenantUISetting.Create("Light", "default", "default", "en", string.Empty);
+
         var createResult = Tenant.Create(
             command.TenantName,
-            command.TenantCode,
             command.Email?.Trim(),
-            command.Theme?.Trim(),
-            command.LogoUrl?.Trim(),
-            command.PrimaryColor?.Trim(),
-            command.DefaultLanguage?.Trim(),
-            command.LoginText?.Trim(),
-            command.TwoFactorEnabled,
-            command.TwoFactorCodeExpiry,
-            command.HomePageUrl?.Trim(),
             command.IsActive,
-            command.TenantType,
-            command.SubscriptionType,
-            command.AuthenticationMode,
+            authSettings,
+            uiSetting,
             out var tenant);
+
+        tenant?.GenerateTenantCode(1);
 
         db.Tenants.Add(tenant!);
 
@@ -34,8 +46,8 @@ internal class TenantProvisioningService : ITenantProvisioningService
         return tenant!;
     }
 
-    public async Task<Tenant?> ExistsAsync(IApplicationDbContext db, 
-        string tenantCode, 
+    public async Task<Tenant?> ExistsAsync(IApplicationDbContext db,
+        string tenantCode,
         CancellationToken ct)
     {
         var existingTenant = await db.Tenants

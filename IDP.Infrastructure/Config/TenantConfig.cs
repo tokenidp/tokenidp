@@ -12,13 +12,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         builder.Property(x => x.TenantCode).HasMaxLength(20) .IsRequired();
 
         builder.Property(x => x.Email).HasMaxLength(100);
-        builder.Property(x => x.Theme).HasMaxLength(50);
-        builder.Property(x => x.PrimaryColor).HasMaxLength(20);
-        builder.Property(x => x.LogoUrl).HasMaxLength(200);
-        builder.Property(x => x.HomePageUrl).HasMaxLength(200);
-        builder.Property(x => x.DefaultLanguage).HasMaxLength(10);
-        builder.Property(x => x.LoginText).HasMaxLength(500);
-
+        
         builder.Property(x => x.IsActive).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 

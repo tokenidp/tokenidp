@@ -7,12 +7,12 @@ internal class UserCommandUseCase
     private readonly ICurrentUserService _currentUserService;
     private readonly IIdentityStore _identityStore;
     private readonly IAppLogger<UserCommandUseCase> _logger;
-    private readonly IUserCodeGenerator _userCodeGenerator;
+    private readonly ICodeSequenceGenerator _userCodeGenerator;
 
     public UserCommandUseCase(ICurrentUserService currentUserService,
         IAppLogger<UserCommandUseCase> logger,
         IIdentityStore identityStore,
-        IUserCodeGenerator userCodeGenerator)
+        ICodeSequenceGenerator userCodeGenerator)
     {
         _currentUserService = currentUserService;
         _logger = logger;
@@ -58,7 +58,7 @@ internal class UserCommandUseCase
             request.LastName,
             request.UserName,
             request.Email,
-            request.Phone,
+            request.Phone!,
             _currentUserService.UserId,
             request.Roles,
             out var user);
@@ -75,7 +75,7 @@ internal class UserCommandUseCase
         }
 
         var nextValue = await _userCodeGenerator
-            .GenerateNextValueAsync(_currentUserService.TenantId, cancellationToken);
+            .NextUserCodeAsync(_currentUserService.TenantId, cancellationToken);
 
         user.GenerateUserCode(nextValue);
 

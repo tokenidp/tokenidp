@@ -66,6 +66,19 @@ namespace IDP.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CodeSequences",
+                columns: table => new
+                {
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    SequenceKey = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    LastValue = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CodeSequences", x => new { x.TenantId, x.SequenceKey });
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DashboardMetricRankings",
                 columns: table => new
                 {
@@ -236,6 +249,31 @@ namespace IDP.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Roles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RoleName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    NormalizedName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    RoleDescription = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    IsEditable = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    EffectiveUserId = table.Column<int>(type: "int", nullable: false, computedColumnSql: "COALESCE(NULLIF([UpdatedBy], 0), [CreatedBy])", stored: true),
+                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tenants",
                 columns: table => new
                 {
@@ -244,17 +282,6 @@ namespace IDP.Infrastructure.Migrations
                     TenantName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     TenantCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    Theme = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    LogoUrl = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    PrimaryColor = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    DefaultLanguage = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
-                    LoginText = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: true),
-                    TwoFactorCodeExpiry = table.Column<int>(type: "int", nullable: true),
-                    HomePageUrl = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    TenantType = table.Column<int>(type: "int", nullable: true),
-                    SubscriptionType = table.Column<int>(type: "int", nullable: true),
-                    AuthenticationMode = table.Column<int>(type: "int", nullable: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     EffectiveUserId = table.Column<int>(type: "int", nullable: false, computedColumnSql: "COALESCE(NULLIF([UpdatedBy], 0), [CreatedBy])", stored: true),
                     CreatedBy = table.Column<int>(type: "int", nullable: false),
@@ -334,17 +361,6 @@ namespace IDP.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tokens", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserCodeSequences",
-                columns: table => new
-                {
-                    TenantId = table.Column<int>(type: "int", nullable: false),
-                    LastValue = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
                 });
 
             migrationBuilder.CreateTable(
@@ -483,30 +499,74 @@ namespace IDP.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Roles",
+                name: "TenantAuthSettings",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    NormalizedName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     TenantId = table.Column<int>(type: "int", nullable: false),
-                    RoleDescription = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    IsEditable = table.Column<bool>(type: "bit", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    EffectiveUserId = table.Column<int>(type: "int", nullable: false, computedColumnSql: "COALESCE(NULLIF([UpdatedBy], 0), [CreatedBy])", stored: true),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    AllowLocalLogin = table.Column<bool>(type: "bit", nullable: false),
+                    RequireEmailVerification = table.Column<bool>(type: "bit", nullable: false),
+                    AllowSelfRegistration = table.Column<bool>(type: "bit", nullable: false),
+                    AuthenticationMode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorCodeExpiry = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Roles", x => x.Id);
+                    table.PrimaryKey("PK_TenantAuthSettings", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Roles_Tenants_TenantId",
+                        name: "FK_TenantAuthSettings_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantExternalProviders",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    ProviderType = table.Column<byte>(type: "tinyint", nullable: false),
+                    Enabled = table.Column<bool>(type: "bit", nullable: false),
+                    ClientId = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    ClientSecret = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    Authority = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true),
+                    Scopes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CallbackPath = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantExternalProviders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantExternalProviders_Tenants_TenantId",
+                        column: x => x.TenantId,
+                        principalTable: "Tenants",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TenantUISettings",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    Theme = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    LogoUrl = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    PrimaryColor = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    DefaultLanguage = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    LoginText = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TenantUISettings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TenantUISettings_Tenants_TenantId",
                         column: x => x.TenantId,
                         principalTable: "Tenants",
                         principalColumn: "Id",
@@ -927,6 +987,12 @@ namespace IDP.Infrastructure.Migrations
                 columns: new[] { "ClientId", "IsRevoked", "ExpiresAt" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_CodeSequences_TenantId_SequenceKey",
+                table: "CodeSequences",
+                columns: new[] { "TenantId", "SequenceKey" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Configurations_ByScope",
                 table: "Configurations",
                 columns: new[] { "TenantId", "Scope", "IsDeleted" });
@@ -1141,6 +1207,23 @@ namespace IDP.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_TenantAuthSettings_TenantId",
+                table: "TenantAuthSettings",
+                column: "TenantId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantAuthSettings_TenantId_AuthenticationMode",
+                table: "TenantAuthSettings",
+                columns: new[] { "TenantId", "AuthenticationMode" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantExternalProviders_TenantId_ProviderType",
+                table: "TenantExternalProviders",
+                columns: new[] { "TenantId", "ProviderType" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tenants_EffectiveUserId",
                 table: "Tenants",
                 column: "EffectiveUserId");
@@ -1160,6 +1243,12 @@ namespace IDP.Infrastructure.Migrations
                 name: "IX_Tenants_TenantName",
                 table: "Tenants",
                 column: "TenantName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TenantUISettings_TenantId",
+                table: "TenantUISettings",
+                column: "TenantId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1273,41 +1362,6 @@ namespace IDP.Infrastructure.Migrations
                 table: "Users",
                 columns: new[] { "TenantId", "UserName" },
                 unique: true);
-
-            var basePath = AppContext.BaseDirectory;
-            var scriptPath1 = Path.Combine(basePath, "Scripts", "vConfigurationSearch.sql");
-            var scriptPath2 = Path.Combine(basePath, "Scripts", "vRoleSearch.sql");
-            var scriptPath3 = Path.Combine(basePath, "Scripts", "vTenantSearch.sql");
-            var scriptPath4 = Path.Combine(basePath, "Scripts", "vTokenSearch.sql");
-            var scriptPath5 = Path.Combine(basePath, "Scripts", "vUserRolePermissions.sql");
-            var scriptPath6 = Path.Combine(basePath, "Scripts", "vUserSearch.sql");
-
-            var scriptPath7 = Path.Combine(basePath, "Scripts", "usp_MarkExpiredTokens.sql");
-            var scriptPath8 = Path.Combine(basePath, "Scripts", "usp_PurgeOldTokens.sql");
-
-            var viewSql1 = File.ReadAllText(scriptPath1);
-            migrationBuilder.Sql(viewSql1);
-
-            var viewSql2 = File.ReadAllText(scriptPath2);
-            migrationBuilder.Sql(viewSql2);
-
-            var viewSql3 = File.ReadAllText(scriptPath3);
-            migrationBuilder.Sql(viewSql3);
-
-            var viewSql4 = File.ReadAllText(scriptPath4);
-            migrationBuilder.Sql(viewSql4);
-
-            var viewSql5 = File.ReadAllText(scriptPath5);
-            migrationBuilder.Sql(viewSql5);
-
-            var viewSql6 = File.ReadAllText(scriptPath6);
-            migrationBuilder.Sql(viewSql6);
-
-            var viewSql7 = File.ReadAllText(scriptPath7);
-            migrationBuilder.Sql(viewSql7);
-
-            var viewSql8 = File.ReadAllText(scriptPath8);
-            migrationBuilder.Sql(viewSql8);
         }
 
         /// <inheritdoc />
@@ -1333,6 +1387,9 @@ namespace IDP.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "ClientSecrets");
+
+            migrationBuilder.DropTable(
+                name: "CodeSequences");
 
             migrationBuilder.DropTable(
                 name: "Configurations");
@@ -1368,13 +1425,19 @@ namespace IDP.Infrastructure.Migrations
                 name: "RolePermissions");
 
             migrationBuilder.DropTable(
+                name: "TenantAuthSettings");
+
+            migrationBuilder.DropTable(
+                name: "TenantExternalProviders");
+
+            migrationBuilder.DropTable(
+                name: "TenantUISettings");
+
+            migrationBuilder.DropTable(
                 name: "TokenReadModel");
 
             migrationBuilder.DropTable(
                 name: "UserAddresses");
-
-            migrationBuilder.DropTable(
-                name: "UserCodeSequences");
 
             migrationBuilder.DropTable(
                 name: "UserContacts");
@@ -1402,16 +1465,6 @@ namespace IDP.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tenants");
-
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vConfigurationSearch;");
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vRoleSearch;");
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vTenantSearch;");
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vTokenSearch;");
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vUserRolePermissions;");
-            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vUserSearch;");
-
-            migrationBuilder.Sql(@"DROP PROCEDURE IF EXISTS usp_MarkExpiredTokens;");
-            migrationBuilder.Sql(@"DROP PROCEDURE IF EXISTS usp_PurgeOldTokens;");
         }
     }
 }

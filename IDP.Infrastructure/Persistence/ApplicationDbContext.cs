@@ -59,7 +59,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<TenantSearch> TenantsSearch { get; set; }
     public DbSet<ConfigurationSearch> ConfigurationsSearch { get; set; }
     public DbSet<User> Users { get; set; }
-    public DbSet<UserCodeSequence> UserCodeSequences { get; set; }
+    public DbSet<CodeSequence> CodeSequences { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }

@@ -74,7 +74,7 @@ public class UserDetail
     public string? SecurityStamp { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public string UserCode { get; set; } = default!;
-    public int[] Roles { get; set; } = new int[0];
+    public int[] Roles { get; set; } = Array.Empty<int>();
     public List<UserAddressDetail> Addresses { get; set; } = new();
     public List<UserContactDetail> Contacts { get; set; } = new();
 }

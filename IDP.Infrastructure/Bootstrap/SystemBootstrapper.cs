@@ -51,13 +51,23 @@ internal class SystemBootstrapper : ISystemBootstrapper
         {
             var systemTenant = await EnsureSystemTenantAsync(db, ct);
 
+            if (systemTenant == null)
+                return;
+
             await EnsureAdminClientAsync(db, systemTenant.Id, ct);
 
             var permissions = await EnsurePermissionsAsync(db, systemTenant.Id, ct);
 
+            if(permissions  == null)
+                return;
+
             var role = await EnsureDefaultRolesAsync(db, systemTenant.Id, permissions, ct);
+            
+            if(role == null) return;
 
             var user = await EnsureDefaultAdminUserAsync(db, systemTenant.Id, role.Id, ct);
+
+            if (user == null) return;
 
             await EnsureConfigurationsAsync(db, systemTenant.Id, ct);
 
@@ -151,7 +161,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
 
         var adminUser = DefaultUsers.Admin(adminUserName, tempPassword);
 
-        adminUser.Roles.Append(adminRoleId);
+        adminUser.Roles = adminUser.Roles.Append(adminRoleId).ToArray();
 
         _logger.LogInfo("Creating Admin user...");
 

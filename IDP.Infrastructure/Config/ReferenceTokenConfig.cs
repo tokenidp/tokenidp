@@ -9,7 +9,7 @@ internal class ReferenceTokenConfig : IEntityTypeConfiguration<ReferenceToken>
         builder.ToTable("ReferenceTokens");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(x => x.TokenId).IsRequired();
         builder.Property(x => x.TokenHash).HasColumnType("varbinary(32)").IsRequired();

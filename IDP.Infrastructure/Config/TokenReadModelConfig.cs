@@ -10,7 +10,7 @@ internal sealed class TokenReadModelConfiguration
         builder.ToTable("TokenReadModel");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id).ValueGeneratedNever();
+        builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(x => x.SourceTokenId).IsRequired();
         builder.Property(x => x.SourceType).HasMaxLength(64).IsRequired();
