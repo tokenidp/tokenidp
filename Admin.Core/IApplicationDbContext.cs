@@ -15,6 +15,9 @@ public interface IApplicationDbContext
 
     DbSet<Permission> Permissions { get; }
     DbSet<RolePermission> RolePermissions { get; }
+    DbSet<TenantAuthSetting> TenantAuthSettings { get; }
+    DbSet<TenantExternalProvider> TenantExternalProviders { get; }
+    DbSet<TenantUISetting> TenantUISettings { get; }
     DbSet<Tenant> Tenants { get; }
     DbSet<PreAuthorization> PreAuthorizations { get; }
     DbSet<AuthorizationCode> AuthorizationCodes { get; }
@@ -23,6 +26,8 @@ public interface IApplicationDbContext
     DbSet<ClientAudience> ClientAudiences { get; }
     DbSet<ClientSecret> ClientSecrets { get; }
     DbSet<ClientGrantType> ClientGrantTypes { get; }
+    DbSet<ClientAuthPolicy> ClientAuthPolicies { get; }
+    DbSet<ClientExternalProvider> ClientExternalProviders { get; }
     DbSet<Token> Tokens { get; }
     DbSet<ReferenceToken> ReferenceTokens { get; }
     DbSet<RefreshToken> RefreshTokens { get; }

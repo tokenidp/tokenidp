@@ -80,9 +80,9 @@ internal class SystemBootstrapper : ISystemBootstrapper
     {
         var defaultTenant = DefaultTenants.SystemTenant;
 
-        defaultTenant.GenerateTenantCode(1);
+        var tenantCode = defaultTenant.GenerateTenantCode(1);
 
-        var existing = await _tenants.ExistsAsync(db, defaultTenant.TenantCode, ct);
+        var existing = await _tenants.ExistsAsync(db, tenantCode, ct);
 
         if (existing != null)
         {

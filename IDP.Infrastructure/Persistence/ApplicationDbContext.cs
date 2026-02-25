@@ -41,6 +41,9 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<TenantAuthSetting> TenantAuthSettings { get; set; }
+    public DbSet<TenantExternalProvider> TenantExternalProviders { get; set; }
+    public DbSet<TenantUISetting> TenantUISettings { get; set; }
     public DbSet<PreAuthorization> PreAuthorizations { get; set; }
     public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<Client> Clients { get; set; }
@@ -48,6 +51,8 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ClientAudience> ClientAudiences { get; set; }
     public DbSet<ClientSecret> ClientSecrets { get; set; }
     public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
+    public DbSet<ClientAuthPolicy> ClientAuthPolicies { get; set; }
+    public DbSet<ClientExternalProvider> ClientExternalProviders { get; set; }
     public DbSet<Token> Tokens { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<ReferenceToken> ReferenceTokens { get; set; }
@@ -138,9 +143,9 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
             {
                 case EntityState.Added:
 
-                    entry.Entity.SetCreated(_currentUserService.UserId > 0 
-                        ? _currentUserService.UserId 
-                        : entry.Entity.CreatedBy );
+                    entry.Entity.SetCreated(_currentUserService.UserId > 0
+                        ? _currentUserService.UserId
+                        : entry.Entity.CreatedBy);
                     break;
 
                 case EntityState.Modified:

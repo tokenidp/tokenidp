@@ -28,4 +28,16 @@ public class CreateUpdateClient
     public List<string> Audiences { get; set; } = new();
     public string? ClientSecret { get; set; }
     public string? ClientSecretDescription { get; set; }
+    public ClientAuthPolicyDetail AuthPolicy { get; set; } = new();
+    public List<int> ExternalProviders { get; set; } = new();
+}
+
+public sealed class ClientAuthPolicyDetail
+{
+    public bool AllowLocalLoginOverride { get; set; }
+    public bool AllowSelfRegistrationOverride { get; set; }
+    public bool MfaPolicyOverride { get; set; }
+    public bool ShowExternalProviders { get; set; }
+    public bool ShowStaySignedIn { get; set; }
+    public bool ShowCreateAccountLink { get; set; }
 }

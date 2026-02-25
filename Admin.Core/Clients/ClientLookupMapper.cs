@@ -55,4 +55,25 @@ internal static class ClientLookupMapper
             })
             .ToList();
     }
+
+    public async static Task<List<LookupItem>> MapExternalProviders(int tenantId, IApplicationDbContext db)
+    {
+        var providers = await db.TenantExternalProviders
+            .Where(t => t.TenantId == tenantId && t.Enabled == true)
+            .Select(x => new { x.Id, x.ProviderType })
+            .ToListAsync();
+
+        if (!providers.Any())
+        {
+            return new List<LookupItem>();
+        }
+
+        return providers
+            .Select(value => new LookupItem
+            {
+                Key = value.Id.ToString(),
+                Value = value.ProviderType.ToString()
+            })
+            .ToList();
+    }
 }

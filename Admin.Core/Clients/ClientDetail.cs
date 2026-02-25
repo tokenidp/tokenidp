@@ -24,7 +24,22 @@ internal class ClientDetail
             EnableITracking = client.EnableITracking,
             Scopes = client.ClientScopes.Select(scope => scope.Scope).ToList(),
             GrantTypes = client.ClientGrantTypes.Select(grant => grant.AllowedGrantType).ToList(),
-            Audiences = client.ClientAudiences.Select(audience => audience.Name).ToList()
+            Audiences = client.ClientAudiences.Select(audience => audience.Name).ToList(),
+            AuthPolicy = client.ClientAuthPolicy == null
+                ? new ClientAuthPolicyDetail()
+                : new ClientAuthPolicyDetail
+                {
+                    AllowLocalLoginOverride = client.ClientAuthPolicy.AllowLocalLoginOverride,
+                    AllowSelfRegistrationOverride = client.ClientAuthPolicy.AllowSelfRegistrationOverride,
+                    MfaPolicyOverride = client.ClientAuthPolicy.MfaPolicyOverride,
+                    ShowExternalProviders = client.ClientAuthPolicy.ShowExternalProviders,
+                    ShowStaySignedIn = client.ClientAuthPolicy.ShowStaySignedIn,
+                    ShowCreateAccountLink = client.ClientAuthPolicy.ShowCreateAccountLink
+                },
+            ExternalProviders = client.ClientExternalProviders
+                .Where(provider => provider.EnabledForClient)
+                .Select(provider => provider.ExternalProviderId)
+                .ToList()
         };
 
     public int Id { get; private set; }
@@ -47,4 +62,6 @@ internal class ClientDetail
     public List<string> Scopes { get; private set; } = new();
     public List<GrantTypes> GrantTypes { get; private set; } = new();
     public List<string> Audiences { get; private set; } = new();
+    public ClientAuthPolicyDetail AuthPolicy { get; private set; } = new();
+    public List<int> ExternalProviders { get; private set; } = new();
 }

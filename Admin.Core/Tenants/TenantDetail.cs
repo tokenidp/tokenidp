@@ -50,42 +50,4 @@ public sealed class TenantDetail
     public TenantUISettingDetail UISetting { get; set; } = default!;
     public List<TenantExternalProviderDetail> Providers { get; set; } = new();
 
-    public void GenerateTenantCode(int value)
-    {
-        TenantCode = $"TEN-{DateTime.UtcNow:yyyy}-{value:D6}";
-    }
-}
-
-public sealed class TenantAuthSettingDetail
-{
-    public AuthenticationModes AuthenticationMode { get; set; }
-
-    public bool AllowLocalLogin { get; set; }
-    public bool RequireEmailVerification { get; set; }
-    public bool AllowSelfRegistration { get; set; }
-
-    public bool TwoFactorEnabled { get; set; }
-    public int? TwoFactorCodeExpiry { get; set; }
-}
-
-
-public sealed class TenantExternalProviderDetail
-{
-    public ExternalProviderTypes ProviderType { get; set; }
-    public bool Enabled { get; set; }
-
-    public string ClientId { get; set; } = default!;
-    public string? ClientSecret { get; set; }
-    public string Authority { get; set; } = default!;
-    public string Scopes { get; set; } = default!;
-    public string CallbackPath { get; set; } = default!;
-}
-
-public class TenantUISettingDetail
-{
-    public string? Theme { get; private set; }
-    public string? LogoUrl { get; private set; }
-    public string? PrimaryColor { get; private set; }
-    public string? DefaultLanguage { get; private set; }
-    public string? LoginText { get; private set; }
 }

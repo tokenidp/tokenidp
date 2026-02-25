@@ -21,6 +21,8 @@ public class Client : AggregateRoot<int>, ITenant
     public bool? EnableITracking { get; private set; }
 
     public virtual Tenant Tenant { get; private set; } = default!;
+    public virtual ClientAuthPolicy ClientAuthPolicy { get; private set; } = default!;
+    public virtual ICollection<ClientExternalProvider> ClientExternalProviders { get; private set; } = default!;
     public virtual ICollection<ClientScope> ClientScopes { get; private set; } = default!;
     public virtual ICollection<ClientGrantType> ClientGrantTypes { get; private set; } = default!;
     public virtual ICollection<ClientSecret> ClientSecrets { get; private set; } = default!;
@@ -72,6 +74,7 @@ public class Client : AggregateRoot<int>, ITenant
         ClientGrantTypes = new List<ClientGrantType>();
         ClientSecrets = new List<ClientSecret>();
         ClientAudiences = new List<ClientAudience>();
+        ClientExternalProviders = new List<ClientExternalProvider>();
     }
 
     public Result UpdateClient(
@@ -178,6 +181,73 @@ public class Client : AggregateRoot<int>, ITenant
         foreach (var audience in audiences)
         {
             ClientAudiences.Add(audience);
+        }
+
+        return Result.Success(Id);
+    }
+
+    public Result ConfigureAuthPolicy(
+        bool allowLocalLoginOverride,
+        bool allowSelfRegistrationOverride,
+        bool mfaPolicyOverride,
+        bool showExternalProviders,
+        bool showStaySignedIn,
+        bool showCreateAccountLink)
+    {
+        if (ClientAuthPolicy == null)
+        {
+            ClientAuthPolicy = ClientAuthPolicy.Create(
+                allowLocalLoginOverride,
+                allowSelfRegistrationOverride,
+                mfaPolicyOverride,
+                showExternalProviders,
+                showStaySignedIn,
+                showCreateAccountLink);
+        }
+        else
+        {
+            ClientAuthPolicy.update(
+                allowLocalLoginOverride,
+                allowSelfRegistrationOverride,
+                mfaPolicyOverride,
+                showExternalProviders,
+                showStaySignedIn,
+                showCreateAccountLink);
+        }
+
+        return Result.Success(Id);
+    }
+
+    public Result ReplaceExternalProviders(IEnumerable<int> externalProviderIds)
+    {
+        externalProviderIds ??= Array.Empty<int>();
+
+        var sourceProviderIds = externalProviderIds.ToList();
+
+        if (sourceProviderIds.Any(id => id <= 0))
+        {
+            return Result.Failure(
+                "client.external_providers.invalid",
+                "External providers contain invalid values.");
+        }
+
+        var providerIds = sourceProviderIds
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        if (providerIds.Count != sourceProviderIds.Count)
+        {
+            return Result.Failure(
+                "client.external_providers.invalid",
+                "External providers contain duplicate values.");
+        }
+
+        ClientExternalProviders.Clear();
+
+        foreach (var providerId in providerIds)
+        {
+            ClientExternalProviders.Add(ClientExternalProvider.Create(providerId));
         }
 
         return Result.Success(Id);

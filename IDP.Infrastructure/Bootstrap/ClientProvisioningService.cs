@@ -5,7 +5,7 @@ namespace IDP.Infrastructure.Bootstrap;
 
 internal class ClientProvisioningService : IClientProvisioningService
 {
-    public async Task CreateAsync(IApplicationDbContext db, 
+    public async Task CreateAsync(IApplicationDbContext db,
         int tenantId,
         CreateUpdateClient command,
         CancellationToken ct)
@@ -39,15 +39,26 @@ internal class ClientProvisioningService : IClientProvisioningService
         client!.ReplaceScopes(scopes);
         client!.ReplaceGrantTypes(grants);
         client!.ReplaceAudiences(audiences);
+        var authPolicy = command.AuthPolicy ?? new ClientAuthPolicyDetail();
+        client.ConfigureAuthPolicy(
+            authPolicy.AllowLocalLoginOverride,
+            authPolicy.AllowSelfRegistrationOverride,
+            authPolicy.MfaPolicyOverride,
+            authPolicy.ShowExternalProviders,
+            authPolicy.ShowStaySignedIn,
+            authPolicy.ShowCreateAccountLink);
+        client.ReplaceExternalProviders(authPolicy.ShowExternalProviders
+            ? (command.ExternalProviders ?? new List<int>())
+            : new List<int>());
 
         db.Clients.Add(client!);
 
         await db.SaveChangesAsync(ct);
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db, 
-        int tenantId, 
-        string clientId, 
+    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+        int tenantId,
+        string clientId,
         CancellationToken ct)
     {
         var isExist = await db.Clients
@@ -57,7 +68,7 @@ internal class ClientProvisioningService : IClientProvisioningService
         return isExist;
     }
 
-    private static void BuildScopes(IEnumerable<string> scopes, 
+    private static void BuildScopes(IEnumerable<string> scopes,
         out List<ClientScope> mapped)
     {
         mapped = new List<ClientScope>();
@@ -79,7 +90,7 @@ internal class ClientProvisioningService : IClientProvisioningService
         }
     }
 
-    private static void BuildGrantTypes(IEnumerable<GrantTypes> grantTypes, 
+    private static void BuildGrantTypes(IEnumerable<GrantTypes> grantTypes,
         out List<ClientGrantType> mapped)
     {
         mapped = new List<ClientGrantType>();
@@ -101,7 +112,7 @@ internal class ClientProvisioningService : IClientProvisioningService
         }
     }
 
-    private static void BuildAudiences(IEnumerable<string> audiences, 
+    private static void BuildAudiences(IEnumerable<string> audiences,
         out List<ClientAudience> mapped)
     {
         mapped = new List<ClientAudience>();

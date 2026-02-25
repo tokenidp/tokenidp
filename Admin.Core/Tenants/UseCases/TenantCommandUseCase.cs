@@ -20,7 +20,7 @@ internal sealed class TenantCommandUseCase
     }
 
     public async Task<ApiResult<int>> CreateTenant(
-        TenantDetail request,
+        CreateUpdateTenant request,
         CancellationToken cancellationToken = default)
     {
         var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();
@@ -110,7 +110,7 @@ internal sealed class TenantCommandUseCase
     }
 
     public async Task<ApiResult<int>> UpdateTenant(int id,
-        TenantDetail request,
+        CreateUpdateTenant request,
         CancellationToken cancellationToken = default)
     {
         var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();

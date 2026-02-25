@@ -6,7 +6,7 @@ namespace IDP.Infrastructure.Bootstrap;
 internal class TenantProvisioningService : ITenantProvisioningService
 {
     public async Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db,
-        TenantDetail command,
+        CreateUpdateTenant command,
         CancellationToken ct)
     {
         var authSettings = TenantAuthSetting.Create(0);

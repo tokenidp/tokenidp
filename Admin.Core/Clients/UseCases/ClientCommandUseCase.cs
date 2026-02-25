@@ -22,6 +22,8 @@ internal sealed class ClientCommandUseCase
         CreateUpdateClient request,
         CancellationToken cancellationToken = default)
     {
+        var authPolicyRequest = request.AuthPolicy ?? new ClientAuthPolicyDetail();
+
         _logger.LogDebug("Creating client {ClientId} for tenant {TenantId}",
             request.ClientId, _currentUserService.TenantId);
 
@@ -100,6 +102,37 @@ internal sealed class ClientCommandUseCase
             client.AddSecret(clientSecret);
         }
 
+        var authPolicyResult = client.ConfigureAuthPolicy(
+            authPolicyRequest.AllowLocalLoginOverride,
+            authPolicyRequest.AllowSelfRegistrationOverride,
+            authPolicyRequest.MfaPolicyOverride,
+            authPolicyRequest.ShowExternalProviders,
+            authPolicyRequest.ShowStaySignedIn,
+            authPolicyRequest.ShowCreateAccountLink);
+        if (!authPolicyResult.IsSuccess)
+        {
+            return FailureFromResult(authPolicyResult);
+        }
+
+        var selectedProviderIds = authPolicyRequest.ShowExternalProviders
+            ? (request.ExternalProviders ?? new List<int>())
+            : new List<int>();
+
+        var providerValidationResult = await ValidateExternalProviders(
+            tenantId,
+            selectedProviderIds,
+            cancellationToken);
+        if (!providerValidationResult.IsSuccess)
+        {
+            return FailureFromResult(providerValidationResult);
+        }
+
+        var providerResult = client.ReplaceExternalProviders(selectedProviderIds);
+        if (!providerResult.IsSuccess)
+        {
+            return FailureFromResult(providerResult);
+        }
+
         _dbContext.Clients.Add(client);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -114,12 +147,16 @@ internal sealed class ClientCommandUseCase
         CreateUpdateClient request,
         CancellationToken cancellationToken = default)
     {
+        var authPolicyRequest = request.AuthPolicy ?? new ClientAuthPolicyDetail();
+
         _logger.LogDebug("Updating client {ClientId}", id);
 
         var client = await _dbContext.Clients
             .Include(c => c.ClientScopes)
             .Include(c => c.ClientGrantTypes)
             .Include(c => c.ClientAudiences)
+            .Include(c => c.ClientAuthPolicy)
+            .Include(c => c.ClientExternalProviders)
             .FirstOrDefaultAsync(c => c.Id == id
                 && c.TenantId == _currentUserService.TenantId,
                 cancellationToken);
@@ -188,6 +225,37 @@ internal sealed class ClientCommandUseCase
         if (clientSecret != null)
         {
             client.AddSecret(clientSecret);
+        }
+
+        var authPolicyResult = client.ConfigureAuthPolicy(
+            authPolicyRequest.AllowLocalLoginOverride,
+            authPolicyRequest.AllowSelfRegistrationOverride,
+            authPolicyRequest.MfaPolicyOverride,
+            authPolicyRequest.ShowExternalProviders,
+            authPolicyRequest.ShowStaySignedIn,
+            authPolicyRequest.ShowCreateAccountLink);
+        if (!authPolicyResult.IsSuccess)
+        {
+            return FailureFromResult(authPolicyResult);
+        }
+
+        var selectedProviderIds = authPolicyRequest.ShowExternalProviders
+            ? (request.ExternalProviders ?? new List<int>())
+            : new List<int>();
+
+        var providerValidationResult = await ValidateExternalProviders(
+            _currentUserService.TenantId,
+            selectedProviderIds,
+            cancellationToken);
+        if (!providerValidationResult.IsSuccess)
+        {
+            return FailureFromResult(providerValidationResult);
+        }
+
+        var providerResult = client.ReplaceExternalProviders(selectedProviderIds);
+        if (!providerResult.IsSuccess)
+        {
+            return FailureFromResult(providerResult);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -331,5 +399,49 @@ internal sealed class ClientCommandUseCase
         }
 
         return combined;
+    }
+
+    private async Task<Result> ValidateExternalProviders(
+        int tenantId,
+        IEnumerable<int> providerIds,
+        CancellationToken cancellationToken)
+    {
+        providerIds ??= Array.Empty<int>();
+
+        if (providerIds.Any(id => id <= 0))
+        {
+            return Result.Failure(
+                "client.external_providers.invalid",
+                "One or more selected external providers are invalid.");
+        }
+
+        var selectedProviderIds = providerIds
+            .Where(id => id > 0)
+            .Distinct()
+            .ToList();
+
+        if (selectedProviderIds.Count == 0)
+        {
+            return Result.Success(0);
+        }
+
+        var tenantProviderIds = await _dbContext.TenantExternalProviders
+            .AsNoTracking()
+            .Where(provider => provider.TenantId == tenantId)
+            .Select(provider => provider.Id)
+            .ToListAsync(cancellationToken);
+
+        var invalidProviderIds = selectedProviderIds
+            .Where(providerId => !tenantProviderIds.Contains(providerId))
+            .ToList();
+
+        if (invalidProviderIds.Count > 0)
+        {
+            return Result.Failure(
+                "client.external_providers.invalid",
+                "One or more selected external providers are invalid for this tenant.");
+        }
+
+        return Result.Success(0);
     }
 }

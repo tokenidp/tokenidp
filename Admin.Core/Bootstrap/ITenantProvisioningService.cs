@@ -4,6 +4,6 @@ namespace Admin.Core.Bootstrap;
 
 public interface ITenantProvisioningService
 {
-    Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db, TenantDetail command, CancellationToken ct);
+    Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db, CreateUpdateTenant command, CancellationToken ct);
     Task<Tenant?> ExistsAsync(IApplicationDbContext db, string tenantCode, CancellationToken ct);
 }

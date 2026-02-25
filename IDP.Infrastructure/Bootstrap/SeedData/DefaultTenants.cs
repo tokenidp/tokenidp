@@ -4,7 +4,7 @@ namespace IDP.Infrastructure.Bootstrap.SeedData;
 
 internal class DefaultTenants
 {
-    public static readonly TenantDetail SystemTenant = new TenantDetail
+    public static readonly CreateUpdateTenant SystemTenant = new CreateUpdateTenant
     {
         TenantName = "system",
         Email = "admin@system.local",        
