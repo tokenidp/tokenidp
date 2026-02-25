@@ -28,16 +28,6 @@ const getLookupLabel = (options, value) => {
   return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "Unknown";
 };
 
-const getLookupValue = (options, key) => {
-  const normalized = String(key ?? "");
-  const match = (options || []).find(
-    (option) =>
-      String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) ===
-      normalized
-  );
-  return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "";
-};
-
 function TenantsList() {
   const navigate = useNavigate();
   const { state, loadTenants, loadLookups, deleteTenant } = useTenants();
@@ -45,8 +35,6 @@ function TenantsList() {
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [filters, setFilters] = useState({
     status: "",
-    tenantType: "",
-    subscriptionType: "",
     search: "",
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -74,26 +62,6 @@ function TenantsList() {
         Value: filters.status,
         ColumnType: 1,
       });
-    }
-    if (filters.tenantType) {
-      const value = getLookupValue(state.tenantTypes, filters.tenantType);
-      if (value) {
-        criterias.push({
-          ColumnName: "TenantType",
-          Value: value,
-          ColumnType: 1,
-        });
-      }
-    }
-    if (filters.subscriptionType) {
-      const value = getLookupValue(state.subscriptionTypes, filters.subscriptionType);
-      if (value) {
-        criterias.push({
-          ColumnName: "SubscriptionType",
-          Value: value,
-          ColumnType: 1,
-        });
-      }
     }
     return criterias;
   };
@@ -196,54 +164,6 @@ function TenantsList() {
                 ))}
               </select>
             </div>
-            <div className="filter-field">
-              <label className="form-label">Tenant Type</label>
-              <select
-                className="form-select"
-                value={filters.tenantType}
-                onChange={(event) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    tenantType: event.target.value,
-                  }));
-                  setPageNumber(1);
-                }}
-              >
-                <option value="">All Types</option>
-                {state.tenantTypes.map((option) => (
-                  <option
-                    key={option.key ?? option.id ?? option.Key ?? option.Id}
-                    value={option.key ?? option.id ?? option.Key ?? option.Id}
-                  >
-                    {option.value ?? option.name ?? option.Value ?? option.Name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="filter-field">
-              <label className="form-label">Subscription</label>
-              <select
-                className="form-select"
-                value={filters.subscriptionType}
-                onChange={(event) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    subscriptionType: event.target.value,
-                  }));
-                  setPageNumber(1);
-                }}
-              >
-                <option value="">All Subscriptions</option>
-                {state.subscriptionTypes.map((option) => (
-                  <option
-                    key={option.key ?? option.id ?? option.Key ?? option.Id}
-                    value={option.key ?? option.id ?? option.Key ?? option.Id}
-                  >
-                    {option.value ?? option.name ?? option.Value ?? option.Name}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
 
@@ -303,8 +223,7 @@ function TenantsList() {
                   <th>Tenant Name</th>
                   <th>Tenant Code</th>
                   <th>Email</th>
-                  <th>Tenant Type</th>
-                  <th>Subscription</th>
+                  <th>Authentication Mode</th>
                   <th>Status</th>
                   <th className="text-right">Actions</th>
                 </tr>
@@ -327,14 +246,8 @@ function TenantsList() {
                       <td>{getField(item, "email", "Email")}</td>
                       <td>
                         {getLookupLabel(
-                          state.tenantTypes,
-                          getField(item, "tenantType", "TenantType")
-                        )}
-                      </td>
-                      <td>
-                        {getLookupLabel(
-                          state.subscriptionTypes,
-                          getField(item, "subscriptionType", "SubscriptionType")
+                          state.authenticationModes,
+                          getField(item, "authenticationMode", "AuthenticationMode")
                         )}
                       </td>
                       <td>
@@ -376,7 +289,7 @@ function TenantsList() {
                 })}
                 {state.items.length === 0 && (
                   <tr>
-                    <td colSpan="8" className="text-center text-muted py-4">
+                    <td colSpan="7" className="text-center text-muted py-4">
                       No tenants found.
                     </td>
                   </tr>

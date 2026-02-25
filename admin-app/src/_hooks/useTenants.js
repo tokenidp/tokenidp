@@ -10,9 +10,9 @@ const initialState = {
   error: "",
   lastCreatedId: null,
   statuses: [],
-  tenantTypes: [],
-  subscriptionTypes: [],
+  externalProviders: [],
   authenticationModes: [],
+  themes: [],
 };
 
 const actions = {
@@ -42,9 +42,9 @@ const reducer = (state, action) => {
         ...state,
         loading: false,
         statuses: action.payload.statuses,
-        tenantTypes: action.payload.tenantTypes,
-        subscriptionTypes: action.payload.subscriptionTypes,
+        externalProviders: action.payload.externalProviders,
         authenticationModes: action.payload.authenticationModes,
+        themes: action.payload.themes,
       };
     case actions.LIST_ERROR:
       return { ...state, loading: false, error: action.payload };
@@ -103,11 +103,11 @@ export const TenantsProvider = ({ children }) => {
         type: actions.LOOKUPS_SUCCESS,
         payload: {
           statuses: result.statuses || result.Statuses || [],
-          tenantTypes: result.tenantTypes || result.TenantTypes || [],
-          subscriptionTypes:
-            result.subscriptionTypes || result.SubscriptionTypes || [],
+          externalProviders:
+            result.externalProviders || result.ExternalProviders || [],
           authenticationModes:
             result.authenticationModes || result.AuthenticationModes || [],
+          themes: result.themes || result.Themes || [],
         },
       });
       return result;
