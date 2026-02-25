@@ -40,4 +40,21 @@ internal static class TenantLookupMapper
             })
             .ToList();
     }
+
+    public static List<LookupItem> MapTenantThemes()
+    {
+        return new List<LookupItem>
+        {
+            new()
+            {
+                Key = "Dark",
+                Value = "Dark"
+            },
+            new()
+            {
+                Key = "Light",
+                Value = "Light"
+            }
+        };
+    }
 }

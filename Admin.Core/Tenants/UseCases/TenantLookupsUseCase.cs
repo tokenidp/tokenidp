@@ -30,7 +30,8 @@ internal sealed class TenantLookupsUseCase
             {
                 Statuses = TenantLookupMapper.MapTenantStatuses(),
                 ExternalProviders = TenantLookupMapper.MapExternalProviders(),
-                AuthenticationModes = TenantLookupMapper.MapAuthenticationModes()
+                AuthenticationModes = TenantLookupMapper.MapAuthenticationModes(),
+                Themes = TenantLookupMapper.MapTenantThemes()
             }),
             TimeSpan.FromMinutes(10));
 
