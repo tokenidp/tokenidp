@@ -2,12 +2,10 @@ CREATE VIEW [dbo].[vRoleSearch]
  
 AS  
       Select r.Id, 	
-	  t.TenantName,
 	  r.RoleName,
 	  CASE WHEN COALESCE(r.IsActive, 1) = 1 THEN 'Yes' ELSE 'No' END AS Active,
-	  u.FirstName,
-	  u.LastName
+	  CASE WHEN u.Id is NULL THEN 'System' ELSE u.FirstName END FirstName,
+	  CASE WHEN u.Id is NULL THEN 'Administrator' ELSE u.LastName END LastName
 	  From dbo.Roles r
-	  Inner Join dbo.Tenants t on t.Id = r.TenantId
-	  INNER JOIN dbo.Users u on u.Id = r.EffectiveUserId
+	  LEFT JOIN dbo.Users u on u.Id = r.EffectiveUserId
 GO

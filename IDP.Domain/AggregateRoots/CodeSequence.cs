@@ -1,4 +1,4 @@
-﻿namespace IDP.Domain.AggregateRoots.Users;
+﻿namespace IDP.Domain.AggregateRoots;
 
 public class CodeSequence : ITenant
 {

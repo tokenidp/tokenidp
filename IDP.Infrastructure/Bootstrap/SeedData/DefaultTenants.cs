@@ -7,7 +7,6 @@ internal class DefaultTenants
     public static readonly TenantDetail SystemTenant = new TenantDetail
     {
         TenantName = "system",
-        TenantCode= "System001",
         Email = "admin@system.local",        
         IsActive =  true,
         AuthSettings = new TenantAuthSettingDetail()

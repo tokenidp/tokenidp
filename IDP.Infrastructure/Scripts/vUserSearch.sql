@@ -6,13 +6,12 @@ AS
 	  CONCAT(u.FirstName, ' ', u.LastName) AS FullName,
 	  u.TenantId,
 	  u.UserName,
-	  t.TenantName,
 	  u.StatusId As [Status],
 	  u.PhoneNumber,
 	  u.Email,  
 	  CONCAT(ua.AddressLine1, ' ', ua.City, ', ', ua.[State], ' ', ua.PostalCode) AS FullAddress,
-	  up.FirstName,
-	  up.LastName,
+	  CASE WHEN up.Id is NULL THEN 'System' ELSE up.FirstName END FirstName,
+	  CASE WHEN up.Id is NULL THEN 'Administrator' ELSE up.LastName END LastName,
 	   Roles = STUFF((
 			SELECT ', ' + r.RoleName
 			FROM dbo.UserRoles ur
@@ -21,8 +20,7 @@ AS
 			FOR XML PATH(''), TYPE
 		).value('.', 'nvarchar(500)'), 1, 2, '')
 	  From dbo.Users u
-	  INNER JOIN dbo.Tenants t on t.Id = u.TenantId
-	  INNER JOIN dbo.Users up on up.Id = u.EffectiveUserId
+	  LEFT JOIN dbo.Users up on up.Id = u.EffectiveUserId
 	  Left JOIN UserAddresses ua on u.Id = ua.UserId
 
 GO

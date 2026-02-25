@@ -1,4 +1,6 @@
-﻿namespace IDP.Infrastructure.Config;
+﻿using IDP.Domain.AggregateRoots;
+
+namespace IDP.Infrastructure.Config;
 
 internal class CodeSequenceConfig : IEntityTypeConfiguration<CodeSequence>
 {
@@ -12,10 +14,8 @@ internal class CodeSequenceConfig : IEntityTypeConfiguration<CodeSequence>
                .HasMaxLength(20)
                .IsRequired();
 
-        builder.Property(x => x.LastValue)
-               .IsRequired();
-
-        builder.HasIndex(x => new { x.TenantId, x.SequenceKey })
-               .IsUnique();
+        builder.Property(x => x.LastValue).IsRequired();
+  
+        builder.HasIndex(x => new { x.TenantId, x.SequenceKey }).IsUnique();
     }
 }

@@ -23,6 +23,10 @@ internal sealed class TenantCommandUseCase
         TenantDetail request,
         CancellationToken cancellationToken = default)
     {
+        var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();
+        var uiSettingsRequest = request.UISetting ?? new TenantUISettingDetail();
+        var providersRequest = request.Providers ?? new List<TenantExternalProviderDetail>();
+
         _logger.LogDebug("Creating tenant {TenantName} by user {UserId}",
             request.TenantName, _currentUserService.UserId);
 
@@ -40,27 +44,27 @@ internal sealed class TenantCommandUseCase
 
         var authSettings = TenantAuthSetting.Create(0);
 
-        authSettings.SetAuthenticationMode(request.AuthSettings.AuthenticationMode);
+        authSettings.SetAuthenticationMode(authSettingsRequest.AuthenticationMode);
 
-        if (request.AuthSettings.AllowLocalLogin) authSettings.EnableLocalLogin();
+        if (authSettingsRequest.AllowLocalLogin) authSettings.EnableLocalLogin();
         else authSettings.DisableLocalLogin();
 
-        if (request.AuthSettings.RequireEmailVerification) authSettings.RequireVerifiedEmail();
+        if (authSettingsRequest.RequireEmailVerification) authSettings.RequireVerifiedEmail();
         else authSettings.AllowUnverifiedEmail();
 
-        if (request.AuthSettings.AllowSelfRegistration) authSettings.EnableSelfRegistration();
+        if (authSettingsRequest.AllowSelfRegistration) authSettings.EnableSelfRegistration();
         else authSettings.DisableSelfRegistration();
 
-        if (request.AuthSettings.TwoFactorEnabled)
-            authSettings.EnableTwoFactor(TimeSpan.FromMinutes(request.AuthSettings.TwoFactorCodeExpiry ?? 5));
+        if (authSettingsRequest.TwoFactorEnabled)
+            authSettings.EnableTwoFactor(TimeSpan.FromMinutes(authSettingsRequest.TwoFactorCodeExpiry ?? 5));
         else
             authSettings.DisableTwoFactor();
 
-        var tenantUISetting = TenantUISetting.Create(request.UISetting.Theme,
-            request.UISetting.LogoUrl,
-            request.UISetting.PrimaryColor,
-            request.UISetting.DefaultLanguage,
-            request.UISetting.LoginText);
+        var tenantUISetting = TenantUISetting.Create(uiSettingsRequest.Theme,
+            uiSettingsRequest.LogoUrl,
+            uiSettingsRequest.PrimaryColor,
+            uiSettingsRequest.DefaultLanguage,
+            uiSettingsRequest.LoginText);
 
         var createResult = Tenant.Create(
             tenantName: tenantName,
@@ -80,7 +84,7 @@ internal sealed class TenantCommandUseCase
 
         tenant.GenerateTenantCode(nextValue);
 
-        foreach (var p in request.Providers)
+        foreach (var p in providersRequest)
         {
             var config = OidcClientConfig.Create(
                 clientId: p.ClientId,
@@ -109,9 +113,16 @@ internal sealed class TenantCommandUseCase
         TenantDetail request,
         CancellationToken cancellationToken = default)
     {
+        var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();
+        var uiSettingsRequest = request.UISetting ?? new TenantUISettingDetail();
+        var providersRequest = request.Providers ?? new List<TenantExternalProviderDetail>();
+
         _logger.LogDebug("Updating tenant {TenantId}", id);
 
         var tenant = await _dbContext.Tenants
+            .Include(t => t.TenantUISetting)
+            .Include(t => t.TenantAuthSetting)
+            .Include(t => t.TenantExternalProviders)
             .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
         if (tenant == null)
@@ -147,32 +158,43 @@ internal sealed class TenantCommandUseCase
                 updateResult.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
         }
 
-        tenant.TenantUISetting.Update(request.UISetting.Theme,
-            request.UISetting.LogoUrl,
-            request.UISetting.PrimaryColor,
-            request.UISetting.DefaultLanguage,
-            request.UISetting.LoginText);
-
-        tenant.ConfigureAuthSettings(auth =>
+        if (tenant.TenantUISetting is null)
         {
-            auth.SetAuthenticationMode(request.AuthSettings.AuthenticationMode);
+            return ApiResult<int>.Failure(
+                ApiError.Failure("tenant.ui.missing", "Tenant UI settings are missing."));
+        }
 
-            if (request.AuthSettings.AllowLocalLogin) auth.EnableLocalLogin();
+        tenant.TenantUISetting.Update(uiSettingsRequest.Theme,
+            uiSettingsRequest.LogoUrl,
+            uiSettingsRequest.PrimaryColor,
+            uiSettingsRequest.DefaultLanguage,
+            uiSettingsRequest.LoginText);
+
+        var authConfigureResult = tenant.ConfigureAuthSettings(auth =>
+        {
+            auth.SetAuthenticationMode(authSettingsRequest.AuthenticationMode);
+
+            if (authSettingsRequest.AllowLocalLogin) auth.EnableLocalLogin();
             else auth.DisableLocalLogin();
 
-            if (request.AuthSettings.RequireEmailVerification) auth.RequireVerifiedEmail();
+            if (authSettingsRequest.RequireEmailVerification) auth.RequireVerifiedEmail();
             else auth.AllowUnverifiedEmail();
 
-            if (request.AuthSettings.AllowSelfRegistration) auth.EnableSelfRegistration();
+            if (authSettingsRequest.AllowSelfRegistration) auth.EnableSelfRegistration();
             else auth.DisableSelfRegistration();
 
-            if (request.AuthSettings.TwoFactorEnabled)
-                auth.EnableTwoFactor(TimeSpan.FromMinutes(request.AuthSettings.TwoFactorCodeExpiry ?? 5));
+            if (authSettingsRequest.TwoFactorEnabled)
+                auth.EnableTwoFactor(TimeSpan.FromMinutes(authSettingsRequest.TwoFactorCodeExpiry ?? 5));
             else
                 auth.DisableTwoFactor();
         });
 
-        foreach (var p in request.Providers)
+        if (!authConfigureResult.IsSuccess)
+        {
+            return FailureFromResult(authConfigureResult);
+        }
+
+        foreach (var p in providersRequest)
         {
             var config = OidcClientConfig.Create(
                 p.ClientId,
@@ -183,17 +205,43 @@ internal sealed class TenantCommandUseCase
 
             if (!tenant.TenantExternalProviders.Any(x => x.ProviderType == p.ProviderType))
             {
-                tenant.AddExternalProvider(p.ProviderType, config);
+                var addResult = tenant.AddExternalProvider(p.ProviderType, config);
+                if (!addResult.IsSuccess)
+                    return FailureFromResult(addResult);
             }
             else
             {
-                tenant.UpdateExternalProviderConfig(p.ProviderType, config);
+                var updateProviderResult = tenant.UpdateExternalProviderConfig(p.ProviderType, config);
+                if (!updateProviderResult.IsSuccess)
+                    return FailureFromResult(updateProviderResult);
             }
 
             if (p.Enabled)
-                tenant.EnableExternalProvider(p.ProviderType);
+            {
+                var enableResult = tenant.EnableExternalProvider(p.ProviderType);
+                if (!enableResult.IsSuccess)
+                    return FailureFromResult(enableResult);
+            }
             else
-                tenant.DisableExternalProvider(p.ProviderType);
+            {
+                var disableResult = tenant.DisableExternalProvider(p.ProviderType);
+                if (!disableResult.IsSuccess)
+                    return FailureFromResult(disableResult);
+            }
+        }
+
+        // Any existing provider missing from the request is treated as unchecked.
+        var requestedProviderTypes = providersRequest
+            .Select(p => p.ProviderType)
+            .ToHashSet();
+
+        foreach (var existingProviderType in tenant.TenantExternalProviders
+                     .Select(p => p.ProviderType)
+                     .Where(type => !requestedProviderTypes.Contains(type)))
+        {
+            var disableMissingResult = tenant.DisableExternalProvider(existingProviderType);
+            if (!disableMissingResult.IsSuccess)
+                return FailureFromResult(disableMissingResult);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -79,6 +79,9 @@ internal class SystemBootstrapper : ISystemBootstrapper
         CancellationToken ct)
     {
         var defaultTenant = DefaultTenants.SystemTenant;
+
+        defaultTenant.GenerateTenantCode(1);
+
         var existing = await _tenants.ExistsAsync(db, defaultTenant.TenantCode, ct);
 
         if (existing != null)

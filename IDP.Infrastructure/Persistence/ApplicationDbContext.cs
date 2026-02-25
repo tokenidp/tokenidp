@@ -1,4 +1,5 @@
-﻿using IDP.Domain.AggregateRoots.Authorization;
+﻿using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Domain.AggregateRoots.Emails;
 using IDP.Domain.AggregateRoots.Outbox;

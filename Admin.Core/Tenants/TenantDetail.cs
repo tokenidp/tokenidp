@@ -49,6 +49,11 @@ public sealed class TenantDetail
     public TenantAuthSettingDetail AuthSettings { get; set; } = default!;
     public TenantUISettingDetail UISetting { get; set; } = default!;
     public List<TenantExternalProviderDetail> Providers { get; set; } = new();
+
+    public void GenerateTenantCode(int value)
+    {
+        TenantCode = $"TEN-{DateTime.UtcNow:yyyy}-{value:D6}";
+    }
 }
 
 public sealed class TenantAuthSettingDetail

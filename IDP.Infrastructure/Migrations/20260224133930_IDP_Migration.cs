@@ -1362,6 +1362,41 @@ namespace IDP.Infrastructure.Migrations
                 table: "Users",
                 columns: new[] { "TenantId", "UserName" },
                 unique: true);
+
+            var basePath = AppContext.BaseDirectory;
+            var scriptPath1 = Path.Combine(basePath, "Scripts", "vConfigurationSearch.sql");
+            var scriptPath2 = Path.Combine(basePath, "Scripts", "vRoleSearch.sql");
+            var scriptPath3 = Path.Combine(basePath, "Scripts", "vTenantSearch.sql");
+            var scriptPath4 = Path.Combine(basePath, "Scripts", "vTokenSearch.sql");
+            var scriptPath5 = Path.Combine(basePath, "Scripts", "vUserRolePermissions.sql");
+            var scriptPath6 = Path.Combine(basePath, "Scripts", "vUserSearch.sql");
+
+            var scriptPath7 = Path.Combine(basePath, "Scripts", "usp_MarkExpiredTokens.sql");
+            var scriptPath8 = Path.Combine(basePath, "Scripts", "usp_PurgeOldTokens.sql");
+
+            var viewSql1 = File.ReadAllText(scriptPath1);
+            migrationBuilder.Sql(viewSql1);
+
+            var viewSql2 = File.ReadAllText(scriptPath2);
+            migrationBuilder.Sql(viewSql2);
+
+            var viewSql3 = File.ReadAllText(scriptPath3);
+            migrationBuilder.Sql(viewSql3);
+
+            var viewSql4 = File.ReadAllText(scriptPath4);
+            migrationBuilder.Sql(viewSql4);
+
+            var viewSql5 = File.ReadAllText(scriptPath5);
+            migrationBuilder.Sql(viewSql5);
+
+            var viewSql6 = File.ReadAllText(scriptPath6);
+            migrationBuilder.Sql(viewSql6);
+
+            var viewSql7 = File.ReadAllText(scriptPath7);
+            migrationBuilder.Sql(viewSql7);
+
+            var viewSql8 = File.ReadAllText(scriptPath8);
+            migrationBuilder.Sql(viewSql8);
         }
 
         /// <inheritdoc />
@@ -1465,6 +1500,16 @@ namespace IDP.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Tenants");
+
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vConfigurationSearch;");
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vRoleSearch;");
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vTenantSearch;");
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vTokenSearch;");
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vUserRolePermissions;");
+            migrationBuilder.Sql(@"DROP VIEW IF EXISTS vUserSearch;");
+
+            migrationBuilder.Sql(@"DROP PROCEDURE IF EXISTS usp_MarkExpiredTokens;");
+            migrationBuilder.Sql(@"DROP PROCEDURE IF EXISTS usp_PurgeOldTokens;");
         }
     }
 }

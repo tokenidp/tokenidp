@@ -7,7 +7,6 @@ public partial class UserSearch
     public int TenantId { get; private set; }
     public string FullName { get; private set; }
     public string UserName { get; private set; }
-    public string TenantName { get; private set; }
     public string Status { get; private set; }
     public string FullAddress { get; private set; }
     public string PhoneNumber { get; private set; }

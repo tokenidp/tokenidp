@@ -4,7 +4,6 @@
 public partial class RoleSearch
 {
     public int Id { get; private set; }
-    public string TenantName { get; private set; }
     public string RoleName { get; private set; }
     public string Active { get; private set; }
     public string FirstName { get; private set; }
