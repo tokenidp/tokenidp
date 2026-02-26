@@ -2,6 +2,7 @@ import React from "react";
 
 function AuthStep({
   register,
+  watch,
   isPublicClient,
   showSecret,
   setShowSecret,
@@ -14,9 +15,11 @@ function AuthStep({
   grantError,
   isDeviceIot,
   isWebClient,
+  externalProviderOptions,
 }) {
   const hasAuthCode = grantTypes.includes(0);
   const secretLocked = isPublicClient || isDeviceIot;
+  const showExternalProviders = watch("authPolicy.showExternalProviders");
 
   return (
     <div className="row g-4 justify-content-center">
@@ -88,6 +91,123 @@ function AuthStep({
                   aria-label="Client secret expiry"
                 />
               </div>
+            </div>
+
+            <div className="auth-divider"></div>
+
+            <div className="auth-field">
+              <label className="form-label fw-semibold">Authentication Policy</label>
+              <div className="row g-2">
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="allow-local-login-override"
+                      {...register("authPolicy.allowLocalLoginOverride")}
+                    />
+                    <label className="form-check-label" htmlFor="allow-local-login-override">
+                      Allow Local Login Override
+                    </label>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="allow-self-registration-override"
+                      {...register("authPolicy.allowSelfRegistrationOverride")}
+                    />
+                    <label className="form-check-label" htmlFor="allow-self-registration-override">
+                      Allow Self Registration Override
+                    </label>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="mfa-policy-override"
+                      {...register("authPolicy.mfaPolicyOverride")}
+                    />
+                    <label className="form-check-label" htmlFor="mfa-policy-override">
+                      Enforce MFA Override
+                    </label>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="show-stay-signed-in"
+                      {...register("authPolicy.showStaySignedIn")}
+                    />
+                    <label className="form-check-label" htmlFor="show-stay-signed-in">
+                      Show Stay Signed In
+                    </label>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="show-create-account-link"
+                      {...register("authPolicy.showCreateAccountLink")}
+                    />
+                    <label className="form-check-label" htmlFor="show-create-account-link">
+                      Show Create Account Link
+                    </label>
+                  </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="show-external-providers"
+                      {...register("authPolicy.showExternalProviders")}
+                    />
+                    <label className="form-check-label" htmlFor="show-external-providers">
+                      Show External Providers
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label className="form-label fw-semibold">External Providers</label>
+              <div className="row g-2">
+                {externalProviderOptions.map((option) => (
+                  <div className="col-12 col-sm-6" key={option.value}>
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        type="checkbox"
+                        value={option.value}
+                        id={`client-provider-${option.value}`}
+                        disabled={!showExternalProviders}
+                        {...register("externalProviders")}
+                      />
+                      <label
+                        className="form-check-label"
+                        htmlFor={`client-provider-${option.value}`}
+                      >
+                        {option.label}
+                      </label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {!externalProviderOptions.length && (
+                <div className="form-text text-muted">
+                  No tenant external providers configured.
+                </div>
+              )}
             </div>
 
             <div className="auth-divider"></div>

@@ -24,6 +24,15 @@ const defaultValues = {
   grantTypes: [0],
   scopes: ["openid", "profile"],
   clientAudience: "",
+  authPolicy: {
+    allowLocalLoginOverride: false,
+    allowSelfRegistrationOverride: false,
+    mfaPolicyOverride: false,
+    showExternalProviders: true,
+    showStaySignedIn: false,
+    showCreateAccountLink: false,
+  },
+  externalProviders: [],
 };
 
 function ApplicationCreate() {
@@ -58,6 +67,19 @@ function ApplicationCreate() {
       audiences: data.audiences || [],
       clientSecret: data.clientSecret || null,
       clientSecretDescription: null,
+      authPolicy: {
+        allowLocalLoginOverride: !!data.authPolicy?.allowLocalLoginOverride,
+        allowSelfRegistrationOverride: !!data.authPolicy?.allowSelfRegistrationOverride,
+        mfaPolicyOverride: !!data.authPolicy?.mfaPolicyOverride,
+        showExternalProviders: !!data.authPolicy?.showExternalProviders,
+        showStaySignedIn: !!data.authPolicy?.showStaySignedIn,
+        showCreateAccountLink: !!data.authPolicy?.showCreateAccountLink,
+      },
+      externalProviders: Array.isArray(data.externalProviders)
+        ? data.externalProviders
+            .map((value) => Number(value))
+            .filter((value) => Number.isFinite(value) && value > 0)
+        : [],
     };
 
     const result = await createApplication(payload);

@@ -24,6 +24,15 @@ const emptyValues = {
   grantTypes: [0],
   scopes: ["openid", "profile"],
   clientAudience: "",
+  authPolicy: {
+    allowLocalLoginOverride: false,
+    allowSelfRegistrationOverride: false,
+    mfaPolicyOverride: false,
+    showExternalProviders: true,
+    showStaySignedIn: false,
+    showCreateAccountLink: false,
+  },
+  externalProviders: [],
 };
 
 function ApplicationEdit() {
@@ -75,6 +84,52 @@ function ApplicationEdit() {
           data.clientAudience ??
           data.ClientAudience ??
           (data.audiences ?? data.Audiences ?? [""])[0],
+        authPolicy: {
+          allowLocalLoginOverride:
+            data.authPolicy?.allowLocalLoginOverride ??
+            data.authPolicy?.AllowLocalLoginOverride ??
+            data.AuthPolicy?.allowLocalLoginOverride ??
+            data.AuthPolicy?.AllowLocalLoginOverride ??
+            false,
+          allowSelfRegistrationOverride:
+            data.authPolicy?.allowSelfRegistrationOverride ??
+            data.authPolicy?.AllowSelfRegistrationOverride ??
+            data.AuthPolicy?.allowSelfRegistrationOverride ??
+            data.AuthPolicy?.AllowSelfRegistrationOverride ??
+            false,
+          mfaPolicyOverride:
+            data.authPolicy?.mfaPolicyOverride ??
+            data.authPolicy?.MfaPolicyOverride ??
+            data.AuthPolicy?.mfaPolicyOverride ??
+            data.AuthPolicy?.MfaPolicyOverride ??
+            false,
+          showExternalProviders:
+            data.authPolicy?.showExternalProviders ??
+            data.authPolicy?.ShowExternalProviders ??
+            data.AuthPolicy?.showExternalProviders ??
+            data.AuthPolicy?.ShowExternalProviders ??
+            true,
+          showStaySignedIn:
+            data.authPolicy?.showStaySignedIn ??
+            data.authPolicy?.ShowStaySignedIn ??
+            data.AuthPolicy?.showStaySignedIn ??
+            data.AuthPolicy?.ShowStaySignedIn ??
+            false,
+          showCreateAccountLink:
+            data.authPolicy?.showCreateAccountLink ??
+            data.authPolicy?.ShowCreateAccountLink ??
+            data.AuthPolicy?.showCreateAccountLink ??
+            data.AuthPolicy?.ShowCreateAccountLink ??
+            false,
+        },
+        externalProviders:
+          (
+            data.externalProviders ??
+            data.ExternalProviders ??
+            data.externalProviderIds ??
+            data.ExternalProviderIds ??
+            []
+          ).map((value) => String(value)),
       });
     };
 
@@ -105,6 +160,19 @@ function ApplicationEdit() {
       audiences: data.audiences || [],
       clientSecret: data.clientSecret || null,
       clientSecretDescription: null,
+      authPolicy: {
+        allowLocalLoginOverride: !!data.authPolicy?.allowLocalLoginOverride,
+        allowSelfRegistrationOverride: !!data.authPolicy?.allowSelfRegistrationOverride,
+        mfaPolicyOverride: !!data.authPolicy?.mfaPolicyOverride,
+        showExternalProviders: !!data.authPolicy?.showExternalProviders,
+        showStaySignedIn: !!data.authPolicy?.showStaySignedIn,
+        showCreateAccountLink: !!data.authPolicy?.showCreateAccountLink,
+      },
+      externalProviders: Array.isArray(data.externalProviders)
+        ? data.externalProviders
+            .map((value) => Number(value))
+            .filter((value) => Number.isFinite(value) && value > 0)
+        : [],
     };
 
     const result = await updateApplication(id, payload);

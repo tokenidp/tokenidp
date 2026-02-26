@@ -13,6 +13,7 @@ const initialState = {
   clientTypes: [],
   tokenTypes: [],
   scopes: [],
+  externalProviders: [],
 };
 
 const actions = {
@@ -45,6 +46,7 @@ const reducer = (state, action) => {
         clientTypes: action.payload.clientTypes,
         tokenTypes: action.payload.tokenTypes,
         scopes: action.payload.scopes,
+        externalProviders: action.payload.externalProviders,
       };
     case actions.LIST_ERROR:
       return { ...state, loading: false, error: action.payload };
@@ -110,6 +112,8 @@ export const ApplicationsProvider = ({ children }) => {
           clientTypes: result.clientTypes || result.ClientTypes || [],
           tokenTypes: result.tokenTypes || result.TokenTypes || [],
           scopes: result.clientScopes || result.ClientScopes || [],
+          externalProviders:
+            result.externalProviders || result.ExternalProviders || [],
         },
       });
       return result;
