@@ -16,15 +16,23 @@ public class ClientAuthPolicy : Entity<int>
 
     public virtual Client Client { get; private set; } = default!;
 
-    public static ClientAuthPolicy Create(bool allowLocalLoginOverride,
+    public static ClientAuthPolicy Create(Client client,
+        bool allowLocalLoginOverride,
         bool allowSelfRegistrationOverride,
         bool mfaPolicyOverride,
         bool showExternalProviders,
         bool showStaySignedIn,
         bool showCreateAccountLink)
     {
+        if (client == null)
+        {
+            throw new DomainException("Client is required.");
+        }
+
         return new ClientAuthPolicy()
         {
+            Client = client,
+            ClientId = client.Id,
             AllowLocalLoginOverride = allowLocalLoginOverride,
             AllowSelfRegistrationOverride = allowSelfRegistrationOverride,
             MfaPolicyOverride = mfaPolicyOverride,

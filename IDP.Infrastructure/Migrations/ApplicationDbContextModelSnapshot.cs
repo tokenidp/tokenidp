@@ -378,25 +378,30 @@ namespace IDP.Infrastructure.Migrations
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Clients.ClientExternalProvider", b =>
                 {
-                    b.Property<int>("ClientId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("ExternalProviderId")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<bool>("EnabledForClient")
                         .HasColumnType("bit");
 
-                    b.Property<int>("Id")
+                    b.Property<int>("ExternalProviderId")
                         .HasColumnType("int");
 
-                    b.HasKey("ClientId", "ExternalProviderId");
+                    b.HasKey("Id");
 
                     b.HasIndex("ExternalProviderId");
 
                     b.HasIndex("ClientId", "EnabledForClient");
 
-                    b.HasIndex("ClientId", "ExternalProviderId");
+                    b.HasIndex("ClientId", "ExternalProviderId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ClientExternalProviders_ClientId_ExternalProviderId");
 
                     b.ToTable("ClientExternalProviders", (string)null);
                 });
@@ -2354,7 +2359,7 @@ namespace IDP.Infrastructure.Migrations
                     b.HasOne("IDP.Domain.AggregateRoots.Clients.Client", "Client")
                         .WithOne()
                         .HasForeignKey("IDP.Domain.AggregateRoots.Clients.ClientAuthPolicy", "ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("IDP.Domain.AggregateRoots.Clients.Client", null)

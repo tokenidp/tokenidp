@@ -24,6 +24,7 @@ internal class ClientAuthPolicyConfig : IEntityTypeConfiguration<ClientAuthPolic
         b.HasOne(x => x.Client)
          .WithOne()
          .HasForeignKey<ClientAuthPolicy>(x => x.ClientId)
+         .OnDelete(DeleteBehavior.NoAction)
          .IsRequired();
     }
 }

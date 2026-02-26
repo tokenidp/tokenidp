@@ -61,6 +61,11 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
             .HasForeignKey(ur => ur.ClientId)
             .IsRequired();
 
+        builder.HasMany(a => a.ClientExternalProviders)
+            .WithOne(e => e.Client)
+            .HasForeignKey(ur => ur.ClientId)
+            .IsRequired();
+
         builder.HasIndex(x => x.ClientId)
             .IsUnique()
             .HasDatabaseName("IX_Clients_ClientId");

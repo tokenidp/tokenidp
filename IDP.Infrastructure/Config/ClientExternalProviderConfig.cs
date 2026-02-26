@@ -6,7 +6,12 @@ internal class ClientExternalProviderConfig : IEntityTypeConfiguration<ClientExt
     {
         b.ToTable("ClientExternalProviders");
 
-        b.HasKey(x => new { x.ClientId, x.ExternalProviderId });
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).ValueGeneratedOnAdd();
+
+        b.HasIndex(x => new { x.ClientId, x.ExternalProviderId })
+            .IsUnique()
+            .HasDatabaseName("IX_ClientExternalProviders_ClientId_ExternalProviderId");
 
         b.Property(x => x.ClientId).IsRequired();
         b.Property(x => x.ExternalProviderId).IsRequired();

@@ -1,19 +1,24 @@
-﻿namespace Admin.Core.Tenants.UseCases;
+﻿using Admin.Core.Common;
+
+namespace Admin.Core.Tenants.UseCases;
 
 internal sealed class TenantCommandUseCase
 {
     private readonly IApplicationDbContext _dbContext;
+    private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _codeGenerator;
 
     public TenantCommandUseCase(
         IApplicationDbContext dbContext,
+        ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<TenantCommandUseCase> logger,
         ICodeSequenceGenerator codeGenerator)
     {
         _dbContext = dbContext;
+        _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
         _codeGenerator = codeGenerator;
@@ -103,6 +108,7 @@ internal sealed class TenantCommandUseCase
 
         _dbContext.Tenants.Add(tenant);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateLookupCaches(tenant.Id);
 
         _logger.LogInfo("Tenant created with Id {TenantId}", tenant.Id);
 
@@ -245,6 +251,7 @@ internal sealed class TenantCommandUseCase
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await InvalidateLookupCaches(id);
 
         _logger.LogInfo("Tenant updated {TenantId}", id);
 
@@ -297,5 +304,11 @@ internal sealed class TenantCommandUseCase
     {
         return ApiResult<int>.Failure(
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
+    }
+
+    private async Task InvalidateLookupCaches(int tenantId)
+    {
+        await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
+        await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
     }
 }

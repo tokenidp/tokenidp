@@ -197,6 +197,7 @@ public class Client : AggregateRoot<int>, ITenant
         if (ClientAuthPolicy == null)
         {
             ClientAuthPolicy = ClientAuthPolicy.Create(
+                this,
                 allowLocalLoginOverride,
                 allowSelfRegistrationOverride,
                 mfaPolicyOverride,
