@@ -1,6 +1,6 @@
 /admin-app/node_modules/
-/idp-sdk/node_modules/
-/idp-sdk/dist/
+/react-idp-sdk/node_modules/
+/react-idp-sdk/dist/
 /admin-app/build/
 /admin-app/build-temp/
 /idp-supporting-docs/assets/logos/
