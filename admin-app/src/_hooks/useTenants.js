@@ -136,6 +136,48 @@ export const TenantsProvider = ({ children }) => {
     [get]
   );
 
+  const resolveTenantIdByCode = useCallback(
+    async (tenantCode) => {
+      if (!tenantCode) {
+        return null;
+      }
+
+      try {
+        const response = await post("admin/tenant/list", {
+          pageNumber: 1,
+          pageSize: 50,
+          sortColumn: "TenantName",
+          sortOrder: "asc",
+          searchAll: false,
+          SearchCriterias: [
+            {
+              ColumnName: "Search",
+              Value: tenantCode,
+              ColumnType: 1,
+            },
+          ],
+        });
+
+        const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || [];
+        const match = (Array.isArray(items) ? items : []).find(
+          (item) =>
+            String(item?.tenantCode ?? item?.TenantCode ?? "").toLowerCase() ===
+            String(tenantCode).toLowerCase()
+        );
+
+        return match?.id ?? match?.Id ?? null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to resolve tenant.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const createTenant = useCallback(
     async (payload) => {
       dispatch({ type: actions.CREATE_START });
@@ -200,6 +242,7 @@ export const TenantsProvider = ({ children }) => {
         loadTenants,
         loadLookups,
         getTenantById,
+        resolveTenantIdByCode,
         createTenant,
         updateTenant,
         deleteTenant,

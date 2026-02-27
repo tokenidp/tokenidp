@@ -168,6 +168,49 @@ export const PermissionsProvider = ({ children }) => {
     [get]
   );
 
+  const resolvePermissionIdByKey = useCallback(
+    async (permissionKey) => {
+      if (!permissionKey) {
+        return null;
+      }
+
+      try {
+        const response = await post("admin/permission/list", {
+          pageNumber: 1,
+          pageSize: 50,
+          sortColumn: "Sequence",
+          sortOrder: "asc",
+          searchAll: false,
+          SearchCriterias: [
+            {
+              ColumnName: "PermissionKey",
+              Value: permissionKey,
+              ColumnType: 1,
+            },
+          ],
+        });
+
+        const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || [];
+        const list = Array.isArray(items) ? items : [];
+        const match = list.find(
+          (item) =>
+            String(item?.permissionKey ?? item?.PermissionKey ?? "").toLowerCase() ===
+            String(permissionKey).toLowerCase()
+        );
+
+        return match?.id ?? match?.Id ?? null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to resolve permission.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   return (
     <PermissionsContext.Provider
       value={{
@@ -178,6 +221,7 @@ export const PermissionsProvider = ({ children }) => {
         createPermission,
         updatePermission,
         getPermissionById,
+        resolvePermissionIdByKey,
       }}
     >
       {children}

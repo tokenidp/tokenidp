@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ApplicationWizard from "./applicationWizard";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useApplications } from "../../_hooks/useApplications";
@@ -36,25 +36,40 @@ const emptyValues = {
 };
 
 function ApplicationEdit() {
-  const { id } = useParams();
+  const { clientKey } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const {
     state,
     loadLookups,
     getApplicationById,
+    resolveApplicationIdByClientId,
     updateApplication,
     clearStatus,
   } = useApplications();
   const [initialValues, setInitialValues] = useState(emptyValues);
+  const [applicationId, setApplicationId] = useState(
+    location?.state?.id ?? null
+  );
+  const decodedClientKey = decodeURIComponent(clientKey || "");
 
   useEffect(() => {
     loadLookups();
   }, [loadLookups]);
 
   useEffect(() => {
-    if (!id) return;
-    const loadClient = async () => {
-      const data = await getApplicationById(id);
+    const resolveAndLoad = async () => {
+      let resolvedId = applicationId;
+      if (!resolvedId && decodedClientKey) {
+        resolvedId = await resolveApplicationIdByClientId(decodedClientKey);
+        if (resolvedId) {
+          setApplicationId(resolvedId);
+        }
+      }
+
+      if (!resolvedId) return;
+
+      const data = await getApplicationById(resolvedId);
       if (!data) return;
 
       setInitialValues({
@@ -133,12 +148,21 @@ function ApplicationEdit() {
       });
     };
 
-    loadClient();
-  }, [getApplicationById, id]);
+    resolveAndLoad();
+  }, [
+    applicationId,
+    decodedClientKey,
+    getApplicationById,
+    resolveApplicationIdByClientId,
+  ]);
 
   const handleSubmit = async (data) => {
+    if (!applicationId) {
+      return;
+    }
+
     const payload = {
-      id: Number(id),
+      id: Number(applicationId),
       clientId: data.clientId.trim(),
       clientName: data.clientName.trim(),
       description: data.description?.trim() || null,
@@ -175,7 +199,7 @@ function ApplicationEdit() {
         : [],
     };
 
-    const result = await updateApplication(id, payload);
+    const result = await updateApplication(applicationId, payload);
     if (result.ok) {
       clearStatus();
       navigate("/applications");
@@ -189,7 +213,7 @@ function ApplicationEdit() {
           <h5 className="page-title mb-1">Edit Application</h5>
           <Breadcrumbs
             className="app-breadcrumb mb-2"
-            appendLabel={id ? `Editing client: ${id}` : ""}
+            appendLabel={decodedClientKey ? `Editing client: ${decodedClientKey}` : ""}
           />
         </div>
       </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { usePermissions } from "../../_hooks/usePermissions";
 import InfoModal from "../common/infoModal";
@@ -9,10 +9,19 @@ const keyPattern = /^[a-z0-9]+([._][a-z0-9]+)*$/;
 
 function AddPermission({ mode = "add" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
-  const permissionId = params.permissionId;
-  const { state, loadParents, createPermission, updatePermission, getPermissionById } =
-    usePermissions();
+  const permissionKeyParam = params.permissionKey;
+  const decodedPermissionKey = decodeURIComponent(permissionKeyParam || "");
+  const {
+    state,
+    loadParents,
+    createPermission,
+    updatePermission,
+    getPermissionById,
+    resolvePermissionIdByKey,
+  } = usePermissions();
+  const [permissionId, setPermissionId] = useState(location?.state?.id || null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
   const controlTypeOptions = useMemo(
@@ -55,9 +64,19 @@ function AddPermission({ mode = "add" }) {
   }, [loadParents]);
 
   useEffect(() => {
-    if (!permissionId || mode !== "edit") return;
+    if (mode !== "edit") return;
     const loadPermission = async () => {
-      const data = await getPermissionById(permissionId);
+      let resolvedId = permissionId;
+      if (!resolvedId && decodedPermissionKey) {
+        resolvedId = await resolvePermissionIdByKey(decodedPermissionKey);
+        if (resolvedId) {
+          setPermissionId(resolvedId);
+        }
+      }
+
+      if (!resolvedId) return;
+
+      const data = await getPermissionById(resolvedId);
       if (!data) return;
       setValue("permissionName", data.permissionName ?? "");
       setValue("permissionKey", data.permissionKey ?? "");
@@ -68,7 +87,14 @@ function AddPermission({ mode = "add" }) {
       setValue("isActive", data.active === "Active");
     };
     loadPermission();
-  }, [getPermissionById, mode, permissionId, setValue]);
+  }, [
+    decodedPermissionKey,
+    getPermissionById,
+    mode,
+    permissionId,
+    resolvePermissionIdByKey,
+    setValue,
+  ]);
 
   const onSubmit = async (data) => {
     const payload = {

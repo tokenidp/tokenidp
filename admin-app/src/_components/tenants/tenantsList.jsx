@@ -263,9 +263,16 @@ function TenantsList() {
                         <button
                           className="btn btn-link p-0 text-primary ButtonLink"
                           type="button"
-                          onClick={() =>
-                            navigate(`edit/${getField(item, "id", "Id")}`)
-                          }
+                          onClick={() => {
+                            const id = getField(item, "id", "Id");
+                            const tenantCode = getField(item, "tenantCode", "TenantCode");
+                            if (!tenantCode) {
+                              return;
+                            }
+                            navigate(`edit/${encodeURIComponent(String(tenantCode))}`, {
+                              state: { id },
+                            });
+                          }}
                           title="Edit"
                         >
                           <i className="fa fa-pen"></i>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import InfoModal from "../common/infoModal";
 import { useUsers } from "../../_hooks/useUsers";
@@ -59,11 +59,20 @@ const resolveAddressTypeValue = (rawValue, options) => {
 
 function AddEditUser({ mode }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const params = useParams();
-  const userId = params.userId;
-  const { state, loadLookups, getUserById, createUser, updateUser } = useUsers();
+  const userKey = params.userKey;
+  const decodedUserKey = decodeURIComponent(userKey || "");
+  const {
+    state,
+    loadLookups,
+    getUserById,
+    resolveUserIdByUserName,
+    createUser,
+    updateUser,
+  } = useUsers();
   const [currentUserId, setCurrentUserId] = useState(
-    userId ? Number(userId) : 0
+    location?.state?.id ? Number(location.state.id) : 0
   );
   const [activeTab, setActiveTab] = useState("details");
   const [showPassword, setShowPassword] = useState(false);
@@ -155,13 +164,23 @@ function AddEditUser({ mode }) {
   }, [loadLookups]);
 
   useEffect(() => {
-    if (!userId || mode !== "edit") return;
+    if (mode !== "edit") return;
     const loadUser = async () => {
-      const data = await getUserById(userId);
+      let resolvedId = currentUserId;
+      if (!resolvedId && decodedUserKey) {
+        resolvedId = await resolveUserIdByUserName(decodedUserKey);
+        if (resolvedId) {
+          setCurrentUserId(Number(resolvedId));
+        }
+      }
+
+      if (!resolvedId) return;
+
+      const data = await getUserById(resolvedId);
       if (!data) return;
-      const resolvedId =
-        data.id ?? data.Id ?? (Number(userId) || 0);
-      setCurrentUserId(resolvedId);
+      const resolvedDataId =
+        data.id ?? data.Id ?? Number(currentUserId || 0);
+      setCurrentUserId(resolvedDataId);
       setValue("firstName", data.firstName ?? data.FirstName ?? "");
       setValue("lastName", data.lastName ?? data.LastName ?? "");
       setValue("userName", data.userName ?? data.UserName ?? "");
@@ -280,24 +299,31 @@ function AddEditUser({ mode }) {
       );
     };
     loadUser();
-  }, [addressTypeOptions, getUserById, mode, setValue, userId]);
+  }, [
+    addressTypeOptions,
+    currentUserId,
+    decodedUserKey,
+    getUserById,
+    mode,
+    resolveUserIdByUserName,
+    setValue,
+  ]);
 
   useEffect(() => {
-    if (!userId || mode !== "edit") return;
-    const resolvedId = Number(userId) || 0;
-    if (resolvedId && resolvedId !== currentUserId) {
-      setCurrentUserId(resolvedId);
+    if (mode !== "edit" || currentUserId) return;
+    if (location?.state?.id) {
+      setCurrentUserId(Number(location.state.id));
     }
-  }, [currentUserId, mode, userId]);
+  }, [currentUserId, location, mode]);
 
   useEffect(() => {
-    if (mode === "edit" && userId && addressTypeSeed !== null) {
+    if (mode === "edit" && decodedUserKey && addressTypeSeed !== null) {
       setValue(
         "addressType",
         resolveAddressTypeValue(addressTypeSeed, addressTypeOptions)
       );
     }
-  }, [addressTypeOptions, addressTypeSeed, mode, setValue, userId]);
+  }, [addressTypeOptions, addressTypeSeed, decodedUserKey, mode, setValue]);
 
   useEffect(() => {
     if (mode !== "add") return;
@@ -321,44 +347,46 @@ function AddEditUser({ mode }) {
 
   const onSubmit = async (data) => {
     const addressPayload = {
-      addressType: data.addressType,
-      addressLine1: data.addressLine1.trim(),
-      addressLine2: data.addressLine2.trim() || null,
-      city: data.city.trim(),
-      state: data.state.trim() || null,
-      postalCode: data.postalCode.trim() || null,
-      country: data.country.trim(),
+      addressType: String(data.addressType ?? ""),
+      addressLine1: String(data.addressLine1 ?? "").trim(),
+      addressLine2: String(data.addressLine2 ?? "").trim() || null,
+      city: String(data.city ?? "").trim(),
+      state: String(data.state ?? "").trim(),
+      postalCode: String(data.postalCode ?? "").trim(),
+      country: String(data.country ?? "").trim(),
       isActive: true,
     };
 
     const contactsPayload = hasContactDetails
       ? [
           {
-            contactType: data.contactType.trim(),
-            relationship: data.contactRelationship.trim() || null,
-            email: data.contactEmail.trim() || null,
-            phoneNumber: data.contactPhoneNumber.trim() || null,
-            addressLine1: data.contactAddressLine1.trim() || null,
-            addressLine2: data.contactAddressLine2.trim() || null,
-            city: data.contactCity.trim() || null,
-            state: data.contactState.trim() || null,
-            postalCode: data.contactPostalCode.trim() || null,
-            country: data.contactCountry.trim() || null,
+            contactType: String(data.contactType ?? "").trim(),
+            relationship: String(data.contactRelationship ?? "").trim() || null,
+            email: String(data.contactEmail ?? "").trim() || null,
+            phoneNumber: String(data.contactPhoneNumber ?? "").trim() || null,
+            addressLine1: String(data.contactAddressLine1 ?? "").trim() || null,
+            addressLine2: String(data.contactAddressLine2 ?? "").trim() || null,
+            city: String(data.contactCity ?? "").trim() || null,
+            state: String(data.contactState ?? "").trim() || null,
+            postalCode: String(data.contactPostalCode ?? "").trim() || null,
+            country: String(data.contactCountry ?? "").trim() || null,
             isActive: true,
           },
         ]
       : [];
 
-    const resolvedUserId = currentUserId || (userId ? Number(userId) : 0);
+    const routeUserId = Number(currentUserId || 0);
+    const resolvedUserId = mode === "edit"
+      ? routeUserId
+      : currentUserId || 0;
     const payload = {
       id: resolvedUserId,
-      Id: resolvedUserId,
       tenantId: 0,
-      firstName: data.firstName.trim(),
-      lastName: data.lastName.trim(),
-      userName: data.userName.trim(),
-      email: data.email.trim(),
-      phone: data.phone.trim(),
+      firstName: String(data.firstName ?? "").trim(),
+      lastName: String(data.lastName ?? "").trim(),
+      userName: String(data.userName ?? "").trim(),
+      email: String(data.email ?? "").trim(),
+      phone: String(data.phone ?? "").trim(),
       password: data.password ? data.password : null,
       twoFactorEnabled: !!data.twoFactorEnabled,
       lockoutEnabled: !!data.lockoutEnabled,
@@ -370,8 +398,8 @@ function AddEditUser({ mode }) {
       status: data.status || null,
     };
 
-    if (mode === "edit" && userId) {
-      await updateUser(resolvedUserId, payload);
+    if (mode === "edit" && routeUserId > 0) {
+      await updateUser(routeUserId, payload);
       setInfoContent({
         title: "User updated",
         message: "User updated successfully.",
@@ -452,9 +480,9 @@ function AddEditUser({ mode }) {
                     <div className="card">
                       <div className="card-body">
                         <h6 className="card-title">Account Status</h6>
-                        <div className="row g-3">
-                          <div className="col-12 col-md-6">
-                            <label className="form-label">Status</label>
+                        <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
+                          <div className="col-12 col-md-4">
+                            <label className="form-label">Status *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-circle-dot"></i>
@@ -486,7 +514,7 @@ function AddEditUser({ mode }) {
                               </div>
                             )}
                           </div>
-                          <div className="col-12 col-md-6">
+                          <div className="col-12 col-md-4">
                             <label className="form-label">Lockout Enabled</label>
                             <div className="form-check form-switch app-switch account-status-switch">
                               <input
@@ -497,7 +525,7 @@ function AddEditUser({ mode }) {
                               <label className="form-check-label">Enabled</label>
                             </div>
                           </div>
-                          <div className="col-12 col-md-6">
+                          <div className="col-12 col-md-4">
                             <label className="form-label">Access Failed Count</label>
                             <div className="input-group">
                               <span className="input-group-text">
@@ -540,7 +568,7 @@ function AddEditUser({ mode }) {
                         <h6 className="card-title">Identity Information</h6>
                         <div className="row g-3">
                           <div className="col-12 col-md-6">
-                            <label className="form-label">First Name</label>
+                            <label className="form-label">First Name *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-user"></i>
@@ -563,7 +591,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Last Name</label>
+                            <label className="form-label">Last Name *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-user"></i>
@@ -586,7 +614,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Username</label>
+                            <label className="form-label">Username *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-at"></i>
@@ -610,22 +638,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Normalized Username</label>
-                            <div className="input-group">
-                              <span className="input-group-text">
-                                <i className="fa fa-id-badge"></i>
-                              </span>
-                              <input
-                                className="form-control"
-                                type="text"
-                                readOnly
-                                {...register("normalizedUserName")}
-                              />
-                            </div>
-                            <div className="form-text">System generated.</div>
-                          </div>
-                          <div className="col-12 col-md-6">
-                            <label className="form-label">Email Address</label>
+                            <label className="form-label">Email Address *</label>
                             <div className="d-flex align-items-center gap-2">
                               <div className="input-group">
                                 <span className="input-group-text">
@@ -657,7 +670,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Phone Number</label>
+                            <label className="form-label">Phone Number *</label>
                             <div className="d-flex align-items-center gap-2">
                               <div className="input-group">
                                 <span className="input-group-text">
@@ -719,7 +732,9 @@ function AddEditUser({ mode }) {
                             </div>
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Password</label>
+                            <label className="form-label">
+                              Password {mode === "add" ? "*" : ""}
+                            </label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-key"></i>
@@ -770,7 +785,7 @@ function AddEditUser({ mode }) {
                   <div className="col-12">
                     <div className="card">
                       <div className="card-body">
-                        <h6 className="card-title">Roles</h6>
+                        <h6 className="card-title">Roles *</h6>
                         <input
                           type="hidden"
                           {...register("roles", {
@@ -787,7 +802,7 @@ function AddEditUser({ mode }) {
                             const roleName =
                               role.value ?? role.name ?? role.Name ?? "Role";
                             return (
-                              <div key={roleId} className="col-12 col-md-6">
+                              <div key={roleId} className="col">
                                 <div
                                   className={`option-card d-flex align-items-center gap-3 ${
                                     selectedRoles.includes(Number(roleId))
@@ -881,7 +896,7 @@ function AddEditUser({ mode }) {
                         <h6 className="card-title">User Address</h6>
                         <div className="row g-3">
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Address Type</label>
+                            <label className="form-label">Address Type *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-tag"></i>
@@ -912,7 +927,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Address Line 1</label>
+                            <label className="form-label">Address Line 1 *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-map-marker-alt"></i>
@@ -949,7 +964,7 @@ function AddEditUser({ mode }) {
                             </div>
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">City</label>
+                            <label className="form-label">City *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-city"></i>
@@ -970,7 +985,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">State / Province</label>
+                            <label className="form-label">State / Province *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-map"></i>
@@ -981,7 +996,9 @@ function AddEditUser({ mode }) {
                                 }`}
                                 type="text"
                                 placeholder="WA"
-                                {...register("state")}
+                                {...register("state", {
+                                  required: "State / Province is required.",
+                                })}
                               />
                             </div>
                             {errors.state && (
@@ -989,7 +1006,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">Postal Code</label>
+                            <label className="form-label">Postal Code *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-mail-bulk"></i>
@@ -1000,7 +1017,9 @@ function AddEditUser({ mode }) {
                                 }`}
                                 type="text"
                                 placeholder="98101"
-                                {...register("postalCode")}
+                                {...register("postalCode", {
+                                  required: "Postal code is required.",
+                                })}
                               />
                             </div>
                             {errors.postalCode && (
@@ -1010,7 +1029,7 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">Country</label>
+                            <label className="form-label">Country *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-flag"></i>
@@ -1052,7 +1071,7 @@ function AddEditUser({ mode }) {
                         <h6 className="card-title">Contact Information</h6>
                         <div className="row g-3">
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Contact Type</label>
+                            <label className="form-label">Contact Type *</label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-user-plus"></i>

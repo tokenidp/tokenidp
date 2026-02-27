@@ -137,6 +137,48 @@ export const UsersProvider = ({ children }) => {
     [get]
   );
 
+  const resolveUserIdByUserName = useCallback(
+    async (userName) => {
+      if (!userName) {
+        return null;
+      }
+
+      try {
+        const response = await post("admin/user/list", {
+          pageNumber: 1,
+          pageSize: 50,
+          sortColumn: "FullName",
+          sortOrder: "asc",
+          searchAll: false,
+          SearchCriterias: [
+            {
+              ColumnName: "Search",
+              Value: userName,
+              ColumnType: 1,
+            },
+          ],
+        });
+
+        const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || [];
+        const match = (Array.isArray(items) ? items : []).find(
+          (item) =>
+            String(item?.userName ?? item?.UserName ?? "").toLowerCase() ===
+            String(userName).toLowerCase()
+        );
+
+        return match?.id ?? match?.Id ?? null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to resolve user.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const createUser = useCallback(
     async (payload) => {
       try {
@@ -176,6 +218,7 @@ export const UsersProvider = ({ children }) => {
         loadUsers,
         loadLookups,
         getUserById,
+        resolveUserIdByUserName,
         createUser,
         updateUser,
       }}

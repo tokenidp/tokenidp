@@ -74,7 +74,14 @@ function Roles() {
                       <button
                         className="btn btn-link p-0 text-primary ButtonLink"
                         type="button"
-                        onClick={() => navigate(`edit/${roleId}`)}
+                        onClick={() => {
+                          if (!roleName) {
+                            return;
+                          }
+                          navigate(`edit/${encodeURIComponent(String(roleName))}`, {
+                            state: { id: roleId },
+                          });
+                        }}
                       >
                         Edit Role
                       </button>

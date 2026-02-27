@@ -299,9 +299,20 @@ function PermissionsList() {
                         className="btn btn-link p-0 text-primary ButtonLink"
                         type="button"
                         title="Edit"
-                        onClick={() =>
-                          navigate(`edit/${getField(item, "id", "Id")}`)
-                        }
+                        onClick={() => {
+                          const id = getField(item, "id", "Id");
+                          const permissionKey = getField(
+                            item,
+                            "permissionKey",
+                            "PermissionKey"
+                          );
+                          if (!permissionKey) {
+                            return;
+                          }
+                          navigate(`edit/${encodeURIComponent(String(permissionKey))}`, {
+                            state: { id },
+                          });
+                        }}
                       >
                         <i className="fa fa-pen"></i>
                       </button>

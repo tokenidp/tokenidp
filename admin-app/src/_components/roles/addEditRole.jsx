@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useRoles } from "../../_hooks/useRoles";
 import useTree from "../../_hooks/useTree";
@@ -30,6 +30,15 @@ const getActionIds = (node) => {
   return ids;
 };
 
+const getMenuIds = (node) => {
+  const ids = [];
+  if ((node.childrens || []).length > 0) {
+    ids.push(node.id);
+  }
+  (node.childrens || []).forEach((child) => ids.push(...getMenuIds(child)));
+  return ids;
+};
+
 function AddEditRole({ mode }) {
   const {
     register,
@@ -45,34 +54,69 @@ function AddEditRole({ mode }) {
   });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
-  const { createRole, updateRole, getRoleById, loadAssignablePermissions } =
+  const {
+    createRole,
+    updateRole,
+    getRoleById,
+    resolveRoleIdByName,
+    loadAssignablePermissions,
+  } =
     useRoles();
   const { createTree } = useTree();
+  const location = useLocation();
   const params = useParams();
-  const [roleId, setRoleId] = useState(params.roleId || null);
+  const roleKey = params.roleKey;
+  const decodedRoleKey = decodeURIComponent(roleKey || "");
+  const [roleId, setRoleId] = useState(location?.state?.id || null);
   const [permissions, setPermissions] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [search, setSearch] = useState("");
+  const [expandedIds, setExpandedIds] = useState(new Set());
   const getField = (item, ...keys) =>
     keys.find((key) => item?.[key] !== undefined) !== undefined
       ? item[keys.find((key) => item?.[key] !== undefined)]
       : undefined;
 
   const onSubmit = async (data) => {
-    const rolePermissions = Array.from(selectedIds)
-      .map((id) => {
-        const permission = permissions.find(
-          (item) => getField(item, "id", "Id") === id
-        );
-        if (!permission) return null;
-        return {
-          roleId: roleId ? Number(roleId) : 0,
-          tenantPermissionId: getField(permission, "id", "Id"),
-          permissionKey: getField(permission, "permissionKey", "PermissionKey"),
-          isAllowed: true,
-        };
-      })
-      .filter(Boolean);
+    const selectedIdSet = new Set(Array.from(selectedIds).map((id) => String(id)));
+
+    const rolePermissions =
+      mode === "edit"
+        ? permissions
+            .map((permission) => {
+              const permissionId = getField(permission, "id", "Id");
+              const permissionKey = getField(
+                permission,
+                "permissionKey",
+                "PermissionKey"
+              );
+
+              if (permissionId === undefined || permissionId === null || !permissionKey) {
+                return null;
+              }
+
+              return {
+                roleId: roleId ? Number(roleId) : 0,
+                permissionId,
+                permissionKey,
+                isAllowed: selectedIdSet.has(String(permissionId)),
+              };
+            })
+            .filter(Boolean)
+        : Array.from(selectedIds)
+            .map((id) => {
+              const permission = permissions.find(
+                (item) => String(getField(item, "id", "Id")) === String(id)
+              );
+              if (!permission) return null;
+              return {
+                roleId: roleId ? Number(roleId) : 0,
+                permissionId: getField(permission, "id", "Id"),
+                permissionKey: getField(permission, "permissionKey", "PermissionKey"),
+                isAllowed: true,
+              };
+            })
+            .filter(Boolean);
 
     const payload = {
       id: roleId ? Number(roleId) : 0,
@@ -112,9 +156,19 @@ function AddEditRole({ mode }) {
   };
 
   useEffect(() => {
-    if (mode !== "edit" || !roleId) return;
+    if (mode !== "edit") return;
     const loadRole = async () => {
-      const role = await getRoleById(roleId);
+      let resolvedRoleId = roleId;
+      if (!resolvedRoleId && decodedRoleKey) {
+        resolvedRoleId = await resolveRoleIdByName(decodedRoleKey);
+        if (resolvedRoleId) {
+          setRoleId(resolvedRoleId);
+        }
+      }
+
+      if (!resolvedRoleId) return;
+
+      const role = await getRoleById(resolvedRoleId);
       if (!role) return;
       setValue("name", getField(role, "name", "Name") ?? "");
       setValue(
@@ -128,13 +182,18 @@ function AddEditRole({ mode }) {
         new Set(
           rolePermissions
             .filter((p) => p?.isAllowed ?? p?.IsAllowed)
-            .map((p) => p?.tenantPermissionId ?? p?.TenantPermissionId)
+            .map((p) =>
+              p?.permissionId ??
+              p?.PermissionId ??
+              p?.tenantPermissionId ??
+              p?.TenantPermissionId
+            )
             .filter((id) => id !== undefined && id !== null)
         )
       );
     };
     loadRole();
-  }, [getRoleById, mode, roleId, setValue]);
+  }, [decodedRoleKey, getRoleById, mode, resolveRoleIdByName, roleId, setValue]);
 
   useEffect(() => {
     const load = async () => {
@@ -146,7 +205,7 @@ function AddEditRole({ mode }) {
 
   const tree = useMemo(
     () => createTree(permissions, { allowedControlTypes: "all" }),
-    [createTree, permissions]
+    [permissions]
   );
 
   const filteredTree = useMemo(() => {
@@ -157,6 +216,10 @@ function AddEditRole({ mode }) {
     const term = trimmedSearch.toLowerCase();
     return tree.map((node) => filterTree(node, term)).filter(Boolean);
   }, [search, tree]);
+
+  useEffect(() => {
+    setExpandedIds(new Set());
+  }, [tree]);
 
   const togglePermission = (id, checked) => {
     setSelectedIds((prev) => {
@@ -193,44 +256,105 @@ function AddEditRole({ mode }) {
     return ids.every((id) => selectedIds.has(id));
   };
 
+  const isMenuIndeterminate = (node) => {
+    const ids = getActionIds(node);
+    if (ids.length === 0) {
+      return false;
+    }
+    const selectedCount = ids.filter((id) => selectedIds.has(id)).length;
+    return selectedCount > 0 && selectedCount < ids.length;
+  };
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    const next = new Set();
+    filteredTree.forEach((node) => {
+      getMenuIds(node).forEach((id) => next.add(id));
+    });
+    setExpandedIds(next);
+  };
+
+  const collapseAll = () => {
+    setExpandedIds(new Set());
+  };
+
+  const setAllSelections = (checked) => {
+    const ids = filteredTree.flatMap((node) => getActionIds(node));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => {
+        if (checked) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      });
+      return next;
+    });
+  };
 
   const renderPermissionItem = (node, level = 0) => {
     const hasChildren = (node.childrens || []).length > 0;
     const isMenu = hasChildren;
     const isChecked = isMenu ? isMenuChecked(node) : selectedIds.has(node.id);
-
-    const isLeaf = !hasChildren;
-
+    const isExpanded =
+      search.trim().length >= MIN_SEARCH_LENGTH || expandedIds.has(node.id);
+    const isIndeterminate = isMenu && isMenuIndeterminate(node);
     return (
       <div
         key={node.id}
-        className={`permission-item ${
-          isMenu ? "permission-item-group" : ""
-        } permission-level-${Math.min(level, 3)}`}
+        className={`permission-tree-node permission-level-${Math.min(level, 4)}`}
       >
-        <label className="permission-item-label">
-          <input
-            type="checkbox"
-            className="form-check-input permission-checkbox"
-            checked={isChecked}
-            onChange={(event) =>
-              isMenu
-                ? toggleMenu(node, event.target.checked)
-                : togglePermission(node.id, event.target.checked)
-            }
-          />
-          <span className="permission-item-text">
-            <span
-              className={`permission-item-title${
-                isLeaf ? " permission-item-title-normal" : ""
-              }`}
-            >
-              {node.permissionName}
+        <div className="permission-tree-row">
+          <div className="permission-tree-row-main">
+            <span className="permission-tree-indent" style={{ width: level * 18 }} />
+            {hasChildren ? (
+              <button
+                type="button"
+                className="permission-tree-toggle"
+                onClick={() => toggleExpand(node.id)}
+                aria-label={isExpanded ? "Collapse" : "Expand"}
+              >
+                <i className={`fa fa-chevron-${isExpanded ? "down" : "right"}`}></i>
+              </button>
+            ) : (
+              <span className="permission-tree-toggle-placeholder" />
+            )}
+            <input
+              type="checkbox"
+              className="form-check-input permission-checkbox"
+              checked={isChecked}
+              ref={(input) => {
+                if (input) {
+                  input.indeterminate = isIndeterminate;
+                }
+              }}
+              onChange={(event) =>
+                isMenu
+                  ? toggleMenu(node, event.target.checked)
+                  : togglePermission(node.id, event.target.checked)
+              }
+            />
+            <span className="permission-tree-text">
+              <span className={`permission-tree-title ${isMenu ? "is-menu" : ""}`}>
+                {node.permissionName}
+              </span>
             </span>
-          </span>
-        </label>
-        {hasChildren && (
-          <div className="permission-item-children">
+          </div>
+        </div>
+        {hasChildren && isExpanded && (
+          <div className="permission-tree-children">
             {(node.childrens || []).map((child) =>
               renderPermissionItem(child, level + 1)
             )}
@@ -307,54 +431,54 @@ function AddEditRole({ mode }) {
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h6 className="card-title mb-0">Assign Permissions</h6>
-                  <div className="search-box permission-search">
-                    <i className="fa fa-search"></i>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Search permissions (min 3 chars)"
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                    />
+                  <div className="d-flex align-items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={expandAll}
+                    >
+                      Expand all
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={collapseAll}
+                    >
+                      Collapse all
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => setAllSelections(true)}
+                    >
+                      Select all
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setAllSelections(false)}
+                    >
+                      Clear all
+                    </button>
+                    <div className="search-box permission-search">
+                      <i className="fa fa-search"></i>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search permissions (min 3 chars)"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div className="permission-tree">
                   {filteredTree.length === 0 ? (
                     <div className="text-muted">No permissions found.</div>
                   ) : (
-                    <div className="permission-grid">
+                    <div className="permission-tree-shell">
                       {filteredTree.map((node) => (
-                        <div key={node.id} className="permission-card">
-                          <div className="permission-card-header">
-                            <div className="permission-card-title">
-                              <span className="permission-card-title-text">
-                                {node.permissionName}
-                              </span>
-                            </div>
-                            <label className="permission-select-all">
-                              <input
-                                type="checkbox"
-                                className="form-check-input permission-checkbox"
-                                checked={isMenuChecked(node)}
-                                onChange={(event) =>
-                                  toggleMenu(node, event.target.checked)
-                                }
-                              />
-                              <span>Select All</span>
-                            </label>
-                          </div>
-                          <div className="permission-card-body">
-                            {(node.childrens || []).length === 0 ? (
-                              <div className="text-muted small">
-                                No sub-permissions found.
-                              </div>
-                            ) : (
-                              (node.childrens || []).map((child) =>
-                                renderPermissionItem(child, 0)
-                              )
-                            )}
-                          </div>
-                        </div>
+                        renderPermissionItem(node, 0)
                       ))}
                     </div>
                   )}

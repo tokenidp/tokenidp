@@ -296,9 +296,16 @@ function Users() {
                       <button
                         className="btn btn-link p-0 text-primary ButtonLink"
                         type="button"
-                        onClick={() =>
-                          navigate(`edit/${getField(item, "id", "Id")}`)
-                        }
+                        onClick={() => {
+                          const id = getField(item, "id", "Id");
+                          const userName = getField(item, "userName", "UserName");
+                          if (!userName) {
+                            return;
+                          }
+                          navigate(`edit/${encodeURIComponent(String(userName))}`, {
+                            state: { id },
+                          });
+                        }}
                         title="Edit"
                       >
                         <i className="fa fa-pen"></i>

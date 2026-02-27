@@ -142,6 +142,48 @@ export const ApplicationsProvider = ({ children }) => {
     [get]
   );
 
+  const resolveApplicationIdByClientId = useCallback(
+    async (clientId) => {
+      if (!clientId) {
+        return null;
+      }
+
+      try {
+        const response = await post("admin/client/list", {
+          pageNumber: 1,
+          pageSize: 50,
+          sortColumn: "ClientName",
+          sortOrder: "asc",
+          searchAll: false,
+          SearchCriterias: [
+            {
+              ColumnName: "ClientId",
+              Value: clientId,
+              ColumnType: 1,
+            },
+          ],
+        });
+
+        const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || [];
+        const match = (Array.isArray(items) ? items : []).find(
+          (item) =>
+            String(item?.clientId ?? item?.ClientId ?? "").toLowerCase() ===
+            String(clientId).toLowerCase()
+        );
+
+        return match?.id ?? match?.Id ?? null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to resolve application.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const createApplication = useCallback(
     async (payload) => {
       dispatch({ type: actions.CREATE_START });
@@ -206,6 +248,7 @@ export const ApplicationsProvider = ({ children }) => {
         loadApplications,
         loadLookups,
         getApplicationById,
+        resolveApplicationIdByClientId,
         createApplication,
         updateApplication,
         deleteApplication,

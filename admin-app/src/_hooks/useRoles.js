@@ -113,6 +113,49 @@ export const RolesProvider = ({ children }) => {
     [get]
   );
 
+  const resolveRoleIdByName = useCallback(
+    async (roleName) => {
+      if (!roleName) {
+        return null;
+      }
+
+      try {
+        const response = await post("admin/role/list", {
+          pageNumber: 1,
+          pageSize: 50,
+          sortColumn: "RoleName",
+          sortOrder: "asc",
+          searchAll: true,
+          SearchCriterias: [
+            {
+              ColumnName: "Search",
+              Value: roleName,
+              ColumnType: 1,
+            },
+          ],
+        });
+
+        const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || result || [];
+        const list = Array.isArray(items) ? items : [];
+        const match = list.find(
+          (item) =>
+            String(item?.roleName ?? item?.RoleName ?? item?.name ?? item?.Name ?? "")
+              .toLowerCase() === String(roleName).toLowerCase()
+        );
+
+        return match?.id ?? match?.Id ?? null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to resolve role.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const loadAssignablePermissions = useCallback(async () => {
     dispatch({ type: actions.LIST_START });
     try {
@@ -136,6 +179,7 @@ export const RolesProvider = ({ children }) => {
         createRole,
         updateRole,
         getRoleById,
+        resolveRoleIdByName,
         loadAssignablePermissions,
       }}
     >

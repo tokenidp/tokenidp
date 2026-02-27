@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useTenants } from "../../_hooks/useTenants";
 
@@ -28,13 +28,16 @@ const isProviderEnabled = (provider) =>
 
 function AddEditTenant({ mode }) {
   const navigate = useNavigate();
-  const { tenantId } = useParams();
-  const id = tenantId;
+  const location = useLocation();
+  const { tenantKey } = useParams();
+  const decodedTenantKey = decodeURIComponent(tenantKey || "");
+  const [tenantId, setTenantId] = useState(location?.state?.id ?? null);
   const [existingProviders, setExistingProviders] = useState([]);
   const {
     state,
     loadLookups,
     getTenantById,
+    resolveTenantIdByCode,
     createTenant,
     updateTenant,
     clearStatus,
@@ -129,12 +132,24 @@ function AddEditTenant({ mode }) {
   }, [loadLookups]);
 
   useEffect(() => {
-    if (mode !== "edit" || !id) {
+    if (mode !== "edit") {
       return;
     }
 
     const loadTenant = async () => {
-      const data = await getTenantById(id);
+      let resolvedId = tenantId;
+      if (!resolvedId && decodedTenantKey) {
+        resolvedId = await resolveTenantIdByCode(decodedTenantKey);
+        if (resolvedId) {
+          setTenantId(resolvedId);
+        }
+      }
+
+      if (!resolvedId) {
+        return;
+      }
+
+      const data = await getTenantById(resolvedId);
       if (!data) {
         return;
       }
@@ -209,7 +224,7 @@ function AddEditTenant({ mode }) {
     };
 
     loadTenant();
-  }, [getTenantById, id, mode, reset]);
+  }, [decodedTenantKey, getTenantById, mode, reset, resolveTenantIdByCode, tenantId]);
 
   useEffect(() => {
     if (!existingProviders.length || !state.externalProviders.length) {
@@ -226,6 +241,10 @@ function AddEditTenant({ mode }) {
   }, [existingProviders, setValue, state.externalProviders]);
 
   const onSubmit = async (data) => {
+    if (mode === "edit" && !tenantId) {
+      return;
+    }
+
     const selectedProviderKeys = new Set(
       (Array.isArray(data.externalProviderKeys) ? data.externalProviderKeys : [])
         .map((key) => String(key))
@@ -261,7 +280,7 @@ function AddEditTenant({ mode }) {
       .map((providerKey) => createDefaultProvider(providerKey));
 
     const payload = {
-      id: mode === "edit" ? Number(id) : 0,
+      id: mode === "edit" ? Number(tenantId) : 0,
       tenantName: data.tenantName.trim(),
       tenantCode: data.tenantCode.trim() || "",
       email: data.email.trim() || null,
@@ -286,8 +305,8 @@ function AddEditTenant({ mode }) {
     };
 
     const result =
-      mode === "edit"
-        ? await updateTenant(id, payload)
+      mode === "edit" && tenantId
+        ? await updateTenant(tenantId, payload)
         : await createTenant(payload);
 
     if (result.ok) {

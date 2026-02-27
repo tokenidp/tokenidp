@@ -77,7 +77,7 @@ function App() {
                 }
               />
               <Route
-                path="edit/:roleId"
+                path="edit/:roleKey"
                 element={
                   <PrivateRoute requiredAnyOf={["roles.edit"]}>
                     <AddEditRole mode="edit" />
@@ -111,7 +111,7 @@ function App() {
                 }
               />
               <Route
-                path="edit/:id"
+                path="edit/:clientKey"
                 element={
                   <PrivateRoute requiredAnyOf={["applications.edit"]}>
                     <ApplicationEdit />
@@ -137,7 +137,7 @@ function App() {
                 }
               />
               <Route
-                path="edit/:userId"
+                path="edit/:userKey"
                 element={
                   <PrivateRoute requiredAnyOf={["users.edit"]}>
                     <AddEditUser mode="edit" />
@@ -163,7 +163,7 @@ function App() {
                 }
               />
               <Route
-                path="edit/:tenantId"
+                path="edit/:tenantKey"
                 element={
                   <PrivateRoute requiredAnyOf={["tenants.edit"]}>
                     <AddEditTenant mode="edit" />
@@ -219,7 +219,7 @@ function App() {
                 }
               />
               <Route
-                path="edit/:permissionId"
+                path="edit/:permissionKey"
                 element={
                   <PrivateRoute requiredAnyOf={["permissions.edit"]}>
                     <AddPermission mode="edit" />

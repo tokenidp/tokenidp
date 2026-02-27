@@ -868,111 +868,132 @@ table td i {
   gap: 6px;
 }
 
-.permission-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.permission-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+.permission-tree-shell {
+  background: linear-gradient(180deg, #f8fafc 0%, #f5f9ff 100%);
+  border: 1px solid #dbe6f5;
   border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+  padding: 12px;
 }
 
-.permission-card-header {
+.permission-tree-node {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.permission-tree-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 12px;
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 4px 8px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
-.permission-card-title {
+.permission-tree-row:hover {
+  background: rgba(30, 58, 138, 0.05);
+  border-color: rgba(30, 58, 138, 0.12);
+}
+
+.permission-tree-row-main {
   display: flex;
-  flex-direction: column;
-}
-
-.permission-card-title-text {
-  font-weight: 600;
-  font-size: 14px;
-  color: #0f172a;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.permission-select-all {
-  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
-  color: #64748b;
-  margin: 0;
+  min-width: 0;
 }
 
-.permission-card-body {
+.permission-tree-indent {
+  flex: 0 0 auto;
+}
+
+.permission-tree-toggle {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #cdd8ea;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e3a8a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  padding: 0;
+}
+
+.permission-tree-toggle-placeholder {
+  width: 22px;
+  height: 22px;
+  display: inline-block;
+}
+
+.permission-tree-text {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  min-width: 0;
 }
 
-.permission-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.permission-item-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  cursor: pointer;
-  margin: 0;
-}
-
-.permission-item-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.permission-item-title {
-  font-weight: 600;
+.permission-tree-title {
   color: #0f172a;
-  line-height: 1.2;
+  font-size: 14px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.permission-item-title.permission-item-title-normal {
-  font-weight: 400 !important;
-}
-
-.permission-item-key {
-  color: #64748b;
-  font-size: 12px;
+.permission-tree-title.is-menu {
+  font-weight: 700;
   letter-spacing: 0.2px;
 }
 
-.permission-item-children {
+.permission-tree-key {
+  color: #64748b;
+  font-size: 11px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.permission-tree-badge {
+  border-radius: 999px;
+  border: 1px solid #d5deec;
+  color: #475569;
+  background: #f8fafc;
+  padding: 2px 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex: 0 0 auto;
+}
+
+.permission-tree-badge.is-group {
+  border-color: rgba(30, 58, 138, 0.25);
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.08);
+}
+
+.permission-tree-children {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-left: 20px;
+  gap: 4px;
+  margin-left: 8px;
+  padding-left: 10px;
+  border-left: 1px dashed #cbd5e1;
 }
 
-.permission-item-group > .permission-item-label .permission-item-title {
-  font-size: 14px;
-}
-
-.permission-level-1 > .permission-item-label .permission-item-title {
+.permission-level-1 > .permission-tree-row .permission-tree-title {
   font-weight: 600;
 }
 
-.permission-level-2 > .permission-item-label .permission-item-title,
-.permission-level-3 > .permission-item-label .permission-item-title {
+.permission-level-2 > .permission-tree-row .permission-tree-title,
+.permission-level-3 > .permission-tree-row .permission-tree-title,
+.permission-level-4 > .permission-tree-row .permission-tree-title {
   font-weight: 500;
 }
 
