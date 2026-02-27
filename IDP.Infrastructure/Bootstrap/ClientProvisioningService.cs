@@ -7,12 +7,13 @@ internal class ClientProvisioningService : IClientProvisioningService
 {
     public async Task CreateAsync(IApplicationDbContext db,
         int tenantId,
+        string clientId,
         CreateUpdateClient command,
         CancellationToken ct)
     {
         var createResult = Client.Create(
             tenantId,
-            command.ClientId,
+            clientId,
             command.ClientName,
             command.Description,
             command.AppType,
@@ -39,6 +40,7 @@ internal class ClientProvisioningService : IClientProvisioningService
         client!.ReplaceScopes(scopes);
         client!.ReplaceGrantTypes(grants);
         client!.ReplaceAudiences(audiences);
+
         var authPolicy = command.AuthPolicy ?? new ClientAuthPolicyDetail();
         client.ConfigureAuthPolicy(
             authPolicy.AllowLocalLoginOverride,

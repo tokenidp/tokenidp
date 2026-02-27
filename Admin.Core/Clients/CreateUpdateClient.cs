@@ -1,11 +1,8 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace Admin.Core.Clients;
 
 public class CreateUpdateClient
 {
     public int Id { get; set; }
-    public string ClientId { get; set; } = default!;
     public string ClientName { get; set; } = default!;
     public string RedirectUri { get; set; } = default!;
     public string? Description { get; set; }

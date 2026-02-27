@@ -10,6 +10,7 @@ internal class ClientAuthPolicyConfig : IEntityTypeConfiguration<ClientAuthPolic
         b.Property(x => x.Id).ValueGeneratedOnAdd();
 
         b.Property(x => x.ClientId).IsRequired();
+        b.HasIndex(x => new { x.ClientId }).IsUnique();
 
         b.Property(x => x.AllowLocalLoginOverride);
         b.Property(x => x.AllowSelfRegistrationOverride);
@@ -19,12 +20,9 @@ internal class ClientAuthPolicyConfig : IEntityTypeConfiguration<ClientAuthPolic
         b.Property(x => x.ShowStaySignedIn).IsRequired();
         b.Property(x => x.ShowCreateAccountLink).IsRequired();
 
-        b.HasIndex(x => new { x.ClientId }).IsUnique();
-
         b.HasOne(x => x.Client)
-         .WithOne()
+         .WithOne(x => x.ClientAuthPolicy)
          .HasForeignKey<ClientAuthPolicy>(x => x.ClientId)
-         .OnDelete(DeleteBehavior.NoAction)
-         .IsRequired();
+         .OnDelete(DeleteBehavior.NoAction);
     }
 }

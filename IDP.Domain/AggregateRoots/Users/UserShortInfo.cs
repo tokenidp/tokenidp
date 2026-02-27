@@ -13,7 +13,7 @@ public class UserShortInfo
     public string PhoneNumber { get; private set; } = default!;
     public bool PhoneNumberConfirmed { get; private set; }
     public DateTime CreatedAtUtc { get; private set; }
-    public DateTime? UpdatedAtUtc  { get; private set; }
+    public DateTime? UpdatedAtUtc { get; private set; }
 
     private UserShortInfo() { }
 

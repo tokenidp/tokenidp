@@ -1,7 +1,7 @@
 ﻿namespace IDP.Domain.AggregateRoots.Emails;
 
 public sealed class EmailDeliveryAttempt : Entity<long>
-{          
+{
     public long EmailMessageId { get; private set; }  // aggregate reference
     public int AttemptNo { get; private set; }
     public string? Provider { get; private set; }

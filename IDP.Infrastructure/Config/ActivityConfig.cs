@@ -30,7 +30,7 @@ internal sealed class ActivityConfig : IEntityTypeConfiguration<Activity>
 
         builder.Property(x => x.Status).IsRequired().HasMaxLength(32);
         builder.Property(x => x.Description).IsRequired().HasMaxLength(1024);
-        
+
         builder.Property(x => x.CorrelationId);
         builder.Property(x => x.IpAddress).HasMaxLength(32);
         builder.Property(x => x.UserAgent).HasMaxLength(100);

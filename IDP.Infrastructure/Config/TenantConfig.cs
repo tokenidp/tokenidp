@@ -9,10 +9,13 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
         builder.Property(x => x.TenantName).HasMaxLength(100).IsRequired();
-        builder.Property(x => x.TenantCode).HasMaxLength(20) .IsRequired();
+        builder.Property(x => x.TenantDisplayName).HasMaxLength(100);
+        builder.Property(x => x.TenantCode).HasMaxLength(20).IsRequired();
+
+        builder.Property(x => x.TenantKey).IsRequired().HasMaxLength(64);
 
         builder.Property(x => x.Email).HasMaxLength(100);
-        
+
         builder.Property(x => x.IsActive).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 
@@ -38,5 +41,9 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         // Audit queries
         builder.HasIndex(x => x.EffectiveUserId)
             .HasDatabaseName("IX_Tenants_EffectiveUserId");
+
+        builder.HasIndex(x => x.TenantKey)
+            .IsUnique()
+            .HasDatabaseName("IX_Tenants_TenantKey");
     }
 }

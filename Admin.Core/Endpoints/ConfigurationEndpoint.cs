@@ -58,9 +58,9 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .RequireAuthorization(new AuthorizeAttribute
-         {
-             Policy = "settings.view"
-         })
+        {
+            Policy = "settings.view"
+        })
         .WithName("TenantConfigurationByKey")
         .WithTags("TenantConfigurationByKey");
 

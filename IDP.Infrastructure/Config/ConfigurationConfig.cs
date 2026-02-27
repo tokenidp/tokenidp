@@ -12,7 +12,7 @@ internal class ConfigurationConfig : IEntityTypeConfiguration<Configuration>
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
 
         builder.Property(x => x.ConfigKey).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.ConfigValue).HasMaxLength(200) .IsRequired();
+        builder.Property(x => x.ConfigValue).HasMaxLength(200).IsRequired();
         builder.Property(x => x.ValueType).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Scope).HasMaxLength(50).IsRequired();
 

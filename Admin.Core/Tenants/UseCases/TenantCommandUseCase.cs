@@ -1,4 +1,5 @@
 ﻿using Admin.Core.Common;
+using IDP.Foundation;
 
 namespace Admin.Core.Tenants.UseCases;
 
@@ -47,6 +48,15 @@ internal sealed class TenantCommandUseCase
                 ApiError.Failure("tenant.name.duplicate", "Tenant name already exists."));
         }
 
+        var tenantKey = await GenerateUniqueAsync(tenantName,
+            key => CheckTenantByKey(key, cancellationToken));
+
+        if (string.IsNullOrEmpty(tenantKey))
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure("tenant.key.duplicate", "Tenant key already exists."));
+        }
+
         var authSettings = TenantAuthSetting.Create(0);
 
         authSettings.SetAuthenticationMode(authSettingsRequest.AuthenticationMode);
@@ -73,6 +83,7 @@ internal sealed class TenantCommandUseCase
 
         var createResult = Tenant.Create(
             tenantName: tenantName,
+            tenantKey: tenantKey,
             email: request.Email?.Trim(),
             isActive: request.IsActive,
             authSetting: authSettings,
@@ -310,5 +321,31 @@ internal sealed class TenantCommandUseCase
     {
         await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
         await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
+    }
+
+    private async Task<bool> CheckTenantByKey(string key, CancellationToken cancellationToken)
+    {
+        var keyExist = await _dbContext.Tenants
+            .AsNoTracking()
+            .AnyAsync(t => t.TenantKey.ToLower() == key.ToLower(), cancellationToken);
+
+        return keyExist;
+    }
+
+    private static async Task<string> GenerateUniqueAsync(string tenantName,
+        Func<string, Task<bool>> existsAsync)
+    {
+        var baseKey = TenantKeyGenerator.Generate(tenantName);
+
+        var key = baseKey;
+        var counter = 1;
+
+        while (await existsAsync(key))
+        {
+            key = $"{baseKey}-{counter}";
+            counter++;
+        }
+
+        return key;
     }
 }

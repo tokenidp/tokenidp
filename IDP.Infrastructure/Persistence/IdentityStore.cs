@@ -1,5 +1,4 @@
 ﻿using Admin.Core.Common;
-using Azure.Core;
 using IDP.Domain.DomainEvents.Users;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Projections;

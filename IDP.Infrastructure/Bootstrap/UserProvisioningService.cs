@@ -13,9 +13,9 @@ internal class UserProvisioningService : IUserProvisioningService
         _passwordService = passwordService;
     }
 
-    public async Task<User> CreateAsync(IApplicationDbContext db, 
-        int tenantId, 
-        UserDetail command, 
+    public async Task<User> CreateAsync(IApplicationDbContext db,
+        int tenantId,
+        UserDetail command,
         CancellationToken ct)
     {
         var createResult = User.Create(
@@ -46,9 +46,9 @@ internal class UserProvisioningService : IUserProvisioningService
         return user!;
     }
 
-    public async Task<User?> ExistsAsync(IApplicationDbContext db, 
-        int tenantId, 
-        string userName, 
+    public async Task<User?> ExistsAsync(IApplicationDbContext db,
+        int tenantId,
+        string userName,
         CancellationToken ct)
     {
         var existingUser = await db.Users

@@ -21,7 +21,7 @@ internal sealed class SmtpEmailSender : IEmailSender
     public async Task<SendEmailResult> SendAsync(EmailMessage email, CancellationToken ct)
     {
         try
-        {           
+        {
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(_settings.FromEmail, _settings.FromName),
@@ -31,7 +31,7 @@ internal sealed class SmtpEmailSender : IEmailSender
             };
 
             mailMessage.To.Add(email.ToAddress);
-        
+
             using var smtpClient = new SmtpClient(_settings.SmtpServer, _settings.SmtpPort)
             {
                 EnableSsl = _settings.SmtpUseSsl

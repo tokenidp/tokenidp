@@ -1,5 +1,4 @@
 ﻿using Admin.Core.Permissions;
-using System.Linq;
 
 namespace IDP.Infrastructure.Bootstrap.SeedData;
 
@@ -39,7 +38,7 @@ internal class DefaultPermissions
                 string parent = permission.PermissionName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()!;
                 string singular = parent.EndsWith("s", StringComparison.OrdinalIgnoreCase) ? parent[..^1] : parent;
 
-                if(!parent.EndsWith("s", StringComparison.OrdinalIgnoreCase))
+                if (!parent.EndsWith("s", StringComparison.OrdinalIgnoreCase))
                 {
                     parent = parent.Insert(parent.Length, "s");
                 }

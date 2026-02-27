@@ -32,7 +32,7 @@ internal sealed class SendGridEmailSender : IEmailSender
                 email.Subject!,
                 email.BodyText,
                 email.BodyHtml);
-       
+
             var response = await client.SendEmailAsync(msg, ct);
 
             if (response.IsSuccessStatusCode)

@@ -26,7 +26,7 @@ internal sealed class ClientStore : IClientStore
     {
         _logger.LogDebug("GetClient client: {ClientId}", clientId);
 
-        var cacheKey = CacheKeys.CLIENT.FormatCacheKey(clientId);
+        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("ACT", clientId);
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
@@ -49,7 +49,7 @@ internal sealed class ClientStore : IClientStore
     {
         _logger.LogDebug("GetValidationClient: Checking is valid client for client: {ClientId}", clientId);
 
-        var cacheKey = CacheKeys.CLIENT.FormatCacheKey(clientId);
+        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("SHT", clientId);
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
@@ -72,7 +72,7 @@ internal sealed class ClientStore : IClientStore
     {
         _logger.LogDebug("GetValidationClient: Checking is valid client for client: {ClientId}", clientId);
 
-        var cacheKey = CacheKeys.CLIENT_VALIDATION.FormatCacheKey(clientId);
+        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("VAL", clientId);
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
@@ -135,5 +135,57 @@ internal sealed class ClientStore : IClientStore
             };
         },
         expiration: TimeSpan.FromMinutes(15));
+    }
+
+    public async Task<IEnumerable<ClientExternalProviderSnapShort>> GetExternalProviders(int clientId)
+    {
+        _logger.LogDebug("GetExternalProviders: Get external providers for client: {ClientId}", clientId);
+
+        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("EPRV", clientId);
+
+        var externalProviders = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+            var client = await (from cp in _dbContext.ClientExternalProviders
+                                join tp in _dbContext.TenantExternalProviders on cp.ExternalProviderId equals tp.Id
+                                where cp.ClientId == clientId
+                                select new ClientExternalProviderSnapShort
+                                (tp.ProviderType.ToString(),
+                                    cp.EnabledForClient,
+                                    tp.OidcConfig.ClientId,
+                                    tp.OidcConfig.ClientSecret,
+                                    tp.OidcConfig.Authority,
+                                    tp.OidcConfig.CallbackPath
+                                )).ToListAsync();
+
+            _logger.LogDebug("Cached client external providers for {CacheKey}", cacheKey);
+
+            return client;
+        }, expiration: TimeSpan.FromMinutes(5));
+
+        _logger.LogDebug("Retrieved external providers for client: {ClientId}", clientId);
+
+        return externalProviders;
+    }
+
+    public async Task<ClientAuthPolicy?> GetClientAuthPolicy(int clientId)
+    {
+        _logger.LogDebug("GetClientAuthPolicy: Get auth policy for client: {ClientId}", clientId);
+
+        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("AUTH", clientId);
+
+        var authPolicy = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+            var client = await _dbContext.ClientAuthPolicies
+            .Where(s => s.ClientId == clientId)
+            .FirstOrDefaultAsync();
+
+            _logger.LogDebug("Cached client auth policy for {CacheKey}", cacheKey);
+
+            return client;
+        }, expiration: TimeSpan.FromMinutes(2));
+
+        _logger.LogDebug("Retrieved auth policy for client: {ClientId}", clientId);
+
+        return authPolicy;
     }
 }

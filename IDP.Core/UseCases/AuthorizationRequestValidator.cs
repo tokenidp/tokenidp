@@ -12,7 +12,7 @@ public sealed class AuthorizationRequestValidator
         _clientStore = clientStore;
     }
 
-    public async Task ValidateAsync(
+    public async Task<ClientShortInfo> ValidateAsync(
         AuthorizationRequest request,
         CancellationToken ct)
     {
@@ -81,6 +81,8 @@ public sealed class AuthorizationRequestValidator
                 "invalid_scope",
                 "Missing 'openid' scope.");
         }
+
+        return client;
     }
 }
 

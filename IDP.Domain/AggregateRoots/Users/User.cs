@@ -166,10 +166,10 @@ public partial class User : AggregateRoot<int>, ITenant
         return Result.Success(0);
     }
 
-    public void ApplyIdentityFlags(bool lookoutEnabled, 
-        bool twoFactorEnabled, 
-        bool emailConfirmed, 
-        bool phoneNumberConfirmed, 
+    public void ApplyIdentityFlags(bool lookoutEnabled,
+        bool twoFactorEnabled,
+        bool emailConfirmed,
+        bool phoneNumberConfirmed,
         int accessFailedCount,
         DateTimeOffset? lookoutEnd)
     {

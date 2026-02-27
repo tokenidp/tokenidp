@@ -42,12 +42,10 @@ public interface IApplicationDbContext
     DbSet<UserContact> UserContacts { get; }
 
     // ------------Emails-------------------
-
     DbSet<EmailMessage> EmailMessages { get; }
     DbSet<EmailDeliveryAttempt> EmailDeliveryAttempts { get; }
 
     // ------------Read Models-------------------
-
     DbSet<TokenSearch> TokenSearch { get; }
     DbSet<TokenReadModel> TokenReadModel { get; }
     DbSet<UserRolePermission> UserRolePermissions { get; }

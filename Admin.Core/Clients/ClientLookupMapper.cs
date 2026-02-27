@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Emails;
-
-namespace Admin.Core.Clients;
+﻿namespace Admin.Core.Clients;
 
 internal static class ClientLookupMapper
 {

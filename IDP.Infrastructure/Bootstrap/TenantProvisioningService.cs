@@ -31,6 +31,7 @@ internal class TenantProvisioningService : ITenantProvisioningService
 
         var createResult = Tenant.Create(
             command.TenantName,
+            "system-admin",
             command.Email?.Trim(),
             command.IsActive,
             authSettings,

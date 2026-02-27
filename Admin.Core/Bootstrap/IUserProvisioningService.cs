@@ -1,5 +1,4 @@
-﻿using Admin.Core.Tenants;
-using Admin.Core.Users;
+﻿using Admin.Core.Users;
 
 namespace Admin.Core.Bootstrap;
 

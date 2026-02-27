@@ -2,5 +2,5 @@
 
 public interface IAuthorizationRequestValidator
 {
-    Task ValidateAsync(AuthorizationRequest request, CancellationToken ct);
+    Task<ClientShortInfo> ValidateAsync(AuthorizationRequest request, CancellationToken ct);
 }

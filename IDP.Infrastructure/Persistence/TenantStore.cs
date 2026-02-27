@@ -31,4 +31,19 @@ internal sealed class TenantStore : ITenantStore
 
         return hasTwoFactorEnabled;
     }
+
+    public async Task<TenantUISetting?> GetTenantUISettings(int tenantId)
+    {
+        var cacheKey = CacheKeys.TENANT.FormatCacheKey("UI", tenantId);
+
+        var uiSetting = await _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+            return await _dbContext.TenantUISettings
+            .Where(t => t.Id == tenantId)
+            .FirstOrDefaultAsync();
+
+        }, new TimeSpan(0, 15, 0));
+
+        return uiSetting;
+    }
 }

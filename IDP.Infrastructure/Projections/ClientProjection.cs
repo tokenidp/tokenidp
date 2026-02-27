@@ -36,6 +36,7 @@ internal static class ClientShortInfoProjection
         client => new ClientShortInfo
         (
             client.Id,
+            client.TenantId,
             client.ClientName,
             client.RedirectUri,
             client.ClientScopes.Select(s => s.Scope),

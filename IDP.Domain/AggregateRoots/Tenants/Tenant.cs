@@ -5,7 +5,9 @@ public partial class Tenant : AggregateRoot<int>
     private readonly List<TenantExternalProvider> _tenantExternalProviders = new();
 
     public string TenantName { get; private set; } = default!;
+    public string? TenantDisplayName { get; private set; }
     public string TenantCode { get; private set; } = default!;
+    public string TenantKey { get; private set; } = default!;
     public string? Email { get; private set; } = default!;
     public bool IsActive { get; private set; }
     public int EffectiveUserId { get; private set; }
@@ -17,12 +19,14 @@ public partial class Tenant : AggregateRoot<int>
     private Tenant() { }
 
     private Tenant(string tenantName,
+        string tenantKey,
         string? email,
         bool isActive,
         TenantAuthSetting authSetting,
         TenantUISetting tenantUISetting)
     {
         TenantName = tenantName;
+        TenantKey = tenantKey;
         Email = email;
         IsActive = isActive;
 
@@ -32,6 +36,7 @@ public partial class Tenant : AggregateRoot<int>
 
     public static Result Create(
         string tenantName,
+        string tenantKey,
         string? email,
         bool isActive,
         TenantAuthSetting authSetting,
@@ -49,6 +54,7 @@ public partial class Tenant : AggregateRoot<int>
 
         tenant = new Tenant(
             tenantName: tenantName,
+            tenantKey: tenantKey,
             email: email,
             isActive: isActive,
             authSetting: authSetting,
@@ -58,8 +64,8 @@ public partial class Tenant : AggregateRoot<int>
     }
 
     public Result UpdateTenantProfile(
-        string tenantName, 
-        string? email, 
+        string tenantName,
+        string? email,
         bool isActive)
     {
         var validation = ValidateInput(tenantName);
@@ -213,7 +219,7 @@ public partial class Tenant : AggregateRoot<int>
         {
             return Result.Failure("tenant.name.invalid", "Tenant name is required.");
         }
-      
+
         return Result.Success(0);
     }
 }

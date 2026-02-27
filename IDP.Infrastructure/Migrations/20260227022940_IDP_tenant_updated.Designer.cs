@@ -4,6 +4,7 @@ using IDP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IDP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260227022940_IDP_tenant_updated")]
+    partial class IDP_tenant_updated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -349,6 +352,9 @@ namespace IDP.Infrastructure.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ClientId1")
+                        .HasColumnType("int");
+
                     b.Property<bool>("MfaPolicyOverride")
                         .HasColumnType("bit");
 
@@ -365,6 +371,10 @@ namespace IDP.Infrastructure.Migrations
 
                     b.HasIndex("ClientId")
                         .IsUnique();
+
+                    b.HasIndex("ClientId1")
+                        .IsUnique()
+                        .HasFilter("[ClientId1] IS NOT NULL");
 
                     b.ToTable("ClientAuthPolicies", (string)null);
                 });
@@ -2363,10 +2373,14 @@ namespace IDP.Infrastructure.Migrations
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Clients.ClientAuthPolicy", b =>
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Clients.Client", "Client")
-                        .WithOne("ClientAuthPolicy")
+                        .WithOne()
                         .HasForeignKey("IDP.Domain.AggregateRoots.Clients.ClientAuthPolicy", "ClientId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("IDP.Domain.AggregateRoots.Clients.Client", null)
+                        .WithOne("ClientAuthPolicy")
+                        .HasForeignKey("IDP.Domain.AggregateRoots.Clients.ClientAuthPolicy", "ClientId1");
 
                     b.Navigation("Client");
                 });

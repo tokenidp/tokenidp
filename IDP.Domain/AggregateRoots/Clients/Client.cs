@@ -78,7 +78,6 @@ public class Client : AggregateRoot<int>, ITenant
     }
 
     public Result UpdateClient(
-        string clientId,
         string clientName,
         string? description,
         ClientTypes appType,
@@ -96,7 +95,7 @@ public class Client : AggregateRoot<int>, ITenant
         bool? enableITracking)
     {
         var validation = ValidateInput(
-            clientId,
+            ClientId,
             clientName,
             redirectUri,
             accessTokenLifetime,
@@ -107,7 +106,6 @@ public class Client : AggregateRoot<int>, ITenant
             return validation;
         }
 
-        ClientId = clientId;
         ClientName = clientName;
         Description = description;
         ClientType = appType;

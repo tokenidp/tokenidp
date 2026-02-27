@@ -60,7 +60,7 @@ internal class UserPermissionsUseCase
 
         _logger.LogDebug("Found {ClaimCount} claims for user {UserId}",
             permissions.Count, _currentUserService.UserId);
-      
+
         var userInfo = UserPermission.Create(
             user.Id,
             user.TenantId,

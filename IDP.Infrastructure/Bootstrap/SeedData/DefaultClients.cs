@@ -8,7 +8,6 @@ internal static class DefaultClients
         string redirectUri,
         string logoutRedirectUri) => new()
         {
-            ClientId = "idp-admin",
             ClientName = "IDP Admin Portal",
             Description = "Administrative client for managing the Identity Platform",
             AppType = ClientTypes.SPA,
@@ -49,7 +48,13 @@ internal static class DefaultClients
 
             // Public client (SPA) → no secret
             ClientSecret = null,
-            ClientSecretDescription = null
+            ClientSecretDescription = null,
+
+            AuthPolicy = new ClientAuthPolicyDetail()
+            {
+                AllowLocalLoginOverride = true,
+                ShowStaySignedIn = true
+            }
         };
 }
 

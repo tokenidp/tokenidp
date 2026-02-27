@@ -1,5 +1,4 @@
 ﻿using Admin.Core.Common;
-using IDP.Domain.AggregateRoots.Tenants;
 
 namespace Admin.Core.Clients.UseCases;
 
@@ -41,7 +40,7 @@ internal sealed class ClientLookupsUseCase
                     ExternalProviders = await ClientLookupMapper
                         .MapExternalProviders(_currentUserService.TenantId, _appDbContext)
                 };
-            },TimeSpan.FromMinutes(10));
+            }, TimeSpan.FromMinutes(10));
 
 
 

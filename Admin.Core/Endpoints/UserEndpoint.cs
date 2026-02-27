@@ -2,7 +2,6 @@
 using Admin.Core.Users.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Admin.Core.Endpoints;
 

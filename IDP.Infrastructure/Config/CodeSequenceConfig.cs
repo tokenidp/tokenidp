@@ -15,7 +15,7 @@ internal class CodeSequenceConfig : IEntityTypeConfiguration<CodeSequence>
                .IsRequired();
 
         builder.Property(x => x.LastValue).IsRequired();
-  
+
         builder.HasIndex(x => new { x.TenantId, x.SequenceKey }).IsUnique();
     }
 }

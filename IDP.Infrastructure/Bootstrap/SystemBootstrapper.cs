@@ -58,12 +58,12 @@ internal class SystemBootstrapper : ISystemBootstrapper
 
             var permissions = await EnsurePermissionsAsync(db, systemTenant.Id, ct);
 
-            if(permissions  == null)
+            if (permissions == null)
                 return;
 
             var role = await EnsureDefaultRolesAsync(db, systemTenant.Id, permissions, ct);
-            
-            if(role == null) return;
+
+            if (role == null) return;
 
             var user = await EnsureDefaultAdminUserAsync(db, systemTenant.Id, role.Id, ct);
 
@@ -113,7 +113,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
 
         _logger.LogInfo("Creating Admin client...");
 
-        await _clients.CreateAsync(db, tenantId,
+        await _clients.CreateAsync(db, tenantId, adminClientId,
             DefaultClients.GetDefaultClient(_bootstrapOptions.RedirectUri,
             _bootstrapOptions.LogoutRedirectUri),
             ct);

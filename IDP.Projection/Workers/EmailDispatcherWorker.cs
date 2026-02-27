@@ -122,9 +122,9 @@ public sealed class EmailDispatcherWorker : BackgroundService
             var attemptStarted = DateTime.UtcNow;
 
             try
-            {               
+            {
                 if (email.PayloadMode is EmailPayloadMode.TemplateRef or EmailPayloadMode.Hybrid)
-                {        
+                {
                     if (string.IsNullOrWhiteSpace(email.Subject) && !string.IsNullOrWhiteSpace(email.TemplateKey))
                     {
                         var (subject, html, text) = await renderer!.RenderAsync(

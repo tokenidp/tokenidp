@@ -23,16 +23,17 @@ internal sealed class ClientCommandUseCase
         CancellationToken cancellationToken = default)
     {
         var authPolicyRequest = request.AuthPolicy ?? new ClientAuthPolicyDetail();
+        var clientId = Guid.NewGuid().ToString();
 
         _logger.LogDebug("Creating client {ClientId} for tenant {TenantId}",
-            request.ClientId, _currentUserService.TenantId);
+           clientId, _currentUserService.TenantId);
 
         var tenantId = _currentUserService.TenantId;
 
         var existing = await _dbContext.Clients
             .AsNoTracking()
             .AnyAsync(c => c.TenantId == tenantId
-                && c.ClientId.ToLower() == request.ClientId.ToLower(),
+                && c.ClientId.ToLower() == clientId.ToLower(),
                 cancellationToken);
 
         if (existing)
@@ -43,7 +44,7 @@ internal sealed class ClientCommandUseCase
 
         var createResult = Client.Create(
             tenantId,
-            request.ClientId,
+            clientId,
             request.ClientName,
             request.Description,
             request.AppType,
@@ -169,7 +170,6 @@ internal sealed class ClientCommandUseCase
         }
 
         var updateResult = client.UpdateClient(
-            request.ClientId,
             request.ClientName,
             request.Description,
             request.AppType,

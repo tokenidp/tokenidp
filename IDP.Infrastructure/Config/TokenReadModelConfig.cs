@@ -6,7 +6,7 @@ internal sealed class TokenReadModelConfiguration
     : IEntityTypeConfiguration<TokenReadModel>
 {
     public void Configure(EntityTypeBuilder<TokenReadModel> builder)
-    {     
+    {
         builder.ToTable("TokenReadModel");
 
         builder.HasKey(x => x.Id);

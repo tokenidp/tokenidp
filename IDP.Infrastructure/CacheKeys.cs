@@ -12,6 +12,5 @@ public static class CacheKeys
     public const string AUTHORIZATION = "AUTH";
     public const string CLIENT = "CLT";
     public const string CONFIGURATION = "CNFG";
-    public const string CLIENT_VALIDATION = "CLT:VAL";
     public const string DASHBOARD_EXPIRING_CLIENT_SECRETS = "CLT:EXP";
 }

@@ -11,4 +11,8 @@ public interface IClientStore
     Task<ClientShortInfo> GetClientShortInfo(string clientId);
 
     Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead, CancellationToken ct);
+
+    Task<IEnumerable<ClientExternalProviderSnapShort>> GetExternalProviders(int clientId);
+
+    Task<ClientAuthPolicy?> GetClientAuthPolicy(int clientId);
 }

@@ -7,8 +7,8 @@ internal class DefaultTenants
     public static readonly CreateUpdateTenant SystemTenant = new CreateUpdateTenant
     {
         TenantName = "system",
-        Email = "admin@system.local",        
-        IsActive =  true,
+        Email = "admin@system.local",
+        IsActive = true,
         AuthSettings = new TenantAuthSettingDetail()
         {
             AuthenticationMode = AuthenticationModes.Local,

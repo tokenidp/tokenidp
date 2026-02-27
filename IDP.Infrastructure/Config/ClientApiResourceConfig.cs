@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Permissions;
-
-namespace IDP.Infrastructure.Config;
+﻿namespace IDP.Infrastructure.Config;
 
 internal class ClientApiResourceConfig : IEntityTypeConfiguration<ClientApiResource>
 {

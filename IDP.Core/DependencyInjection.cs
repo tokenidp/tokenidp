@@ -48,6 +48,7 @@ public static class DependencyInjection
                 sp.GetRequiredService<IClientStore>()));
 
         services.AddScoped<IAuthorizationRequestValidator, AuthorizationRequestValidator>();
+        services.AddScoped<IAuthorizationPageUiUseCase, AuthorizationPageUiUseCase>();
     }
 
     private static void AddMfaService(this IServiceCollection services)

@@ -2,6 +2,8 @@
 
 public class TenantUISetting : Entity<int>
 {
+    private TenantUISetting() { }
+
     public int TenantId { get; private set; }
     public string? Theme { get; private set; }
     public string? LogoUrl { get; private set; }

@@ -6,9 +6,9 @@ namespace IDP.Infrastructure.Bootstrap;
 
 internal class ConfigurationSeeder : IConfigurationSeeder
 {
-    public async Task CreateAsync(IApplicationDbContext db, 
-        int tenantId, 
-        CreateUpdateConfiguration command, 
+    public async Task CreateAsync(IApplicationDbContext db,
+        int tenantId,
+        CreateUpdateConfiguration command,
         CancellationToken ct)
     {
         var createResult = Configuration.Create(
@@ -25,18 +25,18 @@ internal class ConfigurationSeeder : IConfigurationSeeder
         await db.SaveChangesAsync();
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db, 
-        int tenantId, 
-        string configKey, 
-        string scope, 
+    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+        int tenantId,
+        string configKey,
+        string scope,
         CancellationToken ct)
     {
         Enum.TryParse<ConfigurationScopes>(scope, ignoreCase: true, out var result);
 
         var isExist = await db.Configurations
             .AsNoTracking()
-            .AnyAsync(t => t.TenantId == tenantId 
-            && t.ConfigKey == configKey 
+            .AnyAsync(t => t.TenantId == tenantId
+            && t.ConfigKey == configKey
             && t.Scope == result, ct);
 
         return isExist;

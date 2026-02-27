@@ -1,5 +1,4 @@
 using IDP.Domain.AggregateRoots.Configurations;
-using System.ComponentModel.DataAnnotations;
 
 namespace Admin.Core.Configurations;
 

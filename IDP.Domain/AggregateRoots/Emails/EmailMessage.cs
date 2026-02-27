@@ -9,7 +9,7 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
 
     public EmailStatus Status { get; private set; }
     public byte Priority { get; private set; }
-    public EmailPayloadMode PayloadMode { get; private set; }    
+    public EmailPayloadMode PayloadMode { get; private set; }
     public string ToAddress { get; private set; } = string.Empty;
     public string? DisplayName { get; private set; }
 

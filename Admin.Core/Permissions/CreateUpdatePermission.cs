@@ -4,11 +4,11 @@ public class CreateUpdatePermission
 {
     public CreateUpdatePermission(int? parentId,
         int tenantId,
-        string permissionKey, 
-        string permissionName, 
-        string? accessUrl, 
-        string? icon, 
-        string controlType, 
+        string permissionKey,
+        string permissionName,
+        string? accessUrl,
+        string? icon,
+        string controlType,
         bool isActive,
         bool isSystem,
         int sequence)
@@ -35,7 +35,7 @@ public class CreateUpdatePermission
     public string ControlType { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public bool IsSystem { get; set; } = false;
-    public int Sequence {  get; set; }
+    public int Sequence { get; set; }
 
     public List<CreateUpdatePermission> ChildPermissions { get; set; } = default!;
 }
