@@ -18,6 +18,7 @@ const actions = {
   PARENTS_SUCCESS: "PARENTS_SUCCESS",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
@@ -42,6 +43,8 @@ const reducer = (state, action) => {
       };
     case actions.LIST_ERROR:
       return { ...state, loading: false, error: action.payload };
+    case actions.CLEAR_ERROR:
+      return { ...state, error: "" };
     default:
       return state;
   }
@@ -124,6 +127,7 @@ export const PermissionsProvider = ({ children }) => {
     async (payload) => {
       try {
         const response = await post("admin/permission", payload);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -140,6 +144,7 @@ export const PermissionsProvider = ({ children }) => {
     async (id, payload) => {
       try {
         const response = await put(`admin/permission/${id}`, payload);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -156,6 +161,7 @@ export const PermissionsProvider = ({ children }) => {
     async (id) => {
       try {
         const response = await get(`admin/permission/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -199,6 +205,7 @@ export const PermissionsProvider = ({ children }) => {
             String(permissionKey).toLowerCase()
         );
 
+        dispatch({ type: actions.CLEAR_ERROR });
         return match?.id ?? match?.Id ?? null;
       } catch (error) {
         dispatch({

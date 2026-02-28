@@ -4,6 +4,7 @@ import ConfirmModal from "../common/confirmModal";
 import InfoModal from "../common/infoModal";
 import Pagination from "../common/pagination";
 import { useSettings } from "../../_hooks/useSettings";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const defaultSearch = {
   pageNumber: 1,
@@ -83,6 +84,7 @@ const normalizeValueType = (value) => {
 
 function SettingsList() {
   const { state, loadSettings, bulkSave, deleteConfiguration } = useSettings();
+  const { setSuccess } = useGlobalSuccess();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -253,7 +255,10 @@ function SettingsList() {
 
     const result = await bulkSave(payload);
     if (result.ok) {
-      openInfo("Changes saved", "Tenant configuration updated successfully.");
+      setSuccess({
+        title: "Changes saved",
+        message: "Tenant configuration updated successfully.",
+      });
       setDrafts({});
       setNewEntry(null);
       reload();

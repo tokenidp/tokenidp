@@ -25,6 +25,7 @@ const actions = {
   CREATE_SUCCESS: "CREATE_SUCCESS",
   CREATE_ERROR: "CREATE_ERROR",
   CLEAR_STATUS: "CLEAR_STATUS",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
@@ -62,6 +63,8 @@ const reducer = (state, action) => {
       return { ...state, loading: false, error: action.payload };
     case actions.CLEAR_STATUS:
       return { ...state, error: "", lastCreatedId: null };
+    case actions.CLEAR_ERROR:
+      return { ...state, error: "" };
     default:
       return state;
   }
@@ -130,6 +133,7 @@ export const ApplicationsProvider = ({ children }) => {
     async (id) => {
       try {
         const response = await get(`admin/client/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
         return normalizeResult(response) || null;
       } catch (error) {
         dispatch({
@@ -172,6 +176,7 @@ export const ApplicationsProvider = ({ children }) => {
             String(clientId).toLowerCase()
         );
 
+        dispatch({ type: actions.CLEAR_ERROR });
         return match?.id ?? match?.Id ?? null;
       } catch (error) {
         dispatch({
@@ -225,6 +230,7 @@ export const ApplicationsProvider = ({ children }) => {
     async (id) => {
       try {
         await deleteRequest(`admin/client/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
         return { ok: true };
       } catch (error) {
         dispatch({

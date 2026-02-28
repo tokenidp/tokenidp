@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import ApplicationWizard from "./applicationWizard";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useApplications } from "../../_hooks/useApplications";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const emptyValues = {
   clientName: "",
@@ -48,6 +49,7 @@ function ApplicationEdit() {
     clearStatus,
   } = useApplications();
   const [initialValues, setInitialValues] = useState(emptyValues);
+  const { setSuccess } = useGlobalSuccess();
   const [applicationId, setApplicationId] = useState(
     location?.state?.id ?? null
   );
@@ -202,6 +204,10 @@ function ApplicationEdit() {
     const result = await updateApplication(applicationId, payload);
     if (result.ok) {
       clearStatus();
+      setSuccess({
+        title: "Application updated",
+        message: "Application updated successfully.",
+      });
       navigate("/applications");
     }
   };

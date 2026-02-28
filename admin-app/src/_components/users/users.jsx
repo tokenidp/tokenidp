@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
+import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
+import InfoModal from "../common/infoModal";
 import { useUsers } from "../../_hooks/useUsers";
 
 function Users() {
   const navigate = useNavigate();
-  const { state, loadUsers, loadLookups } = useUsers();
+  const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus } = useUsers();
 
   const defaultSearch = {
     pageNumber: 1,
@@ -24,6 +26,18 @@ function Users() {
     status: "",
     search: "",
   });
+  const [resetPasswordSubmitting, setResetPasswordSubmitting] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [pendingResetUser, setPendingResetUser] = useState({ id: 0, userName: "" });
+  const [statusUpdatingUserId, setStatusUpdatingUserId] = useState(0);
+  const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
+  const [pendingStatusUpdate, setPendingStatusUpdate] = useState({
+    id: 0,
+    userName: "",
+    status: "",
+  });
+  const [infoOpen, setInfoOpen] = useState(false);
+  const [infoContent, setInfoContent] = useState({ title: "", message: "" });
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -109,7 +123,122 @@ function Users() {
     if (typeof isActive === "boolean") {
       return isActive ? "Active" : "Disabled";
     }
+
+    const statusId = getField(item, "statusId", "StatusId");
+    if (statusId !== undefined && statusId !== null) {
+      const statusLookup = state.statuses.find(
+        (status) =>
+          String(status.key ?? status.id ?? status.Id) === String(statusId)
+      );
+      const statusValue =
+        statusLookup?.value ?? statusLookup?.name ?? statusLookup?.Name;
+      if (statusValue) {
+        return String(statusValue);
+      }
+    }
+
     return getField(item, "status", "Status") || "Unknown";
+  };
+
+  const getNextStatus = (item) => {
+    const currentStatus = String(getStatusLabel(item)).toLowerCase();
+    return currentStatus === "active" ? "Inactive" : "Active";
+  };
+
+  const openResetPassword = (item) => {
+    const id = Number(getField(item, "id", "Id") || 0);
+    const userName = String(getField(item, "userName", "UserName", "email", "Email") || "");
+    if (!id) {
+      return;
+    }
+    setPendingResetUser({ id, userName });
+    setResetConfirmOpen(true);
+  };
+
+  const closeResetPassword = () => {
+    if (resetPasswordSubmitting) {
+      return;
+    }
+    setResetConfirmOpen(false);
+    setPendingResetUser({ id: 0, userName: "" });
+  };
+
+  const submitResetPassword = async () => {
+    if (!pendingResetUser.id || resetPasswordSubmitting) {
+      return false;
+    }
+
+    setResetPasswordSubmitting(true);
+    const response = await resetUserPassword(pendingResetUser.id);
+    setResetPasswordSubmitting(false);
+
+    closeResetPassword();
+
+    if (!response) {
+      return false;
+    }
+
+    setInfoContent({
+      title: "Reset email queued",
+      message: "Password reset link has been queued for delivery.",
+    });
+    setInfoOpen(true);
+    return true;
+  };
+
+  const openStatusConfirm = (item) => {
+    const id = Number(getField(item, "id", "Id") || 0);
+    if (!id || statusUpdatingUserId) {
+      return;
+    }
+
+    setPendingStatusUpdate({
+      id,
+      userName: String(
+        getField(item, "fullName", "name", "Name", "userName", "UserName") || "this user"
+      ),
+      status: getNextStatus(item),
+    });
+    setStatusConfirmOpen(true);
+  };
+
+  const closeStatusConfirm = () => {
+    if (statusUpdatingUserId) {
+      return;
+    }
+
+    setStatusConfirmOpen(false);
+    setPendingStatusUpdate({ id: 0, userName: "", status: "" });
+  };
+
+  const submitUserStatusUpdate = async () => {
+    const { id, status: nextStatus } = pendingStatusUpdate;
+    if (!id || !nextStatus) {
+      return;
+    }
+
+    setStatusUpdatingUserId(id);
+    const isSuccess = await updateUserStatus(id, { id, status: nextStatus });
+    setStatusUpdatingUserId(0);
+
+    closeStatusConfirm();
+
+    if (!isSuccess) {
+      return;
+    }
+
+    await loadUsers({
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(),
+    });
+
+    setInfoContent({
+      title: "Status updated",
+      message: `User status changed to ${nextStatus}.`,
+    });
+    setInfoOpen(true);
   };
 
   return (
@@ -294,6 +423,14 @@ function Users() {
                     </td>
                     <td className="text-right table-actions">
                       <button
+                        className="btn btn-link p-0 text-warning ButtonLink"
+                        type="button"
+                        onClick={() => openResetPassword(item)}
+                        title="Reset Password"
+                      >
+                        <i className="fa fa-key"></i>
+                      </button>
+                      <button
                         className="btn btn-link p-0 text-primary ButtonLink"
                         type="button"
                         onClick={() => {
@@ -311,11 +448,19 @@ function Users() {
                         <i className="fa fa-pen"></i>
                       </button>
                       <button
-                        className="btn btn-link p-0 text-danger ButtonLink"
+                        className={`btn btn-link p-0 ButtonLink ${
+                          getNextStatus(item) === "Inactive" ? "text-danger" : "text-success"
+                        }`}
                         type="button"
-                        title="Delete"
+                        title={`Set ${getNextStatus(item)}`}
+                        disabled={statusUpdatingUserId === Number(getField(item, "id", "Id"))}
+                        onClick={() => openStatusConfirm(item)}
                       >
-                        <i className="fa fa-trash"></i>
+                        <i
+                          className={`fa ${
+                            getNextStatus(item) === "Inactive" ? "fa-ban" : "fa-check"
+                          }`}
+                        ></i>
                       </button>
                     </td>
                   </tr>
@@ -339,6 +484,39 @@ function Users() {
           onPageChange={setPageNumber}
         />
       </div>
+
+      <InfoModal
+        open={infoOpen}
+        title={infoContent.title}
+        message={infoContent.message}
+        onClose={() => setInfoOpen(false)}
+      />
+
+      <ConfirmModal
+        open={resetConfirmOpen}
+        title="Initiate Password Reset"
+        message={
+          pendingResetUser.id
+            ? `Send a password reset email to ${pendingResetUser.userName || "this user"}?`
+            : "Send password reset email?"
+        }
+        confirmLabel={resetPasswordSubmitting ? "Sending..." : "Send Reset Email"}
+        onConfirm={submitResetPassword}
+        onClose={closeResetPassword}
+      />
+
+      <ConfirmModal
+        open={statusConfirmOpen}
+        title="Update User Status"
+        message={
+          pendingStatusUpdate.id
+            ? `Change status for ${pendingStatusUpdate.userName} to ${pendingStatusUpdate.status}?`
+            : "Change user status?"
+        }
+        confirmLabel={pendingStatusUpdate.status || "Confirm"}
+        onConfirm={submitUserStatusUpdate}
+        onClose={closeStatusConfirm}
+      />
     </div>
   );
 }

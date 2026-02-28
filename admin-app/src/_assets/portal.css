@@ -703,6 +703,7 @@ table td i {
   transform: translateY(-50%);
   color: #94a3b8;
   font-size: 14px;
+  pointer-events: none;
 }
 
 .token-inspect-modal {
@@ -1382,4 +1383,32 @@ th.text-right {
   .wizard-step-label {
     font-size: 11px;
   }
+}
+
+.global-success-toast {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 1080;
+  min-width: 280px;
+  max-width: 420px;
+}
+
+.search-box i,
+.quick-search i,
+.input-group-text i {
+  pointer-events: none;
+}
+
+.btn-link.ButtonLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.btn-link.ButtonLink i {
+  cursor: pointer;
 }

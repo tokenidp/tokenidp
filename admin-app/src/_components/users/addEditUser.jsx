@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
-import InfoModal from "../common/infoModal";
 import { useUsers } from "../../_hooks/useUsers";
+import { useGlobalError } from "../../_hooks/useGlobalError";
 
 const DEFAULT_ADDRESS_TYPES = [
   { key: "1", value: "Home" },
@@ -71,14 +71,13 @@ function AddEditUser({ mode }) {
     createUser,
     updateUser,
   } = useUsers();
+  const { clearError } = useGlobalError();
   const [currentUserId, setCurrentUserId] = useState(
     location?.state?.id ? Number(location.state.id) : 0
   );
   const [activeTab, setActiveTab] = useState("details");
   const [showPassword, setShowPassword] = useState(false);
   const [showMetadata, setShowMetadata] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [infoContent, setInfoContent] = useState({ title: "", message: "" });
 
   const {
     register,
@@ -399,20 +398,18 @@ function AddEditUser({ mode }) {
     };
 
     if (mode === "edit" && routeUserId > 0) {
-      await updateUser(routeUserId, payload);
-      setInfoContent({
-        title: "User updated",
-        message: "User updated successfully.",
-      });
+      const result = await updateUser(routeUserId, payload);
+      if (result == null) {
+        return;
+      }
+      clearError();
     } else {
-      await createUser(payload);
-      setInfoContent({
-        title: "User saved",
-        message: "User created successfully.",
-      });
+      const result = await createUser(payload);
+      if (result == null) {
+        return;
+      }
+      clearError();
     }
-
-    setInfoOpen(true);
   };
 
   return (
@@ -1250,13 +1247,6 @@ function AddEditUser({ mode }) {
           </div>
         </form>
       </div>
-
-      <InfoModal
-        open={infoOpen}
-        title={infoContent.title}
-        message={infoContent.message}
-        onClose={() => setInfoOpen(false)}
-      />
     </div>
   );
 }

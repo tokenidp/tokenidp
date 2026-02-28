@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useReducer } from "react";
 import useApiClient from "./useApiClient";
+import { useGlobalSuccess } from "./useGlobalSuccess";
 
 const UsersContext = createContext();
 
@@ -18,6 +19,7 @@ const actions = {
   LIST_SUCCESS: "LIST_SUCCESS",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
@@ -41,13 +43,16 @@ const reducer = (state, action) => {
       };
     case actions.LIST_ERROR:
       return { ...state, loading: false, error: action.payload };
+    case actions.CLEAR_ERROR:
+      return { ...state, error: "" };
     default:
       return state;
   }
 };
 
 export const UsersProvider = ({ children }) => {
-  const { get, post, put } = useApiClient();
+  const { get, post, put, patch } = useApiClient();
+  const { setSuccess } = useGlobalSuccess();
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const normalizeResult = (response) => response?.data?.value || response?.data;
@@ -183,7 +188,12 @@ export const UsersProvider = ({ children }) => {
     async (payload) => {
       try {
         const response = await post("admin/user", payload);
-        return response?.data?.value || response?.data;
+        dispatch({ type: actions.CLEAR_ERROR });
+        setSuccess({
+          title: "User saved",
+          message: "User created successfully.",
+        });
+        return response?.data?.value ?? response?.data ?? true;
       } catch (error) {
         dispatch({
           type: actions.LIST_ERROR,
@@ -192,14 +202,19 @@ export const UsersProvider = ({ children }) => {
         return null;
       }
     },
-    [post]
+    [post, setSuccess]
   );
 
   const updateUser = useCallback(
     async (id, payload) => {
       try {
         const response = await put(`admin/user/${id}`, payload);
-        return response?.data?.value || response?.data;
+        dispatch({ type: actions.CLEAR_ERROR });
+        setSuccess({
+          title: "User updated",
+          message: "User updated successfully.",
+        });
+        return response?.data?.value ?? response?.data ?? true;
       } catch (error) {
         dispatch({
           type: actions.LIST_ERROR,
@@ -208,7 +223,41 @@ export const UsersProvider = ({ children }) => {
         return null;
       }
     },
-    [put]
+    [put, setSuccess]
+  );
+
+  const resetUserPassword = useCallback(
+    async (id) => {
+      try {
+        const response = await post(`admin/user/${id}/reset-password`);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return response?.data?.value || response?.data;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to initiate password reset.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
+  const updateUserStatus = useCallback(
+    async (id, payload) => {
+      try {
+        await patch(`admin/user/${id}`, payload);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return true;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to update user status.",
+        });
+        return false;
+      }
+    },
+    [patch]
   );
 
   return (
@@ -221,6 +270,8 @@ export const UsersProvider = ({ children }) => {
         resolveUserIdByUserName,
         createUser,
         updateUser,
+        updateUserStatus,
+        resetUserPassword,
       }}
     >
       {children}

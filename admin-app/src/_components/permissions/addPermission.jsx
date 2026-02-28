@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { usePermissions } from "../../_hooks/usePermissions";
-import InfoModal from "../common/infoModal";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const keyPattern = /^[a-z0-9]+([._][a-z0-9]+)*$/;
 
@@ -22,8 +22,7 @@ function AddPermission({ mode = "add" }) {
     resolvePermissionIdByKey,
   } = usePermissions();
   const [permissionId, setPermissionId] = useState(location?.state?.id || null);
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [infoContent, setInfoContent] = useState({ title: "", message: "" });
+  const { setSuccess } = useGlobalSuccess();
   const controlTypeOptions = useMemo(
     () =>
       state.controlTypes.length > 0
@@ -109,19 +108,24 @@ function AddPermission({ mode = "add" }) {
     };
 
     if (mode === "edit" && permissionId) {
-      await updatePermission(permissionId, payload);
-      setInfoContent({
+      const result = await updatePermission(permissionId, payload);
+      if (!result) {
+        return;
+      }
+      setSuccess({
         title: "Permission updated",
         message: "Permission updated successfully.",
       });
     } else {
-      await createPermission(payload);
-      setInfoContent({
+      const result = await createPermission(payload);
+      if (!result) {
+        return;
+      }
+      setSuccess({
         title: "Permission saved",
         message: "Permission created successfully.",
       });
     }
-    setInfoOpen(true);
   };
 
   return (
@@ -331,13 +335,6 @@ function AddPermission({ mode = "add" }) {
           {mode === "edit" ? "Update Permission" : "Save Permission"}
         </button>
       </div>
-
-      <InfoModal
-        open={infoOpen}
-        title={infoContent.title}
-        message={infoContent.message}
-        onClose={() => setInfoOpen(false)}
-      />
     </div>
   );
 }

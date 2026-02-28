@@ -4,7 +4,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useRoles } from "../../_hooks/useRoles";
 import useTree from "../../_hooks/useTree";
-import InfoModal from "../common/infoModal";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const MIN_SEARCH_LENGTH = 3;
 
@@ -52,8 +52,7 @@ function AddEditRole({ mode }) {
       isActive: true,
     },
   });
-  const [infoOpen, setInfoOpen] = useState(false);
-  const [infoContent, setInfoContent] = useState({ title: "", message: "" });
+  const { setSuccess } = useGlobalSuccess();
   const {
     createRole,
     updateRole,
@@ -131,27 +130,29 @@ function AddEditRole({ mode }) {
         ? await updateRole(roleId, payload)
         : await createRole(payload);
 
+    if (!response) {
+      return null;
+    }
+
     const createdRoleId =
       response?.value || response?.result || response?.id || response;
 
     if (createdRoleId) {
       setRoleId(createdRoleId);
-      setInfoContent({
+      setSuccess({
         title: "Role saved",
         message: "Role saved with permissions.",
       });
-      setInfoOpen(true);
       return createdRoleId;
     }
 
-    setInfoContent({
+    setSuccess({
       title: mode === "edit" ? "Role updated" : "Role saved",
       message:
         mode === "edit"
           ? "Role updated successfully."
           : "Role saved with permissions.",
     });
-    setInfoOpen(true);
     return null;
   };
 
@@ -504,13 +505,6 @@ function AddEditRole({ mode }) {
           Save
         </button>
       </div>
-
-      <InfoModal
-        open={infoOpen}
-        title={infoContent.title}
-        message={infoContent.message}
-        onClose={() => setInfoOpen(false)}
-      />
     </div>
   );
 }

@@ -1,17 +1,30 @@
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const GlobalErrorContext = createContext();
 
 export const GlobalErrorProvider = ({ children }) => {
   const [error, setError] = useState(null);
+  const clearError = useCallback(() => setError(null), []);
+
+  useEffect(() => {
+    if (!error) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      setError(null);
+    }, 5000);
+
+    return () => clearTimeout(timeoutId);
+  }, [error]);
 
   const value = useMemo(
     () => ({
       error,
       setError,
-      clearError: () => setError(null),
+      clearError,
     }),
-    [error]
+    [clearError, error]
   );
 
   return (

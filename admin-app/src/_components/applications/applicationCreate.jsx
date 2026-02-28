@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ApplicationWizard from "./applicationWizard";
 import { useApplications } from "../../_hooks/useApplications";
 import Breadcrumbs from "../common/breadcrumbs";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const defaultValues = {
   clientName: "",
@@ -38,6 +39,7 @@ const defaultValues = {
 function ApplicationCreate() {
   const navigate = useNavigate();
   const { state, createApplication, clearStatus, loadLookups } = useApplications();
+  const { setSuccess } = useGlobalSuccess();
 
   useEffect(() => {
     loadLookups();
@@ -85,6 +87,10 @@ function ApplicationCreate() {
     const result = await createApplication(payload);
     if (result.ok) {
       clearStatus();
+      setSuccess({
+        title: "Application saved",
+        message: "Application created successfully.",
+      });
       navigate("/applications");
     }
   };

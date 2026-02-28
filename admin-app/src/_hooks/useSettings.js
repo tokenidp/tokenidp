@@ -19,6 +19,7 @@ const actions = {
   SAVE_START: "SAVE_START",
   SAVE_SUCCESS: "SAVE_SUCCESS",
   SAVE_ERROR: "SAVE_ERROR",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
@@ -40,6 +41,8 @@ const reducer = (state, action) => {
       return { ...state, saving: false, lastSaveResult: action.payload };
     case actions.SAVE_ERROR:
       return { ...state, saving: false, error: action.payload };
+    case actions.CLEAR_ERROR:
+      return { ...state, error: "" };
     default:
       return state;
   }
@@ -122,6 +125,7 @@ export const SettingsProvider = ({ children }) => {
     async (id) => {
       try {
         await deleteRequest(`admin/configuration/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
         return { ok: true };
       } catch (error) {
         dispatch({

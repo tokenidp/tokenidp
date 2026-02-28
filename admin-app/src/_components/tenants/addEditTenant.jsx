@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useTenants } from "../../_hooks/useTenants";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const defaultValues = {
   tenantName: "",
@@ -33,6 +34,7 @@ function AddEditTenant({ mode }) {
   const decodedTenantKey = decodeURIComponent(tenantKey || "");
   const [tenantId, setTenantId] = useState(location?.state?.id ?? null);
   const [existingProviders, setExistingProviders] = useState([]);
+  const { setSuccess } = useGlobalSuccess();
   const {
     state,
     loadLookups,
@@ -311,6 +313,13 @@ function AddEditTenant({ mode }) {
 
     if (result.ok) {
       clearStatus();
+      setSuccess({
+        title: mode === "edit" ? "Tenant updated" : "Tenant saved",
+        message:
+          mode === "edit"
+            ? "Tenant updated successfully."
+            : "Tenant created successfully.",
+      });
       navigate("/tenants");
     }
   };

@@ -4,7 +4,9 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { GlobalErrorProvider } from "./_hooks/useGlobalError";
+import { GlobalSuccessProvider } from "./_hooks/useGlobalSuccess";
 import Spinner from "./_components/common/spinner";
+import GlobalSuccessToast from "./_components/common/globalSuccessToast";
 import { IdpAuthProvider } from "tokentresor-idp-react";
 
 const container = document.getElementById("root");
@@ -23,8 +25,11 @@ root.render(
       }}
     >
       <GlobalErrorProvider>
-        <App />
-        <Spinner />
+        <GlobalSuccessProvider>
+          <App />
+          <GlobalSuccessToast />
+          <Spinner />
+        </GlobalSuccessProvider>
       </GlobalErrorProvider>
     </IdpAuthProvider>
   </React.StrictMode>

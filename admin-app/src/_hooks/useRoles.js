@@ -14,6 +14,7 @@ const actions = {
   LIST_START: "LIST_START",
   LIST_SUCCESS: "LIST_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
@@ -29,6 +30,8 @@ const reducer = (state, action) => {
       };
     case actions.LIST_ERROR:
       return { ...state, loading: false, error: action.payload };
+    case actions.CLEAR_ERROR:
+      return { ...state, error: "" };
     default:
       return state;
   }
@@ -69,6 +72,7 @@ export const RolesProvider = ({ children }) => {
     async (payload) => {
       try {
         const response = await post("admin/role", payload);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -85,6 +89,7 @@ export const RolesProvider = ({ children }) => {
     async (id, payload) => {
       try {
         const response = await put(`admin/role/${id}`, payload);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -101,6 +106,7 @@ export const RolesProvider = ({ children }) => {
     async (id) => {
       try {
         const response = await get(`admin/role/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
         return response?.data?.value || response?.data;
       } catch (error) {
         dispatch({
@@ -144,6 +150,7 @@ export const RolesProvider = ({ children }) => {
               .toLowerCase() === String(roleName).toLowerCase()
         );
 
+        dispatch({ type: actions.CLEAR_ERROR });
         return match?.id ?? match?.Id ?? null;
       } catch (error) {
         dispatch({
@@ -161,6 +168,7 @@ export const RolesProvider = ({ children }) => {
     try {
       const response = await get("admin/permission/assign");
       const result = normalizeResult(response) || [];
+      dispatch({ type: actions.CLEAR_ERROR });
       return Array.isArray(result) ? result : [];
     } catch (error) {
       dispatch({
