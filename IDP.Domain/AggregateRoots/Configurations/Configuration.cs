@@ -2,6 +2,15 @@
 
 namespace IDP.Domain.AggregateRoots.Configurations;
 
+public enum ConfigurationScopes
+{
+    System,
+    Security,
+    Notification,
+    Branding,
+    Integration
+}
+
 public class Configuration : AggregateRoot<int>, ITenant
 {
     public string ConfigKey { get; private set; } = string.Empty;

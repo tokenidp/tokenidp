@@ -55,7 +55,7 @@ internal class RoleEndpoint : IEndpointDefinition
              Policy = "roles.view"
          })
         .WithName("RoleById")
-        .WithTags("RoleById");
+        .WithTags("Roles");
 
         authGroup.MapPost("/", async ([FromBody] CreateUpdateRole role,
             [FromServices] RoleCommandUseCase roleService,
@@ -72,7 +72,7 @@ internal class RoleEndpoint : IEndpointDefinition
              Policy = "roles.add"
          })
         .WithName("CreateRole")
-        .WithTags("CreateRole");
+        .WithTags("Roles");
 
         authGroup.MapPut("/{id}", async (int id, [FromBody] CreateUpdateRole role,
             [FromServices] RoleCommandUseCase roleService,
@@ -93,7 +93,7 @@ internal class RoleEndpoint : IEndpointDefinition
              Policy = "roles.edit"
          })
         .WithName("UpdateRole")
-        .WithTags("UpdateRole");
+        .WithTags("Roles");
 
         authGroup.MapDelete("/{id}", async (int id,
             [FromServices] RoleCommandUseCase roleService) =>
@@ -113,6 +113,6 @@ internal class RoleEndpoint : IEndpointDefinition
              Policy = "roles.delete"
          })
         .WithName("DeleteRole")
-        .WithTags("DeleteRole");
+        .WithTags("Roles");
     }
 }

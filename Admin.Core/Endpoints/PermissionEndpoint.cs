@@ -45,7 +45,7 @@ internal class PermissionEndpoint : IEndpointDefinition
              Policy = "permissions.view"
          })
         .WithName("PagedPermissions")
-        .WithTags("PagedPermissions");
+        .WithTags("Permissions");
 
         authGroup.MapPost("/", async (CreateUpdatePermission request,
             PermissionCommandUseCase permissionUseCases) =>
@@ -63,7 +63,7 @@ internal class PermissionEndpoint : IEndpointDefinition
              Policy = "permissions.add"
          })
         .WithName("CreatePermission")
-        .WithTags("CreatePermission");
+        .WithTags("Permissions");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdatePermission request,
             PermissionCommandUseCase permissionUseCases) =>
@@ -83,7 +83,7 @@ internal class PermissionEndpoint : IEndpointDefinition
              Policy = "permissions.edit"
          })
         .WithName("UpdatePermission")
-        .WithTags("UpdatePermission");
+        .WithTags("Permissions");
 
         authGroup.MapGet("/{id}", async (int id,
             PermissionQueryUseCase permissionUseCases) =>
@@ -106,8 +106,8 @@ internal class PermissionEndpoint : IEndpointDefinition
          {
              Policy = "permissions.view"
          })
-        .WithName("PermissionbyId")
-        .WithTags("PermissionbyId");
+        .WithName("PermissionById")
+        .WithTags("Permissions");
 
         authGroup.MapGet("lookups", async (
             PermissionLookupsUseCase useCase,
@@ -119,6 +119,6 @@ internal class PermissionEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("PermissionLookups")
-        .WithTags("PermissionLookups");
+        .WithTags("Permissions");
     }
 }

@@ -142,7 +142,7 @@ public sealed class EmailDispatcherWorker : BackgroundService
                     provider: email.Provider,
                     nowUtc: DateTime.UtcNow);
 
-                var result = await emailNotification.SendAsync(email, ct);
+                var result = await emailNotification.SendAsync(emailConfigurationProvider, email, ct);
 
                 if (result.Success)
                 {

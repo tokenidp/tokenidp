@@ -48,7 +48,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
              Policy = "settings.view"
          })
         .WithName("TenantConfigurationById")
-        .WithTags("TenantConfigurationById");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapGet("/key/{key}", async (string key,
             ConfigurationQueryByKeyUseCase useCase,
@@ -62,7 +62,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.view"
         })
         .WithName("TenantConfigurationByKey")
-        .WithTags("TenantConfigurationByKey");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapPost("/", async (CreateUpdateConfiguration configuration,
             ConfigurationCommandUseCase useCase,
@@ -77,7 +77,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.add"
         })
         .WithName("CreateTenantConfiguration")
-        .WithTags("CreateTenantConfiguration");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapPut("/{id:int}", async (int id, CreateUpdateConfiguration configuration,
             ConfigurationUpdateCommandUseCase useCase,
@@ -97,7 +97,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.edit"
         })
         .WithName("UpdateTenantConfiguration")
-        .WithTags("UpdateTenantConfiguration");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapDelete("/{id:int}", async (int id,
             ConfigurationDeleteCommandUseCase useCase,
@@ -117,7 +117,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.delete"
         })
         .WithName("DeleteTenantConfiguration")
-        .WithTags("DeleteTenantConfiguration");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapPost("/upsert", async (CreateUpdateConfiguration configuration,
             ConfigurationUpsertCommandUseCase useCase,
@@ -131,7 +131,7 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.edit"
         })
         .WithName("UpsertTenantConfiguration")
-        .WithTags("UpsertTenantConfiguration");
+        .WithTags("TenantConfigurations");
 
         authGroup.MapPost("/bulk", async (BulkUpdateTenantConfigurations request,
             ConfigurationsBulkCommandUseCase useCase,
@@ -145,6 +145,6 @@ internal class ConfigurationEndpoint : IEndpointDefinition
             Policy = "settings.edit"
         })
         .WithName("BulkUpdateTenantConfigurations")
-        .WithTags("BulkUpdateTenantConfigurations");
+        .WithTags("TenantConfigurations");
     }
 }

@@ -9,6 +9,7 @@ public class ClientAuthPolicy : Entity<int>
     public bool AllowLocalLoginOverride { get; private set; }
     public bool AllowSelfRegistrationOverride { get; private set; }
     public bool MfaPolicyOverride { get; private set; }
+    public bool AllowForgotPassword { get; private set; }
 
     public bool ShowExternalProviders { get; private set; }
     public bool ShowStaySignedIn { get; private set; }

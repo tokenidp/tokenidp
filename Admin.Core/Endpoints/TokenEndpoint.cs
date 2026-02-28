@@ -39,7 +39,7 @@ internal class TokenEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("TokenLookups")
-        .WithTags("TokenLookups");
+        .WithTags("Tokens");
 
         authGroup.MapGet("/{id}", async (Guid id,
             TokenQueryUseCase useCase) =>
@@ -59,7 +59,7 @@ internal class TokenEndpoint : IEndpointDefinition
             Policy = "tokens.view"
         })
         .WithName("TokenById")
-        .WithTags("TokenById");
+        .WithTags("Tokens");
 
         authGroup.MapPost("/{id}/revoke", async (Guid id,
             [FromBody] TokenRevokeRequest request,
@@ -76,7 +76,7 @@ internal class TokenEndpoint : IEndpointDefinition
             Policy = "tokens.delete"
         })
         .WithName("TokenRevoke")
-        .WithTags("TokenRevoke");
+        .WithTags("Tokens");
 
         authGroup.MapPost("/{id}/expire", async (Guid id,
             TokenCommandUseCase useCase,
@@ -92,6 +92,6 @@ internal class TokenEndpoint : IEndpointDefinition
              Policy = "tokens.delete"
          })
         .WithName("TokenExpire")
-        .WithTags("TokenExpire");
+        .WithTags("Tokens");
     }
 }

@@ -1,5 +1,12 @@
 ﻿namespace IDP.Domain.AggregateRoots.Tenants;
 
+public enum AuthenticationModes
+{
+    Local,
+    External,
+    Mixed
+}
+
 public class TenantAuthSetting : Entity<int>
 {
     private TenantAuthSetting() { }

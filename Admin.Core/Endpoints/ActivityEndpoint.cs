@@ -41,6 +41,6 @@ internal class ActivityEndpoint : IEndpointDefinition
             Policy = "activities.view"
         })
        .WithName("ActivityLookups")
-       .WithTags("ActivityLookups");
+       .WithTags("Activities");
     }
 }

@@ -1,5 +1,12 @@
 ﻿namespace IDP.Domain.AggregateRoots.Emails;
 
+public enum EmailDeliveryOutcome : byte
+{
+    Success = 0,
+    TransientFailure = 1,
+    PermanentFailure = 2
+}
+
 public sealed class EmailDeliveryAttempt : Entity<long>
 {
     public long EmailMessageId { get; private set; }  // aggregate reference

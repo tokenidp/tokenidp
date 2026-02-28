@@ -3,6 +3,14 @@ using IDP.Domain.Specifications;
 
 namespace IDP.Domain.AggregateRoots.Users;
 
+public enum UserStatus
+{
+    Active,
+    Inactive,
+    Terminate,
+    Locked
+}
+
 public partial class User : AggregateRoot<int>, ITenant
 {
     private readonly List<UserRole> _userRoles = new();

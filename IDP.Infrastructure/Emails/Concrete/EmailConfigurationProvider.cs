@@ -57,7 +57,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetApiKey()
     {
-        var apikey = _settings?.Where(l => l.ConfigKey == "ApiKey")
+        var apikey = _settings?.Where(l => l.ConfigKey.ToLower() == "ApiKey".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         ApiKey = apikey ?? ApiKey;
@@ -65,7 +65,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetSmtpServer()
     {
-        var smtpServer = _settings?.Where(l => l.ConfigKey == "SmtpServer")
+        var smtpServer = _settings?.Where(l => l.ConfigKey.ToLower() == "SmtpServer".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpServer = smtpServer ?? SmtpServer;
@@ -73,7 +73,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetSmtpPort()
     {
-        var smtpPort = _settings?.Where(l => l.ConfigKey == "SmtpPort")
+        var smtpPort = _settings?.Where(l => l.ConfigKey.ToLower() == "SmtpPort".ToLower())
             .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         SmtpPort = smtpPort ?? SmtpPort;
@@ -81,7 +81,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetSmtpUsername()
     {
-        var smtpUsername = _settings?.Where(l => l.ConfigKey == "SmtpUsername")
+        var smtpUsername = _settings?.Where(l => l.ConfigKey.ToLower() == "SmtpUsername".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpUsername = smtpUsername ?? SmtpUsername;
@@ -89,7 +89,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetSmtpPassword()
     {
-        var smtpPassword = _settings?.Where(l => l.ConfigKey == "SmtpPassword")
+        var smtpPassword = _settings?.Where(l => l.ConfigKey.ToLower() == "SmtpPassword".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         SmtpPassword = smtpPassword ?? SmtpPassword;
@@ -97,7 +97,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetSmtpUseSsl()
     {
-        var smtpUseSsl = _settings?.Where(l => l.ConfigKey == "SmtpUseSsl")
+        var smtpUseSsl = _settings?.Where(l => l.ConfigKey.ToLower() == "SmtpUseSsl".ToLower())
             .Select(s => Convert.ToBoolean(s.ConfigValue)).FirstOrDefault();
 
         SmtpUseSsl = smtpUseSsl ?? SmtpUseSsl;
@@ -105,7 +105,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetFromEmail()
     {
-        var fromEmail = _settings?.Where(l => l.ConfigKey == "FromEmail")
+        var fromEmail = _settings?.Where(l => l.ConfigKey.ToLower() == "FromEmail".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         FromEmail = fromEmail ?? FromEmail;
@@ -113,7 +113,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetFromName()
     {
-        var fromName = _settings?.Where(l => l.ConfigKey == "FromName")
+        var fromName = _settings?.Where(l => l.ConfigKey.ToLower() == "FromName".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         FromName = fromName ?? FromName;
@@ -121,7 +121,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetRetryAttempts()
     {
-        var retryAttempts = _settings?.Where(l => l.ConfigKey == "RetryAttempts")
+        var retryAttempts = _settings?.Where(l => l.ConfigKey.ToLower() == "RetryAttempts".ToLower())
             .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         RetryAttempts = retryAttempts ?? RetryAttempts;
@@ -129,7 +129,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetRetryDelay()
     {
-        var retryDelay = _settings?.Where(l => l.ConfigKey == "RetryDelay")
+        var retryDelay = _settings?.Where(l => l.ConfigKey.ToLower() == "RetryDelay".ToLower())
             .Select(s => Convert.ToInt32(s.ConfigValue)).FirstOrDefault();
 
         RetryDelay = retryDelay ?? RetryDelay;
@@ -137,7 +137,7 @@ public sealed class EmailConfigurationProvider
 
     private void SetEmailProviderType()
     {
-        var providerType = _settings?.Where(l => l.ConfigKey == "EmailProviderType")
+        var providerType = _settings?.Where(l => l.ConfigKey.ToLower() == "EmailProviderType".ToLower())
             .Select(s => s.ConfigValue).FirstOrDefault();
 
         if (providerType != null)

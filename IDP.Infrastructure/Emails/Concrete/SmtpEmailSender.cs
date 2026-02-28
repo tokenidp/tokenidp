@@ -8,23 +8,22 @@ namespace IDP.Infrastructure.Emails.Concrete;
 
 internal sealed class SmtpEmailSender : IEmailSender
 {
-    private readonly EmailConfigurationProvider _settings;
     private readonly IAppLogger<SmtpEmailSender> _logger;
 
-    public SmtpEmailSender(EmailConfigurationProvider settings,
-        IAppLogger<SmtpEmailSender> logger)
+    public SmtpEmailSender(IAppLogger<SmtpEmailSender> logger)
     {
-        _settings = settings;
         _logger = logger;
     }
 
-    public async Task<SendEmailResult> SendAsync(EmailMessage email, CancellationToken ct)
+    public async Task<SendEmailResult> SendAsync(EmailConfigurationProvider settings, 
+        EmailMessage email, 
+        CancellationToken ct)
     {
         try
         {
             var mailMessage = new MailMessage
             {
-                From = new MailAddress(_settings.FromEmail, _settings.FromName),
+                From = new MailAddress(settings.FromEmail, settings.FromName),
                 Subject = email.Subject!,
                 Body = email.BodyHtml ?? email.BodyText ?? string.Empty,
                 IsBodyHtml = email.BodyHtml != null
@@ -32,17 +31,17 @@ internal sealed class SmtpEmailSender : IEmailSender
 
             mailMessage.To.Add(email.ToAddress);
 
-            using var smtpClient = new SmtpClient(_settings.SmtpServer, _settings.SmtpPort)
+            using var smtpClient = new SmtpClient(settings.SmtpServer, settings.SmtpPort)
             {
-                EnableSsl = _settings.SmtpUseSsl
+                EnableSsl = settings.SmtpUseSsl
             };
 
-            if (!string.IsNullOrEmpty(_settings.SmtpUsername))
+            if (!string.IsNullOrEmpty(settings.SmtpUsername))
             {
                 smtpClient.UseDefaultCredentials = false;
                 smtpClient.Credentials = new NetworkCredential(
-                    _settings.SmtpUsername,
-                    _settings.SmtpPassword);
+                    settings.SmtpUsername,
+                    settings.SmtpPassword);
             }
 
             await smtpClient.SendMailAsync(mailMessage, ct);

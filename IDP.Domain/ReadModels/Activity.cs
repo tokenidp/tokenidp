@@ -4,6 +4,8 @@ namespace IDP.Domain.ReadModels;
 
 public sealed class Activity : Entity<long>, ITenant
 {
+    private const int MaxUserAgentLength = 256;
+
     public long OutboxEventId { get; private set; }
     public int TenantId { get; private set; }
     public ActivityCategory Category { get; private set; }
@@ -85,11 +87,21 @@ public sealed class Activity : Entity<long>, ITenant
 
             CorrelationId = correlationId,
             IpAddress = ipAddress?.Trim(),
-            UserAgent = userAgent?.Trim(),
+            UserAgent = TrimToMaxLength(userAgent, MaxUserAgentLength),
 
             OutboxEventId = outboxEventId,
             CreatedAtUtc = DateTime.UtcNow
         };
     }
-}
 
+    private static string? TrimToMaxLength(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length <= maxLength ? trimmed : trimmed[..maxLength];
+    }
+}

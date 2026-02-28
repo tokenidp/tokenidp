@@ -48,7 +48,7 @@ internal class ClientEndpoint : IEndpointDefinition
             Policy = "applications.view"
         })
         .WithName("ClientById")
-        .WithTags("ClientById");
+        .WithTags("Clients");
 
         authGroup.MapGet("clientlookups", async (ClientLookupsUseCase useCase,
             HttpContext httpContext) =>
@@ -58,7 +58,7 @@ internal class ClientEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("ClientLookups")
-        .WithTags("ClientLookups");
+        .WithTags("Clients");
 
         authGroup.MapPost("/", async (CreateUpdateClient client,
             ClientCommandUseCase useCase,
@@ -75,7 +75,7 @@ internal class ClientEndpoint : IEndpointDefinition
             Policy = "applications.add"
         })
         .WithName("CreateClient")
-        .WithTags("CreateClient");
+        .WithTags("Clients");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateClient client,
             ClientCommandUseCase useCase,
@@ -96,7 +96,7 @@ internal class ClientEndpoint : IEndpointDefinition
             Policy = "applications.edit"
         })
         .WithName("UpdateClient")
-        .WithTags("UpdateClient");
+        .WithTags("Clients");
 
         authGroup.MapDelete("/{id}", async (int id,
             ClientCommandUseCase useCase,
@@ -117,6 +117,6 @@ internal class ClientEndpoint : IEndpointDefinition
             Policy = "applications.delete"
         })
         .WithName("DeleteClient")
-        .WithTags("DeleteClient");
+        .WithTags("Clients");
     }
 }

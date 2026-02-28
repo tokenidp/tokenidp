@@ -37,6 +37,7 @@ internal static class ClientShortInfoProjection
         (
             client.Id,
             client.TenantId,
+            client.ClientAuthPolicy.AllowForgotPassword,
             client.ClientName,
             client.RedirectUri,
             client.ClientScopes.Select(s => s.Scope),

@@ -26,6 +26,16 @@ internal sealed class EmailTemplateRenderer : IEmailTemplateRenderer
             return Task.FromResult(result);
         }
 
+        if (templateKey == "PASSWORD_RESET")
+        {
+            var html = ReplaceTokens(EmailTemplates.PasswordResetHtml, tokens)
+                .Replace("{YEAR}", DateTime.UtcNow.Year.ToString());
+
+            (string Subject, string? Html, string? Text) result = (EmailTemplates.PasswordResetSubject, html, default);
+
+            return Task.FromResult(result);
+        }
+
         throw new InvalidOperationException($"Unknown email template: {templateKey}");
     }
 

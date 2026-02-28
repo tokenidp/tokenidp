@@ -8,10 +8,12 @@ namespace IDP.Infrastructure.Emails;
 internal class EmailQueueStore : IEmailQueueStore
 {
     private readonly ApplicationDbContext _db;
+    private readonly IAppLogger<EmailQueueStore> _logger;
 
-    public EmailQueueStore(ApplicationDbContext db)
+    public EmailQueueStore(ApplicationDbContext db, IAppLogger<EmailQueueStore> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task CancelPendingAsync(
@@ -20,12 +22,28 @@ internal class EmailQueueStore : IEmailQueueStore
         string reason,
         CancellationToken ct)
     {
-        await _db.Database.ExecuteSqlRawAsync(
-            EmailSql.CancelPendingByMessageKey,
-            new SqlParameter("@tenantId", tenantId),
-            new SqlParameter("@messageKey", messageKey),
-            new SqlParameter("@reason", reason),
-            ct);
+        try
+        {
+            await _db.Database.ExecuteSqlRawAsync(
+                EmailSql.CancelPendingByMessageKey,
+                new[]
+                {
+                    new SqlParameter("@tenantId", tenantId),
+                    new SqlParameter("@messageKey", messageKey),
+                    new SqlParameter("@reason", reason)
+                },
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to cancel pending emails. TenantId={TenantId}, MessageKey={MessageKey}, Reason={Reason}",
+                tenantId,
+                messageKey,
+                reason);
+            throw;
+        }
     }
 
     public async Task EnqueueAsync(EmailMessage email, CancellationToken ct)

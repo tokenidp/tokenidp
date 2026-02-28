@@ -70,6 +70,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserContact> UserContacts { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<TokenSearch> TokenSearch { get; set; }
     public DbSet<TokenReadModel> TokenReadModel { get; set; }
     public DbSet<Activity> Activities { get; set; }

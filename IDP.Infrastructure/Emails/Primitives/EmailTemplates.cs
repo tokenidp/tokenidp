@@ -27,5 +27,32 @@ internal static class EmailTemplates
     </html>";
 
     public const string MfaCodeSubject = "Your verification code";
-}
 
+    public const string PasswordResetHtml = @"
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Password Reset</title>
+    </head>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #2563eb; margin-bottom: 16px;'>Reset Your Password</h2>
+            <p>A password reset request was received for <strong><%TENANT_NAME%></strong>.</p>
+            <p>Use the link below to reset your password:</p>
+            <p style='margin: 24px 0;'>
+                <a href='<%RESET_LINK%>' style='background: #2563eb; color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 6px; display: inline-block;'>
+                    Reset Password
+                </a>
+            </p>
+            <p>This link expires in <strong><%EXPIRY_MINUTES%> minutes</strong>.</p>
+            <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
+                <p>If you didn't request this, please ignore this email.</p>
+                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>";
+
+    public const string PasswordResetSubject = "Reset your password";
+}

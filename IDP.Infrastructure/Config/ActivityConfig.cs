@@ -26,14 +26,14 @@ internal sealed class ActivityConfig : IEntityTypeConfiguration<Activity>
         builder.Property(x => x.ActorDisplayName).HasMaxLength(256);
         builder.Property(x => x.TargetType).HasConversion<int>();
         builder.Property(x => x.TargetId).HasMaxLength(64);
-        builder.Property(x => x.TargetDescription).HasMaxLength(512);
+        builder.Property(x => x.TargetDescription).HasMaxLength(256);
 
         builder.Property(x => x.Status).IsRequired().HasMaxLength(32);
         builder.Property(x => x.Description).IsRequired().HasMaxLength(1024);
 
         builder.Property(x => x.CorrelationId);
         builder.Property(x => x.IpAddress).HasMaxLength(32);
-        builder.Property(x => x.UserAgent).HasMaxLength(100);
+        builder.Property(x => x.UserAgent).HasMaxLength(512);
 
         builder.Property(x => x.Category)
            .HasConversion(new EnumToNumberConverter<ActivityCategory, int>())

@@ -1,5 +1,13 @@
 ﻿namespace IDP.Domain.AggregateRoots.Outbox;
 
+public enum OutboxStatus : byte
+{
+    Pending = 0,
+    Processing = 1,
+    Processed = 2,
+    Failed = 3
+}
+
 public class OutboxEventConsumer
 {
     public long Id { get; private set; }

@@ -19,6 +19,7 @@ internal class ClientAuthPolicyConfig : IEntityTypeConfiguration<ClientAuthPolic
         b.Property(x => x.ShowExternalProviders).IsRequired();
         b.Property(x => x.ShowStaySignedIn).IsRequired();
         b.Property(x => x.ShowCreateAccountLink).IsRequired();
+        b.Property(x => x.AllowForgotPassword).IsRequired();
 
         b.HasOne(x => x.Client)
          .WithOne(x => x.ClientAuthPolicy)

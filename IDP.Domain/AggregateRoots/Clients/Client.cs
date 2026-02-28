@@ -1,5 +1,21 @@
 ﻿namespace IDP.Domain.AggregateRoots.Clients;
 
+public enum ClientTypes
+{
+    SPA,
+    Mobile,
+    Desktop,
+    WebApp,
+    Backend,
+    DeviceIoT
+}
+
+public enum TokenTypes
+{
+    JWT,
+    ReferenceToken
+}
+
 public class Client : AggregateRoot<int>, ITenant
 {
     public string ClientId { get; private set; } = default!;

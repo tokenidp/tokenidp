@@ -9,7 +9,7 @@ internal static class EndpointResultMapper
             return Results.Ok(result);
         }
 
-        return ToErrorResult(result.Error);
+        return ToErrorResult(result);
     }
 
     public static IResult ToCreatedOrError<T>(ApiResult<T> result, string location)
@@ -19,7 +19,7 @@ internal static class EndpointResultMapper
             return Results.Created(location, result);
         }
 
-        return ToErrorResult(result.Error);
+        return ToErrorResult(result);
     }
 
     public static IResult ToNoContentOrError<T>(ApiResult<T> result)
@@ -29,16 +29,22 @@ internal static class EndpointResultMapper
             return Results.NoContent();
         }
 
-        return ToErrorResult(result.Error);
+        return ToErrorResult(result);
     }
 
-    private static IResult ToErrorResult(ApiError? error)
+    private static IResult ToErrorResult<T>(ApiResult<T> result)
     {
-        var apiError = error ?? ApiError.Failure("An unexpected error occurred.");
-        var payload = ApiResult<ApiError>.Failure(apiError);
+        if (result.Error is null && (result.Errors is null || result.Errors.Count == 0))
+        {
+            result = ApiResult<T>.Failure(ApiError.Failure("An unexpected error occurred."));
+        }
 
-        return string.Equals(apiError.Code, "NotFound", StringComparison.OrdinalIgnoreCase)
-            ? Results.NotFound(payload)
-            : Results.BadRequest(payload);
+        var isNotFound =
+            string.Equals(result.Error?.Code, "NotFound", StringComparison.OrdinalIgnoreCase) ||
+            (result.Errors?.Any(e => string.Equals(e.Code, "NotFound", StringComparison.OrdinalIgnoreCase)) ?? false);
+
+        return isNotFound
+            ? Results.NotFound(result)
+            : Results.BadRequest(result);
     }
 }

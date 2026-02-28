@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Bootstrap;
 using Admin.Core.Configurations;
 using IDP.Domain.AggregateRoots.Permissions;
+using IDP.Foundation.Options;
 using IDP.Infrastructure.Bootstrap.SeedData;
 using IDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
@@ -16,7 +17,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
     private readonly IPermissionSeeder _permissions;
     private readonly IConfigurationSeeder _configs;
     private readonly IAppLogger<SystemBootstrapper> _logger;
-    private readonly BootstrapOptions _bootstrapOptions;
+    private readonly BootstrapOption _bootstrapOptions;
 
     public SystemBootstrapper(ITenantProvisioningService tenants,
         IClientProvisioningService clients,
@@ -24,7 +25,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         IRoleProvisioningService roles,
         IPermissionSeeder permissions,
         IConfigurationSeeder configs,
-        IOptions<BootstrapOptions> options,
+        IOptions<BootstrapOption> options,
         IAppLogger<SystemBootstrapper> logger)
     {
         _tenants = tenants;

@@ -1,5 +1,12 @@
 ﻿namespace IDP.Domain.AggregateRoots.Users;
 
+public enum AddressTypes
+{
+    Home,
+    Work,
+    Billing
+}
+
 public class UserAddress : Entity<int>
 {
     public int UserId { get; private set; }

@@ -50,7 +50,7 @@ internal class TenantEndpoint : IEndpointDefinition
              Policy = "tenants.view"
          })
         .WithName("TenantById")
-        .WithTags("TenantById");
+        .WithTags("Tenants");
 
         authGroup.MapGet("tenantlookups", async (TenantLookupsUseCase useCase,
             HttpContext httpContext) =>
@@ -60,7 +60,7 @@ internal class TenantEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("TenantLookups")
-        .WithTags("TenantLookups");
+        .WithTags("Tenants");
 
         authGroup.MapPost("/", async (CreateUpdateTenant tenant,
             TenantCommandUseCase useCase,
@@ -77,7 +77,7 @@ internal class TenantEndpoint : IEndpointDefinition
              Policy = "tenants.add"
          })
         .WithName("CreateTenant")
-        .WithTags("CreateTenant");
+        .WithTags("Tenants");
 
         authGroup.MapPut("/{id}", async (int id, CreateUpdateTenant tenant,
             TenantCommandUseCase useCase,
@@ -98,7 +98,7 @@ internal class TenantEndpoint : IEndpointDefinition
              Policy = "tenants.edit"
          })
         .WithName("UpdateTenant")
-        .WithTags("UpdateTenant");
+        .WithTags("Tenants");
 
         authGroup.MapDelete("/{id}", async (int id,
             TenantCommandUseCase useCase,
@@ -119,6 +119,6 @@ internal class TenantEndpoint : IEndpointDefinition
              Policy = "tenants.delete"
          })
         .WithName("DeleteTenant")
-        .WithTags("DeleteTenant");
+        .WithTags("Tenants");
     }
 }

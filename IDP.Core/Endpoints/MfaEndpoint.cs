@@ -19,7 +19,7 @@ internal class MfaEndpoint : IEndpointDefinition
             return ApiResult<AuthorizationResponse>.Success(authResponse);
         })
         .WithName("VerifyMfa")
-        .WithTags("VerifyMfa");
+        .WithTags("Mfa");
 
         authGroup.MapPost("/resend", async (MfaRequest request,
             IAppLogger<MfaEndpoint> _logger,
@@ -42,6 +42,6 @@ internal class MfaEndpoint : IEndpointDefinition
             return Results.Ok(ApiResult<AuthorizationResponse>.Success(response));
         })
         .WithName("ResendMfa")
-        .WithTags("ResendMfa");
+        .WithTags("Mfa");
     }
 }

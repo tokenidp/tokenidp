@@ -8,22 +8,22 @@ namespace IDP.Infrastructure.Emails.Concrete;
 
 internal sealed class SendGridEmailSender : IEmailSender
 {
-    private readonly EmailConfigurationProvider _settings;
     private readonly IAppLogger<SendGridEmailSender> _logger;
 
-    public SendGridEmailSender(EmailConfigurationProvider settings, IAppLogger<SendGridEmailSender> logger)
+    public SendGridEmailSender(IAppLogger<SendGridEmailSender> logger)
     {
-        _settings = settings;
         _logger = logger;
     }
 
-    public async Task<SendEmailResult> SendAsync(EmailMessage email, CancellationToken ct)
+    public async Task<SendEmailResult> SendAsync(EmailConfigurationProvider settings, 
+        EmailMessage email, 
+        CancellationToken ct)
     {
         try
         {
-            var client = new SendGridClient(_settings.ApiKey);
+            var client = new SendGridClient(settings.ApiKey);
 
-            var from = new SendGrid.Helpers.Mail.EmailAddress(_settings.FromEmail, _settings.FromName);
+            var from = new SendGrid.Helpers.Mail.EmailAddress(settings.FromEmail, settings.FromName);
             var toAddr = new SendGrid.Helpers.Mail.EmailAddress(email.ToAddress, email.DisplayName);
 
             var msg = MailHelper.CreateSingleEmail(

@@ -78,6 +78,14 @@ internal class DefaultPermissions
 
                     childPermission.ChildPermissions.AddRange(addPermission, editPermission);
 
+                    if (childPermission.PermissionName.Contains("Users"))
+                    {
+                        ++i;
+                        var resetPasswordPermission = CreateActionPermission(tenantId,i,"users.resetpassword","Reset Users Password");
+
+                        childPermission.ChildPermissions.Add(resetPasswordPermission);
+                    }
+
                     if (childPermission.PermissionName.Contains("Roles"))
                     {
                         ++i;

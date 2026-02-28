@@ -1,6 +1,6 @@
-﻿namespace IDP.Infrastructure.Bootstrap;
+﻿namespace IDP.Foundation.Options;
 
-internal class BootstrapOptions
+public class BootstrapOption
 {
     public string RedirectUri { get; set; } = default!;
     public string LogoutRedirectUri { get; set; } = default!;

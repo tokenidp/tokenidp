@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Bootstrap;
 using IDP.Core.OAuth;
 using IDP.Foundation.Abstractions.Stores;
+using IDP.Foundation.Options;
 using IDP.Infrastructure.Bootstrap;
 using IDP.Infrastructure.Emails;
 using IDP.Infrastructure.Emails.Abstractions;
@@ -62,7 +63,7 @@ public static class DependencyInjection
 
     private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<BootstrapOptions>(configuration.GetSection("Bootstrap"));
+        services.Configure<BootstrapOption>(configuration.GetSection("Bootstrap"));
 
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
         services.AddScoped<IClientProvisioningService, ClientProvisioningService>();
@@ -96,7 +97,7 @@ public static class DependencyInjection
 
     public static async Task EnsureSystemBootstrap(this WebApplication app, string connectionStringName)
     {
-        var opts = app.Services.GetRequiredService<IOptions<BootstrapOptions>>().Value;
+        var opts = app.Services.GetRequiredService<IOptions<BootstrapOption>>().Value;
 
         if (!app.Environment.IsProduction() && opts.Enable)
         {

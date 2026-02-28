@@ -49,7 +49,7 @@ internal class UserEndpoint : IEndpointDefinition
             Policy = "users.view"
         })
         .WithName("UserById")
-        .WithTags("UserById");
+        .WithTags("Users");
 
         authGroup.MapGet("userlookups", async (UserLookupsUseCase userService,
             HttpContext httpContext) =>
@@ -60,7 +60,7 @@ internal class UserEndpoint : IEndpointDefinition
 
         })
         .WithName("UserLookups")
-        .WithTags("UserLookups");
+        .WithTags("Users");
 
         authGroup.MapPost("/", async (UserDetail user,
             UserCommandUseCase userService,
@@ -77,7 +77,7 @@ internal class UserEndpoint : IEndpointDefinition
              Policy = "users.add"
          })
         .WithName("CreateUser")
-        .WithTags("CreateUser");
+        .WithTags("Users");
 
         authGroup.MapPut("/{id}", async (int id, UserDetail user,
             UserCommandUseCase userService,
@@ -98,7 +98,7 @@ internal class UserEndpoint : IEndpointDefinition
              Policy = "users.edit"
          })
         .WithName("UpdateUser")
-        .WithTags("UpdateUser");
+        .WithTags("Users");
 
         authGroup.MapPatch("/{id}", async (int id, UpdateUserStatus user,
             UserCommandUseCase userService,
@@ -119,7 +119,7 @@ internal class UserEndpoint : IEndpointDefinition
              Policy = "users.edit"
          })
         .WithName("UpdateUserStatus")
-        .WithTags("UpdateUserStatus");
+        .WithTags("Users");
 
         authGroup.MapGet("/permissions", async (
             UserPermissionsUseCase userService) =>
@@ -129,6 +129,24 @@ internal class UserEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .WithName("UserPermissions")
-        .WithTags("UserPermissions");
+        .WithTags("Users");
+
+        authGroup.MapPost("/{id}/reset-password", async (int id,
+            PasswordResetUseCase passwordResetUseCase,
+            HttpContext httpContext) =>
+        {
+            var command = new InitiateAdminPasswordResetCommand { UserId = id };
+
+            var response = await passwordResetUseCase
+                .InitiateAdminPasswordReset(command, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "users.resetpassword"
+        })
+        .WithName("AdminPasswordReset")
+        .WithTags("PasswordReset");
     }
 }
