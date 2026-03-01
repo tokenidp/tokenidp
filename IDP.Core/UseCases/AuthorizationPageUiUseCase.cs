@@ -1,4 +1,5 @@
-﻿using IDP.Foundation.Abstractions.Stores;
+﻿using IDP.Domain.AggregateRoots.Clients;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Core.UseCases;
 
@@ -14,7 +15,10 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
         _clientStore = clientStore;
     }
 
-    public async Task<AuthorizationPageUi> BuildAsync(int tenantId, int clientId, CancellationToken ct)
+    public async Task<AuthorizationPageUi> BuildAsync(IReadOnlySet<string> scopes, 
+        int tenantId, 
+        int clientId, 
+        CancellationToken ct)
     {
         var tenantUISetting = await _tenantStore.GetTenantUISettings(tenantId);
         var clientPolicy = await _clientStore.GetClientAuthPolicy(clientId);
@@ -33,6 +37,7 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
         {
             authorizationPageUi.AllowLocalLogin = clientPolicy.AllowLocalLoginOverride;
             authorizationPageUi.AllowSignup = clientPolicy.ShowCreateAccountLink;
+            authorizationPageUi.AllowStaySignedIn = clientPolicy.ShowStaySignedIn;
         }
 
         if (providers != null)
@@ -42,6 +47,11 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
                 DisplayName = p.ProviderType,
                 Enabled = p.EnabledForClient
             }).ToList();
+        }
+
+        if (!scopes.Contains(StandardScopes.OfflineAccess))
+        {
+            authorizationPageUi.AllowStaySignedIn = false;
         }
 
         return authorizationPageUi;

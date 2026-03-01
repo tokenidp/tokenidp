@@ -8,6 +8,7 @@ using Admin.Core.Roles.UseCases;
 using Admin.Core.Settings.UseCases;
 using Admin.Core.Tenants.UseCases;
 using Admin.Core.Tokens.UseCases;
+using Admin.Core.Users;
 using Admin.Core.Users.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

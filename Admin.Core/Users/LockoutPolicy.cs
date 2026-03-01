@@ -1,8 +1,8 @@
-﻿namespace Admin.Core.Common;
+﻿namespace Admin.Core.Users;
 
 public sealed class LockoutPolicy
 {
-    private readonly int _maxFailed = 5;
+    private readonly int _maxFailed = 3;
     private readonly TimeSpan _lockoutDuration = TimeSpan.FromMinutes(15);
 
     public void OnFailedLogin(User user)

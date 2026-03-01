@@ -7,14 +7,16 @@ internal sealed class IntrospectionUseCase
     private readonly IAppLogger<IntrospectionUseCase> _logger;
     private readonly ITokenStore _tokenStore;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
-
+    private readonly ICurrentUserService _currentUserService;
     public IntrospectionUseCase(IAppLogger<IntrospectionUseCase> logger,
         ITokenStore tokenStore,
-        TokenSecretGenerator tokenSecretGenerator)
+        TokenSecretGenerator tokenSecretGenerator,
+        ICurrentUserService currentUserService)
     {
         _logger = logger;
         _tokenStore = tokenStore;
         _tokenSecretGenerator = tokenSecretGenerator;
+        _currentUserService = currentUserService;
     }
 
     public async Task<IntrospectionResponse> ValidateReferenceToken(string token)
@@ -27,21 +29,25 @@ internal sealed class IntrospectionUseCase
 
         if (referenceToken == null)
         {
-            _logger.LogWarning("Reference token not found or revoked: {TokenId}",
+            _logger.LogWarning("Reference token not found, expired or revoked: {TokenId}",
                 $"{token.SubstringSafe(0, 5)}...");
 
-            return IntrospectionResponse.Create();
+            return IntrospectionResponse.Inactive();
         }
 
         _logger.LogDebug("Valid token found for client {client}", referenceToken.ClientId);
 
         var roles = referenceToken.Roles ?? string.Empty;
 
-        return IntrospectionResponse.Create(
-            referenceToken.UserId,
+        return IntrospectionResponse.ActiveResponse(
+            referenceToken.UserId?.ToString() ?? string.Empty,
             referenceToken.ClientId,
-            referenceToken.TenantId,
+            referenceToken.TenantId.ToString(),
             referenceToken.Scope,
-            roles.Split(","));
+            roles.Split(","),
+            referenceToken.ExpiresAt,
+            referenceToken.IssuedAt,
+            _currentUserService.BaseUrl
+            );
     }
 }

@@ -68,8 +68,8 @@ public static class DependencyInjection
         services.AddScoped<TokenGrantFactory>();
 
         services.AddScoped<ITokenGrantUseCase>(sp =>
-           new TokenGrantUseCase(sp.GetRequiredService<TokenGrantFactory>(),
-               sp.GetRequiredService<IAppLogger<TokenGrantUseCase>>(),
+           new TokenGrantPipeline(sp.GetRequiredService<TokenGrantFactory>(),
+               sp.GetRequiredService<IAppLogger<TokenGrantPipeline>>(),
                sp.GetRequiredService<GrantTypeValidatorUseCase>()));
 
         services.AddScoped<RefreshTokenGrantHandler>();

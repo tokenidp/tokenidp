@@ -2,7 +2,7 @@
 
 public interface IIdentityStore
 {
-    Task<AuthenticationContext> Authenticate(string userName, string password);
+    Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password);
 
     Task<User> GetUserById(int id);
 

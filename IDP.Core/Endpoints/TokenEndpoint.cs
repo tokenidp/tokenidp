@@ -10,7 +10,7 @@ internal class TokenEndpoint : IEndpointDefinition
             TokenRequest request,
             ITokenGrantUseCase accessTokenUseCase) =>
         {
-            string ipAddress = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+            string ipAddress = httpContext.Connection?.RemoteIpAddress?.MapToIPv4().ToString() ?? string.Empty;
 
             request.IpAddress = ipAddress;
 

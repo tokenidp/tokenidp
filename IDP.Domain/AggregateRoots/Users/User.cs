@@ -246,10 +246,26 @@ public partial class User : AggregateRoot<int>, ITenant
 
     public void SetPasswordHash(string hash) => PasswordHash = hash;
     public void IncrementAccessFailed() => AccessFailedCount++;
-    public void ResetAccessFailed() => AccessFailedCount = 0;
     public void LockUntil(DateTimeOffset until) => LockoutEnd = until;
     public bool IsLockedOut() => LockoutEnabled && LockoutEnd.HasValue && LockoutEnd > DateTimeOffset.UtcNow;
     public void RotateSecurityStamp() => SecurityStamp = Guid.NewGuid().ToString("N");
+
+    public void RegisterFailedAttempt(int maxAttempts, TimeSpan lockoutDuration)
+    {
+        AccessFailedCount++;
+
+        if (AccessFailedCount >= maxAttempts)
+        {
+            LockoutEnd = DateTime.UtcNow.Add(lockoutDuration);
+            AccessFailedCount = 0;
+        }
+    }
+
+    public void ResetAccessFailed()
+    {
+        AccessFailedCount = 0;
+        LockoutEnd = null;
+    }
 }
 
 public partial class User

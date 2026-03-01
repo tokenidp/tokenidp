@@ -2,8 +2,7 @@
 
 namespace IDP.Core.UseCases;
 
-public sealed class AuthorizationRequestValidator
-    : IAuthorizationRequestValidator
+public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidator
 {
     private readonly IClientStore _clientStore;
 
@@ -40,9 +39,7 @@ public sealed class AuthorizationRequestValidator
                 "Invalid redirect_uri.");
         }
 
-        if (!string.Equals(
-                request.ResponseType,
-                "code",
+        if (!string.Equals(request.ResponseType, "code",
                 StringComparison.Ordinal))
         {
             throw new AuthorizationRequestException(

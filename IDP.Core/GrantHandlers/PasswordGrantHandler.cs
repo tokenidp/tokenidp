@@ -30,7 +30,8 @@ internal class PasswordGrantHandler : ITokenGrantHandler
 
     public async Task<TokenResponse> HandleAsync(TokenRequest request)
     {
-        var context = await _identityService.Authenticate(request.UserName, request.Password);
+        var context = await _identityService
+            .Authenticate(request.TenantId, request.UserName, request.Password);
 
         if (!context.IsSuccess)
         {
@@ -54,7 +55,8 @@ internal class PasswordGrantHandler : ITokenGrantHandler
             return TokenResponse.Success(authResponse.TwoFactorEnabled ?? false);
         }
 
-        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(request.ClientId, context.UserId);
+        var tokenInfo = await _tokenContextUseCase
+            .BuildTokenContextAsync(request.ClientId, context.UserId);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 
@@ -70,7 +72,8 @@ internal class PasswordGrantHandler : ITokenGrantHandler
             return TokenResponse.Failure(authResponse.Error);
         }
 
-        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(authRequest?.ClientId!, request.UserId);
+        var tokenInfo = await _tokenContextUseCase
+            .BuildTokenContextAsync(authRequest?.ClientId!, request.UserId);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 

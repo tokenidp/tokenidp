@@ -2,5 +2,8 @@
 
 public interface IAuthorizationPageUiUseCase
 {
-    Task<AuthorizationPageUi> BuildAsync(int tenantId, int clientId, CancellationToken ct);
+    Task<AuthorizationPageUi> BuildAsync(IReadOnlySet<string> scopes, 
+        int tenantId, 
+        int clientId, 
+        CancellationToken ct);
 }

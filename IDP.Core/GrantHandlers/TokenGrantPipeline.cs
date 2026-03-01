@@ -3,14 +3,14 @@ using IDP.Domain.AggregateRoots.Clients;
 
 namespace IDP.Core.GrantHandlers;
 
-internal sealed class TokenGrantUseCase : ITokenGrantUseCase
+internal sealed class TokenGrantPipeline : ITokenGrantUseCase
 {
     private readonly GrantTypeValidatorUseCase _grantTypeValidator;
     private readonly TokenGrantFactory _tokenGrantFactory;
-    private readonly IAppLogger<TokenGrantUseCase> _logger;
+    private readonly IAppLogger<TokenGrantPipeline> _logger;
 
-    public TokenGrantUseCase(TokenGrantFactory tokenGrantFactory,
-        IAppLogger<TokenGrantUseCase> logger,
+    public TokenGrantPipeline(TokenGrantFactory tokenGrantFactory,
+        IAppLogger<TokenGrantPipeline> logger,
         GrantTypeValidatorUseCase grantTypeValidator)
     {
         _tokenGrantFactory = tokenGrantFactory;
@@ -20,9 +20,12 @@ internal sealed class TokenGrantUseCase : ITokenGrantUseCase
 
     public async Task<IResult> GetAccessToken(TokenRequest request)
     {
-        _logger.LogInfo("GetAccessToken called for ClientId: {ClientId} from IP: {IP}", request.ClientId, request.IpAddress);
+        _logger.LogInfo("GetAccessToken called for ClientId: {ClientId} from IP: {IP}"
+            , request.ClientId, request.IpAddress ?? string.Empty);
 
-        if (!await _grantTypeValidator.ValidateGrantType(request.GrantType, request.ClientId))
+        var (isValid, tenantId) = await _grantTypeValidator.ValidateGrantType(request.GrantType, request.ClientId);
+
+        if (!isValid)
         {
             var errorResult = ApiResult<ApiError>.Failure(
                            ApiError.Failure("Invalid grant type."));
@@ -34,9 +37,12 @@ internal sealed class TokenGrantUseCase : ITokenGrantUseCase
 
         ITokenGrantHandler tokenGrantHandler = _tokenGrantFactory.GetService(parsedGrantType);
 
+        request.SetTenantId(tenantId);
+
         var response = await tokenGrantHandler.HandleAsync(request);
 
-        _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}", request.ClientId, request.GrantType);
+        _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}", 
+            request.ClientId, request.GrantType);
 
         return Results.Ok(ApiResult<TokenResponse>.Success(response));
     }

@@ -10,6 +10,7 @@ public class AuthorizationCode : AggregateRoot<int>
     public string CodeChallengeMethod { get; private set; } = string.Empty; //Default is SHA-256
     public string? Scopes { get; private set; }
     public bool IsUsed { get; private set; }
+    public bool RememberMe { get; private set; }
 
     private AuthorizationCode() { }
 
@@ -20,6 +21,7 @@ public class AuthorizationCode : AggregateRoot<int>
         int userId,
         DateTime expiry,
         string redirectUri,
+        bool rememberMe,
         string? scopes = null)
     {
         CodeChallenge = codeChallenge;
@@ -30,6 +32,7 @@ public class AuthorizationCode : AggregateRoot<int>
         RedirectUri = redirectUri;
         Scopes = scopes;
         CodeChallengeMethod = codeChallengeMethod;
+        RememberMe = rememberMe;
     }
 
     public void UpdateIsUsed(bool isUsed)

@@ -26,16 +26,18 @@ internal sealed class IdentityStore : IIdentityStore
         _passwordService = passwordService;
     }
 
-    public async Task<AuthenticationContext> Authenticate(string userName, string password)
+    public async Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password)
     {
         try
         {
             _logger.LogInfo("Authentication attempt for user: {UserName}", userName);
 
             var user = await _applicationDbContext.Users
-                .FirstOrDefaultAsync(u => u.UserName == userName
+                .FirstOrDefaultAsync(u => u.TenantId == tenantId
+                && (
+                 u.UserName == userName
                 || u.Email == userName
-                || u.PhoneNumber == userName);
+                || u.PhoneNumber == userName));
 
             if (user == null)
             {
@@ -57,7 +59,12 @@ internal sealed class IdentityStore : IIdentityStore
 
                 await _applicationDbContext.SaveChangesAsync();
 
-                return AuthenticationContext.Failure($"Invalid username or password");
+                return AuthenticationContext.Failure("Invalid username or password");
+            }
+
+            if (user.IsLockedOut())
+            {
+                return AuthenticationContext.Failure("User is locked out.");
             }
 
             _logger.LogDebug("Found user {UserId} for authentication", user.Id);
@@ -75,6 +82,8 @@ internal sealed class IdentityStore : IIdentityStore
                     _currentUserService.IpAddress,
                     _currentUserService.UserAgent);
 
+                user.RegisterFailedAttempt(3, TimeSpan.FromMinutes(5));
+
                 await UpdateUser(user);
 
                 return AuthenticationContext.Failure($"Invalid username or password");
@@ -86,6 +95,7 @@ internal sealed class IdentityStore : IIdentityStore
                 _currentUserService.IpAddress,
                 _currentUserService.UserAgent);
 
+            user.ResetAccessFailed();
             await UpdateUser(user);
 
             return AuthenticationContext.Authenticated(user);

@@ -26,16 +26,13 @@ internal class TokenStore : ITokenStore
 
     public async Task<Token?> GetToken(byte[] tokenHash)
     {
-        var token = await _dbContext.Tokens
-            .FirstOrDefaultAsync(s => s.RefreshToken.TokenHash == tokenHash && s.IsRevoked != true);
-
-        if (token != null)
-        {
-            return token;
-        }
-
-        token = await _dbContext.Tokens
-             .FirstOrDefaultAsync(s => s.ReferenceToken.TokenHash == tokenHash && s.IsRevoked != true);
+        var token = await _dbContext.Tokens.FirstOrDefaultAsync(s =>
+        !s.IsRevoked &&
+        s.ExpiresAt > DateTime.UtcNow &&
+        (
+            (s.RefreshToken != null && s.RefreshToken.TokenHash == tokenHash) ||
+            (s.ReferenceToken != null && s.ReferenceToken.TokenHash == tokenHash)
+        ));
 
         return token;
     }

@@ -1,36 +1,62 @@
-﻿namespace IDP.Core.Model;
+﻿using System.Text.Json.Serialization;
+
+namespace IDP.Core.Model;
 
 public class IntrospectionResponse
 {
+    [JsonPropertyName("active")]
     public bool Active { get; set; }
-    public string Sub { get; set; }
-    public string UId { get; set; }
+
+    [JsonPropertyName("sub")]
+    public string? Sub { get; set; }
+
+    [JsonPropertyName("client_id")]
+    public string? ClientId { get; set; }
+
+    [JsonPropertyName("scope")]
     public string? Scope { get; set; }
-    public string[] Roles { get; set; }
+
+    [JsonPropertyName("exp")]
+    public long? Exp { get; set; }
+
+    [JsonPropertyName("iat")]
+    public long? Iat { get; set; }
+
+    [JsonPropertyName("iss")]
+    public string? Iss { get; set; }
+
+    [JsonPropertyName("uid")]
+    public string? TenantId { get; set; }
+
+    [JsonPropertyName("roles")]
+    public string[]? Roles { get; set; }
 
     private IntrospectionResponse() { }
 
-    public static IntrospectionResponse Create()
-    {
-        return new IntrospectionResponse()
-        {
-            Active = false
-        };
-    }
+    public static IntrospectionResponse Inactive()
+        => new() { Active = false };
 
-    public static IntrospectionResponse Create(int? userId,
+    public static IntrospectionResponse ActiveResponse(
+        string sub,
         string clientId,
-        int tenantId,
+        string tenantId,
         string? scope,
-        string[] roles)
+        string[] roles,
+        DateTime expiresAtUtc,
+        DateTime issuedAtUtc,
+        string issuer)
     {
-        return new IntrospectionResponse()
+        return new IntrospectionResponse
         {
             Active = true,
-            Sub = userId == null ? clientId : userId.Value.ToString(),
-            UId = tenantId.ToString(),
+            Sub = sub,
+            ClientId = clientId,
             Scope = scope,
-            Roles = roles
+            TenantId = tenantId,
+            Roles = roles,
+            Exp = new DateTimeOffset(expiresAtUtc).ToUnixTimeSeconds(),
+            Iat = new DateTimeOffset(issuedAtUtc).ToUnixTimeSeconds(),
+            Iss = issuer
         };
     }
 }

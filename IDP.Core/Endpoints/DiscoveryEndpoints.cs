@@ -27,7 +27,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
 
         app.MapGet(JwksPath, async (HttpContext http, IConfiguration configuration, IHostEnvironment env) =>
         {
-            var jwks = await BuildJwksAsync(configuration, env);
+            var jwks = BuildJwksAsync(configuration, env);
             await WriteJsonAsync(http, jwks);
         });
     }
@@ -72,7 +72,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         return baseUrl.TrimEnd('/');
     }
 
-    private async Task<string> BuildJwksAsync(IConfiguration configuration, IHostEnvironment environment)
+    private string BuildJwksAsync(IConfiguration configuration, IHostEnvironment environment)
     {
         // Support certificate based keys or PEM/base64 encoded RSA keys
         var certThumb = configuration["TokenOptions:CertificateThumbprint"];

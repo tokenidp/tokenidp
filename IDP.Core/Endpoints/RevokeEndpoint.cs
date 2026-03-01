@@ -14,7 +14,7 @@ internal class RevokeEndpoint : IEndpointDefinition
         IAppLogger<RevokeEndpoint> _logger,
         RevokeTokenUseCase revokeTokenService) =>
         {
-            string ipAddress = httpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+            string ipAddress = httpContext.Connection?.RemoteIpAddress?.MapToIPv4().ToString() ?? string.Empty;
 
             request.IpAddress = ipAddress;
 

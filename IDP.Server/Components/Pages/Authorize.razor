@@ -62,7 +62,7 @@ else if (ui != null)
                 <div class="options-row">
                     @if (ui.AllowStaySignedIn)
                     {
-                        <label><input type="checkbox" /> Stay signed in</label>
+                        <label><InputCheckbox @bind-Value="loginModel.RememberMe" /> Stay signed in</label>
                     }
 
                     <a href="#" @onclick="GoToForgotPassword">Forgot password?</a>
@@ -143,6 +143,8 @@ else if (ui != null)
 
         [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; } = default!;
+
+        public bool RememberMe { get; set; }
     }
 
     private AuthorizationPageUi? ui;
@@ -201,7 +203,7 @@ else if (ui != null)
             var clientInfo = await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
 
             // Build dynamic UI AFTER validation
-            ui = await PageUiUseCase.BuildAsync(clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
+            ui = await PageUiUseCase.BuildAsync(clientInfo.Scopes, clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
         }
         catch (AuthorizationRequestException ex)
         {
@@ -238,7 +240,8 @@ else if (ui != null)
             CodeChallenge = codeChallenge,
             RedirectUri = redirectUri,
             CodeChallengeMethod = codeChallengeMethod,
-            Scopes = requestedScopes
+            Scopes = requestedScopes,
+            RememberMe = loginModel.RememberMe
         };
 
         try

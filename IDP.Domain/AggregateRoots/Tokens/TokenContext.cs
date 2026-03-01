@@ -13,6 +13,7 @@ public class TokenContext
     public int ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
+    public bool RememberMe { get; private set; }
     public DateTime IssuedAt { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime RefreshExpiresAt { get; private set; }
@@ -30,6 +31,7 @@ public class TokenContext
         int clientSecretExpiry,
         int accessTokenLifetime,
         int refreshTokenExpiration,
+        bool rememberMe,
         string[] roles,
         string[] scope,
         string[] audience,
@@ -46,10 +48,11 @@ public class TokenContext
             Roles = roles,
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
-            RefreshTokenExpiration = refreshTokenExpiration * 60,
+            RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
             Scopes = scope,
             Audiences = audience,
-            IpAddress = ipAddress
+            IpAddress = ipAddress,
+            RememberMe = rememberMe
         };
     }
 
@@ -74,7 +77,7 @@ public class TokenContext
             TokenType = tokenType,
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
-            RefreshTokenExpiration = refreshTokenExpiration * 60,
+            RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
             Scopes = scope,
             Audiences = audience,
             IpAddress = ipAddress,
@@ -90,7 +93,14 @@ public class TokenContext
 
     public void SetRefreshTokenExpiry()
     {
-        RefreshExpiresAt = DateTime.UtcNow.AddMinutes(RefreshTokenExpiration);
+        if (RememberMe)
+        {
+            RefreshExpiresAt = DateTime.UtcNow.AddMinutes(RefreshTokenExpiration);
+        }
+        else
+        {
+            RefreshExpiresAt = DateTime.UtcNow.AddMinutes(240);
+        }
     }
 
     public void AddAuthorizedScopes(string scope)

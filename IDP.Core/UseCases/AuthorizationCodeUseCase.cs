@@ -98,14 +98,19 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             throw new NotFoundException("Client not found.");
         }
 
-        var tokenInfo = await _tokenContextUseCase.BuildTokenContextAsync(tokenRequest.ClientId, authorizationCode.UserId);
+        var tokenInfo = await _tokenContextUseCase
+            .BuildTokenContextAsync(tokenRequest.ClientId, 
+            authorizationCode.UserId,
+            authorizationCode.RememberMe);
 
         tokenInfo.AddAuthorizedScopes(authorizationCode.Scopes ?? string.Empty);
 
         return tokenInfo;
     }
 
-    private async Task<AuthorizationResponse> GenerateAuthorizationCode(AuthorizationRequest request, int userId)
+    private async Task<AuthorizationResponse> GenerateAuthorizationCode(
+        AuthorizationRequest request, 
+        int userId)
     {
         var code = Guid.NewGuid().ToString();
         _logger.LogDebug("Generated authorization code: {Code}", code);
@@ -118,6 +123,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             userId,
             DateTime.UtcNow.AddMinutes(5),
             request.RedirectUri,
+            request.RememberMe,
             request.Scopes);
 
         var id = await _authorizationCodeStore.Create(authorizationCode);

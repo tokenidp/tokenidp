@@ -19,4 +19,12 @@ public class TokenRequest
     public string? IpAddress { get; set; }
 
     public string? ClientSecret { get; set; }
+
+    // Not bindable from client
+    public int TenantId { get; private set; }
+
+    public void SetTenantId(int tenantId)
+    {
+        TenantId = tenantId;
+    }
 }

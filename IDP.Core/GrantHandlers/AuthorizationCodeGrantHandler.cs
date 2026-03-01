@@ -24,15 +24,15 @@ internal sealed class AuthorizationCodeGrantHandler : ITokenGrantHandler
             throw new ArgumentNullException(nameof(tokenRequest));
         }
 
-        _logger.LogInfo("Generating token for request from {IPAddress}", tokenRequest.IpAddress);
+        _logger.LogInfo("Generating token for request from {IPAddress}", tokenRequest.IpAddress ?? string.Empty);
 
         var tokenInfo = await _authorizationCodeUseCase.ValidateAuthorizationCodeAsync(tokenRequest);
 
-        _logger.LogDebug("User validation successful for {UserId}", tokenInfo.UserId);
+        _logger.LogDebug("User validation successful for {UserId}", tokenInfo.UserId ?? 0);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 
-        _logger.LogInfo("Token generated successfully for {UserId}", tokenInfo.UserId);
+        _logger.LogInfo("Token generated successfully for {UserId}", tokenInfo.UserId ?? 0);
 
         return token;
     }
