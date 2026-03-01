@@ -185,9 +185,13 @@ function TokensStep({
                   {...register("refreshTokenExpiration", {
                     required: hasRefreshToken,
                     valueAsNumber: true,
+                    max: {
+                      value: 30,
+                      message: "Refresh token expiration cannot exceed 30 days.",
+                    },
                   })}
                 />
-                <span className="input-group-text">Hours</span>
+                <span className="input-group-text">Days</span>
               </div>
               {!hasRefreshToken && (
                 <div className="form-text text-muted">
@@ -195,7 +199,10 @@ function TokensStep({
                 </div>
               )}
               {hasRefreshToken && errors.refreshTokenExpiration && (
-                <div className="error-msg">Refresh token expiration is required.</div>
+                <div className="error-msg">
+                  {errors.refreshTokenExpiration.message ||
+                    "Refresh token expiration is required."}
+                </div>
               )}
               <div className="form-text">
                 Longer-lived refresh tokens increase risk if compromised.

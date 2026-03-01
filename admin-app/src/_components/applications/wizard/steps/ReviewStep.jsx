@@ -73,7 +73,7 @@ function ReviewStep({
     : null;
 
   const refreshTokenWarning =
-    values.refreshTokenExpiration && Number(values.refreshTokenExpiration) > 720
+    values.refreshTokenExpiration && Number(values.refreshTokenExpiration) > 30
       ? "Long-lived refresh tokens increase risk if compromised."
       : null;
 
@@ -220,7 +220,7 @@ function ReviewStep({
                   <div className="text-muted small">Refresh Token Expiration</div>
                   <div>
                     {values.refreshTokenExpiration
-                      ? `${values.refreshTokenExpiration} hours`
+                      ? `${values.refreshTokenExpiration} days`
                       : "--"}
                   </div>
                 </div>
