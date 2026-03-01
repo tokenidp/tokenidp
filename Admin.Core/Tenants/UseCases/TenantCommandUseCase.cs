@@ -213,14 +213,21 @@ internal sealed class TenantCommandUseCase
 
         foreach (var p in providersRequest)
         {
+            var existingProvider = tenant.TenantExternalProviders
+                .FirstOrDefault(x => x.ProviderType == p.ProviderType);
+
+            var resolvedClientSecret = string.IsNullOrWhiteSpace(p.ClientSecret)
+                ? existingProvider?.OidcConfig?.ClientSecret
+                : p.ClientSecret;
+
             var config = OidcClientConfig.Create(
                 p.ClientId,
                 new Uri(p.Authority),
                 p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
                 p.CallbackPath,
-                p.ClientSecret);
+                resolvedClientSecret);
 
-            if (!tenant.TenantExternalProviders.Any(x => x.ProviderType == p.ProviderType))
+            if (existingProvider is null)
             {
                 var addResult = tenant.AddExternalProvider(p.ProviderType, config);
                 if (!addResult.IsSuccess)

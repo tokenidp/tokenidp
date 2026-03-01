@@ -161,7 +161,7 @@ else if (ui != null)
     private string codeChallengeMethod = string.Empty;
     private string responseType = string.Empty;
     private string state = string.Empty;
-
+    private int tenantId;
     private string tenantKey = string.Empty;
 
     private readonly LoginModel loginModel = new();
@@ -201,7 +201,7 @@ else if (ui != null)
             };
 
             var clientInfo = await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
-
+            tenantId = clientInfo.TenantId;
             // Build dynamic UI AFTER validation
             ui = await PageUiUseCase.BuildAsync(clientInfo.Scopes, clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
         }
@@ -241,7 +241,8 @@ else if (ui != null)
             RedirectUri = redirectUri,
             CodeChallengeMethod = codeChallengeMethod,
             Scopes = requestedScopes,
-            RememberMe = loginModel.RememberMe
+            RememberMe = loginModel.RememberMe,
+            TenantId = tenantId
         };
 
         try

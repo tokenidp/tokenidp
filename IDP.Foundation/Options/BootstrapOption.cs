@@ -2,6 +2,7 @@
 
 public class BootstrapOption
 {
+    public string ClientId { get; set; } = default!;
     public string RedirectUri { get; set; } = default!;
     public string LogoutRedirectUri { get; set; } = default!;
     public string AdminTempPassword { get; set; } = default!;

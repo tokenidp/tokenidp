@@ -33,7 +33,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 
     public async Task<AuthorizationResponse> Authenticate(AuthorizationRequest request)
     {
-        var context = await _identityService.Authenticate(request.UserName, request.Password);
+        var context = await _identityService.Authenticate(request.TenantId, request.UserName, request.Password);
 
         if (!context.IsSuccess)
         {
@@ -99,7 +99,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         }
 
         var tokenInfo = await _tokenContextUseCase
-            .BuildTokenContextAsync(tokenRequest.ClientId, 
+            .BuildTokenContextAsync(tokenRequest.ClientId,
             authorizationCode.UserId,
             authorizationCode.RememberMe);
 
@@ -109,7 +109,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
     }
 
     private async Task<AuthorizationResponse> GenerateAuthorizationCode(
-        AuthorizationRequest request, 
+        AuthorizationRequest request,
         int userId)
     {
         var code = Guid.NewGuid().ToString();
