@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -27,6 +27,9 @@ const defaultValues = {
 const isProviderEnabled = (provider) =>
   provider?.enabled ?? provider?.Enabled ?? false;
 
+const getProviderField = (provider, camel, pascal, fallback = "") =>
+  provider?.[camel] ?? provider?.[pascal] ?? fallback;
+
 function AddEditTenant({ mode }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,6 +52,7 @@ function AddEditTenant({ mode }) {
     register,
     handleSubmit,
     setValue,
+    clearErrors,
     reset,
     watch,
     formState: { errors },
@@ -61,7 +65,10 @@ function AddEditTenant({ mode }) {
   const allowLocalLogin = watch("allowLocalLogin");
   const requireEmailVerification = watch("requireEmailVerification");
   const allowSelfRegistration = watch("allowSelfRegistration");
+  const externalProviderKeysValue = watch("externalProviderKeys");
   const isActive = String(isActiveValue).toLowerCase() === "true";
+  const [providerDetailsByKey, setProviderDetailsByKey] = useState({});
+  const [providerConfigErrors, setProviderConfigErrors] = useState({});
 
   const getLookupField = (option) =>
     option?.key ??
@@ -119,15 +126,127 @@ function AddEditTenant({ mode }) {
     return Number.isFinite(parsed) ? parsed : fallback;
   };
 
-  const createDefaultProvider = (providerType) => ({
-    providerType: toNumberOrDefault(providerType),
-    enabled: true,
-    clientId: `provider-${providerType}-client`,
-    clientSecret: null,
-    authority: "https://example.com",
-    scopes: "openid profile email",
-    callbackPath: "/signin-oidc",
-  });
+  const toProviderDetail = (providerType, provider = {}) => {
+    const currentClientSecret = getProviderField(
+      provider,
+      "clientSecret",
+      "ClientSecret",
+      ""
+    );
+    const hasClientSecretFlag =
+      provider?.hasClientSecret ??
+      provider?.HasClientSecret ??
+      Boolean(currentClientSecret);
+
+    return {
+      providerType: toNumberOrDefault(providerType),
+      enabled: isProviderEnabled(provider),
+      authority: String(getProviderField(provider, "authority", "Authority", "")),
+      clientId: String(getProviderField(provider, "clientId", "ClientId", "")),
+      clientSecret: "",
+      scopes: String(getProviderField(provider, "scopes", "Scopes", "")),
+      callbackPath: String(
+        getProviderField(provider, "callbackPath", "CallbackPath", "")
+      ),
+      hasClientSecret: Boolean(hasClientSecretFlag),
+      editingSecret: !hasClientSecretFlag,
+      clientSecretChanged: false,
+    };
+  };
+
+  const externalProviderOptions = useMemo(
+    () =>
+      (state.externalProviders ?? []).map((option, index) => {
+        const value = toProviderOptionValue(option, index);
+        const label =
+          option.value ?? option.name ?? option.Value ?? option.Name ?? `Provider ${index + 1}`;
+        return { value: String(value), label: String(label) };
+      }),
+    [state.externalProviders]
+  );
+
+  const selectedProviderKeys = useMemo(() => {
+    if (Array.isArray(externalProviderKeysValue)) {
+      return externalProviderKeysValue.map((key) => String(key)).filter(Boolean);
+    }
+    if (externalProviderKeysValue === undefined || externalProviderKeysValue === null) {
+      return [];
+    }
+    return [String(externalProviderKeysValue)].filter(Boolean);
+  }, [externalProviderKeysValue]);
+
+  const updateProviderDetail = (providerKey, patch) => {
+    setProviderDetailsByKey((prev) => ({
+      ...prev,
+      [providerKey]: {
+        ...toProviderDetail(providerKey),
+        ...(prev[providerKey] || {}),
+        ...patch,
+      },
+    }));
+  };
+
+  const clearProviderFieldError = (providerKey, fieldName) => {
+    setProviderConfigErrors((prev) => {
+      if (!prev[providerKey] || !prev[providerKey][fieldName]) {
+        return prev;
+      }
+      const nextProviderErrors = { ...prev[providerKey] };
+      delete nextProviderErrors[fieldName];
+      const next = { ...prev };
+      if (Object.keys(nextProviderErrors).length) {
+        next[providerKey] = nextProviderErrors;
+      } else {
+        delete next[providerKey];
+      }
+      return next;
+    });
+  };
+
+  const getProviderConfigError = (providerKey, fieldName) =>
+    providerConfigErrors?.[providerKey]?.[fieldName] || "";
+
+  const validateProviderConfigs = (selectedKeys) => {
+    const nextErrors = {};
+    selectedKeys.forEach((providerKey) => {
+      const detail = providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
+      const providerErrors = {};
+
+      if (!String(detail.clientId || "").trim()) {
+        providerErrors.clientId = "Client ID is required when provider is enabled.";
+      }
+      if (!String(detail.authority || "").trim()) {
+        providerErrors.authority = "Authority is required when provider is enabled.";
+      }
+      if (!String(detail.callbackPath || "").trim()) {
+        providerErrors.callbackPath = "Callback path is required when provider is enabled.";
+      }
+
+      if (Object.keys(providerErrors).length) {
+        nextErrors[providerKey] = providerErrors;
+      }
+    });
+
+    setProviderConfigErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const toProviderPayload = (providerKey, detail, enabled) => {
+    const payload = {
+      providerType: toNumberOrDefault(detail.providerType ?? providerKey),
+      enabled: Boolean(enabled),
+      clientId: String(detail.clientId || "").trim(),
+      authority: String(detail.authority || "").trim(),
+      scopes: String(detail.scopes || "").trim(),
+      callbackPath: String(detail.callbackPath || "").trim(),
+    };
+
+    if (detail.clientSecretChanged && String(detail.clientSecret || "").trim()) {
+      payload.clientSecret = String(detail.clientSecret).trim();
+    }
+
+    return payload;
+  };
 
   useEffect(() => {
     loadLookups();
@@ -223,35 +342,92 @@ function AddEditTenant({ mode }) {
         providers: data.providers ?? data.Providers ?? [],
       });
       setExistingProviders(data.providers ?? data.Providers ?? []);
+      setProviderConfigErrors({});
     };
 
     loadTenant();
   }, [decodedTenantKey, getTenantById, mode, reset, resolveTenantIdByCode, tenantId]);
 
   useEffect(() => {
-    if (!existingProviders.length || !state.externalProviders.length) {
+    if (!existingProviders.length) {
       return;
     }
 
-    setValue(
-      "externalProviderKeys",
-      existingProviders
-        .filter((provider) => isProviderEnabled(provider))
-        .map((provider) => toProviderKey(provider))
-        .filter(Boolean)
-    );
-  }, [existingProviders, setValue, state.externalProviders]);
+    setProviderDetailsByKey((prev) => {
+      const next = { ...prev };
+      existingProviders.forEach((provider) => {
+        const providerKey = toProviderKey(provider);
+        if (!providerKey) return;
+        const providerEnum = resolveProviderEnum(
+          provider.providerType ?? provider.ProviderType ?? providerKey
+        );
+        next[providerKey] = {
+          ...toProviderDetail(providerEnum ?? providerKey, provider),
+          ...(next[providerKey] || {}),
+          providerType: toNumberOrDefault(providerEnum ?? providerKey),
+          enabled: isProviderEnabled(provider),
+          authority: String(getProviderField(provider, "authority", "Authority", "")),
+          clientId: String(getProviderField(provider, "clientId", "ClientId", "")),
+          scopes: String(getProviderField(provider, "scopes", "Scopes", "")),
+          callbackPath: String(
+            getProviderField(provider, "callbackPath", "CallbackPath", "")
+          ),
+          hasClientSecret: Boolean(
+            getProviderField(provider, "hasClientSecret", "HasClientSecret", false) ||
+              getProviderField(provider, "clientSecret", "ClientSecret", "")
+          ),
+          editingSecret: !Boolean(
+            getProviderField(provider, "hasClientSecret", "HasClientSecret", false) ||
+              getProviderField(provider, "clientSecret", "ClientSecret", "")
+          ),
+          clientSecret: "",
+          clientSecretChanged: false,
+        };
+      });
+      return next;
+    });
+  }, [existingProviders, state.externalProviders]);
+
+  useEffect(() => {
+    const selectedKeysSet = new Set(selectedProviderKeys);
+    setProviderDetailsByKey((prev) => {
+      const next = { ...prev };
+
+      externalProviderOptions.forEach((option) => {
+        const providerKey = String(option.value);
+        const previousDetail = next[providerKey];
+        if (!previousDetail) {
+          next[providerKey] = {
+            ...toProviderDetail(providerKey),
+            providerType: toNumberOrDefault(providerKey),
+            enabled: selectedKeysSet.has(providerKey),
+          };
+          return;
+        }
+        next[providerKey] = {
+          ...previousDetail,
+          enabled: selectedKeysSet.has(providerKey),
+        };
+      });
+
+      return next;
+    });
+  }, [externalProviderOptions, selectedProviderKeys]);
 
   const onSubmit = async (data) => {
     if (mode === "edit" && !tenantId) {
       return;
     }
 
-    const selectedProviderKeys = new Set(
+    const selectedProviderKeySet = new Set(
       (Array.isArray(data.externalProviderKeys) ? data.externalProviderKeys : [])
         .map((key) => String(key))
         .filter(Boolean)
     );
+
+    if (!validateProviderConfigs(Array.from(selectedProviderKeySet))) {
+      return;
+    }
 
     const existingByKey = new Map(
       (existingProviders ?? [])
@@ -259,27 +435,31 @@ function AddEditTenant({ mode }) {
         .filter(([key]) => !!key)
     );
 
-    const updatedExistingProviders = Array.from(existingByKey.values()).map(
-      (provider) => {
-        const providerKey = toProviderKey(provider);
-        const providerEnum = resolveProviderEnum(
-          provider.providerType ?? provider.ProviderType ?? providerKey
-        );
-        return {
-          providerType: toNumberOrDefault(providerEnum ?? providerKey),
-          enabled: selectedProviderKeys.has(providerKey),
-          clientId: provider.clientId ?? provider.ClientId ?? "",
-          clientSecret: provider.clientSecret ?? provider.ClientSecret ?? null,
-          authority: provider.authority ?? provider.Authority ?? "",
-          scopes: provider.scopes ?? provider.Scopes ?? "",
-          callbackPath: provider.callbackPath ?? provider.CallbackPath ?? "",
-        };
-      }
-    );
+    const updatedExistingProviders = Array.from(existingByKey.values()).map((provider) => {
+      const providerKey = toProviderKey(provider);
+      const providerEnum = resolveProviderEnum(
+        provider.providerType ?? provider.ProviderType ?? providerKey
+      );
+      const detail =
+        providerDetailsByKey[providerKey] ||
+        toProviderDetail(providerEnum ?? providerKey, provider);
 
-    const newSelectedProviders = Array.from(selectedProviderKeys)
+      return toProviderPayload(
+        providerEnum ?? providerKey,
+        {
+          ...detail,
+          providerType: toNumberOrDefault(providerEnum ?? providerKey),
+        },
+        selectedProviderKeySet.has(providerKey)
+      );
+    });
+
+    const newSelectedProviders = Array.from(selectedProviderKeySet)
       .filter((providerKey) => !existingByKey.has(providerKey))
-      .map((providerKey) => createDefaultProvider(providerKey));
+      .map((providerKey) => {
+        const detail = providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
+        return toProviderPayload(providerKey, detail, true);
+      });
 
     const payload = {
       id: mode === "edit" ? Number(tenantId) : 0,
@@ -622,31 +802,155 @@ function AddEditTenant({ mode }) {
                 <div className="text-muted small mb-3">
                   Select external identity providers from tenant lookups.
                 </div>
-                <div className="row g-2">
-                  {state.externalProviders.map((option, index) => {
-                    const value = toProviderOptionValue(option, index);
-                    const label =
-                      option.value ?? option.name ?? option.Value ?? option.Name;
+                <div className="row g-3">
+                  {externalProviderOptions.map((providerOption) => {
+                    const providerKey = String(providerOption.value);
+                    const isEnabled = selectedProviderKeys.includes(providerKey);
+                    const detail =
+                      providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
+                    const authorityError = getProviderConfigError(providerKey, "authority");
+                    const clientIdError = getProviderConfigError(providerKey, "clientId");
+                    const callbackPathError = getProviderConfigError(
+                      providerKey,
+                      "callbackPath"
+                    );
 
                     return (
-                      <div
-                        className="col-12 col-sm-6 col-lg-4"
-                        key={String(value)}
-                      >
-                        <div className="form-check">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            value={String(value)}
-                            id={`provider-${String(value)}`}
-                            {...register("externalProviderKeys")}
-                          />
-                          <label
-                            className="form-check-label"
-                            htmlFor={`provider-${String(value)}`}
-                          >
-                            {label}
-                          </label>
+                      <div className="col-12" key={providerKey}>
+                        <div className="border rounded p-3">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input"
+                              type="checkbox"
+                              value={providerKey}
+                              id={`provider-${providerKey}`}
+                              {...register("externalProviderKeys", {
+                                onChange: (event) => {
+                                  const checked = event.target.checked;
+                                  updateProviderDetail(providerKey, { enabled: checked });
+                                  if (!checked) {
+                                    setProviderConfigErrors((prev) => {
+                                      if (!prev[providerKey]) {
+                                        return prev;
+                                      }
+                                      const next = { ...prev };
+                                      delete next[providerKey];
+                                      return next;
+                                    });
+                                  }
+                                  clearErrors("externalProviderKeys");
+                                },
+                              })}
+                            />
+                            <label
+                              className="form-check-label fw-semibold"
+                              htmlFor={`provider-${providerKey}`}
+                            >
+                              {providerOption.label}
+                            </label>
+                          </div>
+
+                          {isEnabled && (
+                            <div className="row g-3 mt-2">
+                              <div className="col-12 col-md-6">
+                                <label className="form-label">Authority *</label>
+                                <input
+                                  className={`form-control${authorityError ? " is-invalid" : ""}`}
+                                  value={detail.authority || ""}
+                                  onChange={(event) => {
+                                    updateProviderDetail(providerKey, {
+                                      authority: event.target.value,
+                                    });
+                                    clearProviderFieldError(providerKey, "authority");
+                                  }}
+                                />
+                                {authorityError && (
+                                  <div className="error-msg">{authorityError}</div>
+                                )}
+                              </div>
+                              <div className="col-12 col-md-6">
+                                <label className="form-label">Client ID *</label>
+                                <input
+                                  className={`form-control${clientIdError ? " is-invalid" : ""}`}
+                                  value={detail.clientId || ""}
+                                  onChange={(event) => {
+                                    updateProviderDetail(providerKey, {
+                                      clientId: event.target.value,
+                                    });
+                                    clearProviderFieldError(providerKey, "clientId");
+                                  }}
+                                />
+                                {clientIdError && (
+                                  <div className="error-msg">{clientIdError}</div>
+                                )}
+                              </div>
+                              <div className="col-12 col-md-6">
+                                <label className="form-label">Client Secret</label>
+                                {detail.hasClientSecret && !detail.editingSecret ? (
+                                  <div>
+                                    <div className="form-text mb-2">
+                                      Secret is configured.
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-secondary btn-sm"
+                                      onClick={() =>
+                                        updateProviderDetail(providerKey, {
+                                          editingSecret: true,
+                                        })
+                                      }
+                                    >
+                                      Change Secret
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <input
+                                    className="form-control"
+                                    type="password"
+                                    value={detail.clientSecret || ""}
+                                    onChange={(event) =>
+                                      updateProviderDetail(providerKey, {
+                                        clientSecret: event.target.value,
+                                        clientSecretChanged: Boolean(
+                                          String(event.target.value || "").trim()
+                                        ),
+                                      })
+                                    }
+                                  />
+                                )}
+                              </div>
+                              <div className="col-12 col-md-6">
+                                <label className="form-label">Scopes</label>
+                                <input
+                                  className="form-control"
+                                  value={detail.scopes || ""}
+                                  onChange={(event) =>
+                                    updateProviderDetail(providerKey, {
+                                      scopes: event.target.value,
+                                    })
+                                  }
+                                />
+                              </div>
+                              <div className="col-12">
+                                <label className="form-label">Callback Path *</label>
+                                <input
+                                  className={`form-control${
+                                    callbackPathError ? " is-invalid" : ""
+                                  }`}
+                                  value={detail.callbackPath || ""}
+                                  onChange={(event) => {
+                                    updateProviderDetail(providerKey, {
+                                      callbackPath: event.target.value,
+                                    });
+                                    clearProviderFieldError(providerKey, "callbackPath");
+                                  }}
+                                />
+                                {callbackPathError && (
+                                  <div className="error-msg">{callbackPathError}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
