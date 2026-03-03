@@ -6,14 +6,14 @@ namespace IDP.Core.UseCases;
 internal sealed class UserInfoUseCase
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly IIdentityStore _identityStore;
+    private readonly IUserStore _identityStore;
     private readonly IAppLogger<UserInfoUseCase> _logger;
 
     private IReadOnlySet<string> _supportedScopes;
 
     public UserInfoUseCase(IAppLogger<UserInfoUseCase> logger,
         ICurrentUserService currentUserService,
-        IIdentityStore identityStore)
+        IUserStore identityStore)
     {
         _supportedScopes = StandardScopes.Supported;
 

@@ -6,34 +6,38 @@ namespace IDP.Core.UseCases;
 
 internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 {
-    private readonly IIdentityStore _identityService;
-    private readonly IAuthorizationCodeStore _authorizationCodeStore;
+    private readonly IAuthenticationService _identityService;
+    private readonly IAuthorizationStore _authorizationStore;
     private readonly IMfaUseCase _mfaUseCase;
     private readonly IClientStore _clientStore;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
 
-    internal AuthorizationCodeUseCase(IIdentityStore identityService,
+    internal AuthorizationCodeUseCase(IAuthenticationService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
         IMfaUseCase mfaUseCase,
-        IAuthorizationCodeStore authorizationCodeStore,
+        IAuthorizationStore authorizationStore,
         TokenContextUseCase tokenContextUseCase,
         TenantUserMfaPolicy mfaPolicy,
-        IClientStore clientStore)
+        IClientStore clientStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _identityService = identityService;
         _logger = appLogger;
         _mfaUseCase = mfaUseCase;
-        _authorizationCodeStore = authorizationCodeStore;
+        _authorizationStore = authorizationStore;
         _tokenContextUseCase = tokenContextUseCase;
         _mfaPolicy = mfaPolicy;
         _clientStore = clientStore;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<AuthorizationResponse> Authenticate(AuthorizationRequest request)
     {
-        var context = await _identityService.Authenticate(request.TenantId, request.UserName, request.Password);
+        var context = await _identityService
+            .Authenticate(_tenantContextAccessor.TenantId, request.UserName, request.Password);
 
         if (!context.IsSuccess)
         {
@@ -46,7 +50,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 
         if (checkTwoFactorEnabled)
         {
-            authResponse = await _mfaUseCase.GenerateMfaCode(request, context.UserId);
+            authResponse = await _mfaUseCase.GenerateMfaForAuthorizeAsync(request, context.UserId);
 
             _logger.LogInfo("Authenticate completed for user: {Username}", request.UserName);
 
@@ -54,20 +58,6 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         }
 
         authResponse = await GenerateAuthorizationCode(request, context.UserId);
-
-        return authResponse;
-    }
-
-    public async Task<AuthorizationResponse> VerifyMfaCode(MfaRequest request)
-    {
-        var (authRequest, authResponse) = await _mfaUseCase.VerifyMfaRequest(request);
-
-        if (authResponse != null && !authResponse.IsSuccess)
-        {
-            return authResponse;
-        }
-
-        authResponse = await GenerateAuthorizationCode(authRequest!, request.UserId);
 
         return authResponse;
     }
@@ -108,7 +98,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         return tokenInfo;
     }
 
-    private async Task<AuthorizationResponse> GenerateAuthorizationCode(
+    public async Task<AuthorizationResponse> GenerateAuthorizationCode(
         AuthorizationRequest request,
         int userId)
     {
@@ -126,7 +116,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             request.RememberMe,
             request.Scopes);
 
-        var id = await _authorizationCodeStore.Create(authorizationCode);
+        var id = await _authorizationStore.CreateAuthorization(authorizationCode);
 
         _logger.LogInfo("Saved authorization code {Id} for user {UserId} - Client: {ClientId}.",
             id, userId, request.ClientId);
@@ -136,7 +126,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 
     private async Task<AuthorizationCode> ValidateAuthorizationCode(string code, string clientId)
     {
-        var authorizationCode = await _authorizationCodeStore.GetByCode(code, clientId);
+        var authorizationCode = await _authorizationStore.GetByAuthCode(code, clientId);
 
         if (authorizationCode == null || authorizationCode.Expiry <= DateTime.UtcNow
             || authorizationCode.IsUsed || authorizationCode.Code != code)
@@ -148,7 +138,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 
         _logger.LogInfo("Authorization code found for UserId: {UserId}", authorizationCode.UserId);
 
-        var id = _authorizationCodeStore.Update(authorizationCode);
+        var id = _authorizationStore.UpdateAuthorization(authorizationCode);
 
         return authorizationCode;
     }

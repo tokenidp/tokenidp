@@ -2,6 +2,7 @@
 using IDP.Core.OAuth;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Foundation.Options;
+using IDP.Foundation.Security;
 using IDP.Infrastructure.Bootstrap;
 using IDP.Infrastructure.Emails;
 using IDP.Infrastructure.Emails.Abstractions;
@@ -45,20 +46,36 @@ public static class DependencyInjection
         services.AddSingleton(typeof(IAppLogger<>), typeof(AppLogger<>));
         services.AddSingleton<ICache, MemoryCache>();
         services.AddSingleton<JsonHelper>();
+
+        var secretEncryptionOptions = configuration
+            .GetSection(SecretEncryptionOptions.SectionName)
+            .Get<SecretEncryptionOptions>() ?? new SecretEncryptionOptions();
+
+        if (string.IsNullOrWhiteSpace(secretEncryptionOptions.KeyBase64))
+        {
+            secretEncryptionOptions.KeyBase64 =
+                Environment.GetEnvironmentVariable("IDP_SECRET_ENCRYPTION_KEY") ?? string.Empty;
+        }
+
+        services.AddSingleton(secretEncryptionOptions);
+        services.AddSingleton<ISecretProtector>(_ =>
+            new AesGcmSecretProtector(
+                secretEncryptionOptions.KeyBase64,
+                secretEncryptionOptions.KeyId));
     }
 
     private static void AddStores(IServiceCollection services)
     {
-        services.AddScoped<IAuthorizationCodeStore, AuthorizationCodeStore>();
+        services.AddScoped<IAuthorizationStore, AuthorizationStore>();
         services.AddScoped<IClientStore, ClientStore>();
-        services.AddScoped<IIdentityStore, IdentityStore>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IRoleStore, RoleStore>();
         services.AddScoped<IConfigurationStore, ConfigurationStore>();
-        services.AddScoped<IPreAuthorizationStore, PreAuthorizationStore>();
         services.AddScoped<ITenantStore, TenantStore>();
         services.AddScoped<ITokenStore, TokenStore>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
         services.AddScoped<ICodeSequenceGenerator, CodeSequenceGenerator>();
+        services.AddScoped<IUserStore, UserStore>();
     }
 
     private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)

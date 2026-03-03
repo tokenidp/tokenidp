@@ -5,7 +5,7 @@ namespace Admin.Core.Users.UseCases;
 
 internal class UserPermissionsUseCase
 {
-    private readonly IIdentityStore _identityStore;
+    private readonly IUserStore _userStore;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<UserPermissionsUseCase> _logger;
@@ -13,19 +13,19 @@ internal class UserPermissionsUseCase
     public UserPermissionsUseCase(ICurrentUserService currentUserService,
         IApplicationDbContext applicationDbContext,
         IAppLogger<UserPermissionsUseCase> logger,
-        IIdentityStore identityStore)
+        IUserStore userStore)
     {
         _currentUserService = currentUserService;
         _dbContext = applicationDbContext;
         _logger = logger;
-        _identityStore = identityStore;
+        _userStore = userStore;
     }
 
     public async Task<ApiResult<UserPermission>> GetUserPermissions()
     {
         _logger.LogDebug("Fetching user info for: {UserId}", _currentUserService.UserId);
 
-        var user = await _identityStore.GetUserById(_currentUserService.UserId);
+        var user = await _userStore.GetUserById(_currentUserService.UserId);
 
         if (user == null)
         {

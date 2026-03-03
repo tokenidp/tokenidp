@@ -46,6 +46,7 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<TenantUISetting> TenantUISettings { get; set; }
     public DbSet<PreAuthorization> PreAuthorizations { get; set; }
     public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
+    public DbSet<DeviceAuthorization> DeviceAuthorizations { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<ClientScope> ClientScopes { get; set; }
     public DbSet<ClientAudience> ClientAudiences { get; set; }

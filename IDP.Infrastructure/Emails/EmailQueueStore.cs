@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.AggregateRoots.Emails;
+using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Emails.Primitives;
 using IDP.Infrastructure.Persistence;
 using Microsoft.Data.SqlClient;

@@ -10,19 +10,22 @@ internal sealed class TenantCommandUseCase
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _codeGenerator;
+    private readonly ISecretProtector _secretProtector;
 
     public TenantCommandUseCase(
         IApplicationDbContext dbContext,
         ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<TenantCommandUseCase> logger,
-        ICodeSequenceGenerator codeGenerator)
+        ICodeSequenceGenerator codeGenerator,
+        ISecretProtector secretProtector)
     {
         _dbContext = dbContext;
         _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
         _codeGenerator = codeGenerator;
+        _secretProtector = secretProtector;
     }
 
     public async Task<ApiResult<int>> CreateTenant(
@@ -107,7 +110,7 @@ internal sealed class TenantCommandUseCase
                 authority: new Uri(p.Authority),
                 scopes: p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
                 callbackPath: p.CallbackPath,
-                clientSecret: p.ClientSecret);
+                clientSecret: EncryptProviderSecret(tenant.TenantKey, p.ProviderType, p.ClientSecret));
 
             var addResult = tenant.AddExternalProvider(p.ProviderType, config);
             if (!addResult.IsSuccess)
@@ -219,13 +222,14 @@ internal sealed class TenantCommandUseCase
             var resolvedClientSecret = string.IsNullOrWhiteSpace(p.ClientSecret)
                 ? existingProvider?.OidcConfig?.ClientSecret
                 : p.ClientSecret;
+            var encryptedClientSecret = EncryptProviderSecret(tenant.TenantKey, p.ProviderType, resolvedClientSecret);
 
             var config = OidcClientConfig.Create(
                 p.ClientId,
                 new Uri(p.Authority),
                 p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
                 p.CallbackPath,
-                resolvedClientSecret);
+                encryptedClientSecret);
 
             if (existingProvider is null)
             {
@@ -354,5 +358,18 @@ internal sealed class TenantCommandUseCase
         }
 
         return key;
+    }
+
+    private string? EncryptProviderSecret(
+        string tenantKey,
+        ExternalProviderTypes providerType,
+        string? clientSecret)
+    {
+        return _secretProtector.Encrypt(clientSecret, BuildSecretContext(tenantKey, providerType));
+    }
+
+    private static string BuildSecretContext(string tenantKey, ExternalProviderTypes providerType)
+    {
+        return $"tenant:{tenantKey}:provider:{providerType}";
     }
 }

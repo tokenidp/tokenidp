@@ -1,4 +1,6 @@
-﻿using IDP.Foundation.Abstractions.Stores;
+﻿using Admin.Core.Tenants;
+using IDP.Domain.AggregateRoots.Tenants;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Persistence;
 
@@ -45,5 +47,23 @@ internal sealed class TenantStore : ITenantStore
         }, new TimeSpan(0, 15, 0));
 
         return uiSetting;
+    }
+
+    public async Task<TenantExternalProvider?> ResolveExternalProvider(
+       int tenantId,
+       ExternalProviderTypes providerType,
+       CancellationToken ct = default)
+    {
+        var provider = await _dbContext.TenantExternalProviders
+            .FirstOrDefaultAsync(
+                x => x.TenantId == tenantId
+                  && x.ProviderType == providerType
+                  && x.Enabled,
+                ct);
+
+        if (provider == null)
+            return null;
+
+        return provider;
     }
 }

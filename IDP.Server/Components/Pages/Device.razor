@@ -1,0 +1,127 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using IDP.Core.Abstractions
+@using IDP.Foundation.Abstractions
+@using Microsoft.AspNetCore.WebUtilities
+
+@page "/device"
+@rendermode InteractiveServer
+
+<PageTitle>Device Activation</PageTitle>
+
+@inject NavigationManager Navigation
+@inject IDeviceAuthenticationUseCase AuthUseCase
+@inject IJSRuntime JSRuntime
+@inject IAppLogger<Device> Logger
+
+<div class="card">
+    <h1>Activate Your Device</h1>
+
+    <div class="alert-danger" style="@GetErrorStyle()">@ErrorMessage</div>
+
+    @if (!isApproved)
+    {
+        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="field">
+                <label>User Code</label>
+                <InputText @bind-Value="model.UserCode" />
+                <ValidationMessage For="@(() => model.UserCode)" />
+            </div>
+
+            <div class="field">
+                <label>Username</label>
+                <InputText @bind-Value="model.UserName" />
+                <ValidationMessage For="@(() => model.UserName)" />
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <InputText @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="@(() => model.Password)" />
+            </div>
+
+            <button type="submit" class="btn-primary">Activate Device</button>
+        </EditForm>
+    }
+    else
+    {
+        <div class="success-message">
+            ✔ Device successfully activated.
+            <br />
+            You may now return to your device.
+        </div>
+    }
+</div>
+
+@code {
+
+    private sealed class DeviceLoginModel
+    {
+        [Required]
+        public string UserCode { get; set; } = default!;
+
+        [Required]
+        public string UserName { get; set; } = default!;
+
+        [Required]
+        public string Password { get; set; } = default!;
+    }
+
+    private readonly DeviceLoginModel model = new();
+
+    private bool isApproved = false;
+    private string ErrorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+
+        if (query.TryGetValue("user_code", out var code))
+        {
+            model.UserCode = code.ToString();
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        ErrorMessage = string.Empty;
+
+        try
+        {
+            var authResult = await AuthUseCase.AuthenticateAsync(model.UserCode, model.UserName, model.Password);
+
+            if (authResult?.IsSuccess == false)
+            {
+                ErrorMessage = authResult.Error ?? "Invalid credentials.";
+                return;
+            }
+
+            if (authResult?.TwoFactorEnabled == true)
+            {
+                Navigation.NavigateTo($"/mfa?uid={authResult.UserId}&corid={authResult.CorrelationId}&flow=device");
+                return;
+            }
+
+            var approvalResult = await AuthUseCase.ApproveAsync(
+                model.UserCode,
+                authResult!.UserId);
+
+            if (!approvalResult.IsSuccess)
+            {
+                ErrorMessage = approvalResult.Error ?? "Invalid or expired code.";
+                return;
+            }
+
+            isApproved = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Device activation failed");
+            ErrorMessage = "An unexpected error occurred.";
+        }
+    }
+
+    private string GetErrorStyle()
+        => string.IsNullOrEmpty(ErrorMessage) ? "display:none;" : "";
+}

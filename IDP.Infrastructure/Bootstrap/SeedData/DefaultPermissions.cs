@@ -12,6 +12,7 @@ internal class DefaultPermissions
         var usersView = CreatePermission(tenantId, "users.view", "Users", "NavLink", 8, "/users", "fa-users me-2");
         var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavLink", 9, "/roles", "fa-shield-alt me-2");
         var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavLink", 10, "/permissions", "fa-shield me-2");
+        var tenantsView = CreatePermission(tenantId, "tenants.view", "Tenant Management", "NavGroup", 3, "/tenants", "fa-building me-2");
 
         //NavGroups
         var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
@@ -20,7 +21,7 @@ internal class DefaultPermissions
 
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "tenants.view", "Tenant Management", "NavGroup", 3, "/tenants", "fa-building me-2"));
+        allPermissions.Add(tenantsView);
         allPermissions.Add(userManagement);
         allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 4, "/tokens", "fa-id-badge me-2"));
         allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 6, "/activities", "fa-clipboard-list me-2"));
@@ -81,7 +82,7 @@ internal class DefaultPermissions
                     if (childPermission.PermissionName.Contains("Users"))
                     {
                         ++i;
-                        var resetPasswordPermission = CreateActionPermission(tenantId,i,"users.resetpassword","Reset Users Password");
+                        var resetPasswordPermission = CreateActionPermission(tenantId, i, "users.resetpassword", "Reset Users Password");
 
                         childPermission.ChildPermissions.Add(resetPasswordPermission);
                     }
@@ -96,6 +97,14 @@ internal class DefaultPermissions
                 }
             }
         }
+
+        tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
+        tenantsView.ChildPermissions.Add(CreateActionPermission(
+            tenantId,
+            ++i,
+            "Tenant.Secret.Reveal",
+            "Reveal Tenant Provider Secret"));
+
         return allPermissions;
     }
 

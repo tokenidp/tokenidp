@@ -3,6 +3,7 @@
 @using IDP.Core.Abstractions
 @using IDP.Core.Model
 @using IDP.Core.OAuth
+@using IDP.Foundation.Abstractions
 @using IDP.Foundation.Exceptions
 @using IDP.Server.Middlewares
 @using Microsoft.AspNetCore.WebUtilities
@@ -18,6 +19,7 @@
 @inject IAuthorizationCodeUseCase AuthUseCase
 @inject IAuthorizationRequestValidator AuthorizationValidator;
 @inject IAuthorizationPageUiUseCase PageUiUseCase
+@inject ITenantContextAccessor TenantContext;
 @inject IJSRuntime JSRuntime
 @inject ILogger<Authorize> logger
 
@@ -161,7 +163,6 @@ else if (ui != null)
     private string codeChallengeMethod = string.Empty;
     private string responseType = string.Empty;
     private string state = string.Empty;
-    private int tenantId;
     private string tenantKey = string.Empty;
 
     private readonly LoginModel loginModel = new();
@@ -201,7 +202,9 @@ else if (ui != null)
             };
 
             var clientInfo = await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
-            tenantId = clientInfo.TenantId;
+
+            TenantContext.SetTenantId(clientInfo.TenantId);
+
             // Build dynamic UI AFTER validation
             ui = await PageUiUseCase.BuildAsync(clientInfo.Scopes, clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
         }
@@ -242,7 +245,6 @@ else if (ui != null)
             CodeChallengeMethod = codeChallengeMethod,
             Scopes = requestedScopes,
             RememberMe = loginModel.RememberMe,
-            TenantId = tenantId
         };
 
         try
@@ -259,7 +261,7 @@ else if (ui != null)
 
             if (authCodeResponse?.TwoFactorEnabled == true)
             {
-                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&redirect_uri={redirectUri}";
+                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&flow=authorize&redirect_uri={redirectUri}";
                 Navigation.NavigateTo(uri);
                 return;
             }
@@ -341,8 +343,8 @@ else if (ui != null)
     private static string ResolveTenantKeyFromHost(string absoluteUrl)
     {
         // Example:
-        // blue-ocean.idp.tresorauth.com  => tenantKey = "blue-ocean"
-        // idp.tresorauth.com            => tenantKey = "system" (or "")
+        // blue-ocean.idp.tresorauth.com => tenantKey = "blue-ocean"
+        // idp.tresorauth.com => tenantKey = "system" (or "")
         var host = new Uri(absoluteUrl).Host;
         var parts = host.Split('.', StringSplitOptions.RemoveEmptyEntries);
 

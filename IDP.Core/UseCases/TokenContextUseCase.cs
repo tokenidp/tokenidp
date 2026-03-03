@@ -4,7 +4,7 @@ namespace IDP.Core.UseCases;
 
 internal class TokenContextUseCase
 {
-    private readonly IIdentityStore _identityStore;
+    private readonly IUserStore _identityStore;
     private readonly IRoleStore _roleService;
     private readonly IAppLogger<TokenContextUseCase> _logger;
     private readonly IClientStore _clientStore;
@@ -12,7 +12,7 @@ internal class TokenContextUseCase
     public TokenContextUseCase(IRoleStore roleService,
         IClientStore clientStore,
         IAppLogger<TokenContextUseCase> logger,
-        IIdentityStore identityStore)
+        IUserStore identityStore)
     {
         _roleService = roleService;
         _clientStore = clientStore;

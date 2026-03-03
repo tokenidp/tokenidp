@@ -21,6 +21,7 @@ public interface IApplicationDbContext
     DbSet<Tenant> Tenants { get; }
     DbSet<PreAuthorization> PreAuthorizations { get; }
     DbSet<AuthorizationCode> AuthorizationCodes { get; }
+    DbSet<DeviceAuthorization> DeviceAuthorizations { get; }
     DbSet<Client> Clients { get; }
     DbSet<ClientScope> ClientScopes { get; }
     DbSet<ClientAudience> ClientAudiences { get; }

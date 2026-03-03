@@ -5,19 +5,19 @@ namespace Admin.Core.Users.UseCases;
 internal class UserCommandUseCase
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly IIdentityStore _identityStore;
+    private readonly IUserStore _userStore;
     private readonly IAppLogger<UserCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
 
     public UserCommandUseCase(ICurrentUserService currentUserService,
         IAppLogger<UserCommandUseCase> logger,
-        IIdentityStore identityStore,
-        ICodeSequenceGenerator userCodeGenerator)
+        ICodeSequenceGenerator userCodeGenerator,
+        IUserStore userStore)
     {
         _currentUserService = currentUserService;
         _logger = logger;
-        _identityStore = identityStore;
         _userCodeGenerator = userCodeGenerator;
+        _userStore = userStore;
     }
 
     public async Task<ApiResult<int>> CreateUser(
@@ -33,9 +33,9 @@ internal class UserCommandUseCase
         }
 
         var normalizedUserName = request.UserName.Trim();
-        var normalizedEmail = request.Email.Trim();
+        var normalizedEmail = request.Email?.Trim();
 
-        var userNameExists = await _identityStore
+        var userNameExists = await _userStore
             .UserNameExistsAsync(0, normalizedUserName, cancellationToken);
 
         if (userNameExists)
@@ -44,7 +44,7 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.username.duplicate", "User name already exists."));
         }
 
-        var emailExists = await _identityStore.EmailExistsAsync(0, normalizedEmail, cancellationToken);
+        var emailExists = await _userStore.EmailExistsAsync(0, normalizedEmail, cancellationToken);
 
         if (emailExists)
         {
@@ -101,7 +101,7 @@ internal class UserCommandUseCase
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
 
-        var result = await _identityStore.CreateUser(user, request.Password);
+        var result = await _userStore.CreateUser(user, request.Password);
 
         _logger.LogInfo("User created with Id {UserId}", user.Id);
 
@@ -115,7 +115,7 @@ internal class UserCommandUseCase
     {
         _logger.LogDebug("Updating user {UserId}", id);
 
-        var user = await _identityStore.GetUserAggregateAsync(id, cancellationToken);
+        var user = await _userStore.GetUserAggregateAsync(id, cancellationToken);
 
         if (user == null)
         {
@@ -131,7 +131,7 @@ internal class UserCommandUseCase
         }
 
         var normalizedEmail = request.Email.Trim();
-        var emailExists = await _identityStore.EmailExistsAsync(id, normalizedEmail, cancellationToken);
+        var emailExists = await _userStore.EmailExistsAsync(id, normalizedEmail, cancellationToken);
 
         if (emailExists)
         {
@@ -179,7 +179,7 @@ internal class UserCommandUseCase
             user.UpdateStatus(parsedStatus);
         }
 
-        var result = await _identityStore.UpdateUser(user);
+        var result = await _userStore.UpdateUser(user);
 
         _logger.LogInfo("User updated {UserId}", id);
 
@@ -193,7 +193,7 @@ internal class UserCommandUseCase
     {
         _logger.LogDebug("Updating user status for {UserId}", id);
 
-        var user = await _identityStore.GetUserById(id);
+        var user = await _userStore.GetUserById(id);
 
         if (user == null)
         {
@@ -205,7 +205,7 @@ internal class UserCommandUseCase
 
         user.UpdateStatus(request.Status);
 
-        var result = await _identityStore.UpdateUser(user);
+        var result = await _userStore.UpdateUser(user);
 
         _logger.LogInfo("User status updated {UserId}", id);
 

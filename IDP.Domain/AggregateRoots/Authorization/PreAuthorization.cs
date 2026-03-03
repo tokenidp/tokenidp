@@ -4,12 +4,12 @@ public class PreAuthorization : AggregateRoot<int>
 {
     public int UserId { get; private set; }
     public string CorrelationId { get; private set; } = default!;
-    public string ClientId { get; private set; } = default!;
-    public string RedirectUri { get; private set; } = default!;
-    public string CodeChallenge { get; private set; } = default!;
-    public string CodeChallengeMethod { get; private set; } = default!;//Default is SHA-256 
+    public string? ClientId { get; private set; } = default!;
+    public string? RedirectUri { get; private set; } = default!;
+    public string? CodeChallenge { get; private set; } = default!;
+    public string? CodeChallengeMethod { get; private set; } = default!;//Default is SHA-256 
     public string? GrantType { get; private set; } = default!;
-    public string Scopes { get; private set; } = default!;
+    public string? Scopes { get; private set; } = default!;
     public string MfaCode { get; private set; } = default!;
     public DateTime Expiry { get; private set; }
     public bool Is2FAVerified { get; private set; }
@@ -19,12 +19,12 @@ public class PreAuthorization : AggregateRoot<int>
     public PreAuthorization(int userId,
         string mfaCode,
         string correlationId,
-        string clientId,
-        string redirectUri,
-        string codeChallenge,
-        string codeChallengeMethod,
-        DateTime expiry,
-        string scopes = null)
+        string? clientId,
+        string? redirectUri,
+        string? codeChallenge,
+        string? codeChallengeMethod,
+        string? scopes,
+        DateTime expiry)
     {
         UserId = userId;
         MfaCode = mfaCode;

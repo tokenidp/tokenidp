@@ -23,7 +23,8 @@ internal sealed class TokenGrantPipeline : ITokenGrantUseCase
         _logger.LogInfo("GetAccessToken called for ClientId: {ClientId} from IP: {IP}"
             , request.ClientId, request.IpAddress ?? string.Empty);
 
-        var (isValid, tenantId) = await _grantTypeValidator.ValidateGrantType(request.GrantType, request.ClientId);
+        var (isValid, tenantId) = await _grantTypeValidator
+            .ValidateGrantType(request.GrantType, request.ClientId);
 
         if (!isValid)
         {

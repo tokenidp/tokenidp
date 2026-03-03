@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<TokenSecretGenerator>();
 
+        services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
+
         AddUseCases(services);
         AddGrantHandlers(services);
     }
@@ -39,13 +41,14 @@ public static class DependencyInjection
     {
         services.AddScoped<IAuthorizationCodeUseCase>(sp =>
             new AuthorizationCodeUseCase(
-                sp.GetRequiredService<IIdentityStore>(),
+                sp.GetRequiredService<IAuthenticationService>(),
                 sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
                 sp.GetRequiredService<IMfaUseCase>(),
-                sp.GetRequiredService<IAuthorizationCodeStore>(),
+                sp.GetRequiredService<IAuthorizationStore>(),
                 sp.GetRequiredService<TokenContextUseCase>(),
                 sp.GetRequiredService<TenantUserMfaPolicy>(),
-                sp.GetRequiredService<IClientStore>()));
+                sp.GetRequiredService<IClientStore>(),
+                sp.GetRequiredService<ITenantContextAccessor>()));
 
         services.AddScoped<IAuthorizationRequestValidator, AuthorizationRequestValidator>();
         services.AddScoped<IAuthorizationPageUiUseCase, AuthorizationPageUiUseCase>();
@@ -56,8 +59,8 @@ public static class DependencyInjection
         services.AddScoped<TenantUserMfaPolicy>();
 
         services.AddScoped<IMfaUseCase>(sp =>
-            new MfaUseCase(sp.GetRequiredService<IIdentityStore>(),
-                sp.GetRequiredService<IPreAuthorizationStore>(),
+            new MfaUseCase(sp.GetRequiredService<IUserStore>(),
+                sp.GetRequiredService<IAuthorizationStore>(),
                 sp.GetRequiredService<IAppLogger<MfaUseCase>>(),
                 sp.GetRequiredService<ICurrentUserService>(),
                 sp.GetRequiredService<IEmailQueueStore>()));

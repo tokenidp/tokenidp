@@ -34,6 +34,7 @@ public sealed class TenantExternalProviderDetail
 {
     public ExternalProviderTypes ProviderType { get; set; }
     public bool Enabled { get; set; }
+    public bool HasClientSecret { get; set; }
 
     public string ClientId { get; set; } = default!;
     public string? ClientSecret { get; set; }

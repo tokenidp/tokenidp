@@ -1,19 +1,18 @@
 ﻿using IDP.Core.Policies;
 using IDP.Core.UseCases;
-using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Core.GrantHandlers;
 
 internal class PasswordGrantHandler : ITokenGrantHandler
 {
-    private readonly IIdentityStore _identityService;
+    private readonly IAuthenticationService _identityService;
     private readonly IMfaUseCase _mfaUseCase;
     private readonly TokenIssuerUseCase _tokenService;
-    private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
-    private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
+    private readonly TenantUserMfaPolicy _mfaPolicy;
+    private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
 
-    public PasswordGrantHandler(IIdentityStore identityService,
+    public PasswordGrantHandler(IAuthenticationService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
         IMfaUseCase mfaUseCase,
         TokenContextUseCase tokenContextUseCase,
@@ -42,13 +41,15 @@ internal class PasswordGrantHandler : ITokenGrantHandler
 
         if (checkTwoFactorEnabled)
         {
-            var authRequest = AuthorizationRequest.Create(request.ClientId,
-                request.RedirectUri,
-                string.Empty,
-                string.Empty,
-                request.Scope);
+            GenerateMfaCommand mfaRequest = new()
+            {
+                UserId = context.UserId,
+                ClientId = request.ClientId,
+                RedirectUri = request.RedirectUri,
+                Scopes = request.Scope
+            };
 
-            var authResponse = await _mfaUseCase.GenerateMfaCode(authRequest, context.UserId);
+            var authResponse = await _mfaUseCase.GenerateMfaCode(mfaRequest);
 
             _logger.LogInfo("Authenticate completed for user: {Username}", request.UserName);
 

@@ -28,9 +28,16 @@ public sealed class TenantDetail
                 {
                     ProviderType = p.ProviderType,
                     Enabled = p.Enabled,
+                    HasClientSecret = p.OidcConfig != null &&
+                                      p.OidcConfig.ClientSecret != null &&
+                                      p.OidcConfig.ClientSecret != string.Empty,
 
                     ClientId = p.OidcConfig != null ? p.OidcConfig.ClientId : string.Empty,
-                    ClientSecret = p.OidcConfig != null ? p.OidcConfig.ClientSecret : null,
+                    ClientSecret = p.OidcConfig != null &&
+                                   p.OidcConfig.ClientSecret != null &&
+                                   p.OidcConfig.ClientSecret != string.Empty
+                                       ? "********"
+                                       : null,
                     Authority = p.OidcConfig != null ? p.OidcConfig.Authority.ToString() : string.Empty,
                     Scopes = p.OidcConfig != null
                         ? string.Join(" ", p.OidcConfig.Scopes)

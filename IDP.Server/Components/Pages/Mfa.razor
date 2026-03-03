@@ -9,6 +9,7 @@
 @inject NavigationManager Navigation
 @inject IMfaUseCase MfaService
 @inject IAuthorizationCodeUseCase AuthService
+@inject IDeviceAuthenticationUseCase AuthUseCase
 @inject IJSRuntime JSRuntime
 @inject LoadService LoadService
 
@@ -72,8 +73,9 @@
     private bool IsInvalid { get; set; }
     private bool IsResending { get; set; }
     private bool WasResent { get; set; }
-    private string ErrorMessage;
+    private string? ErrorMessage;
     private bool isLoading;
+    private string? flowType;
     private Dictionary<string, string> QueryParams = new();
 
     protected override void OnInitialized()
@@ -91,6 +93,9 @@
                      ? string.Join(",", values)
                      : kvp.Value.ToString() ?? ""
                  );
+
+            QueryParams.TryGetValue("flow", out var flow);
+            flowType = flow;
         }
     }
 
@@ -209,19 +214,37 @@
             UserId = Convert.ToInt32(QueryParams["uid"])
         };
 
-        var result = await AuthService.VerifyMfaCode(mfaRequest);
+        var (authRequest, authResponse) = await MfaService.VerifyMfaRequest(mfaRequest);
 
-        if (result?.IsSuccess == true)
+        if (authResponse?.IsSuccess == true)
         {
-            var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
+            if (flowType == "authorize")
+            {
+                var authCode = await AuthService.GenerateAuthorizationCode(authRequest!, mfaRequest.UserId);
+                if (authCode != null && authCode.IsSuccess)
+                {
+                    var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
+                    var uri = $"{redirectUri}?code={authCode.AuthorizationCode}";
+                    Navigation.NavigateTo(uri, true);
+                }
+                else
+                {
+                    ErrorMessage = authResponse?.Error ?? "Unable to verify the code. Please try again.";
+                    IsInvalid = true;
+                }
+            }
+            else if (flowType == "device")
+            {
+                var userCode = QueryParams["user_code"];
+                await AuthUseCase.ApproveAsync(userCode, mfaRequest.UserId);
 
-            var uri = $"{redirectUri}?code={result?.AuthorizationCode}";
+                Navigation.NavigateTo("/device-success");
+            }
 
-            Navigation.NavigateTo(uri, true);
             return;
         }
 
-        ErrorMessage = result?.Error ?? "Unable to verify the code. Please try again.";
+        ErrorMessage = authResponse?.Error ?? "Unable to verify the code. Please try again.";
         IsInvalid = true;
     }
 

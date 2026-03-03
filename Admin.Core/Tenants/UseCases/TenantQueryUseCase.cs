@@ -7,15 +7,18 @@ internal sealed class TenantQueryUseCase
     private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantQueryUseCase> _logger;
+    private readonly ISecretProtector _secretProtector;
 
     public TenantQueryUseCase(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
-        IAppLogger<TenantQueryUseCase> logger)
+        IAppLogger<TenantQueryUseCase> logger,
+        ISecretProtector secretProtector)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
+        _secretProtector = secretProtector;
     }
 
     public async Task<ApiResult<TenantDetail>> GetTenantById(
@@ -44,6 +47,58 @@ internal sealed class TenantQueryUseCase
         }
 
         return ApiResult<TenantDetail>.Success(tenant);
+    }
+
+    public async Task<ApiResult<RevealTenantProviderSecretResponse>> RevealTenantProviderSecret(
+        int tenantId,
+        RevealTenantProviderSecretRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        if (_currentUserService.TenantId > 0 && tenantId != _currentUserService.TenantId)
+        {
+            return ApiResult<RevealTenantProviderSecretResponse>.Failure(
+                ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
+        }
+
+        var tenant = await _dbContext.Tenants
+            .AsNoTracking()
+            .Include(t => t.TenantExternalProviders)
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return ApiResult<RevealTenantProviderSecretResponse>.Failure(
+                ApiError.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(tenantId)));
+        }
+
+        var provider = tenant.TenantExternalProviders
+            .FirstOrDefault(p => p.ProviderType == request.ProviderType);
+
+        if (provider?.OidcConfig?.ClientSecret is null || provider.OidcConfig.ClientSecret == string.Empty)
+        {
+            return ApiResult<RevealTenantProviderSecretResponse>.Failure(
+                ApiError.Failure("tenant.provider.secret.notfound",
+                    "Secret is not configured for provider {0}.".FormatString(request.ProviderType)));
+        }
+
+        var decryptedSecret = _secretProtector.Decrypt(
+            provider.OidcConfig.ClientSecret,
+            BuildSecretContext(tenant.TenantKey, request.ProviderType));
+
+        _logger.LogInfo(
+            "Tenant secret revealed. UserId={UserId}, TenantId={TenantId}, Provider={Provider}, TimestampUtc={TimestampUtc}, IP={IpAddress}",
+            _currentUserService.UserId,
+            tenantId,
+            request.ProviderType.ToString(),
+            DateTime.UtcNow,
+            _currentUserService.IpAddress ?? "unknown");
+
+        return ApiResult<RevealTenantProviderSecretResponse>.Success(
+            new RevealTenantProviderSecretResponse
+            {
+                ProviderType = request.ProviderType,
+                ClientSecret = decryptedSecret ?? string.Empty
+            });
     }
 
     public async Task<ApiResult<PaginatedList<TenantSearchResult>>> GetTenants(
@@ -114,5 +169,10 @@ internal sealed class TenantQueryUseCase
         _logger.LogDebug("Fetched {Count} tenants", tenants.TotalCount);
 
         return ApiResult<PaginatedList<TenantSearchResult>>.Success(tenants);
+    }
+
+    private static string BuildSecretContext(string tenantKey, ExternalProviderTypes providerType)
+    {
+        return $"tenant:{tenantKey}:provider:{providerType}";
     }
 }

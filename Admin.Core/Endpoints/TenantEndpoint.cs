@@ -120,5 +120,27 @@ internal class TenantEndpoint : IEndpointDefinition
          })
         .WithName("DeleteTenant")
         .WithTags("Tenants");
+
+        authGroup.MapPost("/{id}/reveal-secret", async (int id,
+            RevealTenantProviderSecretRequest request,
+            TenantQueryUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.RevealTenantProviderSecret(id, request, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "Tenant.Secret.Reveal"
+        })
+        .WithName("RevealTenantProviderSecret")
+        .WithTags("Tenants");
     }
 }

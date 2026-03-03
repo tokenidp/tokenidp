@@ -81,5 +81,47 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
 
         return client;
     }
+
+    public async Task<ClientShortInfo> ValidateAsync(
+        DeviceAuthorizationRequest request,
+        CancellationToken ct)
+    {
+        var client = await _clientStore.GetClientShortInfo(request.ClientId);
+
+        if (client == null || !client.IsValidClient)
+        {
+            throw new AuthorizationRequestException(
+                error: "unauthorized_client",
+                description: "Invalid client_id.",
+                allowRedirect: false);
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Scope))
+        {
+            throw new AuthorizationRequestException(
+                "invalid_request",
+                "Missing scope.");
+        }
+
+        var allowedScopes = client.Scopes
+            .ToHashSet(StringComparer.Ordinal);
+
+        var requestedScopes = request.Scope
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var invalidScopes = requestedScopes
+            .Except(allowedScopes)
+            .ToArray();
+
+        if (invalidScopes.Length > 0)
+        {
+            throw new AuthorizationRequestException(
+                "invalid_scope",
+                $"Invalid scope: {string.Join(" ", invalidScopes)}.");
+        }
+
+        return client;
+    }
 }
 

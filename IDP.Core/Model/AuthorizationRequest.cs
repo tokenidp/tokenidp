@@ -10,7 +10,6 @@ public class AuthorizationRequest
     public string CodeChallenge { get; set; } = default!;
     public string Scopes { get; set; } = default!;
     public string CodeChallengeMethod { get; set; } = default!; //Default is SHA256
-    public int TenantId { get; set; }
     public bool RememberMe { get; set; }
 
     public AuthorizationRequest() { }

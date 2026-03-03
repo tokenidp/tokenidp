@@ -1,6 +1,6 @@
 ﻿using IDP.Domain.AggregateRoots.Emails;
 
-namespace IDP.Foundation.Abstractions;
+namespace IDP.Foundation.Abstractions.Stores;
 
 public interface IEmailQueueStore
 {

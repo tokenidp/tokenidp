@@ -1,29 +1,31 @@
 ﻿using Admin.Core.Common;
 using IDP.Domain.DomainEvents.Users;
 using IDP.Foundation.Abstractions.Stores;
-using IDP.Infrastructure.Projections;
 
 namespace IDP.Core.OAuth;
 
-internal sealed class IdentityStore : IIdentityStore
+internal sealed class AuthenticationService : IAuthenticationService
 {
     private readonly IApplicationDbContext _applicationDbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationEventDispatcher _applicationEventDispatcher;
-    private readonly IAppLogger<IdentityStore> _logger;
+    private readonly IAppLogger<AuthenticationService> _logger;
+    private readonly IUserStore _userStore;
     private readonly PasswordService _passwordService;
 
-    public IdentityStore(IAppLogger<IdentityStore> logger,
+    public AuthenticationService(IAppLogger<AuthenticationService> logger,
         IApplicationDbContext applicationDbContext,
         ICurrentUserService currentUserService,
         IApplicationEventDispatcher applicationEventDispatcher,
-        PasswordService passwordService)
+        PasswordService passwordService,
+        IUserStore userStore)
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
         _currentUserService = currentUserService;
         _applicationEventDispatcher = applicationEventDispatcher;
         _passwordService = passwordService;
+        _userStore = userStore;
     }
 
     public async Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password)
@@ -84,7 +86,7 @@ internal sealed class IdentityStore : IIdentityStore
 
                 user.RegisterFailedAttempt(3, TimeSpan.FromMinutes(5));
 
-                await UpdateUser(user);
+                await _userStore.UpdateUser(user);
 
                 return AuthenticationContext.Failure($"Invalid username or password");
             }
@@ -96,7 +98,7 @@ internal sealed class IdentityStore : IIdentityStore
                 _currentUserService.UserAgent);
 
             user.ResetAccessFailed();
-            await UpdateUser(user);
+            await _userStore.UpdateUser(user);
 
             return AuthenticationContext.Authenticated(user);
         }
@@ -104,74 +106,5 @@ internal sealed class IdentityStore : IIdentityStore
         {
             throw;
         }
-    }
-
-    public async Task<User> GetUserById(int id)
-    {
-        var user = await _applicationDbContext.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id);
-
-        return user!;
-    }
-
-    public async Task<UserShortInfo> GetUserShortInfo(int id)
-    {
-        var user = await _applicationDbContext.Users
-            .Where(u => u.Id == id)
-            .AsNoTracking()
-            .Select(UserProjection.Projection)
-            .FirstOrDefaultAsync();
-
-        return user!;
-    }
-
-    public async Task<User?> GetUserAggregateAsync(int id, CancellationToken ct)
-    {
-        return await _applicationDbContext.Users
-            .Include(u => u.UserRoles)
-            .Include(u => u.UserAddresses)
-            .Include(u => u.UserContacts)
-            .FirstOrDefaultAsync(u => u.Id == id, ct);
-    }
-
-    public async Task<bool> EmailExistsAsync(int excludeUserId, string normalizedEmail, CancellationToken ct)
-    {
-        return await _applicationDbContext.Users
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.Id != excludeUserId &&
-                u.NormalizedEmail == normalizedEmail,
-                ct);
-    }
-
-    public async Task<bool> UserNameExistsAsync(int excludeUserId, string normalizedUserName, CancellationToken ct)
-    {
-        return await _applicationDbContext.Users
-            .AsNoTracking()
-            .AnyAsync(u =>
-                u.Id != excludeUserId &&
-                u.NormalizedUserName == normalizedUserName,
-                ct);
-    }
-
-    public async Task<int> CreateUser(User user, string password)
-    {
-        _passwordService.SetPassword(user, password);
-
-        _applicationDbContext.Users.Add(user);
-
-        var rows = await _applicationDbContext.SaveChangesAsync();
-
-        return rows;
-    }
-
-    public async Task<int> UpdateUser(User user)
-    {
-        _applicationDbContext.Users.Update(user);
-
-        var rows = await _applicationDbContext.SaveChangesAsync();
-
-        return rows;
     }
 }

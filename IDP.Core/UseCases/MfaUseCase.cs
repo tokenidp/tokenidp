@@ -8,14 +8,14 @@ namespace IDP.Core.UseCases;
 
 internal sealed class MfaUseCase : IMfaUseCase
 {
-    private readonly IIdentityStore _identityStore;
+    private readonly IUserStore _identityStore;
     private readonly IEmailQueueStore _emailQueueStore;
-    private readonly IPreAuthorizationStore _preAuthorizationRepo;
+    private readonly IAuthorizationStore _preAuthorizationRepo;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<MfaUseCase> _logger;
 
-    public MfaUseCase(IIdentityStore identityStore,
-        IPreAuthorizationStore preAuthorizationRepo,
+    public MfaUseCase(IUserStore identityStore,
+        IAuthorizationStore preAuthorizationRepo,
         IAppLogger<MfaUseCase> logger,
         ICurrentUserService currentUserService,
         IEmailQueueStore emailQueueStore)
@@ -27,38 +27,71 @@ internal sealed class MfaUseCase : IMfaUseCase
         _emailQueueStore = emailQueueStore;
     }
 
-    public async Task<AuthorizationResponse> GenerateMfaCode(AuthorizationRequest request, int userId)
+    public Task<AuthorizationResponse> GenerateMfaForAuthorizeAsync(AuthorizationRequest request,
+        int userId,
+        CancellationToken ct = default)
+    {
+        return GenerateMfaCode(new GenerateMfaCommand
+        {
+            UserId = userId,
+            ClientId = request.ClientId,
+            RedirectUri = request.RedirectUri,
+            CodeChallenge = request.CodeChallenge,
+            CodeChallengeMethod = request.CodeChallengeMethod,
+            Scopes = request.Scopes
+        }, ct);
+    }
+
+    public async Task<AuthorizationResponse> GenerateMfaCode(GenerateMfaCommand command,
+        CancellationToken ct = default)
     {
         var correlationId = Guid.NewGuid().ToString();
 
-        _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", correlationId);
+        _logger.LogDebug(
+            "MFA challenge started. CorrelationId: {CorrelationId}, UserId: {UserId}",
+            correlationId,
+            command.UserId);
 
         var mfaCode = MfaCodeGenerator.GenerateMfaCode();
 
-        PreAuthorization preAuthorization = new(userId,
+        var expiresAt = DateTime.UtcNow.AddMinutes(5);
+
+        var preAuthorization = new PreAuthorization(
+            command.UserId,
             mfaCode,
             correlationId,
-            request.ClientId,
-            request.RedirectUri,
-            request.CodeChallenge,
-            request.CodeChallengeMethod,
-            DateTime.UtcNow.AddMinutes(5),
-            request.Scopes);
+            command.ClientId ?? string.Empty,
+            command.RedirectUri,
+            command.CodeChallenge,
+            command.CodeChallengeMethod,
+            command.Scopes,
+            expiresAt);
 
-        await _preAuthorizationRepo.Create(preAuthorization);
+        await _preAuthorizationRepo.CreatePreAuthorization(preAuthorization);
 
-        _logger.LogInfo("Saved authorization code for user {UserId} (Client: {ClientId})",
-            userId, request.ClientId);
+        var user = await _identityStore.GetUserById(command.UserId);
 
-        var user = await _identityStore.GetUserById(userId);
+        await SendNotification(
+            user.TenantId,
+            user.FullName,
+            user.Email ?? string.Empty,
+            mfaCode);
 
-        await SendNotification(user.TenantId, user.FullName, user.Email ?? string.Empty, mfaCode);
-
-        user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
+        user.MarkMfaChallengeSent(
+            _currentUserService.CorrelationId,
+            _currentUserService.IpAddress);
 
         await _identityStore.UpdateUser(user);
 
-        return AuthorizationResponse.Success(userId, correlationId, true);
+        _logger.LogInfo(
+            "MFA challenge generated. UserId: {UserId}, CorrelationId: {CorrelationId}",
+            command.UserId,
+            correlationId);
+
+        return AuthorizationResponse.Success(
+            command.UserId,
+            correlationId,
+            twoFactorEnabled: true);
     }
 
     public async Task<(AuthorizationRequest?, AuthorizationResponse)> VerifyMfaRequest(MfaRequest request)
@@ -75,11 +108,11 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         var authResponse = AuthorizationResponse.Success(preAuthorization.UserId, preAuthorization.CorrelationId, true);
 
-        var authRequest = AuthorizationRequest.Create(preAuthorization.ClientId,
-            preAuthorization.RedirectUri,
-            preAuthorization.CodeChallenge,
-            preAuthorization.CodeChallengeMethod,
-            preAuthorization.Scopes);
+        var authRequest = AuthorizationRequest.Create(preAuthorization.ClientId ?? string.Empty,
+            preAuthorization.RedirectUri ?? string.Empty,
+            preAuthorization.CodeChallenge ?? string.Empty,
+            preAuthorization.CodeChallengeMethod ?? string.Empty,
+            preAuthorization.Scopes ?? string.Empty);
 
         var user = await _identityStore.GetUserById(request.UserId);
 
@@ -110,7 +143,7 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         preAuthorization.UpdateMfaCode(request.UserId, mfaCode, DateTime.UtcNow.AddMinutes(5));
 
-        await _preAuthorizationRepo.Update(preAuthorization);
+        await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
 
         _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
 
