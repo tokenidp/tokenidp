@@ -6,9 +6,9 @@ public enum GrantTypes
     refresh_token,
     client_credentials,
     device_code,
-    ciba
+    ciba,
+    password
 }
-
 
 public class ClientGrantType : Entity<int>
 {
@@ -19,7 +19,6 @@ public class ClientGrantType : Entity<int>
 
     private ClientGrantType()
     {
-
     }
 
     private ClientGrantType(GrantTypes grantType)

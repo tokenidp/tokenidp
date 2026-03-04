@@ -32,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<TokenContextUseCase>();
         services.AddScoped<TokenContextUseCase>();
         services.AddScoped<TenantUserMfaPolicy>();
+        services.AddScoped<DeviceAuthorizationUseCase>();
+        services.AddScoped<IDeviceAuthenticationUseCase, DeviceAuthenticationUseCase>();
 
         services.AddMfaService();
         services.AddAuthorizationUseCase();
@@ -78,6 +80,8 @@ public static class DependencyInjection
         services.AddScoped<RefreshTokenGrantHandler>();
         services.AddScoped<AuthorizationCodeGrantHandler>();
         services.AddScoped<ClientCredentialGrantHandler>();
+        services.AddScoped<DeviceFlowGrantHandler>();
+        services.AddScoped<PasswordGrantHandler>();
 
         services.AddTransient<Func<GrantTypes, ITokenGrantHandler>>(serviceProvider => key =>
         {
@@ -86,6 +90,8 @@ public static class DependencyInjection
                 GrantTypes.authorization_code => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>(),
                 GrantTypes.refresh_token => serviceProvider.GetRequiredService<RefreshTokenGrantHandler>(),
                 GrantTypes.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
+                GrantTypes.device_code => serviceProvider.GetRequiredService<DeviceFlowGrantHandler>(),
+                GrantTypes.password => serviceProvider.GetRequiredService<PasswordGrantHandler>(),
                 _ => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>()
             };
         });

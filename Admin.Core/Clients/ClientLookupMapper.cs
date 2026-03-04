@@ -48,6 +48,7 @@ internal static class ClientLookupMapper
                     GrantTypes.refresh_token => "Refresh Token",
                     GrantTypes.device_code => "Device Code",
                     GrantTypes.ciba => "Ciba",
+                    GrantTypes.password => "Resource Owner Password Credentials",
                     _ => value.ToString()
                 }
             })
