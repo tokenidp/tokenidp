@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -45,6 +45,7 @@ function AddEditTenant({ mode }) {
     resolveTenantIdByCode,
     createTenant,
     updateTenant,
+    revealTenantProviderSecret,
     clearStatus,
   } = useTenants();
 
@@ -69,6 +70,9 @@ function AddEditTenant({ mode }) {
   const isActive = String(isActiveValue).toLowerCase() === "true";
   const [providerDetailsByKey, setProviderDetailsByKey] = useState({});
   const [providerConfigErrors, setProviderConfigErrors] = useState({});
+  const secretRevealTimeoutsRef = useRef({});
+  const SECRET_MASK = "********";
+  const SECRET_AUTO_HIDE_MS = 6000;
 
   const getLookupField = (option) =>
     option?.key ??
@@ -151,6 +155,8 @@ function AddEditTenant({ mode }) {
       hasClientSecret: Boolean(hasClientSecretFlag),
       editingSecret: !hasClientSecretFlag,
       clientSecretChanged: false,
+      showSecret: false,
+      revealedSecret: "",
     };
   };
 
@@ -184,6 +190,61 @@ function AddEditTenant({ mode }) {
         ...patch,
       },
     }));
+  };
+
+  const clearRevealTimer = (providerKey) => {
+    const existing = secretRevealTimeoutsRef.current[providerKey];
+    if (existing) {
+      window.clearTimeout(existing);
+      delete secretRevealTimeoutsRef.current[providerKey];
+    }
+  };
+
+  const scheduleSecretAutoHide = (providerKey) => {
+    clearRevealTimer(providerKey);
+    secretRevealTimeoutsRef.current[providerKey] = window.setTimeout(() => {
+      updateProviderDetail(providerKey, {
+        showSecret: false,
+        revealedSecret: "",
+      });
+      delete secretRevealTimeoutsRef.current[providerKey];
+    }, SECRET_AUTO_HIDE_MS);
+  };
+
+  const toggleRevealSecret = async (providerKey) => {
+    const detail = providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
+
+    if (detail.showSecret) {
+      clearRevealTimer(providerKey);
+      updateProviderDetail(providerKey, {
+        showSecret: false,
+        revealedSecret: "",
+      });
+      return;
+    }
+
+    if (mode !== "edit" || !tenantId) {
+      return;
+    }
+
+    const response = await revealTenantProviderSecret(
+      tenantId,
+      toNumberOrDefault(detail.providerType ?? providerKey)
+    );
+
+    const revealedSecret = String(
+      response?.clientSecret ?? response?.ClientSecret ?? ""
+    );
+
+    if (!revealedSecret) {
+      return;
+    }
+
+    updateProviderDetail(providerKey, {
+      showSecret: true,
+      revealedSecret,
+    });
+    scheduleSecretAutoHide(providerKey);
   };
 
   const clearProviderFieldError = (providerKey, fieldName) => {
@@ -251,6 +312,15 @@ function AddEditTenant({ mode }) {
   useEffect(() => {
     loadLookups();
   }, [loadLookups]);
+
+  useEffect(() => {
+    return () => {
+      Object.keys(secretRevealTimeoutsRef.current).forEach((providerKey) => {
+        window.clearTimeout(secretRevealTimeoutsRef.current[providerKey]);
+      });
+      secretRevealTimeoutsRef.current = {};
+    };
+  }, []);
 
   useEffect(() => {
     if (mode !== "edit") {
@@ -824,11 +894,17 @@ function AddEditTenant({ mode }) {
                               type="checkbox"
                               value={providerKey}
                               id={`provider-${providerKey}`}
-                              {...register("externalProviderKeys", {
-                                onChange: (event) => {
-                                  const checked = event.target.checked;
-                                  updateProviderDetail(providerKey, { enabled: checked });
+                                {...register("externalProviderKeys", {
+                                  onChange: (event) => {
+                                    const checked = event.target.checked;
+                                  updateProviderDetail(providerKey, {
+                                    enabled: checked,
+                                    ...(checked
+                                      ? {}
+                                      : { showSecret: false, revealedSecret: "" }),
+                                  });
                                   if (!checked) {
+                                    clearRevealTimer(providerKey);
                                     setProviderConfigErrors((prev) => {
                                       if (!prev[providerKey]) {
                                         return prev;
@@ -888,20 +964,39 @@ function AddEditTenant({ mode }) {
                                 <label className="form-label">Client Secret</label>
                                 {detail.hasClientSecret && !detail.editingSecret ? (
                                   <div>
-                                    <div className="form-text mb-2">
-                                      Secret is configured.
-                                    </div>
-                                    <button
-                                      type="button"
-                                      className="btn btn-outline-secondary btn-sm"
-                                      onClick={() =>
-                                        updateProviderDetail(providerKey, {
-                                          editingSecret: true,
-                                        })
+                                    <input
+                                      className="form-control mb-2"
+                                      type={detail.showSecret ? "text" : "password"}
+                                      readOnly
+                                      value={
+                                        detail.showSecret
+                                          ? detail.revealedSecret || ""
+                                          : SECRET_MASK
                                       }
-                                    >
-                                      Change Secret
-                                    </button>
+                                    />
+                                    <div className="d-flex gap-2">
+                                      <button
+                                        type="button"
+                                        className="btn btn-outline-secondary btn-sm"
+                                        onClick={() => toggleRevealSecret(providerKey)}
+                                      >
+                                        {detail.showSecret ? "Hide Secret" : "Show Secret"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="btn btn-outline-secondary btn-sm"
+                                        onClick={() => {
+                                          clearRevealTimer(providerKey);
+                                          updateProviderDetail(providerKey, {
+                                            editingSecret: true,
+                                            showSecret: false,
+                                            revealedSecret: "",
+                                          });
+                                        }}
+                                      >
+                                        Change Secret
+                                      </button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <input

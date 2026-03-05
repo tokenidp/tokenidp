@@ -220,6 +220,25 @@ export const TenantsProvider = ({ children }) => {
     [put]
   );
 
+  const revealTenantProviderSecret = useCallback(
+    async (id, providerType) => {
+      try {
+        const response = await post(`admin/tenant/${id}/reveal-secret`, {
+          providerType,
+        });
+        dispatch({ type: actions.CLEAR_ERROR });
+        return normalizeResult(response) || null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to reveal tenant provider secret.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const deleteTenant = useCallback(
     async (id) => {
       try {
@@ -251,6 +270,7 @@ export const TenantsProvider = ({ children }) => {
         resolveTenantIdByCode,
         createTenant,
         updateTenant,
+        revealTenantProviderSecret,
         deleteTenant,
         clearStatus,
       }}
