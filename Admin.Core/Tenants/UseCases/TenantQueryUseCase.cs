@@ -83,7 +83,7 @@ internal sealed class TenantQueryUseCase
 
         var decryptedSecret = _secretProtector.Decrypt(
             provider.OidcConfig.ClientSecret,
-            BuildSecretContext(tenant.TenantKey, request.ProviderType));
+            BuildSecretContext(tenant.Id.ToString(), request.ProviderType));
 
         _logger.LogInfo(
             "Tenant secret revealed. UserId={UserId}, TenantId={TenantId}, Provider={Provider}, TimestampUtc={TimestampUtc}, IP={IpAddress}",
@@ -171,8 +171,8 @@ internal sealed class TenantQueryUseCase
         return ApiResult<PaginatedList<TenantSearchResult>>.Success(tenants);
     }
 
-    private static string BuildSecretContext(string tenantKey, ExternalProviderTypes providerType)
+    private static string BuildSecretContext(string tenantId, ExternalProviderTypes providerType)
     {
-        return $"tenant:{tenantKey}:provider:{providerType}";
+        return $"tenant:{tenantId}:provider:{providerType}";
     }
 }

@@ -1,5 +1,9 @@
 ﻿using Admin.Core.Bootstrap;
+using AspNet.Security.OAuth.GitHub;
+using IDP.Core.Model;
 using IDP.Core.OAuth;
+using IDP.Domain.AggregateRoots.Configurations;
+using IDP.ExternalProviders.Abstractions;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Foundation.Options;
 using IDP.Foundation.Security;
@@ -8,7 +12,10 @@ using IDP.Infrastructure.Emails;
 using IDP.Infrastructure.Emails.Abstractions;
 using IDP.Infrastructure.Emails.Concrete;
 using IDP.Infrastructure.Emails.Primitives;
+using IDP.Infrastructure.ExternalProviders;
 using IDP.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,8 +32,9 @@ public static class DependencyInjection
     {
         AddPersistence(services, configuration, connectionStringName);
         AddStores(services);
-        AddBootstrapServices(services, configuration);
+        AddExternalProviders(services, configuration);
         AddEmailServices(services);
+        AddBootstrapServices(services, configuration);
     }
 
     private static void AddPersistence(IServiceCollection services,
@@ -78,18 +86,28 @@ public static class DependencyInjection
         services.AddScoped<IUserStore, UserStore>();
     }
 
-    private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)
+    private static void AddExternalProviders(IServiceCollection services,
+       IConfiguration configuration)
     {
-        services.Configure<BootstrapOption>(configuration.GetSection("Bootstrap"));
+        services.AddHttpClient();
 
-        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
-        services.AddScoped<IClientProvisioningService, ClientProvisioningService>();
-        services.AddScoped<IRoleProvisioningService, RoleProvisioningService>();
-        services.AddScoped<IPermissionSeeder, PermissionSeeder>();
-        services.AddScoped<IUserProvisioningService, UserProvisioningService>();
-        services.AddScoped<IConfigurationSeeder, ConfigurationSeeder>();
+        services.Configure<ExternalAuthOptions>(
+            configuration.GetSection(ExternalAuthOptions.SectionName));
 
-        services.AddScoped<ISystemBootstrapper, SystemBootstrapper>();
+        services.AddScoped<ExternalProviderConfigurationResolver>();
+
+        services.AddSingleton<IConfigureOptions<GoogleOptions>, DynamicGoogleOptionsSetup>();
+        services.AddSingleton<IConfigureOptions<MicrosoftAccountOptions>, DynamicMicrosoftOptionsSetup>();
+        services.AddSingleton<IConfigureOptions<GitHubAuthenticationOptions>, DynamicGitHubOptionsSetup>();
+
+        services.AddScoped<IExternalAuthSessionStore, ExternalAuthSessionStore>();
+        services.AddScoped<IExternalIdentityLinkService, ExternalIdentityLinkService>();
+        services.AddScoped<IUserSignInService, UserSignInService>();
+
+        services.AddScoped<IExternalProviderClient, GoogleExternalProviderClient>();
+        services.AddScoped<IExternalProviderClient, MicrosoftExternalProviderClient>();
+        services.AddScoped<IExternalProviderClient, GitHubExternalProviderClient>();
+        services.AddScoped<IExternalProviderFactory, ExternalProviderFactory>();
     }
 
     private static void AddEmailServices(IServiceCollection services)
@@ -110,6 +128,20 @@ public static class DependencyInjection
                 _ => serviceProvider.GetRequiredService<SmtpEmailSender>()
             };
         });
+    }
+
+    private static void AddBootstrapServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<BootstrapOption>(configuration.GetSection("Bootstrap"));
+
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+        services.AddScoped<IClientProvisioningService, ClientProvisioningService>();
+        services.AddScoped<IRoleProvisioningService, RoleProvisioningService>();
+        services.AddScoped<IPermissionSeeder, PermissionSeeder>();
+        services.AddScoped<IUserProvisioningService, UserProvisioningService>();
+        services.AddScoped<IConfigurationSeeder, ConfigurationSeeder>();
+
+        services.AddScoped<ISystemBootstrapper, SystemBootstrapper>();
     }
 
     public static async Task EnsureSystemBootstrap(this WebApplication app, string connectionStringName)

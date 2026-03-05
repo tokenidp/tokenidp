@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDP.Infrastructure", "IDP.I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDP.Projection", "IDP.Projection\IDP.Projection.csproj", "{D627414C-5219-499B-BEFA-D6B0EA510C92}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IDP.ExternalProviders", "IDP.ExternalProviders\IDP.ExternalProviders.csproj", "{969F01EF-8364-4279-BC39-BB7670C10BEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -65,6 +67,10 @@ Global
 		{D627414C-5219-499B-BEFA-D6B0EA510C92}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D627414C-5219-499B-BEFA-D6B0EA510C92}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D627414C-5219-499B-BEFA-D6B0EA510C92}.Release|Any CPU.Build.0 = Release|Any CPU
+		{969F01EF-8364-4279-BC39-BB7670C10BEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{969F01EF-8364-4279-BC39-BB7670C10BEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{969F01EF-8364-4279-BC39-BB7670C10BEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{969F01EF-8364-4279-BC39-BB7670C10BEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

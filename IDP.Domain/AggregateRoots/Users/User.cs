@@ -16,12 +16,13 @@ public partial class User : AggregateRoot<int>, ITenant
     private readonly List<UserRole> _userRoles = new();
     private readonly List<UserAddress> _userAddresses = new();
     private readonly List<UserContact> _userContacts = new();
+    private readonly List<ExternalLogin> _externalLogins = new();
 
     public string UserName { get; private set; } = default!;
-    public string? NormalizedUserName { get; private set; } = default!;
+    public string? NormalizedUserName { get; private set; } = string.Empty;
     public string Email { get; private set; } = default!;
     public bool EmailConfirmed { get; private set; }
-    public string? NormalizedEmail { get; private set; } = default!;
+    public string? NormalizedEmail { get; private set; } = string.Empty;
     public string PasswordHash { get; private set; } = default!;
     public int AccessFailedCount { get; private set; }
     public string? PhoneNumber { get; private set; }
@@ -35,11 +36,13 @@ public partial class User : AggregateRoot<int>, ITenant
     public UserStatus StatusId { get; private set; }
     public string FirstName { get; private set; } = default!;
     public string LastName { get; private set; } = default!;
-    public string UserCode { get; private set; }
+    public string UserCode { get; private set; } = default!;
     public int EffectiveUserId { get; private set; }
+
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
     public IReadOnlyCollection<UserContact> UserContacts => _userContacts.AsReadOnly();
+    public IReadOnlyCollection<ExternalLogin> ExternalLogins => _externalLogins.AsReadOnly();
 
     public virtual Tenant Tenant { get; private set; } = default!;
 
@@ -265,6 +268,30 @@ public partial class User : AggregateRoot<int>, ITenant
     {
         AccessFailedCount = 0;
         LockoutEnd = null;
+    }
+
+    public ExternalLogin AddExternalLogin(ExternalProviderTypes provider,
+        string providerUserId,
+        string? email,
+        string? displayName)
+    {
+        if (_externalLogins.Any(x =>
+            x.Provider == provider &&
+            x.ProviderUserId == providerUserId))
+        {
+            throw new DomainException("External login already linked.");
+        }
+
+        var login = ExternalLogin.Create(
+            Id,
+            provider,
+            providerUserId,
+            email,
+            displayName);
+
+        _externalLogins.Add(login);
+
+        return login;
     }
 }
 

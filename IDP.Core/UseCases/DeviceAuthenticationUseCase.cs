@@ -13,7 +13,7 @@ internal class DeviceAuthenticationUseCase : IDeviceAuthenticationUseCase
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly IAppLogger<DeviceAuthenticationUseCase> _logger;
 
-    internal DeviceAuthenticationUseCase(IAuthenticationService identityService,
+    public DeviceAuthenticationUseCase(IAuthenticationService identityService,
         IMfaUseCase mfaUseCase,
         TenantUserMfaPolicy mfaPolicy,
         IAppLogger<DeviceAuthenticationUseCase> logger,

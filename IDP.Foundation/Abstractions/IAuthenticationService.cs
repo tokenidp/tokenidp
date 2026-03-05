@@ -2,5 +2,7 @@
 
 public interface IAuthenticationService
 {
-    Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password);
+    Task<AuthenticationContext> Authenticate(int tenantId, 
+        string userName, 
+        string password);
 }

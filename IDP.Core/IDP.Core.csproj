@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\IDP.ExternalProviders\IDP.ExternalProviders.csproj" />
     <ProjectReference Include="..\IDP.Foundation\IDP.Foundation.csproj" />
   </ItemGroup>
 

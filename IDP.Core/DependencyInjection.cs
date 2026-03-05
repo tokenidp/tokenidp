@@ -2,6 +2,8 @@
 using IDP.Core.Policies;
 using IDP.Core.UseCases;
 using IDP.Domain.AggregateRoots.Clients;
+using IDP.ExternalProviders;
+using IDP.ExternalProviders.Abstractions;
 using IDP.Foundation.Abstractions.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,10 +18,11 @@ public static class DependencyInjection
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<TokenSecretGenerator>();
 
-        services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
-
         AddUseCases(services);
         AddGrantHandlers(services);
+
+        services.AddSingleton<ITenantContextAccessor, TenantContextAccessor>();
+        services.AddScoped<IExternalAuthUseCase, ExternalAuthUseCase>();
     }
 
     private static void AddUseCases(IServiceCollection services)

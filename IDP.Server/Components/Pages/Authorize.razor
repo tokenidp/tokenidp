@@ -83,7 +83,7 @@ else if (ui != null)
             {
                 if (p.DisplayName == "Google")
                 {
-                    <button class="btn-secondary">
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
                         <span class="btn-icon">
                             <svg viewBox="0 0 533.5 544.3">
                                 <path fill="#4285f4"
@@ -101,7 +101,7 @@ else if (ui != null)
                 }
                 if (p.DisplayName == "Microsoft")
                 {
-                    <button class="btn-secondary">
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
                         <span class="btn-icon">
                             <svg viewBox="0 0 23 23">
                                 <rect fill="#f25022" x="1" y="1" width="10" height="10" />
@@ -115,7 +115,7 @@ else if (ui != null)
                 }
                 if (p.DisplayName == "GitHub")
                 {
-                    <button class="btn-secondary">
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
                         <span class="btn-icon">
                             <svg viewBox="0 0 24 24">
                                 <path fill="#181717"
@@ -163,7 +163,9 @@ else if (ui != null)
     private string codeChallengeMethod = string.Empty;
     private string responseType = string.Empty;
     private string state = string.Empty;
-    private string tenantKey = string.Empty;
+    private string authorizationContextId = string.Empty;
+    private int tenantId;
+    private int id;
 
     private readonly LoginModel loginModel = new();
     private Dictionary<string, string> QueryParams = new();
@@ -181,6 +183,13 @@ else if (ui != null)
         var parsedParams = QueryHelpers.ParseQuery(oauthParams);
         QueryParams = parsedParams.ToDictionary(k => k.Key, v => v.Value.ToString() ?? "");
 
+        QueryParams.TryGetValue("ctx", out authorizationContextId!);
+        if (!string.IsNullOrWhiteSpace(authorizationContextId))
+        {
+            var restoredParams = QueryHelpers.ParseQuery($"?{authorizationContextId.TrimStart('?')}");
+            QueryParams = restoredParams.ToDictionary(k => k.Key, v => v.Value.ToString() ?? "");
+        }
+
         QueryParams.TryGetValue("state", out state!);
         QueryParams.TryGetValue("response_type", out responseType!);
         QueryParams.TryGetValue("client_id", out clientId!);
@@ -188,6 +197,7 @@ else if (ui != null)
         QueryParams.TryGetValue("scope", out requestedScopes!);
         QueryParams.TryGetValue("code_challenge", out codeChallenge!);
         QueryParams.TryGetValue("code_challenge_method", out codeChallengeMethod!);
+        authorizationContextId = BuildAuthorizationContextId(QueryParams);
 
         //tenantKey = ResolveTenantKeyFromHost(Navigation.Uri);
 
@@ -202,8 +212,8 @@ else if (ui != null)
             };
 
             var clientInfo = await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
-
-            TenantContext.SetTenantId(clientInfo.TenantId);
+            tenantId = clientInfo.TenantId;
+            id = clientInfo.TenantId;
 
             // Build dynamic UI AFTER validation
             ui = await PageUiUseCase.BuildAsync(clientInfo.Scopes, clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
@@ -250,6 +260,9 @@ else if (ui != null)
         try
         {
             LoadService.ShowLoader();
+
+            TenantContext.SetTenantId(tenantId);
+            TenantContext.SetClientId(id);
 
             var authCodeResponse = await AuthUseCase.Authenticate(request);
 
@@ -298,17 +311,11 @@ else if (ui != null)
 
     private void LoginWithProvider(string providerKey)
     {
-        // This should go to YOUR external provider challenge endpoint
-        // Example endpoint: /external/challenge?provider=google&returnUrl=/authorize{...}
-        var returnUrl = "/authorize" + oauthParams;
-
-        var url = QueryHelpers.AddQueryString("/external/challenge", new Dictionary<string, string?>
-        {
-            ["provider"] = providerKey,
-            ["returnUrl"] = returnUrl,
-            ["client_id"] = clientId,
-            ["tenant"] = tenantKey
-        });
+        var provider = providerKey.Trim();
+        var challengePath = $"/external/{Uri.EscapeDataString(provider)}/challenge";
+        var url = QueryHelpers.AddQueryString(
+            challengePath,
+            new Dictionary<string, string?> { ["ctx"] = authorizationContextId });
 
         Navigation.NavigateTo(url, forceLoad: true);
     }
@@ -340,18 +347,13 @@ else if (ui != null)
     private static string BuildRedirectUri(string baseUri, IDictionary<string, string?> parameters)
         => QueryHelpers.AddQueryString(baseUri, parameters);
 
-    private static string ResolveTenantKeyFromHost(string absoluteUrl)
+    private static string BuildAuthorizationContextId(IDictionary<string, string> queryParams)
     {
-        // Example:
-        // blue-ocean.idp.tresorauth.com => tenantKey = "blue-ocean"
-        // idp.tresorauth.com => tenantKey = "system" (or "")
-        var host = new Uri(absoluteUrl).Host;
-        var parts = host.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var pairs = queryParams
+            .Where(x => !string.Equals(x.Key, "ctx", StringComparison.OrdinalIgnoreCase))
+            .Select(x => $"{Uri.EscapeDataString(x.Key)}={Uri.EscapeDataString(x.Value)}");
 
-        if (parts.Length >= 4 && parts[1].Equals("idp", StringComparison.OrdinalIgnoreCase))
-            return parts[0];
-
-        return "system";
+        return string.Join("&", pairs);
     }
 
     private static string GetAccentStyle(string? accentHex)

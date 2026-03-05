@@ -110,7 +110,7 @@ internal sealed class TenantCommandUseCase
                 authority: new Uri(p.Authority),
                 scopes: p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
                 callbackPath: p.CallbackPath,
-                clientSecret: EncryptProviderSecret(tenant.TenantKey, p.ProviderType, p.ClientSecret));
+                clientSecret: EncryptProviderSecret(tenant.Id.ToString(), p.ProviderType, p.ClientSecret));
 
             var addResult = tenant.AddExternalProvider(p.ProviderType, config);
             if (!addResult.IsSuccess)
@@ -222,7 +222,7 @@ internal sealed class TenantCommandUseCase
             var resolvedClientSecret = string.IsNullOrWhiteSpace(p.ClientSecret)
                 ? existingProvider?.OidcConfig?.ClientSecret
                 : p.ClientSecret;
-            var encryptedClientSecret = EncryptProviderSecret(tenant.TenantKey, p.ProviderType, resolvedClientSecret);
+            var encryptedClientSecret = EncryptProviderSecret(tenant.Id.ToString(), p.ProviderType, resolvedClientSecret);
 
             var config = OidcClientConfig.Create(
                 p.ClientId,
@@ -361,15 +361,15 @@ internal sealed class TenantCommandUseCase
     }
 
     private string? EncryptProviderSecret(
-        string tenantKey,
+        string tenantId,
         ExternalProviderTypes providerType,
         string? clientSecret)
     {
-        return _secretProtector.Encrypt(clientSecret, BuildSecretContext(tenantKey, providerType));
+        return _secretProtector.Encrypt(clientSecret, BuildSecretContext(tenantId, providerType));
     }
 
-    private static string BuildSecretContext(string tenantKey, ExternalProviderTypes providerType)
+    private static string BuildSecretContext(string tenantId, ExternalProviderTypes providerType)
     {
-        return $"tenant:{tenantKey}:provider:{providerType}";
+        return $"tenant:{tenantId}:provider:{providerType}";
     }
 }
