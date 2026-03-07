@@ -10,15 +10,18 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
     private readonly IApplicationDbContext _dbContext;
     private readonly IUserStore _userStore;
     private readonly ILookupNormalizer _normalizer;
+    private readonly ICodeSequenceGenerator _userCodeGenerator;
 
     public ExternalIdentityLinkService(
         IApplicationDbContext dbContext,
         IUserStore userStore,
-        ILookupNormalizer normalizer)
+        ILookupNormalizer normalizer,
+        ICodeSequenceGenerator userCodeGenerator)
     {
         _dbContext = dbContext;
         _userStore = userStore;
         _normalizer = normalizer;
+        _userCodeGenerator = userCodeGenerator;
     }
 
     public async Task<User> FindOrProvisionUserAsync(
@@ -52,12 +55,11 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 
         if (!string.IsNullOrWhiteSpace(identity.Email))
         {
-            var normalizedEmail = _normalizer.NormalizeEmail(identity.Email);
             user = await _dbContext.Users
                 .Include(x => x.ExternalLogins)
                 .FirstOrDefaultAsync(
                     x => x.TenantId == tenantId &&
-                         x.NormalizedEmail == normalizedEmail,
+                         x.Email == identity.Email,
                     cancellationToken);
         }
 
@@ -82,10 +84,12 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
         CancellationToken cancellationToken)
     {
         var (firstName, lastName) = SplitName(identity.DisplayName);
+
         var userName = await EnsureUniqueUserNameAsync(
             tenantId,
             BuildUserName(identity),
             cancellationToken);
+
         var email = identity.Email ?? $"{identity.ProviderUserId}@external.local";
         var phone = "0000000000";
 
@@ -118,6 +122,11 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             identity.ProviderUserId,
             identity.Email,
             identity.DisplayName);
+
+        var nextValue = await _userCodeGenerator
+            .NextUserCodeAsync(tenantId, cancellationToken);
+
+        user.GenerateUserCode(nextValue);
 
         var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         await _userStore.CreateUser(user, randomPassword);

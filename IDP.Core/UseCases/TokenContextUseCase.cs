@@ -20,8 +20,8 @@ internal class TokenContextUseCase
         _identityStore = identityStore;
     }
 
-    internal async Task<TokenContext> BuildTokenContextAsync(string clientId, 
-        int userId, 
+    internal async Task<TokenContext> BuildTokenContextAsync(string clientId,
+        int userId,
         bool rememberMe = false)
     {
         _logger.LogInfo("Generating user info for token for user:{userId}", userId);

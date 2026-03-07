@@ -1,6 +1,6 @@
 ﻿namespace IDP.Domain.AggregateRoots.Users;
 
-public sealed class ExternalLogin : Entity<int>
+public sealed class UserExternalLogin : Entity<int>
 {
     public int UserId { get; private set; }
 
@@ -15,9 +15,9 @@ public sealed class ExternalLogin : Entity<int>
 
     public User User { get; private set; } = default!;
 
-    private ExternalLogin() { } // EF
+    private UserExternalLogin() { } // EF
 
-    private ExternalLogin(
+    private UserExternalLogin(
         int userId,
         ExternalProviderTypes provider,
         string providerUserId,
@@ -37,14 +37,14 @@ public sealed class ExternalLogin : Entity<int>
         CreatedAtUtc = DateTime.UtcNow;
     }
 
-    public static ExternalLogin Create(
+    public static UserExternalLogin Create(
         int userId,
         ExternalProviderTypes provider,
         string providerUserId,
         string? email,
         string? displayName)
     {
-        return new ExternalLogin(
+        return new UserExternalLogin(
             userId,
             provider,
             providerUserId,

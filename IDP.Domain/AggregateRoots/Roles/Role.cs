@@ -6,7 +6,7 @@ public class Role : AggregateRoot<int>, ITenant
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
     public string? NormalizedName { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }

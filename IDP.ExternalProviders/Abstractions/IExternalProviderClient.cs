@@ -1,5 +1,4 @@
 ﻿using IDP.Domain.AggregateRoots.Tenants;
-using IDP.Domain.AggregateRoots.Users;
 using IDP.ExternalProviders.Model;
 
 namespace IDP.ExternalProviders.Abstractions;

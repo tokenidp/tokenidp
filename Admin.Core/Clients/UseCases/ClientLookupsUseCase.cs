@@ -38,7 +38,8 @@ internal sealed class ClientLookupsUseCase
                     ClientScopes = ClientLookupMapper.MapClientScopes(),
                     GrantTypes = ClientLookupMapper.MapGrantTypes(),
                     ExternalProviders = await ClientLookupMapper
-                        .MapExternalProviders(_currentUserService.TenantId, _appDbContext)
+                        .MapExternalProviders(_currentUserService.TenantId, _appDbContext),
+                    Roles = await ClientLookupMapper.MapRoles(_currentUserService.TenantId, _appDbContext)
                 };
             }, TimeSpan.FromMinutes(10));
 

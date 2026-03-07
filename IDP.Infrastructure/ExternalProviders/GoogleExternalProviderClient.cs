@@ -43,7 +43,7 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
         CancellationToken cancellationToken)
     {
         var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
-        var endpoint = Combine(config.Authority, "/oauth2/token");
+        var endpoint = "https://oauth2.googleapis.com/token";
 
         var form = new List<KeyValuePair<string, string>>
         {
@@ -51,7 +51,8 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
             new("client_id", config.ClientId),
             new("client_secret", config.ClientSecret),
             new("code", request.Code),
-            new("redirect_uri", request.CallbackUrl)
+            new("redirect_uri", request.CallbackUrl),
+            new("scope", string.Join(" ", config.Scopes))
         };
 
         if (!string.IsNullOrWhiteSpace(request.CodeVerifier))
@@ -80,11 +81,15 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
         CancellationToken cancellationToken)
     {
         using var client = CreateClient(tokens.AccessToken);
+
         using var response = await client.GetAsync("https://openidconnect.googleapis.com/v1/userinfo", cancellationToken);
+
         var userInfo = await ReadRequiredJsonAsync<GoogleUserInfoResponse>(response, cancellationToken);
 
         var claims = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
         claims["sub"] = userInfo.Subject;
+
         if (!string.IsNullOrWhiteSpace(userInfo.Email))
         {
             claims["email"] = userInfo.Email;

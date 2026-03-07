@@ -16,7 +16,7 @@ public partial class User : AggregateRoot<int>, ITenant
     private readonly List<UserRole> _userRoles = new();
     private readonly List<UserAddress> _userAddresses = new();
     private readonly List<UserContact> _userContacts = new();
-    private readonly List<ExternalLogin> _externalLogins = new();
+    private readonly List<UserExternalLogin> _externalLogins = new();
 
     public string UserName { get; private set; } = default!;
     public string? NormalizedUserName { get; private set; } = string.Empty;
@@ -42,7 +42,7 @@ public partial class User : AggregateRoot<int>, ITenant
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
     public IReadOnlyCollection<UserAddress> UserAddresses => _userAddresses.AsReadOnly();
     public IReadOnlyCollection<UserContact> UserContacts => _userContacts.AsReadOnly();
-    public IReadOnlyCollection<ExternalLogin> ExternalLogins => _externalLogins.AsReadOnly();
+    public IReadOnlyCollection<UserExternalLogin> ExternalLogins => _externalLogins.AsReadOnly();
 
     public virtual Tenant Tenant { get; private set; } = default!;
 
@@ -270,7 +270,7 @@ public partial class User : AggregateRoot<int>, ITenant
         LockoutEnd = null;
     }
 
-    public ExternalLogin AddExternalLogin(ExternalProviderTypes provider,
+    public UserExternalLogin? AddExternalLogin(ExternalProviderTypes provider,
         string providerUserId,
         string? email,
         string? displayName)
@@ -279,10 +279,10 @@ public partial class User : AggregateRoot<int>, ITenant
             x.Provider == provider &&
             x.ProviderUserId == providerUserId))
         {
-            throw new DomainException("External login already linked.");
+            return default;
         }
 
-        var login = ExternalLogin.Create(
+        var login = UserExternalLogin.Create(
             Id,
             provider,
             providerUserId,

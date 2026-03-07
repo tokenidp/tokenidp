@@ -93,7 +93,7 @@ internal sealed class DeviceAuthorizationUseCase
             _logger.LogError(
                 ex,
                 "Device authorization creation failed. " +
-                "ClientId: {ClientId}",         
+                "ClientId: {ClientId}",
                 request.ClientId);
 
             throw;

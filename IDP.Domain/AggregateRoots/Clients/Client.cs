@@ -26,6 +26,7 @@ public class Client : AggregateRoot<int>, ITenant
     public int TenantId { get; private set; }
     public string RedirectUri { get; private set; } = default!;
     public string? LogoutRedirectUri { get; private set; }
+    public bool RequiredPkce { get; private set; }
     public bool IsActive { get; private set; }
     public int? ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }

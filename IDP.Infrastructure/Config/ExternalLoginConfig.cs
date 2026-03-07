@@ -1,11 +1,11 @@
 ﻿namespace IDP.Infrastructure.Config;
 
 public sealed class ExternalLoginConfiguration
-    : IEntityTypeConfiguration<ExternalLogin>
+    : IEntityTypeConfiguration<UserExternalLogin>
 {
-    public void Configure(EntityTypeBuilder<ExternalLogin> builder)
+    public void Configure(EntityTypeBuilder<UserExternalLogin> builder)
     {
-        builder.ToTable("ExternalLogins");
+        builder.ToTable("UserExternalLogins");
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();

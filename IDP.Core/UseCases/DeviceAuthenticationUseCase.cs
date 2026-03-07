@@ -78,7 +78,7 @@ internal class DeviceAuthenticationUseCase : IDeviceAuthenticationUseCase
 
         var result = ValidateDeviceAuthorization(deviceRequest);
 
-        if(result!= null)
+        if (result != null)
         {
             return result;
         }

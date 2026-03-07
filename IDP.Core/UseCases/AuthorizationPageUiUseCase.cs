@@ -15,9 +15,9 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
         _clientStore = clientStore;
     }
 
-    public async Task<AuthorizationPageUi> BuildAsync(IReadOnlySet<string> scopes, 
-        int tenantId, 
-        int clientId, 
+    public async Task<AuthorizationPageUi> BuildAsync(IReadOnlySet<string> scopes,
+        int tenantId,
+        int clientId,
         CancellationToken ct)
     {
         var tenantUISetting = await _tenantStore.GetTenantUISettings(tenantId);

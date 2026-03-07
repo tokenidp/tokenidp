@@ -15,7 +15,7 @@ internal sealed class GrantTypeValidatorUseCase
         _clientStore = clientStore;
     }
 
-    public async Task<(bool,int)> ValidateGrantType(string grantType, string clientId)
+    public async Task<(bool, int)> ValidateGrantType(string grantType, string clientId)
     {
         _logger.LogInfo("Validate Grant type {GrantType} for client:{ClientId}", grantType, clientId);
 
@@ -37,7 +37,7 @@ internal sealed class GrantTypeValidatorUseCase
 
         if (client.GrantTypes.Any(gt => gt.ToString() == grantType))
         {
-            return (true,client.TenantId);
+            return (true, client.TenantId);
         }
 
         return (true, client.TenantId);

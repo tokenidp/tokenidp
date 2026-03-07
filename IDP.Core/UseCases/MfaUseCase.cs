@@ -27,19 +27,25 @@ internal sealed class MfaUseCase : IMfaUseCase
         _emailQueueStore = emailQueueStore;
     }
 
-    public Task<AuthorizationResponse> GenerateMfaForAuthorizeAsync(AuthorizationRequest request,
+    public async Task<AuthorizationResponse> GenerateMfaForAuthorizeAsync(AuthorizationRequest request,
         int userId,
         CancellationToken ct = default)
     {
-        return GenerateMfaCode(new GenerateMfaCommand
+        var preAuthorization = await _preAuthorizationRepo
+           .GetPreAuthorization(request.AuthorizationContextId);
+
+        if (preAuthorization is null)
         {
-            UserId = userId,
-            ClientId = request.ClientId,
-            RedirectUri = request.RedirectUri,
-            CodeChallenge = request.CodeChallenge,
-            CodeChallengeMethod = request.CodeChallengeMethod,
-            Scopes = request.Scopes
-        }, ct);
+            return AuthorizationResponse.Failure("Authorization context is invalid or expired.");
+        }
+
+        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
+
+        preAuthorization.UpdateMfaCode(userId, mfaCode, DateTime.UtcNow.AddMinutes(5));
+
+        await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
+
+        return await CompleteMfaProcess(userId, mfaCode, request.AuthorizationContextId);
     }
 
     public async Task<AuthorizationResponse> GenerateMfaCode(GenerateMfaCommand command,
@@ -57,47 +63,23 @@ internal sealed class MfaUseCase : IMfaUseCase
         var expiresAt = DateTime.UtcNow.AddMinutes(5);
 
         var preAuthorization = new PreAuthorization(
-            command.UserId,
+            command.TenantId,
+            correlationId,
+            command.ClientId,
             mfaCode,
-            correlationId,
-            command.ClientId ?? string.Empty,
-            command.RedirectUri,
-            command.CodeChallenge,
-            command.CodeChallengeMethod,
             command.Scopes,
-            expiresAt);
+            expiresAt,
+            command.UserId);
 
-        await _preAuthorizationRepo.CreatePreAuthorization(preAuthorization);
+        await _preAuthorizationRepo.CreatePreAuthorization(preAuthorization, ct);
 
-        var user = await _identityStore.GetUserById(command.UserId);
-
-        await SendNotification(
-            user.TenantId,
-            user.FullName,
-            user.Email ?? string.Empty,
-            mfaCode);
-
-        user.MarkMfaChallengeSent(
-            _currentUserService.CorrelationId,
-            _currentUserService.IpAddress);
-
-        await _identityStore.UpdateUser(user);
-
-        _logger.LogInfo(
-            "MFA challenge generated. UserId: {UserId}, CorrelationId: {CorrelationId}",
-            command.UserId,
-            correlationId);
-
-        return AuthorizationResponse.Success(
-            command.UserId,
-            correlationId,
-            twoFactorEnabled: true);
+        return await CompleteMfaProcess(command.UserId, mfaCode, correlationId);
     }
 
     public async Task<(AuthorizationRequest?, AuthorizationResponse)> VerifyMfaRequest(MfaRequest request)
     {
         var preAuthorization = await _preAuthorizationRepo
-            .GetPreAuthorization(request.CorrelationId, request.UserId);
+            .GetPreAuthorization(request.CorrelationId);
 
         if (preAuthorization == null)
         {
@@ -106,7 +88,7 @@ internal sealed class MfaUseCase : IMfaUseCase
             return (default, AuthorizationResponse.Failure(message));
         }
 
-        var authResponse = AuthorizationResponse.Success(preAuthorization.UserId, preAuthorization.CorrelationId, true);
+        var authResponse = AuthorizationResponse.Success(preAuthorization.UserId ?? 0, preAuthorization.CorrelationId, true);
 
         var authRequest = AuthorizationRequest.Create(preAuthorization.ClientId ?? string.Empty,
             preAuthorization.RedirectUri ?? string.Empty,
@@ -128,7 +110,7 @@ internal sealed class MfaUseCase : IMfaUseCase
         _logger.LogDebug("Pre Authorization CorrelationId: {CorrelationId}", request.CorrelationId);
 
         var preAuthorization = await _preAuthorizationRepo
-            .GetPreAuthorization(request.CorrelationId, request.UserId);
+            .GetPreAuthorization(request.CorrelationId);
 
         if (preAuthorization == null)
         {
@@ -147,15 +129,35 @@ internal sealed class MfaUseCase : IMfaUseCase
 
         _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
 
-        var user = await _identityStore.GetUserById(request.UserId);
+        return await CompleteMfaProcess(request.UserId, mfaCode, request.CorrelationId);
+    }
 
-        await SendNotification(user.TenantId, user.FullName, user.Email ?? string.Empty, mfaCode);
+    private async Task<AuthorizationResponse> CompleteMfaProcess(int userId,
+        string mfaCode,
+        string correlationId)
+    {
+        var user = await _identityStore.GetUserById(userId);
 
-        user.MarkMfaChallengeSent(_currentUserService.CorrelationId, _currentUserService.IpAddress);
+        await SendNotification(
+            user.TenantId,
+            user.FullName,
+            user.Email ?? string.Empty,
+            mfaCode);
+
+        user.MarkMfaChallengeSent(
+            _currentUserService.CorrelationId,
+            _currentUserService.IpAddress);
 
         await _identityStore.UpdateUser(user);
 
-        return AuthorizationResponse.Success(request.UserId, request.CorrelationId, true);
+        _logger.LogInfo(
+            "MFA challenge generated. CorrelationId: {CorrelationId}",
+            correlationId);
+
+        return AuthorizationResponse.Success(
+            userId,
+            correlationId,
+            twoFactorEnabled: true);
     }
 
     private async Task SendNotification(int tenantId,

@@ -42,7 +42,7 @@ internal sealed class TokenGrantPipeline : ITokenGrantUseCase
 
         var response = await tokenGrantHandler.HandleAsync(request);
 
-        _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}", 
+        _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}",
             request.ClientId, request.GrantType);
 
         return Results.Ok(ApiResult<TokenResponse>.Success(response));

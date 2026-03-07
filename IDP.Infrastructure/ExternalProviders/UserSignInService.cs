@@ -41,7 +41,7 @@ internal sealed class UserSignInService : IUserSignInService
         var principal = new ClaimsPrincipal(identity);
 
         await context.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
+            "idp_session",
             principal,
             new AuthenticationProperties
             {

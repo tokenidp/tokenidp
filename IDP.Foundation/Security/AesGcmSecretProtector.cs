@@ -1,6 +1,6 @@
-﻿using System.Security.Cryptography;
+﻿using IDP.Foundation.Abstractions;
+using System.Security.Cryptography;
 using System.Text;
-using IDP.Foundation.Abstractions;
 
 namespace IDP.Foundation.Security;
 

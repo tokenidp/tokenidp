@@ -45,7 +45,6 @@ internal class PasswordGrantHandler : ITokenGrantHandler
             {
                 UserId = context.UserId,
                 ClientId = request.ClientId,
-                RedirectUri = request.RedirectUri,
                 Scopes = request.Scope
             };
 

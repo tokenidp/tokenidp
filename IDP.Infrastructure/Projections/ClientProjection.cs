@@ -40,6 +40,7 @@ internal static class ClientShortInfoProjection
             client.ClientAuthPolicy.AllowForgotPassword,
             client.ClientName,
             client.RedirectUri,
+            client.RequiredPkce,
             client.ClientScopes.Select(s => s.Scope),
             client.ClientGrantTypes.Select(g => g.AllowedGrantType)
         );

@@ -118,8 +118,6 @@ public static class ApplicationBuilderExtensions
 
         app.RegisterIDPEndpoints();
 
-        app.MapExternalAuthEndpoints();
-
         app.RegisterAdminEndpoints();
 
         //app.MapHealthChecks("/health");

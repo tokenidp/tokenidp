@@ -10,7 +10,7 @@ public class DeviceFlowEndpoint : IEndpointDefinition
 
         authGroup.MapPost("", static async (DeviceAuthorizationRequest request,
             DeviceAuthorizationUseCase useCase) =>
-        {      
+        {
             var result = await useCase.CreateAsync(request, CancellationToken.None);
 
             return result;

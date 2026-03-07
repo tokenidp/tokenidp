@@ -4,6 +4,7 @@ using IDP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IDP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260306023251_IDP_state_length")]
+    partial class IDP_state_length
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1519,6 +1522,49 @@ namespace IDP.Infrastructure.Migrations
                     b.ToTable("Tokens", (string)null);
                 });
 
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.ExternalLogin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("LastLoginAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte>("Provider")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("ProviderUserId")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("Provider", "ProviderUserId")
+                        .IsUnique();
+
+                    b.ToTable("ExternalLogins", (string)null);
+                });
+
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.PasswordResetToken", b =>
                 {
                     b.Property<long>("Id")
@@ -1829,49 +1875,6 @@ namespace IDP.Infrastructure.Migrations
                         .HasDatabaseName("IX_UserContacts_User_Phone");
 
                     b.ToTable("UserContacts", (string)null);
-                });
-
-            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserExternalLogin", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<DateTime?>("LastLoginAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<byte>("Provider")
-                        .HasColumnType("tinyint");
-
-                    b.Property<string>("ProviderUserId")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("Provider", "ProviderUserId")
-                        .IsUnique();
-
-                    b.ToTable("UserExternalLogins", (string)null);
                 });
 
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserRole", b =>
@@ -2801,6 +2804,17 @@ namespace IDP.Infrastructure.Migrations
                     b.Navigation("Token");
                 });
 
+            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.ExternalLogin", b =>
+                {
+                    b.HasOne("IDP.Domain.AggregateRoots.Users.User", "User")
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.PasswordResetToken", b =>
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Users.User", "User")
@@ -2838,17 +2852,6 @@ namespace IDP.Infrastructure.Migrations
                 {
                     b.HasOne("IDP.Domain.AggregateRoots.Users.User", "User")
                         .WithMany("UserContacts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("IDP.Domain.AggregateRoots.Users.UserExternalLogin", b =>
-                {
-                    b.HasOne("IDP.Domain.AggregateRoots.Users.User", "User")
-                        .WithMany("ExternalLogins")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();

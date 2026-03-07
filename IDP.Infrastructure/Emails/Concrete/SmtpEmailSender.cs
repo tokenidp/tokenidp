@@ -15,8 +15,8 @@ internal sealed class SmtpEmailSender : IEmailSender
         _logger = logger;
     }
 
-    public async Task<SendEmailResult> SendAsync(EmailConfigurationProvider settings, 
-        EmailMessage email, 
+    public async Task<SendEmailResult> SendAsync(EmailConfigurationProvider settings,
+        EmailMessage email,
         CancellationToken ct)
     {
         try

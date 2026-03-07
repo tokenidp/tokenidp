@@ -53,6 +53,20 @@ internal static class AuthenticationDI
                         return issuer;
                     }
                 };
+            })
+            .AddCookie("idp_session", options =>
+            {
+                options.Cookie.Name = "TokenTresor.Session";
+                options.LoginPath = "/login";
+                options.LogoutPath = "/logout";
+
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = TimeSpan.FromHours(30);
+
+                options.Cookie.SameSite = SameSiteMode.Lax;
             });
     }
 

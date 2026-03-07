@@ -4,12 +4,11 @@ using IDP.ExternalProviders.Model;
 
 namespace IDP.Core.Endpoints;
 
-public static class ExternalAuthEndpoints
+internal class ExternalAuthEndpoints : IEndpointDefinition
 {
-    public static IEndpointRouteBuilder MapExternalAuthEndpoints(
-        this IEndpointRouteBuilder endpoints)
+    public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var group = endpoints.MapGroup("/external");
+        var group = app.MapGroup("/external");
 
         group.MapGet("/{provider}/challenge", async (
             string provider,
@@ -40,7 +39,6 @@ public static class ExternalAuthEndpoints
             string code,
             string state,
             IExternalAuthUseCase useCase,
-            ITenantContextAccessor tenantContextAccessor,
             HttpContext httpContext) =>
         {
             if (!TryParseProvider(provider, out var providerType))
@@ -54,8 +52,6 @@ public static class ExternalAuthEndpoints
             }
 
             var input = new ExternalAuthCallbackInput(
-                tenantContextAccessor.TenantId,
-                tenantContextAccessor.ClientId,
                 providerType,
                 code,
                 state);
@@ -64,8 +60,6 @@ public static class ExternalAuthEndpoints
 
             return Results.Redirect(result.ResumeAuthorizeUrl);
         });
-
-        return endpoints;
     }
 
     private static bool TryParseProvider(string value, out ExternalProviderTypes provider)

@@ -54,7 +54,8 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
                 new("client_secret", config.ClientSecret),
                 new("code", request.Code),
                 new("redirect_uri", request.CallbackUrl),
-                new("state", request.State)
+                new("state", request.State),
+                new("scope", string.Join(" ", config.Scopes))
             ]),
             cancellationToken);
 

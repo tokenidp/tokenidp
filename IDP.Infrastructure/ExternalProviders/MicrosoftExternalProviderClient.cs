@@ -51,7 +51,8 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
             new("client_id", config.ClientId),
             new("client_secret", config.ClientSecret),
             new("code", request.Code),
-            new("redirect_uri", request.CallbackUrl)
+            new("redirect_uri", request.CallbackUrl),
+            new("scope", string.Join(" ", config.Scopes))
         };
 
         if (!string.IsNullOrWhiteSpace(request.CodeVerifier))

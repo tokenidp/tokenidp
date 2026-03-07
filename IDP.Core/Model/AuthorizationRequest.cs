@@ -9,6 +9,7 @@ public class AuthorizationRequest
     public string RedirectUri { get; set; } = default!;
     public string CodeChallenge { get; set; } = default!;
     public string Scopes { get; set; } = default!;
+    public string AuthorizationContextId { get; set; } = default!;
     public string CodeChallengeMethod { get; set; } = default!; //Default is SHA256
     public bool RememberMe { get; set; }
 

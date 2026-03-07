@@ -6,8 +6,8 @@ public interface IAuthorizationStore
     Task<int> CreateAuthorization(AuthorizationCode authorizationCode);
     Task<int> UpdateAuthorization(AuthorizationCode authorizationCode);
 
-    Task<PreAuthorization> GetPreAuthorization(string correlationId, int userId);
-    Task<int> CreatePreAuthorization(PreAuthorization preAuthorization);
+    Task<PreAuthorization> GetPreAuthorization(string correlationId);
+    Task<int> CreatePreAuthorization(PreAuthorization preAuthorization, CancellationToken ct);
     Task<int> UpdatePreAuthorization(PreAuthorization preAuthorization);
 
     Task<int> CreateDeviceAuthorization(DeviceAuthorization deviceAuthorization);

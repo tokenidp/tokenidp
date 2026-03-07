@@ -46,7 +46,7 @@ internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
         var tokenInfo = await _tokenContextUseCase
             .BuildTokenContextAsync(request.ClientId, existingToken.UserId ?? 0);
 
-        _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}", 
+        _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}",
             request.ClientId, request.IpAddress ?? string.Empty);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);

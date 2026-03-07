@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Users;
-
-namespace IDP.Infrastructure.Config;
+﻿namespace IDP.Infrastructure.Config;
 
 internal sealed class PasswordResetTokenConfig : IEntityTypeConfiguration<PasswordResetToken>
 {

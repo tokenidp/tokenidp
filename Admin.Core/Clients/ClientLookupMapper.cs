@@ -75,4 +75,25 @@ internal static class ClientLookupMapper
             })
             .ToList();
     }
+
+    public async static Task<List<LookupItem>> MapRoles(int tenantId, IApplicationDbContext db)
+    {
+        var roles = await db.Roles
+            .Where(t => t.TenantId == tenantId && t.IsDeleted != true)
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync();
+
+        if (!roles.Any())
+        {
+            return new List<LookupItem>();
+        }
+
+        return roles
+            .Select(value => new LookupItem
+            {
+                Key = value.Id.ToString(),
+                Value = value.Name
+            })
+            .ToList();
+    }
 }

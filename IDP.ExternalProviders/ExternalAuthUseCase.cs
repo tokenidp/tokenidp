@@ -5,6 +5,7 @@ using IDP.ExternalProviders.Abstractions;
 using IDP.ExternalProviders.Model;
 using IDP.ExternalProviders.Security;
 using IDP.Foundation.Abstractions;
+using IDP.Foundation.Abstractions.Stores;
 using Microsoft.Extensions.Options;
 
 namespace IDP.ExternalProviders;
@@ -17,6 +18,7 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
     private readonly IExternalAuthSessionStore _externalAuthSessionStore;
     private readonly IExternalIdentityLinkService _externalIdentityLinkService;
     private readonly IUserSignInService _userSignInService;
+    private readonly IAuthorizationStore _authorizationStore;
     private readonly ExternalAuthOptions _options;
 
     public ExternalAuthUseCase(
@@ -26,7 +28,8 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
         IExternalAuthSessionStore externalAuthSessionStore,
         IExternalIdentityLinkService externalIdentityLinkService,
         IUserSignInService userSignInService,
-        IOptions<ExternalAuthOptions> options)
+        IOptions<ExternalAuthOptions> options,
+        IAuthorizationStore authorizationStore)
     {
         _tenantContextAccessor = tenantContextAccessor;
         _currentUserService = currentUserService;
@@ -35,6 +38,7 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
         _externalIdentityLinkService = externalIdentityLinkService;
         _userSignInService = userSignInService;
         _options = options.Value;
+        _authorizationStore = authorizationStore;
     }
 
     public async Task<ExternalChallengeResult> StartChallengeAsync(
@@ -49,13 +53,19 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
             throw new InvalidOperationException("Authorization context id is required.");
         }
 
-        var tenantId = _tenantContextAccessor.TenantId;
-        var clientId = _tenantContextAccessor.ClientId;
+        var preAuthorization = await _authorizationStore
+                   .GetPreAuthorization(authorizationContextId);
 
-        if (tenantId <= 0 || clientId <= 0)
+        if (preAuthorization is null)
         {
-            throw new InvalidOperationException("Tenant context is missing for external challenge.");
+            throw new InvalidOperationException("Authorization context is invalid or expired.");
         }
+
+        var tenantId = preAuthorization.TenantId;
+        var clientId = preAuthorization.ClientId_FK;
+
+        _tenantContextAccessor.SetClientId(clientId);
+        _tenantContextAccessor.SetTenantId(tenantId);
 
         var state = OAuthStateGenerator.Generate();
         var nonce = NonceGenerator.Generate();
@@ -119,12 +129,12 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
             throw new InvalidOperationException("Invalid state parameter.");
         }
 
-        if (input.TenantId > 0 && input.TenantId != session.TenantId)
+        if (session.TenantId == 0)
         {
             throw new InvalidOperationException("Invalid tenant context in external callback.");
         }
 
-        if (input.ClientId > 0 && input.ClientId != session.ClientId)
+        if (session.ClientId == 0)
         {
             throw new InvalidOperationException("Invalid client context in external callback.");
         }

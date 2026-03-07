@@ -38,7 +38,7 @@ public interface IApplicationDbContext
     DbSet<UserRole> UserRoles { get; }
     DbSet<Role> Roles { get; }
     DbSet<User> Users { get; }
-    DbSet<ExternalLogin> ExternalLogins { get; }
+    DbSet<UserExternalLogin> UserExternalLogins { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
     DbSet<CodeSequence> CodeSequences { get; }
     DbSet<UserAddress> UserAddresses { get; }

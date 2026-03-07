@@ -1,8 +1,6 @@
 ﻿using Admin.Core.Bootstrap;
-using AspNet.Security.OAuth.GitHub;
 using IDP.Core.Model;
 using IDP.Core.OAuth;
-using IDP.Domain.AggregateRoots.Configurations;
 using IDP.ExternalProviders.Abstractions;
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Foundation.Options;
@@ -14,8 +12,6 @@ using IDP.Infrastructure.Emails.Concrete;
 using IDP.Infrastructure.Emails.Primitives;
 using IDP.Infrastructure.ExternalProviders;
 using IDP.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +52,7 @@ public static class DependencyInjection
         services.AddSingleton<JsonHelper>();
 
         var secretEncryptionOptions = configuration
-            .GetSection(SecretEncryptionOptions.SectionName)
+            .GetSection("Security")
             .Get<SecretEncryptionOptions>() ?? new SecretEncryptionOptions();
 
         if (string.IsNullOrWhiteSpace(secretEncryptionOptions.KeyBase64))
@@ -95,10 +91,6 @@ public static class DependencyInjection
             configuration.GetSection(ExternalAuthOptions.SectionName));
 
         services.AddScoped<ExternalProviderConfigurationResolver>();
-
-        services.AddSingleton<IConfigureOptions<GoogleOptions>, DynamicGoogleOptionsSetup>();
-        services.AddSingleton<IConfigureOptions<MicrosoftAccountOptions>, DynamicMicrosoftOptionsSetup>();
-        services.AddSingleton<IConfigureOptions<GitHubAuthenticationOptions>, DynamicGitHubOptionsSetup>();
 
         services.AddScoped<IExternalAuthSessionStore, ExternalAuthSessionStore>();
         services.AddScoped<IExternalIdentityLinkService, ExternalIdentityLinkService>();

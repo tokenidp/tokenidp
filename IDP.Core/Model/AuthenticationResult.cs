@@ -8,8 +8,8 @@ public class AuthenticationResult
     public string CorrelationId { get; private set; } = default!;
     public string? Error { get; init; }
 
-    public static AuthenticationResult Success(int userId, 
-        bool twoFactorEnabled, 
+    public static AuthenticationResult Success(int userId,
+        bool twoFactorEnabled,
         string correlationId = "")
          => new AuthenticationResult
          {

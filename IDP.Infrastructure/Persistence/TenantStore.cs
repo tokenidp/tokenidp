@@ -1,6 +1,4 @@
-﻿using Admin.Core.Tenants;
-using IDP.Domain.AggregateRoots.Tenants;
-using IDP.Foundation.Abstractions.Stores;
+﻿using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Persistence;
 

@@ -1,5 +1,4 @@
 ﻿using IDP.Domain.AggregateRoots.Authorization;
-using IDP.Domain.AggregateRoots.Users;
 using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Infrastructure.Persistence;
@@ -62,17 +61,17 @@ internal sealed class AuthorizationStore : IAuthorizationStore
         return authorizationCode.Id;
     }
 
-    public async Task<PreAuthorization> GetPreAuthorization(string correlationId, int userId)
+    public async Task<PreAuthorization> GetPreAuthorization(string correlationId)
     {
-        var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId, userId);
+        var cacheKey = CacheKeys.PRE_AUTHORIZATION.FormatCacheKey(correlationId);
 
         var preAuthorization = await _cache.GetAsync<PreAuthorization>(cacheKey);
 
         if (preAuthorization == null)
         {
             preAuthorization = await _dbContext.PreAuthorizations
-                   .Where(t => t.CorrelationId == correlationId && t.UserId == userId
-                                && t.Expiry > DateTime.UtcNow && !t.Is2FAVerified)
+                   .Where(t => t.CorrelationId == correlationId
+                   && t.Expiry > DateTime.UtcNow)
                    .OrderByDescending(t => t.Id)
                    .FirstOrDefaultAsync();
         }
@@ -80,16 +79,16 @@ internal sealed class AuthorizationStore : IAuthorizationStore
         return preAuthorization!;
     }
 
-    public async Task<int> CreatePreAuthorization(PreAuthorization preAuthorization)
+    public async Task<int> CreatePreAuthorization(PreAuthorization preAuthorization, CancellationToken ct)
     {
         _dbContext.PreAuthorizations.Add(preAuthorization);
 
-        var id = await _dbContext.SaveChangesAsync();
+        var id = await _dbContext.SaveChangesAsync(ct);
 
         var cacheKey = CacheKeys.PRE_AUTHORIZATION
-            .FormatCacheKey(preAuthorization.CorrelationId, preAuthorization.UserId);
+            .FormatCacheKey(preAuthorization.CorrelationId);
 
-        await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
+        await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 10, 0));
 
         return id;
     }
@@ -101,9 +100,9 @@ internal sealed class AuthorizationStore : IAuthorizationStore
         var id = await _dbContext.SaveChangesAsync();
 
         var cacheKey = CacheKeys.PRE_AUTHORIZATION
-            .FormatCacheKey(preAuthorization.CorrelationId, preAuthorization.UserId);
+            .FormatCacheKey(preAuthorization.CorrelationId);
 
-        await _cache.SetAsync(cacheKey, preAuthorization, new TimeSpan(0, 5, 0));
+        await _cache.RemoveAsync(cacheKey);
 
         return preAuthorization.Id;
     }

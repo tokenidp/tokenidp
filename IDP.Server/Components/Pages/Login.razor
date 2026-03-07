@@ -3,13 +3,15 @@
 @using IDP.Core.Abstractions
 @using IDP.Core.Model
 @using IDP.Core.OAuth
+@using IDP.Domain.AggregateRoots.Authorization
 @using IDP.Foundation.Abstractions
+@using IDP.Foundation.Abstractions.Stores
 @using IDP.Foundation.Exceptions
 @using IDP.Server.Middlewares
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Logging
 
-@page "/authorize"
+@page "/login"
 @rendermode InteractiveServer
 
 <PageTitle>Authorize</PageTitle>
@@ -17,11 +19,11 @@
 @inject LoadService LoadService
 @inject NavigationManager Navigation
 @inject IAuthorizationCodeUseCase AuthUseCase
-@inject IAuthorizationRequestValidator AuthorizationValidator;
+@inject IAuthorizationStore authorizationStore;
 @inject IAuthorizationPageUiUseCase PageUiUseCase
 @inject ITenantContextAccessor TenantContext;
 @inject IJSRuntime JSRuntime
-@inject ILogger<Authorize> logger
+@inject ILogger<Login> logger
 
 @if (!isRequestValid)
 {
@@ -150,81 +152,63 @@ else if (ui != null)
     }
 
     private AuthorizationPageUi? ui;
+    private PreAuthorization? preAuthorization;
 
     private bool isRequestValid = true;
     private string requestErrorMessage = string.Empty;
     private string ErrorMessage = string.Empty;
 
-    private string oauthParams = string.Empty;
-    private string requestedScopes = string.Empty;
-    private string clientId = string.Empty;
-    private string redirectUri = string.Empty;
-    private string codeChallenge = string.Empty;
-    private string codeChallengeMethod = string.Empty;
-    private string responseType = string.Empty;
-    private string state = string.Empty;
     private string authorizationContextId = string.Empty;
-    private int tenantId;
-    private int id;
 
     private readonly LoginModel loginModel = new();
     private Dictionary<string, string> QueryParams = new();
 
     protected override async Task OnInitializedAsync()
     {
-        oauthParams = new Uri(Navigation.Uri).Query;
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
 
-        if (string.IsNullOrWhiteSpace(oauthParams))
+        if (string.IsNullOrWhiteSpace(authorizationContextId))
         {
-            SetRequestError("invalid_request", "Missing authorization parameters.");
+            SetRequestError("invalid_request", "Missing authorization context id.");
             return;
         }
 
-        var parsedParams = QueryHelpers.ParseQuery(oauthParams);
-        QueryParams = parsedParams.ToDictionary(k => k.Key, v => v.Value.ToString() ?? "");
+        preAuthorization = await authorizationStore.GetPreAuthorization(authorizationContextId);
 
-        QueryParams.TryGetValue("ctx", out authorizationContextId!);
-        if (!string.IsNullOrWhiteSpace(authorizationContextId))
+        if (preAuthorization is null)
         {
-            var restoredParams = QueryHelpers.ParseQuery($"?{authorizationContextId.TrimStart('?')}");
-            QueryParams = restoredParams.ToDictionary(k => k.Key, v => v.Value.ToString() ?? "");
+            SetRequestError("invalid_request", "Authorization context is invalid or expired.");
+            return;
         }
-
-        QueryParams.TryGetValue("state", out state!);
-        QueryParams.TryGetValue("response_type", out responseType!);
-        QueryParams.TryGetValue("client_id", out clientId!);
-        QueryParams.TryGetValue("redirect_uri", out redirectUri!);
-        QueryParams.TryGetValue("scope", out requestedScopes!);
-        QueryParams.TryGetValue("code_challenge", out codeChallenge!);
-        QueryParams.TryGetValue("code_challenge_method", out codeChallengeMethod!);
-        authorizationContextId = BuildAuthorizationContextId(QueryParams);
-
-        //tenantKey = ResolveTenantKeyFromHost(Navigation.Uri);
 
         try
         {
-            AuthorizationRequest request = new()
+            var request = new AuthorizationRequest
             {
-                ClientId = clientId,
-                RedirectUri = redirectUri,
-                Scopes = requestedScopes,
-                ResponseType = responseType
+                ClientId = preAuthorization.ClientId ?? string.Empty,
+                RedirectUri = preAuthorization.RedirectUri ?? string.Empty,
+                Scopes = preAuthorization.Scopes ?? string.Empty,
+                ResponseType = preAuthorization.GrantType ?? "code"
             };
 
-            var clientInfo = await AuthorizationValidator.ValidateAsync(request, CancellationToken.None);
-            tenantId = clientInfo.TenantId;
-            id = clientInfo.TenantId;
-
-            // Build dynamic UI AFTER validation
-            ui = await PageUiUseCase.BuildAsync(clientInfo.Scopes, clientInfo.TenantId, clientInfo.Id, CancellationToken.None);
+            IReadOnlySet<string> scopeSet =
+            preAuthorization.Scopes!.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+          
+            ui = await PageUiUseCase.BuildAsync(
+                scopeSet,
+                preAuthorization.TenantId,
+                preAuthorization.ClientId_FK,
+                CancellationToken.None);
         }
         catch (AuthorizationRequestException ex)
         {
-            SetRequestError(ex.Error, ex.ErrorDescription, ex.AllowRedirect);
+            SetRequestError(ex.Error, ex.ErrorDescription);
         }
         catch (Exception ex)
         {
-            SetRequestError("server_error", ex.Message, allowRedirect: false);
+            SetRequestError("server_error", ex.Message);
         }
     }
 
@@ -249,20 +233,21 @@ else if (ui != null)
         {
             UserName = loginModel.UserName,
             Password = loginModel.Password,
-            ClientId = clientId,
-            CodeChallenge = codeChallenge,
-            RedirectUri = redirectUri,
-            CodeChallengeMethod = codeChallengeMethod,
-            Scopes = requestedScopes,
+            ClientId = preAuthorization?.ClientId!,
+            CodeChallenge = preAuthorization?.CodeChallenge!,
+            RedirectUri = preAuthorization?.RedirectUri!,
+            CodeChallengeMethod = preAuthorization?.CodeChallengeMethod!,
+            Scopes = preAuthorization?.Scopes!,
             RememberMe = loginModel.RememberMe,
+            AuthorizationContextId = preAuthorization?.CorrelationId!
         };
 
         try
         {
             LoadService.ShowLoader();
 
-            TenantContext.SetTenantId(tenantId);
-            TenantContext.SetClientId(id);
+            TenantContext.SetTenantId(preAuthorization?.TenantId ?? 0);
+            TenantContext.SetClientId(preAuthorization?.ClientId_FK ?? 0);
 
             var authCodeResponse = await AuthUseCase.Authenticate(request);
 
@@ -274,7 +259,7 @@ else if (ui != null)
 
             if (authCodeResponse?.TwoFactorEnabled == true)
             {
-                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&flow=authorize&redirect_uri={redirectUri}";
+                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&flow=authorize&redirect_uri={preAuthorization?.RedirectUri!}";
                 Navigation.NavigateTo(uri);
                 return;
             }
@@ -284,8 +269,8 @@ else if (ui != null)
                 ["code"] = authCodeResponse?.AuthorizationCode
             };
 
-            if (!string.IsNullOrWhiteSpace(state))
-                parameters["state"] = state;
+            if (!string.IsNullOrWhiteSpace(preAuthorization?.State!))
+                parameters["state"] = preAuthorization?.State!;
 
             Navigation.NavigateTo(BuildRedirectUri(request.RedirectUri, parameters), forceLoad: true);
         }
@@ -300,12 +285,12 @@ else if (ui != null)
     }
 
     private void GoToForgotPassword()
-        => Navigation.NavigateTo($"/forgot-password{oauthParams}");
+        => Navigation.NavigateTo($"/forgot-password{authorizationContextId}");
 
     private void GoToSignup()
     {
         // You can also allow ui.SignupUrl to be absolute per-tenant.
-        var url = (ui?.SignupUrl ?? "/signup") + oauthParams;
+        var url = (ui?.SignupUrl ?? "/signup") + authorizationContextId;
         Navigation.NavigateTo(url);
     }
 
@@ -329,7 +314,7 @@ else if (ui != null)
 
         if (!allowRedirect) return;
 
-        if (!string.IsNullOrWhiteSpace(redirectUri) && Uri.TryCreate(redirectUri, UriKind.Absolute, out _))
+        if (!string.IsNullOrWhiteSpace(preAuthorization?.RedirectUri!) && Uri.TryCreate(preAuthorization?.RedirectUri!, UriKind.Absolute, out _))
         {
             var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
             {
@@ -337,10 +322,10 @@ else if (ui != null)
                 ["error_description"] = description
             };
 
-            if (!string.IsNullOrWhiteSpace(state))
-                parameters["state"] = state;
+            if (!string.IsNullOrWhiteSpace(preAuthorization?.State!))
+                parameters["state"] = preAuthorization?.State!;
 
-            Navigation.NavigateTo(BuildRedirectUri(redirectUri, parameters), true);
+            Navigation.NavigateTo(BuildRedirectUri(preAuthorization?.RedirectUri!, parameters), true);
         }
     }
 
