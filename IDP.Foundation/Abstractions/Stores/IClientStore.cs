@@ -12,7 +12,7 @@ public interface IClientStore
 
     Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead, CancellationToken ct);
 
-    Task<IEnumerable<ClientExternalProviderSnapShort>> GetExternalProviders(int clientId);
+    Task<IEnumerable<ClientExternalProviderSnapshot>> GetExternalProviders(int clientId);
 
     Task<ClientAuthPolicy?> GetClientAuthPolicy(int clientId);
 }

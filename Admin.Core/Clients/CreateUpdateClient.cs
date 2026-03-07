@@ -27,6 +27,8 @@ public class CreateUpdateClient
     public string? ClientSecretDescription { get; set; }
     public ClientAuthPolicyDetail AuthPolicy { get; set; } = new();
     public List<int> ExternalProviders { get; set; } = new();
+    public bool AutoCreateUsers { get; set; } = true;
+    public int? DefaultRoleId { get; set; }
 }
 
 public sealed class ClientAuthPolicyDetail

@@ -1,4 +1,6 @@
-﻿namespace IDP.Infrastructure.ExternalProviders;
+﻿using IDP.Domain.AggregateRoots.Clients;
+
+namespace IDP.Infrastructure.ExternalProviders;
 
 public sealed class ExternalProviderConfigurationResolver
 {
@@ -16,10 +18,11 @@ public sealed class ExternalProviderConfigurationResolver
         _logger = logger;
     }
 
-    public async Task<TenantExternalProvider?> ResolveAsync(
+    public async Task<ClientExternalProviderSnapshot?> ResolveAsync(
         int tenantId,
         int clientId,
-        ExternalProviderTypes providerType)
+        ExternalProviderTypes providerType,
+        CancellationToken cancellationToken = default)
     {
         _logger.LogDebug(
             "Resolve external provider config for tenant: {TenantId}, client: {ClientId}, provider: {ProviderType}",
@@ -32,16 +35,30 @@ public sealed class ExternalProviderConfigurationResolver
         var provider = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var resolvedProvider = await (
-                from tenantProvider in _dbContext.TenantExternalProviders.AsNoTracking()
-                join clientProvider in _dbContext.ClientExternalProviders.AsNoTracking()
-                    on tenantProvider.Id equals clientProvider.ExternalProviderId
-                where tenantProvider.TenantId == tenantId
-                    && clientProvider.ClientId == clientId
-                    && tenantProvider.ProviderType == providerType
-                    && tenantProvider.Enabled
-                    && clientProvider.EnabledForClient
-                select tenantProvider
-            ).FirstOrDefaultAsync();
+                from tp in _dbContext.TenantExternalProviders.AsNoTracking()
+                join cp in _dbContext.ClientExternalProviders.AsNoTracking()
+                    on tp.Id equals cp.ExternalProviderId
+                join client in _dbContext.Clients.AsNoTracking()
+                    on cp.ClientId equals client.Id
+                where tp.TenantId == tenantId
+                    && cp.ClientId == clientId
+                    && client.TenantId == tenantId
+                    && tp.ProviderType == providerType
+                    && tp.Enabled
+                    && cp.EnabledForClient
+                    && tp.OidcConfig != null
+                select new ClientExternalProviderSnapshot(
+                    tp.ProviderType.ToString(),
+                    cp.EnabledForClient,
+                    tp.Enabled,
+                    tp.OidcConfig!.ClientId,
+                    tp.OidcConfig.ClientSecret,
+                    tp.OidcConfig.Authority,
+                    tp.OidcConfig.CallbackPath,
+                    tp.OidcConfig.Scopes,
+                    cp.AutoCreateUsers,
+                    cp.DefaultRoleId)
+            ).FirstOrDefaultAsync(cancellationToken);
 
             _logger.LogDebug("Cached external provider config for {CacheKey}", cacheKey);
 

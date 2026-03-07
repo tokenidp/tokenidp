@@ -137,7 +137,7 @@ internal sealed class ClientStore : IClientStore
         expiration: TimeSpan.FromMinutes(15));
     }
 
-    public async Task<IEnumerable<ClientExternalProviderSnapShort>> GetExternalProviders(int clientId)
+    public async Task<IEnumerable<ClientExternalProviderSnapshot>> GetExternalProviders(int clientId)
     {
         _logger.LogDebug("GetExternalProviders: Get external providers for client: {ClientId}", clientId);
 
@@ -145,22 +145,28 @@ internal sealed class ClientStore : IClientStore
 
         var externalProviders = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            var client = await (from cp in _dbContext.ClientExternalProviders
-                                join tp in _dbContext.TenantExternalProviders on cp.ExternalProviderId equals tp.Id
+            var client = await (from cp in _dbContext.ClientExternalProviders.AsNoTracking()
+                                join tp in _dbContext.TenantExternalProviders.AsNoTracking() 
+                                on cp.ExternalProviderId equals tp.Id
                                 where cp.ClientId == clientId
-                                select new ClientExternalProviderSnapShort
-                                (tp.ProviderType.ToString(),
+                                && tp.OidcConfig != null
+                                select new ClientExternalProviderSnapshot(
+                                    tp.ProviderType.ToString(),
                                     cp.EnabledForClient,
-                                    tp.OidcConfig.ClientId,
+                                    tp.Enabled,
+                                    tp.OidcConfig!.ClientId,
                                     tp.OidcConfig.ClientSecret,
                                     tp.OidcConfig.Authority,
-                                    tp.OidcConfig.CallbackPath
+                                    tp.OidcConfig.CallbackPath,
+                                    tp.OidcConfig.Scopes,
+                                    cp.AutoCreateUsers,
+                                    cp.DefaultRoleId
                                 )).ToListAsync();
 
             _logger.LogDebug("Cached client external providers for {CacheKey}", cacheKey);
 
             return client;
-        }, expiration: TimeSpan.FromMinutes(5));
+        }, expiration: TimeSpan.FromMinutes(30));
 
         _logger.LogDebug("Retrieved external providers for client: {ClientId}", clientId);
 

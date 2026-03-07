@@ -269,6 +269,16 @@ public class Client : AggregateRoot<int>, ITenant
         return Result.Success(Id);
     }
 
+    public Result ConfigureExternalProvisioning(bool autoCreateUsers, int? defaultRoleId)
+    {
+        foreach (var provider in ClientExternalProviders)
+        {
+            provider.UpdateProvisioningPolicy(autoCreateUsers, defaultRoleId);
+        }
+
+        return Result.Success(Id);
+    }
+
     public static Result Create(
         int tenantId,
         string clientId,

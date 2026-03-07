@@ -6,7 +6,7 @@ public class Role : AggregateRoot<int>, ITenant
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
 
-    public string Name { get; set; }
+    public string? Name { get; set; }
     public string? NormalizedName { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }
@@ -14,6 +14,7 @@ public class Role : AggregateRoot<int>, ITenant
     public bool IsActive { get; private set; }
     public bool IsEditable { get; private set; }
     public bool IsDeleted { get; private set; }
+    public bool IsAssignableToExternalUsers { get; private set; }
 
     public int EffectiveUserId { get; private set; }
 
@@ -23,21 +24,25 @@ public class Role : AggregateRoot<int>, ITenant
 
     public Role(
        int tenantId,
-       string name,
-       string description,
-       bool isActive)
+        string name,
+        string description,
+        bool isActive,
+        bool isEditable = true,
+        bool isAssignableToExternalUsers = false)
     {
         TenantId = tenantId;
         Name = name;
         RoleDescription = description;
         IsActive = isActive;
         IsDeleted = false;
-        IsEditable = true;
+        IsEditable = isEditable;
+        IsAssignableToExternalUsers = !IsReservedSystemRole(name);
     }
 
     public Result Update(string name,
         string description,
-        bool isActive)
+        bool isActive,
+        bool isAssignableToExternalUsers)
     {
         var validation = ValidateEditable()
             .Combine(ValidateName(name));
@@ -48,6 +53,7 @@ public class Role : AggregateRoot<int>, ITenant
         Name = name;
         RoleDescription = description;
         IsActive = isActive;
+        IsAssignableToExternalUsers = !IsReservedSystemRole(name);
 
         return Result.Success(id: Id);
     }
@@ -171,5 +177,11 @@ public class Role : AggregateRoot<int>, ITenant
         }
 
         return Result.Success(id: 0);
+    }
+
+    private static bool IsReservedSystemRole(string? roleName)
+    {
+        var normalized = (roleName ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized is "admin" or "administrator" or "owner";
     }
 }

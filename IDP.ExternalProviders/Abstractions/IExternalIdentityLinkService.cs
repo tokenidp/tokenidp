@@ -5,6 +5,9 @@ namespace IDP.ExternalProviders.Abstractions;
 
 public interface IExternalIdentityLinkService
 {
-    Task<User> FindOrProvisionUserAsync(int tenantId, ExternalIdentity identity,
-     CancellationToken cancellationToken);
+    Task<User> FindOrProvisionUserAsync(
+        int tenantId,
+        int clientId,
+        ExternalIdentity identity,
+        CancellationToken cancellationToken);
 }

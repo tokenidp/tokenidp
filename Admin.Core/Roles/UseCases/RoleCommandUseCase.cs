@@ -29,6 +29,24 @@ internal class RoleCommandUseCase
                 ApiError.Failure("role.name.invalid", "Role name cannot be empty."));
         }
 
+        var isActive = request.IsActive ?? true;
+        var isAssignableToExternalUsers = request.IsAssignableToExternalUsers;
+        if (isAssignableToExternalUsers && !isActive)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "role.external_assignable.invalid",
+                    "Only active roles can be assignable to external users."));
+        }
+
+        if (IsReservedSystemRole(roleName) && isAssignableToExternalUsers)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "role.external_assignable.invalid",
+                    "System roles cannot be assignable to external users."));
+        }
+
         var roleNameLower = roleName.ToLowerInvariant();
         var roleExists = await _dbContext.Roles
             .AnyAsync(
@@ -47,7 +65,8 @@ internal class RoleCommandUseCase
             tenantId: _currentUserService.TenantId,
             name: roleName,
             description: roleDescription,
-            isActive: request.IsActive ?? true
+            isActive: isActive,
+            isAssignableToExternalUsers: isAssignableToExternalUsers
         );
 
         var permissions = request.RolePermissions ?? new List<CreateUpdateRolePermission>();
@@ -108,6 +127,32 @@ internal class RoleCommandUseCase
                 ApiError.Failure("role.name.invalid", "Role name cannot be empty."));
         }
 
+        var isActive = request.IsActive ?? role.IsActive;
+        var isAssignableToExternalUsers = request.IsAssignableToExternalUsers;
+        if (isAssignableToExternalUsers && !isActive)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "role.external_assignable.invalid",
+                    "Only active roles can be assignable to external users."));
+        }
+
+        if (!role.IsEditable && isAssignableToExternalUsers != role.IsAssignableToExternalUsers)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "role.external_assignable.not_editable",
+                    "System roles cannot modify external user assignment."));
+        }
+
+        if (IsReservedSystemRole(roleName) && isAssignableToExternalUsers)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "role.external_assignable.invalid",
+                    "System roles cannot be assignable to external users."));
+        }
+
         var roleNameLower = roleName.ToLowerInvariant();
         var roleExists = await _dbContext.Roles
             .AnyAsync(
@@ -126,7 +171,8 @@ internal class RoleCommandUseCase
         var updateResult = role.Update(
             name: roleName,
             description: roleDescription,
-            isActive: request.IsActive ?? role.IsActive
+            isActive: isActive,
+            isAssignableToExternalUsers: isAssignableToExternalUsers
         );
 
         if (!updateResult.IsSuccess)
@@ -205,5 +251,11 @@ internal class RoleCommandUseCase
             role.Id, _currentUserService.TenantId);
 
         return ApiResult<int>.Success(role.Id);
+    }
+
+    private static bool IsReservedSystemRole(string? roleName)
+    {
+        var normalized = (roleName ?? string.Empty).Trim().ToLowerInvariant();
+        return normalized is "admin" or "administrator" or "owner";
     }
 }

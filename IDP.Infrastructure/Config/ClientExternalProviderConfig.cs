@@ -17,6 +17,8 @@ internal class ClientExternalProviderConfig : IEntityTypeConfiguration<ClientExt
         b.Property(x => x.ExternalProviderId).IsRequired();
 
         b.Property(x => x.EnabledForClient).IsRequired();
+        b.Property(x => x.AutoCreateUsers).IsRequired();
+        b.Property(x => x.DefaultRoleId).IsRequired();
 
         b.HasIndex(x => new { x.ClientId, x.EnabledForClient });
         b.HasIndex(x => new { x.ClientId, x.ExternalProviderId });

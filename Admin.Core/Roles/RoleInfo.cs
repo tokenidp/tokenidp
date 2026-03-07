@@ -10,6 +10,7 @@ internal class RoleInfo
             RoleDescription = r.RoleDescription,
             IsActive = r.IsActive,
             IsEditable = r.IsEditable,
+            IsAssignableToExternalUsers = r.IsAssignableToExternalUsers,
 
             RolePermissions = r.RolePermissions
                 .Select(p => new RolePermissionInfo
@@ -25,6 +26,7 @@ internal class RoleInfo
     public string? RoleDescription { get; set; }
     public bool? IsActive { get; set; }
     public bool? IsEditable { get; set; }
+    public bool IsAssignableToExternalUsers { get; set; }
 
     public IList<RolePermissionInfo> RolePermissions { get; set; }
         = new List<RolePermissionInfo>();

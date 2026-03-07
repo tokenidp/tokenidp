@@ -14,7 +14,8 @@ internal class RoleProvisioningService : IRoleProvisioningService
             tenantId: tenantId,
             name: command.RoleName,
             description: command.RoleDescription,
-            isActive: command.IsActive ?? true
+            isActive: command.IsActive ?? true,
+            isEditable: false
         );
 
         var permissions = command.RolePermissions ?? new List<CreateUpdateRolePermission>();

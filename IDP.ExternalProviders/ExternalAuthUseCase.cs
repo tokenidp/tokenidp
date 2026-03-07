@@ -158,6 +158,7 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
 
             var user = await _externalIdentityLinkService.FindOrProvisionUserAsync(
                 session.TenantId,
+                session.ClientId,
                 identity,
                 cancellationToken);
 

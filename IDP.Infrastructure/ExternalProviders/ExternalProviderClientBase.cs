@@ -46,21 +46,21 @@ internal abstract class ExternalProviderClientBase : IExternalProviderClient
             throw new InvalidOperationException("Client context is required for external authentication.");
         }
 
-        var config = await _configurationResolver.ResolveAsync(tenantId, clientId, Provider);
-        if (config?.OidcConfig is null)
+        var config = await _configurationResolver.ResolveAsync(tenantId, clientId, Provider, cancellationToken);
+        if (config is null)
         {
             throw new InvalidOperationException($"{Provider} is not configured for this tenant/client.");
         }
 
         var secretContext = BuildSecretContext(tenantId.ToString(), Provider);
-        var clientSecret = _secretProtector.Decrypt(config.OidcConfig.ClientSecret, secretContext) ?? string.Empty;
+        var clientSecret = _secretProtector.Decrypt(config.ClientSecret, secretContext) ?? string.Empty;
 
         return new ResolvedProviderConfiguration(
-            config.OidcConfig.ClientId,
+            config.ClientId,
             clientSecret,
-            config.OidcConfig.Authority,
-            config.OidcConfig.CallbackPath,
-            config.OidcConfig.Scopes);
+            config.Authority,
+            config.CallbackPath,
+            config.Scopes);
     }
 
     protected HttpClient CreateClient(string? bearerToken = null)

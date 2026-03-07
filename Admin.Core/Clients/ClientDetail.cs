@@ -64,4 +64,6 @@ internal class ClientDetail
     public List<string> Audiences { get; private set; } = new();
     public ClientAuthPolicyDetail AuthPolicy { get; private set; } = new();
     public List<int> ExternalProviders { get; private set; } = new();
+    public bool AutoCreateUsers { get; set; } = true;
+    public int? DefaultRoleId { get; set; }
 }

@@ -134,6 +134,18 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(providerResult);
         }
 
+        var providerSettingsResult = await ValidateAndApplySharedExternalProviderSettings(
+            tenantId,
+            client,
+            selectedProviderIds,
+            request.AutoCreateUsers,
+            request.DefaultRoleId,
+            cancellationToken);
+        if (!providerSettingsResult.IsSuccess)
+        {
+            return FailureFromResult(providerSettingsResult);
+        }
+
         _dbContext.Clients.Add(client);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -256,6 +268,18 @@ internal sealed class ClientCommandUseCase
         if (!providerResult.IsSuccess)
         {
             return FailureFromResult(providerResult);
+        }
+
+        var providerSettingsResult = await ValidateAndApplySharedExternalProviderSettings(
+            _currentUserService.TenantId,
+            client,
+            selectedProviderIds,
+            request.AutoCreateUsers,
+            request.DefaultRoleId,
+            cancellationToken);
+        if (!providerSettingsResult.IsSuccess)
+        {
+            return FailureFromResult(providerSettingsResult);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -443,5 +467,53 @@ internal sealed class ClientCommandUseCase
         }
 
         return Result.Success(0);
+    }
+
+    private async Task<Result> ValidateAndApplySharedExternalProviderSettings(
+        int tenantId,
+        Client client,
+        IReadOnlyCollection<int> selectedProviderIds,
+        bool autoCreateUsers,
+        int? defaultRoleId,
+        CancellationToken cancellationToken)
+    {
+        if (selectedProviderIds.Count == 0)
+        {
+            return Result.Success(0);
+        }
+
+        if (autoCreateUsers && !defaultRoleId.HasValue)
+        {
+            return Result.Failure(
+                "client.external_provider_settings.default_role.required",
+                "A default role is required when auto-create users is enabled.");
+        }
+
+        if (defaultRoleId.HasValue)
+        {
+            var role = await _dbContext.Roles
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r =>
+                        r.Id == defaultRoleId.Value
+                        && r.TenantId == tenantId
+                        && !r.IsDeleted,
+                    cancellationToken);
+
+            if (role is null)
+            {
+                return Result.Failure(
+                    "client.external_provider_settings.default_role.invalid",
+                    "Selected default role is invalid for this tenant.");
+            }
+
+            if (!role.IsActive || !role.IsAssignableToExternalUsers)
+            {
+                return Result.Failure(
+                    "client.external_provider_settings.default_role.invalid",
+                    "Selected default role cannot be assigned to external users.");
+            }
+        }
+
+        return client.ConfigureExternalProvisioning(autoCreateUsers, defaultRoleId);
     }
 }

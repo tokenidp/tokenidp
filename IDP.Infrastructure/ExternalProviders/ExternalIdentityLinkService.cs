@@ -5,27 +5,34 @@ using System.Security.Cryptography;
 
 namespace IDP.Infrastructure.ExternalProviders;
 
-public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
+internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly IUserStore _userStore;
     private readonly ILookupNormalizer _normalizer;
+    private readonly IAppLogger<ExternalIdentityLinkService> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
+    private readonly ExternalProviderConfigurationResolver _providerConfigurationResolver;
 
     public ExternalIdentityLinkService(
         IApplicationDbContext dbContext,
         IUserStore userStore,
         ILookupNormalizer normalizer,
-        ICodeSequenceGenerator userCodeGenerator)
+        IAppLogger<ExternalIdentityLinkService> logger,
+        ICodeSequenceGenerator userCodeGenerator,
+        ExternalProviderConfigurationResolver providerConfigurationResolver)
     {
         _dbContext = dbContext;
         _userStore = userStore;
         _normalizer = normalizer;
+        _logger = logger;
         _userCodeGenerator = userCodeGenerator;
+        _providerConfigurationResolver = providerConfigurationResolver;
     }
 
     public async Task<User> FindOrProvisionUserAsync(
         int tenantId,
+        int clientId,
         ExternalIdentity identity,
         CancellationToken cancellationToken)
     {
@@ -48,6 +55,13 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             login.RecordLogin();
 
             await _userStore.UpdateUser(linkedUser);
+
+            _logger.LogInfo(
+                "ExternalUserLinked: TenantId={TenantId}, UserId={UserId}, Provider={Provider}, ProviderUserId={ProviderUserId}",
+                tenantId,
+                linkedUser.Id,
+                identity.Provider,
+                identity.ProviderUserId);
             return linkedUser;
         }
 
@@ -65,31 +79,68 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 
         if (user is not null)
         {
-            user.AddExternalLogin(
+            var externalLogin = user.AddExternalLogin(
                 identity.Provider,
                 identity.ProviderUserId,
                 identity.Email,
                 identity.DisplayName);
 
+            externalLogin?.RecordLogin();
+
             await _userStore.UpdateUser(user);
+
+            _logger.LogInfo(
+                "ExternalUserLinked: TenantId={TenantId}, UserId={UserId}, Provider={Provider}, ProviderUserId={ProviderUserId}",
+                tenantId,
+                user.Id,
+                identity.Provider,
+                identity.ProviderUserId);
             return user;
         }
 
-        return await ProvisionUserAsync(tenantId, identity, cancellationToken);
+        return await ProvisionUserAsync(tenantId, clientId, identity, cancellationToken);
     }
 
     private async Task<User> ProvisionUserAsync(
         int tenantId,
+        int clientId,
         ExternalIdentity identity,
         CancellationToken cancellationToken)
     {
+        var providerConfiguration = await _providerConfigurationResolver.ResolveAsync(
+            tenantId,
+            clientId,
+            identity.Provider,
+            cancellationToken);
+
+        if (providerConfiguration is null)
+        {
+            throw new InvalidOperationException("External provider is not configured for this client.");
+        }
+
+        if (!providerConfiguration.AutoCreateUsers)
+        {
+            _logger.LogInfo(
+                "ExternalUserPendingApproval: ClientId={ClientId}, Provider={Provider}, ProviderUserId={ProviderUserId}",
+                clientId,
+                identity.Provider,
+                identity.ProviderUserId);
+
+            throw new InvalidOperationException("User provisioning disabled");
+        }
+
+        if (!providerConfiguration.DefaultRoleId.HasValue)
+        {
+            throw new InvalidOperationException(
+                $"Default role is not configured for provider {identity.Provider}.");
+        }
+
         var (firstName, lastName) = SplitName(identity.DisplayName);
 
         var userName = await EnsureUniqueUserNameAsync(
             tenantId,
             BuildUserName(identity),
             cancellationToken);
-
         var email = identity.Email ?? $"{identity.ProviderUserId}@external.local";
         var phone = "0000000000";
 
@@ -101,7 +152,7 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             email,
             phone,
             createdBy: 0,
-            roles: [],
+            roles: new[] { providerConfiguration.DefaultRoleId.Value },
             out var user);
 
         if (!result.IsSuccess || user is null)
@@ -117,11 +168,13 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             accessFailedCount: 0,
             lookoutEnd: null);
 
-        user.AddExternalLogin(
+        var login = user.AddExternalLogin(
             identity.Provider,
             identity.ProviderUserId,
             identity.Email,
             identity.DisplayName);
+        
+        login?.RecordLogin();
 
         var nextValue = await _userCodeGenerator
             .NextUserCodeAsync(tenantId, cancellationToken);
@@ -130,6 +183,13 @@ public sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 
         var randomPassword = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
         await _userStore.CreateUser(user, randomPassword);
+
+        _logger.LogInfo(
+            "ExternalUserCreated: TenantId={TenantId}, UserId={UserId}, Provider={Provider}, RoleId={RoleId}",
+            tenantId,
+            user.Id,
+            identity.Provider,
+            providerConfiguration.DefaultRoleId.Value);
 
         return user;
     }
