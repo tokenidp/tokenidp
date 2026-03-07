@@ -34,6 +34,8 @@ const emptyValues = {
     showCreateAccountLink: false,
   },
   externalProviders: [],
+  autoCreateUsers: true,
+  defaultRoleId: "",
 };
 
 function ApplicationEdit() {
@@ -73,6 +75,17 @@ function ApplicationEdit() {
 
       const data = await getApplicationById(resolvedId);
       if (!data) return;
+
+      const externalProviders = (
+        data.externalProviders ??
+        data.ExternalProviders ??
+        data.externalProviderIds ??
+        data.ExternalProviderIds ??
+        []
+      )
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value) && value > 0)
+        .map((value) => String(value));
 
       setInitialValues({
         clientName: data.clientName ?? data.ClientName ?? "",
@@ -139,14 +152,15 @@ function ApplicationEdit() {
             data.AuthPolicy?.ShowCreateAccountLink ??
             false,
         },
-        externalProviders:
-          (
-            data.externalProviders ??
-            data.ExternalProviders ??
-            data.externalProviderIds ??
-            data.ExternalProviderIds ??
-            []
-          ).map((value) => String(value)),
+        externalProviders,
+        autoCreateUsers:
+          data.autoCreateUsers ??
+          data.AutoCreateUsers ??
+          true,
+        defaultRoleId:
+          data.defaultRoleId ??
+          data.DefaultRoleId ??
+          "",
       });
     };
 
@@ -162,6 +176,23 @@ function ApplicationEdit() {
     if (!applicationId) {
       return;
     }
+
+    const selectedProviderIds = Array.isArray(data.externalProviders)
+      ? data.externalProviders
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value) && value > 0)
+      : [];
+
+    const autoCreateUsers = data.autoCreateUsers === undefined ? true : !!data.autoCreateUsers;
+    const defaultRoleRaw = data.defaultRoleId;
+    const parsedDefaultRoleId =
+      defaultRoleRaw === "" || defaultRoleRaw === null || defaultRoleRaw === undefined
+        ? null
+        : Number(defaultRoleRaw);
+    const defaultRoleId =
+      parsedDefaultRoleId !== null && Number.isFinite(parsedDefaultRoleId) && parsedDefaultRoleId > 0
+        ? parsedDefaultRoleId
+        : null;
 
     const payload = {
       id: Number(applicationId),
@@ -194,11 +225,12 @@ function ApplicationEdit() {
         showStaySignedIn: !!data.authPolicy?.showStaySignedIn,
         showCreateAccountLink: !!data.authPolicy?.showCreateAccountLink,
       },
-      externalProviders: Array.isArray(data.externalProviders)
-        ? data.externalProviders
-            .map((value) => Number(value))
-            .filter((value) => Number.isFinite(value) && value > 0)
+      externalProviders: !!data.authPolicy?.showExternalProviders
+        ? selectedProviderIds
         : [],
+      autoCreateUsers: !!data.authPolicy?.showExternalProviders ? autoCreateUsers : true,
+      defaultRoleId:
+        !!data.authPolicy?.showExternalProviders && autoCreateUsers ? defaultRoleId : null,
     };
 
     const result = await updateApplication(applicationId, payload);

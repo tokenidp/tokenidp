@@ -196,6 +196,20 @@ function ApplicationWizard({
       .filter((option) => option.value && option.label);
   }, [lookups?.externalProviders]);
 
+  const externalAssignableRoleOptions = useMemo(() => {
+    const normalized = normalizeLookupOptions(lookups?.roles);
+    if (!normalized.length) {
+      return [];
+    }
+
+    return normalized
+      .map((option) => ({
+        value: String(option.key ?? ""),
+        label: String(option.value ?? ""),
+      }))
+      .filter((option) => option.value && option.label);
+  }, [lookups?.roles]);
+
   const selectedAppType = useMemo(
     () => appTypeOptions.find((option) => String(option.value) === String(appType)),
     [appTypeOptions, appType]
@@ -468,7 +482,9 @@ function ApplicationWizard({
             hasInsecureGrant={hasInsecureGrant}
             grantError={grantError}
             externalProviderOptions={externalProviderOptions}
+            externalRoleOptions={externalAssignableRoleOptions}
             watch={watch}
+            setValue={setValue}
           />
         );
       case WizardStep.Redirects:

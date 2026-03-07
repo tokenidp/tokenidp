@@ -7,3 +7,7 @@
 /IDP/
 /React-App.sln
 /admin-app/tmp-build/
+/build-diagnostics.log
+/infra-build-diagnostics.log
+/infra_build_diag_current.log
+/infra_build_no_restore_diag.log

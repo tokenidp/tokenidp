@@ -3,6 +3,7 @@ import React from "react";
 function AuthStep({
   register,
   watch,
+  setValue,
   isPublicClient,
   showSecret,
   setShowSecret,
@@ -16,10 +17,37 @@ function AuthStep({
   isDeviceIot,
   isWebClient,
   externalProviderOptions,
+  externalRoleOptions = [],
 }) {
   const hasAuthCode = grantTypes.includes(0);
   const secretLocked = isPublicClient || isDeviceIot;
   const showExternalProviders = watch("authPolicy.showExternalProviders");
+  const selectedProviders = watch("externalProviders");
+  const selectedProviderValues = Array.isArray(selectedProviders)
+    ? selectedProviders
+    : selectedProviders !== undefined && selectedProviders !== null && selectedProviders !== ""
+      ? [selectedProviders]
+      : [];
+  const normalizedSelectedProviderIds = selectedProviderValues
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  const autoCreateUsersValue = watch("autoCreateUsers");
+  const isAutoCreateUsersEnabled =
+    autoCreateUsersValue === undefined ? true : !!autoCreateUsersValue;
+
+  const defaultRoleValue = watch("defaultRoleId");
+  const parsedDefaultRoleId =
+    defaultRoleValue === "" || defaultRoleValue === null || defaultRoleValue === undefined
+      ? null
+      : Number(defaultRoleValue);
+  const hasDefaultRole =
+    parsedDefaultRoleId !== null && Number.isFinite(parsedDefaultRoleId) && parsedDefaultRoleId > 0;
+  const showRoleSelectionWarning =
+    showExternalProviders &&
+    normalizedSelectedProviderIds.length > 0 &&
+    isAutoCreateUsersEnabled &&
+    !hasDefaultRole;
 
   return (
     <div className="row g-4 justify-content-center">
@@ -181,7 +209,7 @@ function AuthStep({
 
             <div className="auth-field">
               <label className="form-label fw-semibold">External Providers</label>
-              <div className="row g-2">
+              <div className="row g-3">
                 {externalProviderOptions.map((option) => (
                   <div className="col-12 col-sm-6" key={option.value}>
                     <div className="form-check">
@@ -208,6 +236,74 @@ function AuthStep({
                   No tenant external providers configured.
                 </div>
               )}
+
+              <div className="mt-3 border-top pt-3">
+                <div className="form-check mb-3">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    id="client-external-auto-create-users"
+                    checked={isAutoCreateUsersEnabled}
+                    disabled={!showExternalProviders || normalizedSelectedProviderIds.length === 0}
+                    onChange={(event) => {
+                      setValue("autoCreateUsers", event.target.checked, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+
+                      if (!event.target.checked) {
+                        setValue("defaultRoleId", "", {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }
+                    }}
+                  />
+                  <label className="form-check-label" htmlFor="client-external-auto-create-users">
+                    Auto Create Users (all selected providers)
+                  </label>
+                </div>
+
+                <div>
+                  <label className="form-label" htmlFor="client-external-default-role">
+                    Default Role (all selected providers)
+                  </label>
+                  <select
+                    className="form-select"
+                    id="client-external-default-role"
+                    value={hasDefaultRole ? String(parsedDefaultRoleId) : ""}
+                    disabled={
+                      !showExternalProviders ||
+                      normalizedSelectedProviderIds.length === 0 ||
+                      !isAutoCreateUsersEnabled ||
+                      !externalRoleOptions.length
+                    }
+                    onChange={(event) =>
+                      setValue("defaultRoleId", event.target.value || "", {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <option value="">Select default role</option>
+                    {externalRoleOptions.map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
+                  {!externalRoleOptions.length && (
+                    <div className="form-text text-muted">
+                      No external-assignable roles are available.
+                    </div>
+                  )}
+                  {showRoleSelectionWarning && (
+                    <div className="form-text text-danger">
+                      Default role is required when auto-create users is enabled.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="auth-divider"></div>

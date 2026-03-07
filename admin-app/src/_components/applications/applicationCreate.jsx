@@ -34,6 +34,8 @@ const defaultValues = {
     showCreateAccountLink: false,
   },
   externalProviders: [],
+  autoCreateUsers: true,
+  defaultRoleId: "",
 };
 
 function ApplicationCreate() {
@@ -46,6 +48,23 @@ function ApplicationCreate() {
   }, [loadLookups]);
 
   const handleSubmit = async (data) => {
+    const selectedProviderIds = Array.isArray(data.externalProviders)
+      ? data.externalProviders
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value) && value > 0)
+      : [];
+
+    const autoCreateUsers = data.autoCreateUsers === undefined ? true : !!data.autoCreateUsers;
+    const defaultRoleRaw = data.defaultRoleId;
+    const parsedDefaultRoleId =
+      defaultRoleRaw === "" || defaultRoleRaw === null || defaultRoleRaw === undefined
+        ? null
+        : Number(defaultRoleRaw);
+    const defaultRoleId =
+      parsedDefaultRoleId !== null && Number.isFinite(parsedDefaultRoleId) && parsedDefaultRoleId > 0
+        ? parsedDefaultRoleId
+        : null;
+
     const payload = {
       id: 0,
       clientId: data.clientId.trim(),
@@ -77,11 +96,12 @@ function ApplicationCreate() {
         showStaySignedIn: !!data.authPolicy?.showStaySignedIn,
         showCreateAccountLink: !!data.authPolicy?.showCreateAccountLink,
       },
-      externalProviders: Array.isArray(data.externalProviders)
-        ? data.externalProviders
-            .map((value) => Number(value))
-            .filter((value) => Number.isFinite(value) && value > 0)
+      externalProviders: !!data.authPolicy?.showExternalProviders
+        ? selectedProviderIds
         : [],
+      autoCreateUsers: !!data.authPolicy?.showExternalProviders ? autoCreateUsers : true,
+      defaultRoleId:
+        !!data.authPolicy?.showExternalProviders && autoCreateUsers ? defaultRoleId : null,
     };
 
     const result = await createApplication(payload);
