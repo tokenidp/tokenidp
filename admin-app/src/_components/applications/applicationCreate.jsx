@@ -32,10 +32,10 @@ const defaultValues = {
     showExternalProviders: true,
     showStaySignedIn: false,
     showCreateAccountLink: false,
+    autoCreateUsers: true,
+    defaultRoleId: "",
   },
   externalProviders: [],
-  autoCreateUsers: true,
-  defaultRoleId: "",
 };
 
 function ApplicationCreate() {
@@ -54,8 +54,9 @@ function ApplicationCreate() {
           .filter((value) => Number.isFinite(value) && value > 0)
       : [];
 
-    const autoCreateUsers = data.autoCreateUsers === undefined ? true : !!data.autoCreateUsers;
-    const defaultRoleRaw = data.defaultRoleId;
+    const autoCreateUsers =
+      data.authPolicy?.autoCreateUsers === undefined ? true : !!data.authPolicy?.autoCreateUsers;
+    const defaultRoleRaw = data.authPolicy?.defaultRoleId;
     const parsedDefaultRoleId =
       defaultRoleRaw === "" || defaultRoleRaw === null || defaultRoleRaw === undefined
         ? null
@@ -95,13 +96,13 @@ function ApplicationCreate() {
         showExternalProviders: !!data.authPolicy?.showExternalProviders,
         showStaySignedIn: !!data.authPolicy?.showStaySignedIn,
         showCreateAccountLink: !!data.authPolicy?.showCreateAccountLink,
+        autoCreateUsers: autoCreateUsers,
+        defaultRoleId:
+          !!data.authPolicy?.showExternalProviders && autoCreateUsers ? defaultRoleId : null,
       },
       externalProviders: !!data.authPolicy?.showExternalProviders
         ? selectedProviderIds
         : [],
-      autoCreateUsers: !!data.authPolicy?.showExternalProviders ? autoCreateUsers : true,
-      defaultRoleId:
-        !!data.authPolicy?.showExternalProviders && autoCreateUsers ? defaultRoleId : null,
     };
 
     const result = await createApplication(payload);

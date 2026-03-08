@@ -47,12 +47,12 @@ function AddEditRole({ mode }) {
     watch,
     formState: { errors },
   } = useForm({
-    defaultValues: {
-      name: "",
-      description: "",
-      isActive: true,
-      isAssignableToExternalUsers: false,
-    },
+      defaultValues: {
+        name: "",
+        description: "",
+        isActive: true,
+        isAssignableToNewUsers: false,
+      },
   });
   const { setSuccess } = useGlobalSuccess();
   const {
@@ -121,15 +121,15 @@ function AddEditRole({ mode }) {
             })
             .filter(Boolean);
 
-    const payload = {
-      id: roleId ? Number(roleId) : 0,
-      roleName: data.name.trim(),
-      roleDescription: data.description.trim(),
-      isActive: !!data.isActive,
-      isAssignableToExternalUsers:
-        !!data.isActive && !!data.isAssignableToExternalUsers,
-      rolePermissions,
-    };
+      const payload = {
+        id: roleId ? Number(roleId) : 0,
+        roleName: data.name.trim(),
+        roleDescription: data.description.trim(),
+        isActive: !!data.isActive,
+        isAssignableToNewUsers:
+          !!data.isActive && !!data.isAssignableToNewUsers,
+        rolePermissions,
+      };
 
     const response =
       mode === "edit" && roleId
@@ -184,11 +184,11 @@ function AddEditRole({ mode }) {
       );
       setValue("isActive", getField(role, "isActive", "IsActive") ?? true);
       setValue(
-        "isAssignableToExternalUsers",
+        "isAssignableToNewUsers",
         getField(
           role,
-          "isAssignableToExternalUsers",
-          "IsAssignableToExternalUsers"
+          "isAssignableToNewUsers",
+          "IsAssignableToNewUsers"
         ) ?? false
       );
       setIsRoleEditable(getField(role, "isEditable", "IsEditable") ?? true);
@@ -221,7 +221,7 @@ function AddEditRole({ mode }) {
 
   useEffect(() => {
     if (!isActiveValue) {
-      setValue("isAssignableToExternalUsers", false, {
+      setValue("isAssignableToNewUsers", false, {
         shouldDirty: true,
         shouldValidate: true,
       });
@@ -448,27 +448,31 @@ function AddEditRole({ mode }) {
                     </div>
                     <div className="col-12 col-md-6 ps-md-2">
                       <div className="d-flex align-items-center gap-1 pb-1">
-                        <label
-                          className="form-label mb-0"
-                          htmlFor="role-is-assignable-to-external-users"
-                        >
-                          Is Assignable To External Users
-                        </label>
+                          <label
+                            className="form-label mb-0"
+                            htmlFor="role-is-assignable-to-new-users"
+                          >
+                            Assignable To New Users
+                          </label>
                         <div className="form-check form-switch app-switch account-status-switch mb-0">
                           <input
                             className="form-check-input app-switch-input"
                             type="checkbox"
-                            id="role-is-assignable-to-external-users"
+                            id="role-is-assignable-to-new-users"
                             disabled={!isActiveValue || !isRoleEditable}
-                            {...register("isAssignableToExternalUsers")}
+                            {...register("isAssignableToNewUsers")}
                           />
                         </div>
                       </div>
                       {!isActiveValue && (
                         <div className="form-text text-muted">
-                          Only active roles can be assigned to external users.
+                          Only active roles can be assigned to new users.
                         </div>
                       )}
+                      <div className="form-text text-muted">
+                        Roles marked here can be assigned automatically during
+                        provisioning for external login or self-registration.
+                      </div>
                       {!isRoleEditable && (
                         <div className="form-text text-muted">
                           System roles cannot modify this setting.
