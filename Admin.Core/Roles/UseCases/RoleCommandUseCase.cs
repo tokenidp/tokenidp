@@ -30,21 +30,21 @@ internal class RoleCommandUseCase
         }
 
         var isActive = request.IsActive ?? true;
-        var isAssignableToExternalUsers = request.IsAssignableToExternalUsers;
-        if (isAssignableToExternalUsers && !isActive)
+        var isAssignableToNewUsers = request.IsAssignableToNewUsers;
+        if (isAssignableToNewUsers && !isActive)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(
                     "role.external_assignable.invalid",
-                    "Only active roles can be assignable to external users."));
+                    "Only active roles can be assignable to new users."));
         }
 
-        if (IsReservedSystemRole(roleName) && isAssignableToExternalUsers)
+        if (IsReservedSystemRole(roleName) && isAssignableToNewUsers)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(
                     "role.external_assignable.invalid",
-                    "System roles cannot be assignable to external users."));
+                    "System roles cannot be assignable to new users."));
         }
 
         var roleNameLower = roleName.ToLowerInvariant();
@@ -66,7 +66,7 @@ internal class RoleCommandUseCase
             name: roleName,
             description: roleDescription,
             isActive: isActive,
-            isAssignableToExternalUsers: isAssignableToExternalUsers
+            isAssignableToNewUsers: isAssignableToNewUsers
         );
 
         var permissions = request.RolePermissions ?? new List<CreateUpdateRolePermission>();
@@ -128,29 +128,29 @@ internal class RoleCommandUseCase
         }
 
         var isActive = request.IsActive ?? role.IsActive;
-        var isAssignableToExternalUsers = request.IsAssignableToExternalUsers;
-        if (isAssignableToExternalUsers && !isActive)
+        var isAssignableToNewUsers = request.IsAssignableToNewUsers;
+        if (isAssignableToNewUsers && !isActive)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(
                     "role.external_assignable.invalid",
-                    "Only active roles can be assignable to external users."));
+                    "Only active roles can be assignable to new users."));
         }
 
-        if (!role.IsSystem && isAssignableToExternalUsers != role.IsAssignableToExternalUsers)
+        if (!role.IsSystem && isAssignableToNewUsers != role.IsAssignableToNewUsers)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(
                     "role.external_assignable.not_editable",
-                    "System roles cannot modify external user assignment."));
+                    "System roles cannot modify new-user assignment."));
         }
 
-        if (IsReservedSystemRole(roleName) && isAssignableToExternalUsers)
+        if (IsReservedSystemRole(roleName) && isAssignableToNewUsers)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(
                     "role.external_assignable.invalid",
-                    "System roles cannot be assignable to external users."));
+                    "System roles cannot be assignable to new users."));
         }
 
         var roleNameLower = roleName.ToLowerInvariant();
@@ -172,7 +172,7 @@ internal class RoleCommandUseCase
             name: roleName,
             description: roleDescription,
             isActive: isActive,
-            isAssignableToExternalUsers: isAssignableToExternalUsers
+            isAssignableToNewUsers: isAssignableToNewUsers
         );
 
         if (!updateResult.IsSuccess)

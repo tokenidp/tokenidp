@@ -37,7 +37,7 @@ public sealed class ExternalProviderConfigurationResolver
             var resolvedProvider = await (
                 from tp in _dbContext.TenantExternalProviders.AsNoTracking()
                 join cp in _dbContext.ClientExternalProviders.AsNoTracking()
-                    on tp.Id equals cp.ExternalProviderId                
+                    on tp.Id equals cp.ExternalProviderId
                 where tp.TenantId == tenantId
                     && cp.ClientId == clientId
                     && tp.ProviderType == providerType
@@ -52,9 +52,7 @@ public sealed class ExternalProviderConfigurationResolver
                     tp.OidcConfig.ClientSecret,
                     tp.OidcConfig.Authority,
                     tp.OidcConfig.CallbackPath,
-                    tp.OidcConfig.Scopes,
-                    cp.AutoCreateUsers,
-                    cp.DefaultRoleId)
+                    tp.OidcConfig.Scopes)
             ).FirstOrDefaultAsync(cancellationToken);
 
             _logger.LogDebug("Cached external provider config for {CacheKey}", cacheKey);

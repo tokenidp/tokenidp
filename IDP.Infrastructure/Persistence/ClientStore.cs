@@ -146,7 +146,7 @@ internal sealed class ClientStore : IClientStore
         var externalProviders = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await (from cp in _dbContext.ClientExternalProviders.AsNoTracking()
-                                join tp in _dbContext.TenantExternalProviders.AsNoTracking() 
+                                join tp in _dbContext.TenantExternalProviders.AsNoTracking()
                                 on cp.ExternalProviderId equals tp.Id
                                 where cp.ClientId == clientId
                                 && tp.OidcConfig != null
@@ -158,9 +158,7 @@ internal sealed class ClientStore : IClientStore
                                     tp.OidcConfig.ClientSecret,
                                     tp.OidcConfig.Authority,
                                     tp.OidcConfig.CallbackPath,
-                                    tp.OidcConfig.Scopes,
-                                    cp.AutoCreateUsers,
-                                    cp.DefaultRoleId
+                                    tp.OidcConfig.Scopes
                                 )).ToListAsync();
 
             _logger.LogDebug("Cached client external providers for {CacheKey}", cacheKey);

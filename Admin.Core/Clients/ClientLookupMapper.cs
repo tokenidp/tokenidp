@@ -76,12 +76,14 @@ internal static class ClientLookupMapper
             .ToList();
     }
 
-    public async static Task<List<LookupItem>> MapExternalRoles(int tenantId, IApplicationDbContext db)
+    public async static Task<List<LookupItem>> MapRoles(int tenantId, IApplicationDbContext db)
     {
         var roles = await db.Roles
-            .Where(t => t.TenantId == tenantId 
-            && t.IsAssignableToExternalUsers
-            && t.IsDeleted != true)
+            .Where(t =>
+                t.TenantId == tenantId &&
+                t.IsDeleted != true &&
+                t.IsActive &&
+                t.IsAssignableToNewUsers)
             .Select(x => new { x.Id, x.Name })
             .ToListAsync();
 

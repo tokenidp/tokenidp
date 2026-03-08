@@ -6,7 +6,7 @@ public class Role : AggregateRoot<int>, ITenant
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
 
-    public string Name { get; set; } = default!;
+    public string? Name { get; set; }
     public string? NormalizedName { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }
@@ -14,7 +14,7 @@ public class Role : AggregateRoot<int>, ITenant
     public bool IsActive { get; private set; }
     public bool IsSystem { get; private set; }
     public bool IsDeleted { get; private set; }
-    public bool IsAssignableToExternalUsers { get; private set; }
+    public bool IsAssignableToNewUsers { get; private set; }
 
     public int EffectiveUserId { get; private set; }
 
@@ -28,7 +28,7 @@ public class Role : AggregateRoot<int>, ITenant
         string description,
         bool isActive,
         bool isEditable = true,
-        bool isAssignableToExternalUsers = false)
+        bool isAssignableToNewUsers = false)
     {
         TenantId = tenantId;
         Name = name;
@@ -36,13 +36,13 @@ public class Role : AggregateRoot<int>, ITenant
         IsActive = isActive;
         IsDeleted = false;
         IsSystem = isEditable;
-        IsAssignableToExternalUsers = !IsReservedSystemRole(name);
+        IsAssignableToNewUsers = isAssignableToNewUsers && !IsReservedSystemRole(name);
     }
 
     public Result Update(string name,
         string description,
         bool isActive,
-        bool isAssignableToExternalUsers)
+        bool isAssignableToNewUsers)
     {
         var validation = ValidateEditable()
             .Combine(ValidateName(name));
@@ -53,7 +53,7 @@ public class Role : AggregateRoot<int>, ITenant
         Name = name;
         RoleDescription = description;
         IsActive = isActive;
-        IsAssignableToExternalUsers = !IsReservedSystemRole(name);
+        IsAssignableToNewUsers = isAssignableToNewUsers && !IsReservedSystemRole(name);
 
         return Result.Success(id: Id);
     }

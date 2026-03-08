@@ -12,9 +12,7 @@ public sealed class ClientExternalProviderSnapshot
         string? clientSecret,
         Uri authority,
         string callbackPath,
-        IReadOnlyCollection<string>? scopes,
-        bool autoCreateUsers,
-        int? defaultRoleId)
+        IReadOnlyCollection<string>? scopes)
     {
         ProviderType = providerType;
         EnabledForClient = enabledForClient;
@@ -24,8 +22,6 @@ public sealed class ClientExternalProviderSnapshot
         Authority = authority;
         CallbackPath = callbackPath;
         Scopes = scopes ?? Array.Empty<string>();
-        AutoCreateUsers = autoCreateUsers;
-        DefaultRoleId = defaultRoleId;
     }
 
     public string ProviderType { get; private set; }
@@ -37,6 +33,4 @@ public sealed class ClientExternalProviderSnapshot
     public Uri Authority { get; init; } = default!;
     public string CallbackPath { get; init; } = default!;
     public IReadOnlyCollection<string> Scopes { get; init; } = Array.Empty<string>();
-    public bool AutoCreateUsers { get; private set; }
-    public int? DefaultRoleId { get; private set; }
 }

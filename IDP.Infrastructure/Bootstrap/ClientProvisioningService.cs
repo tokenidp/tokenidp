@@ -48,7 +48,9 @@ internal class ClientProvisioningService : IClientProvisioningService
             authPolicy.MfaPolicyOverride,
             authPolicy.ShowExternalProviders,
             authPolicy.ShowStaySignedIn,
-            authPolicy.ShowCreateAccountLink);
+            authPolicy.ShowCreateAccountLink,
+            authPolicy.AutoCreateUsers,
+            authPolicy.DefaultRoleId);
         client.ReplaceExternalProviders(authPolicy.ShowExternalProviders
             ? (command.ExternalProviders ?? new List<int>())
             : new List<int>());

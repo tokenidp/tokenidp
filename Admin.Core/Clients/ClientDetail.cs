@@ -34,7 +34,9 @@ internal class ClientDetail
                     MfaPolicyOverride = client.ClientAuthPolicy.MfaPolicyOverride,
                     ShowExternalProviders = client.ClientAuthPolicy.ShowExternalProviders,
                     ShowStaySignedIn = client.ClientAuthPolicy.ShowStaySignedIn,
-                    ShowCreateAccountLink = client.ClientAuthPolicy.ShowCreateAccountLink
+                    ShowCreateAccountLink = client.ClientAuthPolicy.ShowCreateAccountLink,
+                    AutoCreateUsers = client.ClientAuthPolicy.AutoCreateUsers,
+                    DefaultRoleId = client.ClientAuthPolicy.DefaultRoleId
                 },
             ExternalProviders = client.ClientExternalProviders
                 .Where(provider => provider.EnabledForClient)
@@ -64,6 +66,4 @@ internal class ClientDetail
     public List<string> Audiences { get; private set; } = new();
     public ClientAuthPolicyDetail AuthPolicy { get; private set; } = new();
     public List<int> ExternalProviders { get; private set; } = new();
-    public bool AutoCreateUsers { get; set; } = true;
-    public int? DefaultRoleId { get; set; }
 }

@@ -8,23 +8,23 @@ namespace IDP.Infrastructure.ExternalProviders;
 internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 {
     private readonly IApplicationDbContext _dbContext;
+    private readonly IClientStore _clientStore;
     private readonly IUserStore _userStore;
-    private readonly ILookupNormalizer _normalizer;
     private readonly IAppLogger<ExternalIdentityLinkService> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
     private readonly ExternalProviderConfigurationResolver _providerConfigurationResolver;
 
     public ExternalIdentityLinkService(
         IApplicationDbContext dbContext,
+        IClientStore clientStore,
         IUserStore userStore,
-        ILookupNormalizer normalizer,
         IAppLogger<ExternalIdentityLinkService> logger,
         ICodeSequenceGenerator userCodeGenerator,
         ExternalProviderConfigurationResolver providerConfigurationResolver)
     {
         _dbContext = dbContext;
+        _clientStore = clientStore;
         _userStore = userStore;
-        _normalizer = normalizer;
         _logger = logger;
         _userCodeGenerator = userCodeGenerator;
         _providerConfigurationResolver = providerConfigurationResolver;
@@ -118,7 +118,13 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             throw new InvalidOperationException("External provider is not configured for this client.");
         }
 
-        if (!providerConfiguration.AutoCreateUsers)
+        var authPolicy = await _clientStore.GetClientAuthPolicy(clientId);
+        if (authPolicy is null)
+        {
+            throw new InvalidOperationException("Client authentication policy is not configured.");
+        }
+
+        if (!authPolicy.AutoCreateUsers)
         {
             _logger.LogInfo(
                 "ExternalUserPendingApproval: ClientId={ClientId}, Provider={Provider}, ProviderUserId={ProviderUserId}",
@@ -129,10 +135,10 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             throw new InvalidOperationException("User provisioning disabled");
         }
 
-        if (!providerConfiguration.DefaultRoleId.HasValue)
+        if (!authPolicy.DefaultRoleId.HasValue)
         {
             throw new InvalidOperationException(
-                $"Default role is not configured for provider {identity.Provider}.");
+                $"Default role is not configured for client {clientId}.");
         }
 
         var (firstName, lastName) = SplitName(identity.DisplayName);
@@ -152,7 +158,7 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             email,
             phone,
             createdBy: 0,
-            roles: new[] { providerConfiguration.DefaultRoleId.Value },
+            roles: new[] { authPolicy.DefaultRoleId.Value },
             out var user);
 
         if (!result.IsSuccess || user is null)
@@ -173,7 +179,7 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             identity.ProviderUserId,
             identity.Email,
             identity.DisplayName);
-        
+
         login?.RecordLogin();
 
         var nextValue = await _userCodeGenerator
@@ -189,7 +195,7 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             tenantId,
             user.Id,
             identity.Provider,
-            providerConfiguration.DefaultRoleId.Value);
+            authPolicy.DefaultRoleId.Value);
 
         return user;
     }
@@ -238,9 +244,8 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 
         while (true)
         {
-            var normalized = _normalizer.NormalizeName(candidate);
             var exists = await _dbContext.Users.AnyAsync(
-                x => x.TenantId == tenantId && x.NormalizedUserName == normalized,
+                x => x.TenantId == tenantId && x.UserName == candidate,
                 cancellationToken);
 
             if (!exists)

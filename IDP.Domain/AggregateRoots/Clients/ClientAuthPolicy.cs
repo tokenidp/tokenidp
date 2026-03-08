@@ -14,6 +14,8 @@ public class ClientAuthPolicy : Entity<int>
     public bool ShowExternalProviders { get; private set; }
     public bool ShowStaySignedIn { get; private set; }
     public bool ShowCreateAccountLink { get; private set; }
+    public bool AutoCreateUsers { get; private set; } = true;
+    public int? DefaultRoleId { get; private set; }
 
     public virtual Client Client { get; private set; } = default!;
 
@@ -23,7 +25,9 @@ public class ClientAuthPolicy : Entity<int>
         bool mfaPolicyOverride,
         bool showExternalProviders,
         bool showStaySignedIn,
-        bool showCreateAccountLink)
+        bool showCreateAccountLink,
+        bool autoCreateUsers,
+        int? defaultRoleId)
     {
         if (client == null)
         {
@@ -39,7 +43,9 @@ public class ClientAuthPolicy : Entity<int>
             MfaPolicyOverride = mfaPolicyOverride,
             ShowExternalProviders = showExternalProviders,
             ShowStaySignedIn = showStaySignedIn,
-            ShowCreateAccountLink = showCreateAccountLink
+            ShowCreateAccountLink = showCreateAccountLink,
+            AutoCreateUsers = autoCreateUsers,
+            DefaultRoleId = defaultRoleId
         };
     }
 
@@ -48,7 +54,9 @@ public class ClientAuthPolicy : Entity<int>
         bool mfaPolicyOverride,
         bool showExternalProviders,
         bool showStaySignedIn,
-        bool showCreateAccountLink)
+        bool showCreateAccountLink,
+        bool autoCreateUsers,
+        int? defaultRoleId)
     {
         AllowLocalLoginOverride = allowLocalLoginOverride;
         AllowSelfRegistrationOverride = allowSelfRegistrationOverride;
@@ -56,5 +64,7 @@ public class ClientAuthPolicy : Entity<int>
         ShowExternalProviders = showExternalProviders;
         ShowStaySignedIn = showStaySignedIn;
         ShowCreateAccountLink = showCreateAccountLink;
+        AutoCreateUsers = autoCreateUsers;
+        DefaultRoleId = defaultRoleId;
     }
 }

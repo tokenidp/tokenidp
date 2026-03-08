@@ -207,7 +207,9 @@ public class Client : AggregateRoot<int>, ITenant
         bool mfaPolicyOverride,
         bool showExternalProviders,
         bool showStaySignedIn,
-        bool showCreateAccountLink)
+        bool showCreateAccountLink,
+        bool autoCreateUsers,
+        int? defaultRoleId)
     {
         if (ClientAuthPolicy == null)
         {
@@ -218,7 +220,9 @@ public class Client : AggregateRoot<int>, ITenant
                 mfaPolicyOverride,
                 showExternalProviders,
                 showStaySignedIn,
-                showCreateAccountLink);
+                showCreateAccountLink,
+                autoCreateUsers,
+                defaultRoleId);
         }
         else
         {
@@ -228,7 +232,9 @@ public class Client : AggregateRoot<int>, ITenant
                 mfaPolicyOverride,
                 showExternalProviders,
                 showStaySignedIn,
-                showCreateAccountLink);
+                showCreateAccountLink,
+                autoCreateUsers,
+                defaultRoleId);
         }
 
         return Result.Success(Id);
@@ -268,17 +274,6 @@ public class Client : AggregateRoot<int>, ITenant
 
         return Result.Success(Id);
     }
-
-    public Result ConfigureExternalProvisioning(bool autoCreateUsers, int? defaultRoleId)
-    {
-        foreach (var provider in ClientExternalProviders)
-        {
-            provider.UpdateProvisioningPolicy(autoCreateUsers, defaultRoleId);
-        }
-
-        return Result.Success(Id);
-    }
-
     public static Result Create(
         int tenantId,
         string clientId,

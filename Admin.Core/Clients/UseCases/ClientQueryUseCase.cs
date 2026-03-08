@@ -38,18 +38,6 @@ internal sealed class ClientQueryUseCase
                 "Client not found for the Id {0}".FormatString(clientId)));
         }
 
-        var provisioning = await _dbContext.ClientExternalProviders
-            .AsNoTracking()
-            .Where(c => c.ClientId == clientId && c.EnabledForClient)
-            .Select(s => new
-            {
-                s.AutoCreateUsers,
-                s.DefaultRoleId
-            }).FirstOrDefaultAsync(cancellationToken);
-
-        client.AutoCreateUsers = provisioning?.AutoCreateUsers ?? true;
-        client.DefaultRoleId = provisioning?.DefaultRoleId;
-
         return ApiResult<ClientDetail>.Success(client);
     }
 
