@@ -1,0 +1,262 @@
+﻿@page "/signup"
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@using Admin.Core.Users.UseCases
+@using IDP.Core
+@using IDP.Core.Abstractions
+@using IDP.Core.Model
+@using IDP.Domain.AggregateRoots.Authorization
+@using IDP.Foundation.Abstractions
+@using IDP.Foundation.Abstractions.Stores
+@using IDP.Foundation.Exceptions
+@using IDP.Server
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+<PageTitle>Create Account</PageTitle>
+
+@inject LoadService LoadService
+@inject NavigationManager Navigation
+@inject IAuthorizationStore authorizationStore
+@inject IAuthorizationPageUiUseCase PageUiUseCase
+@inject ITenantContextAccessor TenantContext
+@inject CreateAccountUseCase CreateAccountUseCase
+
+@if (!isRequestValid)
+{
+    <p style="color:red;">@requestErrorMessage</p>
+}
+else if (ui != null)
+{
+    <div class="logo">ID</div>
+    <div class="card" data-theme="@ui.Theme" style="@GetCardStyle(ui.AccentColor)">
+        <h1>Create Account</h1>
+        <p style="margin-bottom:20px; color:var(--muted); text-align:center;">Create a free public account for @ui.ProductName.</p>
+
+        <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
+
+        <EditForm Model="@createAccountModel" OnValidSubmit="HandleCreateAccount">
+            <DataAnnotationsValidator />
+
+            <div class="field">
+                <label for="first-name">First Name</label>
+                <InputText @bind-Value="createAccountModel.FirstName" id="first-name" />
+                <ValidationMessage For="@(() => createAccountModel.FirstName)" />
+            </div>
+
+            <div class="field">
+                <label for="last-name">Last Name</label>
+                <InputText @bind-Value="createAccountModel.LastName" id="last-name" />
+                <ValidationMessage For="@(() => createAccountModel.LastName)" />
+            </div>
+
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText @bind-Value="createAccountModel.Email" id="email" type="email" />
+                <ValidationMessage For="@(() => createAccountModel.Email)" />
+            </div>
+
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText @bind-Value="createAccountModel.Password" id="password" type="password" />
+                <ValidationMessage For="@(() => createAccountModel.Password)" />
+            </div>
+
+            <div class="field">
+                <label for="confirm-password">Confirm Password</label>
+                <InputText @bind-Value="createAccountModel.ConfirmPassword" id="confirm-password" type="password" />
+                <ValidationMessage For="@(() => createAccountModel.ConfirmPassword)" />
+            </div>
+
+            <div class="field">
+                <label for="user-name">User Name</label>
+                <InputText @bind-Value="createAccountModel.UserName" id="user-name" />
+                <ValidationMessage For="@(() => createAccountModel.UserName)" />
+            </div>
+
+            <div class="field">
+                <label for="phone-number">Phone Number</label>
+                <InputText @bind-Value="createAccountModel.PhoneNumber" id="phone-number" />
+                <ValidationMessage For="@(() => createAccountModel.PhoneNumber)" />
+            </div>
+
+            <button type="submit" class="btn-primary">Create Account</button>
+        </EditForm>
+    </div>
+
+    <div class="footer">
+        <a href="#" @onclick="GoToLogin">Back to sign in</a>
+    </div>
+}
+
+@code {
+    private sealed class CreateAccountModel
+    {
+        [Required(ErrorMessage = "First name is required.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Last name is required.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Invalid email.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Phone number is required.")]
+        public string PhoneNumber { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "User name is required.")]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Confirm password is required.")]
+        [Compare(nameof(Password), ErrorMessage = "Password mismatch.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    private readonly CreateAccountModel createAccountModel = new();
+
+    private AuthorizationPageUi? ui;
+    private PreAuthorization? preAuthorization;
+    private bool isRequestValid = true;
+    private string requestErrorMessage = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string authorizationContextId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(authorizationContextId))
+        {
+            SetRequestError("Missing authorization context id.");
+            return;
+        }
+
+        preAuthorization = await authorizationStore.GetPreAuthorization(authorizationContextId);
+
+        if (preAuthorization is null)
+        {
+            SetRequestError("Authorization context is invalid or expired.");
+            return;
+        }
+
+        try
+        {
+            IReadOnlySet<string> scopeSet =
+                preAuthorization.Scopes!
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            ui = await PageUiUseCase.BuildAsync(
+                scopeSet,
+                preAuthorization.TenantId,
+                preAuthorization.ClientId_FK,
+                CancellationToken.None);
+
+            if (ui?.AllowSignup != true)
+            {
+                SetRequestError("Self-registration is not enabled for this client.");
+            }
+        }
+        catch (AuthorizationRequestException ex)
+        {
+            SetRequestError(ex.ErrorDescription);
+        }
+        catch (Exception ex)
+        {
+            SetRequestError(ex.Message);
+        }
+    }
+
+    private async Task HandleCreateAccount()
+    {
+        ErrorMessage = string.Empty;
+
+        if (createAccountModel.Password != createAccountModel.ConfirmPassword)
+        {
+            ErrorMessage = "Password mismatch.";
+            return;
+        }
+
+        if (preAuthorization is null)
+        {
+            ErrorMessage = "Authorization context is invalid or expired.";
+            return;
+        }
+
+        try
+        {
+            LoadService.ShowLoader();
+
+            TenantContext.SetTenantId(preAuthorization.TenantId);
+            TenantContext.SetClientId(preAuthorization.ClientId_FK);
+
+            var result = await CreateAccountUseCase.Execute(new CreateAccountRequest
+            {
+                FirstName = createAccountModel.FirstName,
+                LastName = createAccountModel.LastName,
+                Email = createAccountModel.Email,
+                PhoneNumber = createAccountModel.PhoneNumber,
+                UserName = createAccountModel.UserName,
+                Password = createAccountModel.Password
+            });
+
+            if (!result.IsSuccess)
+            {
+                ErrorMessage = result.ErrorMessage ?? "Unable to create account.";
+                return;
+            }
+
+            Navigation.NavigateTo(BuildLoginUrl(created: true), replace: true);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            TenantContext.Clear();
+            LoadService.HideLoader();
+        }
+    }
+
+    private void GoToLogin()
+        => Navigation.NavigateTo(BuildLoginUrl(created: false));
+
+    private string BuildLoginUrl(bool created)
+    {
+        var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["ctx"] = authorizationContextId
+        };
+
+        if (created)
+        {
+            parameters["created"] = "1";
+        }
+
+        return QueryHelpers.AddQueryString("/login", parameters);
+    }
+
+    private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display:none;" : "";
+
+    private void SetRequestError(string description)
+    {
+        isRequestValid = false;
+        requestErrorMessage = description;
+    }
+
+    private static string GetCardStyle(string? accentHex)
+    {
+        var accentStyle = string.IsNullOrWhiteSpace(accentHex) ? string.Empty : $"--accent:{accentHex};";
+        return $"{accentStyle}max-width:460px;";
+    }
+}

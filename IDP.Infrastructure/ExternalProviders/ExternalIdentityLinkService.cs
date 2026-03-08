@@ -1,4 +1,5 @@
-﻿using IDP.ExternalProviders.Abstractions;
+﻿using Admin.Core.Common;
+using IDP.ExternalProviders.Abstractions;
 using IDP.ExternalProviders.Model;
 using IDP.Foundation.Abstractions.Stores;
 using System.Security.Cryptography;
@@ -10,24 +11,30 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
     private readonly IApplicationDbContext _dbContext;
     private readonly IClientStore _clientStore;
     private readonly IUserStore _userStore;
+    private readonly ILookupNormalizer _normalizer;
     private readonly IAppLogger<ExternalIdentityLinkService> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
     private readonly ExternalProviderConfigurationResolver _providerConfigurationResolver;
+    private readonly UserNormalizationService _userNormalizationService;
 
     public ExternalIdentityLinkService(
         IApplicationDbContext dbContext,
         IClientStore clientStore,
         IUserStore userStore,
+        ILookupNormalizer normalizer,
         IAppLogger<ExternalIdentityLinkService> logger,
         ICodeSequenceGenerator userCodeGenerator,
-        ExternalProviderConfigurationResolver providerConfigurationResolver)
+        ExternalProviderConfigurationResolver providerConfigurationResolver,
+        UserNormalizationService userNormalizationService)
     {
         _dbContext = dbContext;
         _clientStore = clientStore;
         _userStore = userStore;
+        _normalizer = normalizer;
         _logger = logger;
         _userCodeGenerator = userCodeGenerator;
         _providerConfigurationResolver = providerConfigurationResolver;
+        _userNormalizationService = userNormalizationService;
     }
 
     public async Task<User> FindOrProvisionUserAsync(
@@ -166,6 +173,8 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             throw new InvalidOperationException("Failed to provision user for external identity.");
         }
 
+        _userNormalizationService.Normalize(user);
+
         user.ApplyIdentityFlags(
             lookoutEnabled: false,
             twoFactorEnabled: false,
@@ -244,8 +253,9 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 
         while (true)
         {
+            var normalized = _normalizer.NormalizeName(candidate);
             var exists = await _dbContext.Users.AnyAsync(
-                x => x.TenantId == tenantId && x.UserName == candidate,
+                x => x.TenantId == tenantId && x.NormalizedUserName == normalized,
                 cancellationToken);
 
             if (!exists)

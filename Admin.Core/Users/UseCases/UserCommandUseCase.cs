@@ -1,22 +1,33 @@
-﻿using IDP.Foundation.Abstractions.Stores;
+﻿using Admin.Core.Common;
+using IDP.Foundation.Abstractions.Stores;
 
 namespace Admin.Core.Users.UseCases;
 
 internal class UserCommandUseCase
 {
+    private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IUserStore _userStore;
     private readonly IAppLogger<UserCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
+    private readonly UserNormalizationService _userNormalizationService;
+    private readonly ILookupNormalizer _normalizer;
 
-    public UserCommandUseCase(ICurrentUserService currentUserService,
+    public UserCommandUseCase(
+        IApplicationDbContext dbContext,
+        ICurrentUserService currentUserService,
         IAppLogger<UserCommandUseCase> logger,
         ICodeSequenceGenerator userCodeGenerator,
+        UserNormalizationService userNormalizationService,
+        ILookupNormalizer normalizer,
         IUserStore userStore)
     {
+        _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
         _userCodeGenerator = userCodeGenerator;
+        _userNormalizationService = userNormalizationService;
+        _normalizer = normalizer;
         _userStore = userStore;
     }
 
@@ -32,11 +43,17 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.password.required", "Password is required."));
         }
 
-        var normalizedUserName = request.UserName.Trim();
-        var normalizedEmail = request.Email?.Trim();
+        var userName = request.UserName.Trim();
+        var email = request.Email?.Trim() ?? string.Empty;
+        var normalizedUserName = _normalizer.NormalizeName(userName);
+        var normalizedEmail = _normalizer.NormalizeEmail(email);
 
-        var userNameExists = await _userStore
-            .UserNameExistsAsync(0, normalizedUserName, cancellationToken);
+        var userNameExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(
+                u => u.TenantId == _currentUserService.TenantId &&
+                     (u.NormalizedUserName == normalizedUserName || u.UserName == userName),
+                cancellationToken);
 
         if (userNameExists)
         {
@@ -44,7 +61,12 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.username.duplicate", "User name already exists."));
         }
 
-        var emailExists = await _userStore.EmailExistsAsync(0, normalizedEmail, cancellationToken);
+        var emailExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(
+                u => u.TenantId == _currentUserService.TenantId &&
+                     (u.NormalizedEmail == normalizedEmail || u.Email == email),
+                cancellationToken);
 
         if (emailExists)
         {
@@ -68,6 +90,8 @@ internal class UserCommandUseCase
             return FailureFromResult(createResult);
         }
 
+        _userNormalizationService.Normalize(user);
+
         if (!string.IsNullOrWhiteSpace(request.Status) &&
             Enum.TryParse<UserStatus>(request.Status, true, out var parsedStatus))
         {
@@ -79,12 +103,13 @@ internal class UserCommandUseCase
 
         user.GenerateUserCode(nextValue);
 
-        user.ApplyIdentityFlags(request.LockoutEnabled,
-                            request.TwoFactorEnabled,
-                            request.EmailConfirmed,
-                            request.PhoneNumberConfirmed,
-                            request.AccessFailedCount,
-                            request.LockoutEnd);
+        user.ApplyIdentityFlags(
+            request.LockoutEnabled,
+            request.TwoFactorEnabled,
+            request.EmailConfirmed,
+            request.PhoneNumberConfirmed,
+            request.AccessFailedCount,
+            request.LockoutEnd);
 
         var addressResult = BuildAddresses(request.Addresses, out var addresses);
         if (!addressResult.IsSuccess)
@@ -101,7 +126,7 @@ internal class UserCommandUseCase
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
 
-        var result = await _userStore.CreateUser(user, request.Password);
+        await _userStore.CreateUser(user, request.Password);
 
         _logger.LogInfo("User created with Id {UserId}", user.Id);
 
@@ -130,8 +155,15 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.username.immutable", "User name cannot be changed."));
         }
 
-        var normalizedEmail = request.Email.Trim();
-        var emailExists = await _userStore.EmailExistsAsync(id, normalizedEmail, cancellationToken);
+        var email = request.Email.Trim();
+        var normalizedEmail = _normalizer.NormalizeEmail(email);
+        var emailExists = await _dbContext.Users
+            .AsNoTracking()
+            .AnyAsync(
+                u => u.TenantId == _currentUserService.TenantId &&
+                     u.Id != id &&
+                     (u.NormalizedEmail == normalizedEmail || u.Email == email),
+                cancellationToken);
 
         if (emailExists)
         {
@@ -152,6 +184,8 @@ internal class UserCommandUseCase
             return FailureFromResult(updateResult);
         }
 
+        _userNormalizationService.Normalize(user);
+
         var addressResult = BuildAddresses(request.Addresses, out var addresses);
         if (!addressResult.IsSuccess)
         {
@@ -166,7 +200,8 @@ internal class UserCommandUseCase
 
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
-        user.ApplyIdentityFlags(request.LockoutEnabled,
+        user.ApplyIdentityFlags(
+            request.LockoutEnabled,
             request.TwoFactorEnabled,
             request.EmailConfirmed,
             request.PhoneNumberConfirmed,
@@ -179,7 +214,7 @@ internal class UserCommandUseCase
             user.UpdateStatus(parsedStatus);
         }
 
-        var result = await _userStore.UpdateUser(user);
+        await _userStore.UpdateUser(user);
 
         _logger.LogInfo("User updated {UserId}", id);
 
@@ -205,7 +240,7 @@ internal class UserCommandUseCase
 
         user.UpdateStatus(request.Status);
 
-        var result = await _userStore.UpdateUser(user);
+        await _userStore.UpdateUser(user);
 
         _logger.LogInfo("User status updated {UserId}", id);
 

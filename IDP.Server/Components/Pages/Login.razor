@@ -46,6 +46,7 @@ else if (ui != null)
         <h1>Sign in to @ui.ProductName</h1>
 
         <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
+        <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>
 
         @if (ui.AllowLocalLogin)
         {
@@ -71,7 +72,6 @@ else if (ui != null)
 
                     <a href="#" @onclick="GoToForgotPassword">Forgot password?</a>
                 </div>
-                <div class="alert">✔️ Success!</div>
                 <button type="submit" class="btn-primary">Sign In</button>
             </EditForm>
         }
@@ -157,6 +157,7 @@ else if (ui != null)
     private bool isRequestValid = true;
     private string requestErrorMessage = string.Empty;
     private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
 
     private string authorizationContextId = string.Empty;
 
@@ -167,6 +168,9 @@ else if (ui != null)
     {
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
         authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
+        SuccessMessage = query.TryGetValue("created", out var createdValue) && createdValue == "1"
+            ? "Your account has been created successfully. You can now sign in."
+            : string.Empty;
 
         if (string.IsNullOrWhiteSpace(authorizationContextId))
         {
@@ -195,7 +199,7 @@ else if (ui != null)
             IReadOnlySet<string> scopeSet =
             preAuthorization.Scopes!.Split(' ', StringSplitOptions.RemoveEmptyEntries)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-          
+
             ui = await PageUiUseCase.BuildAsync(
                 scopeSet,
                 preAuthorization.TenantId,
@@ -228,6 +232,7 @@ else if (ui != null)
     private async Task HandleLogin()
     {
         ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
 
         AuthorizationRequest request = new()
         {
@@ -289,8 +294,13 @@ else if (ui != null)
 
     private void GoToSignup()
     {
-        // You can also allow ui.SignupUrl to be absolute per-tenant.
-        var url = (ui?.SignupUrl ?? "/signup") + authorizationContextId;
+        var url = QueryHelpers.AddQueryString(
+            ui?.SignupUrl ?? "/signup",
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ctx"] = authorizationContextId
+            });
+
         Navigation.NavigateTo(url);
     }
 
@@ -306,6 +316,7 @@ else if (ui != null)
     }
 
     private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display:none;" : "";
+    private string GetSuccessDisplayStyle() => string.IsNullOrEmpty(SuccessMessage) ? "display:none;" : "";
 
     private void SetRequestError(string error, string description, bool allowRedirect = true)
     {
