@@ -9,7 +9,7 @@ internal class RoleInfo
             Name = r.Name,
             RoleDescription = r.RoleDescription,
             IsActive = r.IsActive,
-            IsEditable = r.IsEditable,
+            IsEditable = r.IsSystem,
             IsAssignableToExternalUsers = r.IsAssignableToExternalUsers,
 
             RolePermissions = r.RolePermissions

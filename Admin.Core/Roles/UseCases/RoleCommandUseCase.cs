@@ -137,7 +137,7 @@ internal class RoleCommandUseCase
                     "Only active roles can be assignable to external users."));
         }
 
-        if (!role.IsEditable && isAssignableToExternalUsers != role.IsAssignableToExternalUsers)
+        if (!role.IsSystem && isAssignableToExternalUsers != role.IsAssignableToExternalUsers)
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure(

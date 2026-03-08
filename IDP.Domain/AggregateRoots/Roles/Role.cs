@@ -6,13 +6,13 @@ public class Role : AggregateRoot<int>, ITenant
     private readonly List<RolePermission> _rolePermissions = new();
     private readonly List<UserRole> _userRoles = new();
 
-    public string? Name { get; set; }
+    public string Name { get; set; } = default!;
     public string? NormalizedName { get; set; }
     public string? ConcurrencyStamp { get; set; }
     public int TenantId { get; private set; }
     public string? RoleDescription { get; private set; } = default!;
     public bool IsActive { get; private set; }
-    public bool IsEditable { get; private set; }
+    public bool IsSystem { get; private set; }
     public bool IsDeleted { get; private set; }
     public bool IsAssignableToExternalUsers { get; private set; }
 
@@ -35,7 +35,7 @@ public class Role : AggregateRoot<int>, ITenant
         RoleDescription = description;
         IsActive = isActive;
         IsDeleted = false;
-        IsEditable = isEditable;
+        IsSystem = isEditable;
         IsAssignableToExternalUsers = !IsReservedSystemRole(name);
     }
 
@@ -145,7 +145,7 @@ public class Role : AggregateRoot<int>, ITenant
                 "The role is deleted and cannot be modified.");
         }
 
-        if (!IsEditable)
+        if (!IsSystem)
         {
             return Result.Failure(
                 "role.not_editable",

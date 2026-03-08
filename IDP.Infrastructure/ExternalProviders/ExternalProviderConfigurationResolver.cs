@@ -37,12 +37,9 @@ public sealed class ExternalProviderConfigurationResolver
             var resolvedProvider = await (
                 from tp in _dbContext.TenantExternalProviders.AsNoTracking()
                 join cp in _dbContext.ClientExternalProviders.AsNoTracking()
-                    on tp.Id equals cp.ExternalProviderId
-                join client in _dbContext.Clients.AsNoTracking()
-                    on cp.ClientId equals client.Id
+                    on tp.Id equals cp.ExternalProviderId                
                 where tp.TenantId == tenantId
                     && cp.ClientId == clientId
-                    && client.TenantId == tenantId
                     && tp.ProviderType == providerType
                     && tp.Enabled
                     && cp.EnabledForClient

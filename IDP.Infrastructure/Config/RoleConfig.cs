@@ -18,7 +18,7 @@ internal class RoleConfig : IEntityTypeConfiguration<Role>
         builder.Property(x => x.ConcurrencyStamp).HasMaxLength(100).IsRequired(false).IsConcurrencyToken();
 
         builder.Property(x => x.IsActive).IsRequired();
-        builder.Property(x => x.IsEditable).IsRequired();
+        builder.Property(x => x.IsSystem).IsRequired();
         builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 
