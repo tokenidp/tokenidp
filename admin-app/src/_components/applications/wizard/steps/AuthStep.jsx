@@ -1,4 +1,5 @@
 import React from "react";
+import { GrantTypeId } from "../wizardState";
 
 function AuthStep({
   register,
@@ -19,7 +20,9 @@ function AuthStep({
   externalProviderOptions,
   externalRoleOptions = [],
 }) {
-  const hasAuthCode = grantTypes.includes(0);
+  const hasAuthorizationGrant =
+    grantTypes.includes(GrantTypeId.AuthorizationCode) ||
+    grantTypes.includes(GrantTypeId.Password);
   const secretLocked = isPublicClient || isDeviceIot;
   const showExternalProviders = watch("authPolicy.showExternalProviders");
   const selectedProviders = watch("externalProviders");
@@ -59,6 +62,92 @@ function AuthStep({
               Grant and authentication settings directly impact application security.
               Incorrect configuration may expose sensitive resources.
             </div>
+
+            <div className="auth-field">
+              <label className="form-label fw-semibold">OAuth Grants</label>
+              <div className="row g-2">
+                {grantOptions.map((grant) => {
+                  const isRefreshToken = grant.id === GrantTypeId.RefreshToken;
+                  const disabledByAppType = !allowedGrants.has(grant.id);
+                  const disabledByDependency = isRefreshToken && !hasAuthorizationGrant;
+                  const disabled = disabledByAppType || disabledByDependency;
+                  const reason = disabledByDependency
+                    ? "Enable Authorization Code or Password to use refresh_token."
+                    : disabledByAppType
+                      ? grant.id === GrantTypeId.ClientCredentials
+                        ? "Available only for Backend (machine-to-machine) applications."
+                        : grant.id === GrantTypeId.DeviceCode
+                          ? "Available for Mobile, Desktop, and Device/IOT applications."
+                          : grant.id === GrantTypeId.Ciba
+                            ? "Available only for Web applications."
+                            : grant.id === GrantTypeId.Password
+                              ? "Available for Mobile, Desktop, Web, and Backend applications."
+                              : "Not supported for this application type."
+                      : null;
+                  return (
+                    <div className="col-12" key={grant.id}>
+                      <div
+                        className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
+                          grantTypes.includes(grant.id) ? "option-card-active" : ""
+                        } ${disabled ? "is-locked" : ""}`}
+                      >
+                        <input
+                          className="form-check-input mt-1"
+                          type="checkbox"
+                          id={`grant-${grant.id}`}
+                          checked={grantTypes.includes(grant.id)}
+                          onChange={() => toggleGrant(grant.id)}
+                          disabled={disabled}
+                          aria-label={`${grant.value} grant`}
+                        />
+                        <label
+                          className="form-check-label w-100"
+                          htmlFor={`grant-${grant.id}`}
+                        >
+                          <div className="grant-title">{grant.value}</div>
+                          <div className="grant-sublabel">{grant.key}</div>
+                          {disabled && reason && (
+                            <div className="grant-reason">{reason}</div>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="form-text">
+                Grant types are prefiltered based on app type selection.
+              </div>
+              {isWebClient && (
+                <div className="form-text text-muted">
+                  CIBA is an advanced grant for decoupled authentication journeys.
+                </div>
+              )}
+              {isDeviceIot && (
+                <div className="form-text text-muted">
+                  Device/IOT is under development: display QR code and user code hints in the
+                  device activation UX.
+                </div>
+              )}
+              {isPublicClient && !isDeviceIot && (
+                <div className="form-text text-muted">
+                  SPA clients must use PKCE with Authorization Code flow. Mobile and Desktop
+                  clients may also use Password flow when explicitly allowed.
+                </div>
+              )}
+              {hasInsecureGrant && (
+                <div className="alert alert-warning mt-3 mb-0">
+                  The selected grant type is not recommended for this app type.
+                </div>
+              )}
+              {grantError && (
+                <div className="alert alert-danger mt-3 mb-0" role="alert">
+                  {grantError}
+                </div>
+              )}
+            </div>
+
+            <div className="auth-divider"></div>
 
             <div className={`auth-field ${secretLocked ? "is-locked" : ""}`}>
               <label className="form-label fw-semibold">Client Secret</label>
@@ -304,89 +393,6 @@ function AuthStep({
                   )}
                 </div>
               </div>
-            </div>
-
-            <div className="auth-divider"></div>
-
-            <div className="auth-field">
-              <label className="form-label fw-semibold">OAuth Grants</label>
-              <div className="row g-2">
-                {grantOptions.map((grant) => {
-                  const isRefreshToken = grant.id === 1;
-                  const disabledByAppType = !allowedGrants.has(grant.id);
-                  const disabledByDependency = isRefreshToken && !hasAuthCode;
-                  const disabled = disabledByAppType || disabledByDependency;
-                  const reason = disabledByDependency
-                    ? "Enable Authorization Code to use refresh_token."
-                    : disabledByAppType
-                      ? grant.id === 2
-                        ? "Available only for Backend (machine-to-machine) applications."
-                        : grant.id === 3
-                          ? "Available for Mobile, Desktop, and Device/IOT applications."
-                          : grant.id === 4
-                            ? "Available only for Web applications."
-                            : "Not supported for this application type."
-                      : null;
-                  return (
-                    <div className="col-12" key={grant.id}>
-                      <div
-                        className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
-                          grantTypes.includes(grant.id) ? "option-card-active" : ""
-                        } ${disabled ? "is-locked" : ""}`}
-                      >
-                        <input
-                          className="form-check-input mt-1"
-                          type="checkbox"
-                          id={`grant-${grant.id}`}
-                          checked={grantTypes.includes(grant.id)}
-                          onChange={() => toggleGrant(grant.id)}
-                          disabled={disabled}
-                          aria-label={`${grant.value} grant`}
-                        />
-                        <label
-                          className="form-check-label w-100"
-                          htmlFor={`grant-${grant.id}`}
-                        >
-                          <div className="grant-title">{grant.value}</div>
-                          <div className="grant-sublabel">{grant.key}</div>
-                          {disabled && reason && (
-                            <div className="grant-reason">{reason}</div>
-                          )}
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="form-text">
-                Grant types are prefiltered based on app type selection.
-              </div>
-              {isWebClient && (
-                <div className="form-text text-muted">
-                  CIBA is an advanced grant for decoupled authentication journeys.
-                </div>
-              )}
-              {isDeviceIot && (
-                <div className="form-text text-muted">
-                  Device/IOT is under development: display QR code and user code hints in the
-                  device activation UX.
-                </div>
-              )}
-              {isPublicClient && !isDeviceIot && (
-                <div className="form-text text-muted">
-                  Public clients must use PKCE with Authorization Code flow.
-                </div>
-              )}
-              {hasInsecureGrant && (
-                <div className="alert alert-warning mt-3 mb-0">
-                  The selected grant type is not recommended for this app type.
-                </div>
-              )}
-              {grantError && (
-                <div className="alert alert-danger mt-3 mb-0" role="alert">
-                  {grantError}
-                </div>
-              )}
             </div>
           </div>
         </div>

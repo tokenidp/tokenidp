@@ -7,55 +7,67 @@ export const fallbackAppTypes = [
   { label: "Device/IOT (Under Development)", value: "5", icon: "fa fa-microchip" },
 ];
 
+export const GrantTypeId = Object.freeze({
+  AuthorizationCode: 0,
+  RefreshToken: 1,
+  ClientCredentials: 2,
+  DeviceCode: 3,
+  Ciba: 4,
+  Password: 5,
+});
+
+const grantTypeMetadataByKey = Object.freeze({
+  authorization_code: {
+    id: GrantTypeId.AuthorizationCode,
+    icon: "fa fa-key",
+  },
+  refresh_token: {
+    id: GrantTypeId.RefreshToken,
+    icon: "fa fa-sync",
+  },
+  client_credentials: {
+    id: GrantTypeId.ClientCredentials,
+    icon: "fa fa-server",
+  },
+  device_code: {
+    id: GrantTypeId.DeviceCode,
+    icon: "fa fa-mobile-screen",
+  },
+  ciba: {
+    id: GrantTypeId.Ciba,
+    icon: "fa fa-link",
+  },
+  password: {
+    id: GrantTypeId.Password,
+    icon: "fa fa-user",
+  },
+});
+
 export const getGrantTypeDisplayLabel = (value) => {
   switch (value) {
     case "authorization_code":
       return "Authorization Code";
-    case "client_credentials":
-      return "Client Credentials";
     case "refresh_token":
       return "Refresh Token";
+    case "client_credentials":
+      return "Client Credentials";
     case "device_code":
       return "Device Code";
     case "ciba":
       return "CIBA";
+    case "password":
+      return "Resource Owner Password Credentials";
     default:
       return String(value);
   }
 };
 
-export const fallbackGrantTypes = [
-  {
-    id: 0,
-    key: "authorization_code",
-    value: getGrantTypeDisplayLabel("authorization_code"),
-    icon: "fa fa-key",
-  },
-  {
-    id: 2,
-    key: "client_credentials",
-    value: getGrantTypeDisplayLabel("client_credentials"),
-    icon: "fa fa-server",
-  },
-  {
-    id: 1,
-    key: "refresh_token",
-    value: getGrantTypeDisplayLabel("refresh_token"),
-    icon: "fa fa-sync",
-  },
-  {
-    id: 3,
-    key: "device_code",
-    value: getGrantTypeDisplayLabel("device_code"),
-    icon: "fa fa-mobile-screen",
-  },
-  {
-    id: 4,
-    key: "ciba",
-    value: getGrantTypeDisplayLabel("ciba"),
-    icon: "fa fa-link",
-  },
-];
+export const fallbackGrantTypes = Object.keys(grantTypeMetadataByKey).map((key) => ({
+  id: grantTypeMetadataByKey[key].id,
+  key,
+  value: getGrantTypeDisplayLabel(key),
+  icon: grantTypeMetadataByKey[key].icon,
+}));
 
 export const fallbackScopes = [
   { value: "openid", label: "openid", icon: "fa fa-fingerprint" },
@@ -71,6 +83,27 @@ export const normalizeLookupOptions = (items) =>
     key: option.key ?? option.id ?? option.Key ?? option.Id,
     value: option.value ?? option.name ?? option.Value ?? option.Name,
   }));
+
+export const normalizeGrantTypeOptions = (items) => {
+  const normalized = normalizeLookupOptions(items)
+    .map((option) => {
+      const key = String(option.key ?? "").trim();
+      const metadata = grantTypeMetadataByKey[key];
+      if (!metadata) {
+        return null;
+      }
+
+      return {
+        id: metadata.id,
+        key,
+        value: option.value || getGrantTypeDisplayLabel(key),
+        icon: metadata.icon,
+      };
+    })
+    .filter(Boolean);
+
+  return normalized.length ? normalized : fallbackGrantTypes;
+};
 
 export const normalizeValue = (value, fallback) =>
   value === undefined || value === null ? fallback : String(value);

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { GrantTypeId } from "../wizardState";
 
 function TokensStep({
   register,
@@ -10,8 +11,14 @@ function TokensStep({
   clearErrors,
   grantTypes,
 }) {
-  const hasAuthCode = useMemo(() => grantTypes.includes(0), [grantTypes]);
-  const hasRefreshToken = useMemo(() => grantTypes.includes(1), [grantTypes]);
+  const hasAuthCode = useMemo(
+    () => grantTypes.includes(GrantTypeId.AuthorizationCode),
+    [grantTypes]
+  );
+  const hasRefreshToken = useMemo(
+    () => grantTypes.includes(GrantTypeId.RefreshToken),
+    [grantTypes]
+  );
 
   const normalizedTokenOptions = useMemo(
     () =>

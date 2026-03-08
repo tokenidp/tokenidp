@@ -20,7 +20,7 @@ function ReviewStep({
   tokenTypeOptions,
   grantTypes,
   scopeOptions,
-  fallbackGrantTypes,
+  grantOptions,
   scopes,
   onEditStep,
   stepIndexById,
@@ -34,7 +34,7 @@ function ReviewStep({
     offline_access: "Offline Access",
   };
 
-  const grantLabels = fallbackGrantTypes
+  const grantLabels = grantOptions
     .filter((grant) => grantTypes.includes(grant.id))
     .map((grant) => ({
       label: grant.value,

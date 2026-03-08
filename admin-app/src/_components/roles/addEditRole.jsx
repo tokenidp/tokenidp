@@ -44,12 +44,14 @@ function AddEditRole({ mode }) {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm({
     defaultValues: {
       name: "",
       description: "",
       isActive: true,
+      isAssignableToExternalUsers: false,
     },
   });
   const { setSuccess } = useGlobalSuccess();
@@ -71,6 +73,8 @@ function AddEditRole({ mode }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [search, setSearch] = useState("");
   const [expandedIds, setExpandedIds] = useState(new Set());
+  const [isRoleEditable, setIsRoleEditable] = useState(true);
+  const isActiveValue = watch("isActive");
   const getField = (item, ...keys) =>
     keys.find((key) => item?.[key] !== undefined) !== undefined
       ? item[keys.find((key) => item?.[key] !== undefined)]
@@ -122,6 +126,8 @@ function AddEditRole({ mode }) {
       roleName: data.name.trim(),
       roleDescription: data.description.trim(),
       isActive: !!data.isActive,
+      isAssignableToExternalUsers:
+        !!data.isActive && !!data.isAssignableToExternalUsers,
       rolePermissions,
     };
 
@@ -177,6 +183,15 @@ function AddEditRole({ mode }) {
         getField(role, "roleDescription", "RoleDescription") ?? ""
       );
       setValue("isActive", getField(role, "isActive", "IsActive") ?? true);
+      setValue(
+        "isAssignableToExternalUsers",
+        getField(
+          role,
+          "isAssignableToExternalUsers",
+          "IsAssignableToExternalUsers"
+        ) ?? false
+      );
+      setIsRoleEditable(getField(role, "isEditable", "IsEditable") ?? true);
       const rolePermissions =
         getField(role, "rolePermissions", "RolePermissions") || [];
       setSelectedIds(
@@ -203,6 +218,15 @@ function AddEditRole({ mode }) {
     };
     load();
   }, [loadAssignablePermissions]);
+
+  useEffect(() => {
+    if (!isActiveValue) {
+      setValue("isAssignableToExternalUsers", false, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [isActiveValue, setValue]);
 
   const tree = useMemo(
     () => createTree(permissions, { allowedControlTypes: "all" }),
@@ -410,7 +434,7 @@ function AddEditRole({ mode }) {
                         {...register("description")}
                       ></textarea>
                     </div>
-                    <div className="col-12 col-md-6 d-flex align-items-end ps-md-2">
+                    <div className="col-12 col-md-6 ps-md-2">
                       <div className="d-flex align-items-center gap-1 pb-1">
                         <label className="form-label mb-0">Active</label>
                         <div className="form-check form-switch app-switch account-status-switch mb-0">
@@ -421,6 +445,35 @@ function AddEditRole({ mode }) {
                           />
                         </div>
                       </div>
+                    </div>
+                    <div className="col-12 col-md-6 ps-md-2">
+                      <div className="d-flex align-items-center gap-1 pb-1">
+                        <label
+                          className="form-label mb-0"
+                          htmlFor="role-is-assignable-to-external-users"
+                        >
+                          Is Assignable To External Users
+                        </label>
+                        <div className="form-check form-switch app-switch account-status-switch mb-0">
+                          <input
+                            className="form-check-input app-switch-input"
+                            type="checkbox"
+                            id="role-is-assignable-to-external-users"
+                            disabled={!isActiveValue || !isRoleEditable}
+                            {...register("isAssignableToExternalUsers")}
+                          />
+                        </div>
+                      </div>
+                      {!isActiveValue && (
+                        <div className="form-text text-muted">
+                          Only active roles can be assigned to external users.
+                        </div>
+                      )}
+                      {!isRoleEditable && (
+                        <div className="form-text text-muted">
+                          System roles cannot modify this setting.
+                        </div>
+                      )}
                     </div>
                   </div>
                 </form>

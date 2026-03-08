@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { GrantTypeId } from "../wizardState";
 
 function ScopesStep({
   scopeOptions,
@@ -10,8 +11,14 @@ function ScopesStep({
   register,
   grantTypes,
 }) {
-  const hasClientCredentials = useMemo(() => grantTypes.includes(2), [grantTypes]);
-  const hasRefreshToken = useMemo(() => grantTypes.includes(1), [grantTypes]);
+  const hasClientCredentials = useMemo(
+    () => grantTypes.includes(GrantTypeId.ClientCredentials),
+    [grantTypes]
+  );
+  const hasRefreshToken = useMemo(
+    () => grantTypes.includes(GrantTypeId.RefreshToken),
+    [grantTypes]
+  );
 
   const scopeDescriptions = {
     openid: "Required for OpenID Connect login (ID Token issuance).",

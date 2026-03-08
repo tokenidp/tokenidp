@@ -11,6 +11,7 @@ const initialState = {
   lastCreatedId: null,
   appTypes: [],
   clientTypes: [],
+  grantTypes: [],
   tokenTypes: [],
   scopes: [],
   externalProviders: [],
@@ -46,6 +47,7 @@ const reducer = (state, action) => {
         loading: false,
         appTypes: action.payload.appTypes,
         clientTypes: action.payload.clientTypes,
+        grantTypes: action.payload.grantTypes,
         tokenTypes: action.payload.tokenTypes,
         scopes: action.payload.scopes,
         externalProviders: action.payload.externalProviders,
@@ -115,6 +117,7 @@ export const ApplicationsProvider = ({ children }) => {
         payload: {
           appTypes: result.appTypes || result.AppTypes || [],
           clientTypes: result.clientTypes || result.ClientTypes || [],
+          grantTypes: result.grantTypes || result.GrantTypes || [],
           tokenTypes: result.tokenTypes || result.TokenTypes || [],
           scopes: result.clientScopes || result.ClientScopes || [],
           externalProviders:
