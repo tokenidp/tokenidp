@@ -168,9 +168,17 @@ else if (ui != null)
     {
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
         authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
-        SuccessMessage = query.TryGetValue("created", out var createdValue) && createdValue == "1"
-            ? "Your account has been created successfully. You can now sign in."
-            : string.Empty;
+        var created = query.TryGetValue("created", out var createdValue) && createdValue == "1";
+        var verifyRequired = query.TryGetValue("verify", out var verifyValue) && verifyValue == "1";
+        var confirmed = query.TryGetValue("confirmed", out var confirmedValue) && confirmedValue == "1";
+
+        SuccessMessage = confirmed
+            ? "Your email has been confirmed. You can now sign in."
+            : created && verifyRequired
+                ? "Your account has been created. Check your email to confirm it before signing in."
+                : created
+                    ? "Your account has been created successfully. You can now sign in."
+                    : string.Empty;
 
         if (string.IsNullOrWhiteSpace(authorizationContextId))
         {

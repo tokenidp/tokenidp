@@ -264,6 +264,11 @@ public partial class User : AggregateRoot<int>, ITenant
         }
     }
 
+    public void ConfirmEmail()
+    {
+        EmailConfirmed = true;
+    }
+
     public void ResetAccessFailed()
     {
         AccessFailedCount = 0;

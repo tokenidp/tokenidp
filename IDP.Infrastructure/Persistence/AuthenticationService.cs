@@ -64,12 +64,17 @@ internal sealed class AuthenticationService : IAuthenticationService
                 return AuthenticationContext.Failure("Invalid username or password");
             }
 
+            _logger.LogDebug("Found user {UserId} for authentication", user.Id);
+
             if (user.IsLockedOut())
             {
                 return AuthenticationContext.Failure("User is locked out.");
             }
 
-            _logger.LogDebug("Found user {UserId} for authentication", user.Id);
+            if (!user.EmailConfirmed)
+            {
+                return AuthenticationContext.Failure("Please confirm your email before signing in.");
+            }
 
             var result = _passwordService.Verify(user, password);
 

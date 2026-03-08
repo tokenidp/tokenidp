@@ -5,7 +5,6 @@ namespace Admin.Core.Users.UseCases;
 
 public sealed class CreateAccountUseCase
 {
-    private const string PublicUserRoleName = "PublicUser";
     private static readonly EmailAddressAttribute EmailValidator = new();
 
     private readonly IApplicationDbContext _dbContext;
@@ -15,6 +14,7 @@ public sealed class CreateAccountUseCase
     private readonly UserNormalizationService _userNormalizationService;
     private readonly ILookupNormalizer _normalizer;
     private readonly IAppLogger<CreateAccountUseCase> _logger;
+    private readonly EmailConfirmationUseCase _emailConfirmationUseCase;
 
     public CreateAccountUseCase(
         IApplicationDbContext dbContext,
@@ -23,7 +23,8 @@ public sealed class CreateAccountUseCase
         PasswordService passwordService,
         UserNormalizationService userNormalizationService,
         ILookupNormalizer normalizer,
-        IAppLogger<CreateAccountUseCase> logger)
+        IAppLogger<CreateAccountUseCase> logger,
+        EmailConfirmationUseCase emailConfirmationUseCase)
     {
         _dbContext = dbContext;
         _tenantContextAccessor = tenantContextAccessor;
@@ -32,6 +33,7 @@ public sealed class CreateAccountUseCase
         _userNormalizationService = userNormalizationService;
         _normalizer = normalizer;
         _logger = logger;
+        _emailConfirmationUseCase = emailConfirmationUseCase;
     }
 
     public async Task<CreateAccountResult> Execute(
@@ -94,6 +96,13 @@ public sealed class CreateAccountUseCase
                 "Self-registration is not enabled for this client.");
         }
 
+        if (clientAuthPolicy.DefaultRoleId is null)
+        {
+            return CreateAccountResult.Failure(
+                "signup.default_role",
+                "Default role is not enabled for this client.");
+        }
+
         var normalizedEmail = _normalizer.NormalizeEmail(email);
         var normalizedUserName = _normalizer.NormalizeName(userName);
 
@@ -101,36 +110,15 @@ public sealed class CreateAccountUseCase
             .AsNoTracking()
             .AnyAsync(
                 x => x.TenantId == tenantId &&
-                     (x.NormalizedEmail == normalizedEmail || x.Email == email),
+                     ((x.NormalizedEmail == normalizedEmail || x.Email == email)
+                     || (x.NormalizedUserName == normalizedUserName || x.UserName == userName)),
                 cancellationToken);
 
         if (emailExists)
         {
             return CreateAccountResult.Failure(
                 "user.email.duplicate",
-                "Email already exists.");
-        }
-
-        var userNameExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(
-                x => x.TenantId == tenantId &&
-                     (x.NormalizedUserName == normalizedUserName || x.UserName == userName),
-                cancellationToken);
-
-        if (userNameExists)
-        {
-            return CreateAccountResult.Failure(
-                "user.username.duplicate",
-                "User name already exists.");
-        }
-
-        var publicUserRole = await EnsurePublicUserRoleAsync(tenantId, cancellationToken);
-        if (publicUserRole is null)
-        {
-            return CreateAccountResult.Failure(
-                "signup.role.invalid",
-                "Public user role is not available.");
+                "Email or User name already exists.");
         }
 
         var createResult = User.Create(
@@ -141,7 +129,7 @@ public sealed class CreateAccountUseCase
             email,
             phoneNumber,
             createdBy: 0,
-            roles: new[] { publicUserRole.Id },
+            roles: new[] { clientAuthPolicy.DefaultRoleId ?? 0 },
             out var user);
 
         if (!createResult.IsSuccess || user is null)
@@ -167,6 +155,17 @@ public sealed class CreateAccountUseCase
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        if (tenantAuth.RequireEmailVerification)
+        {
+            await _emailConfirmationUseCase.InitiateEmailConfirmation(
+                new InitiateEmailConfirmationCommand
+                {
+                    UserId = user.Id,
+                    AuthorizationContextId = request.AuthorizationContextId
+                },
+                cancellationToken);
+        }
+
         _logger.LogInfo(
             "Public account created for tenant {TenantId} and client {ClientId} with user {UserId}",
             tenantId,
@@ -174,34 +173,6 @@ public sealed class CreateAccountUseCase
             user.Id);
 
         return CreateAccountResult.Success(user.Id, tenantAuth.RequireEmailVerification);
-    }
-
-    private async Task<Role?> EnsurePublicUserRoleAsync(int tenantId, CancellationToken cancellationToken)
-    {
-        var existingRole = await _dbContext.Roles
-            .FirstOrDefaultAsync(
-                x => x.TenantId == tenantId &&
-                     !x.IsDeleted &&
-                     x.Name == PublicUserRoleName,
-                cancellationToken);
-
-        if (existingRole is not null)
-        {
-            if (!existingRole.IsActive)
-            {
-                return null;
-            }
-
-            if (string.IsNullOrWhiteSpace(existingRole.NormalizedName))
-            {
-                existingRole.NormalizedName = _normalizer.NormalizeName(existingRole.Name);
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-
-            return existingRole;
-        }
-
-        return default;
     }
 
     private static CreateAccountResult? ValidateRequest(
@@ -273,6 +244,7 @@ public sealed class CreateAccountRequest
     public string PhoneNumber { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+    public string AuthorizationContextId { get; set; } = string.Empty;
 }
 
 public sealed class CreateAccountResult

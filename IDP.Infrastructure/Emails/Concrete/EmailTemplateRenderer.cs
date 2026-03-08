@@ -36,6 +36,16 @@ internal sealed class EmailTemplateRenderer : IEmailTemplateRenderer
             return Task.FromResult(result);
         }
 
+        if (templateKey == "EMAIL_CONFIRMATION")
+        {
+            var html = ReplaceTokens(EmailTemplates.EmailConfirmationHtml, tokens)
+                .Replace("{YEAR}", DateTime.UtcNow.Year.ToString());
+
+            (string Subject, string? Html, string? Text) result = (EmailTemplates.EmailConfirmationSubject, html, default);
+
+            return Task.FromResult(result);
+        }
+
         throw new InvalidOperationException($"Unknown email template: {templateKey}");
     }
 

@@ -206,7 +206,8 @@ else if (ui != null)
                 Email = createAccountModel.Email,
                 PhoneNumber = createAccountModel.PhoneNumber,
                 UserName = createAccountModel.UserName,
-                Password = createAccountModel.Password
+                Password = createAccountModel.Password,
+                AuthorizationContextId = authorizationContextId
             });
 
             if (!result.IsSuccess)
@@ -215,7 +216,9 @@ else if (ui != null)
                 return;
             }
 
-            Navigation.NavigateTo(BuildLoginUrl(created: true), replace: true);
+            Navigation.NavigateTo(
+                BuildLoginUrl(created: true, verifyRequired: result.RequiresEmailVerification),
+                replace: true);
         }
         catch (Exception ex)
         {
@@ -229,9 +232,9 @@ else if (ui != null)
     }
 
     private void GoToLogin()
-        => Navigation.NavigateTo(BuildLoginUrl(created: false));
+        => Navigation.NavigateTo(BuildLoginUrl(created: false, verifyRequired: false));
 
-    private string BuildLoginUrl(bool created)
+    private string BuildLoginUrl(bool created, bool verifyRequired)
     {
         var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
@@ -241,6 +244,11 @@ else if (ui != null)
         if (created)
         {
             parameters["created"] = "1";
+        }
+
+        if (verifyRequired)
+        {
+            parameters["verify"] = "1";
         }
 
         return QueryHelpers.AddQueryString("/login", parameters);

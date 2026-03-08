@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<CreateAccountUseCase>();
         services.AddScoped<UserLookupsUseCase>();
         services.AddScoped<PasswordResetUseCase>();
+        services.AddScoped<EmailConfirmationUseCase>();
 
         services.AddScoped<UserPermissionsUseCase>();
         services.AddScoped<PermissionCommandUseCase>();

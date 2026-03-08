@@ -40,6 +40,7 @@ public interface IApplicationDbContext
     DbSet<User> Users { get; }
     DbSet<UserExternalLogin> UserExternalLogins { get; }
     DbSet<PasswordResetToken> PasswordResetTokens { get; }
+    DbSet<EmailConfirmationToken> EmailConfirmationTokens { get; }
     DbSet<CodeSequence> CodeSequences { get; }
     DbSet<UserAddress> UserAddresses { get; }
     DbSet<UserContact> UserContacts { get; }

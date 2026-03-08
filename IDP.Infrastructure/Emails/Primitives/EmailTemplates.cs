@@ -55,4 +55,32 @@ internal static class EmailTemplates
     </html>";
 
     public const string PasswordResetSubject = "Reset your password";
+
+    public const string EmailConfirmationHtml = @"
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Confirm Your Email</title>
+    </head>
+    <body style='font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333;'>
+        <div style='max-width: 600px; margin: 0 auto;'>
+            <h2 style='color: #2563eb; margin-bottom: 16px;'>Confirm Your Email Address</h2>
+            <p>Welcome to <strong><%TENANT_NAME%></strong>.</p>
+            <p>Please confirm your email address before signing in to your account.</p>
+            <p style='margin: 24px 0;'>
+                <a href='<%CONFIRM_LINK%>' style='background: #2563eb; color: #fff; text-decoration: none; padding: 10px 16px; border-radius: 6px; display: inline-block;'>
+                    Confirm Email
+                </a>
+            </p>
+            <p>This confirmation link expires in <strong><%EXPIRY_HOURS%> hours</strong>.</p>
+            <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
+                <p>If you didn't create this account, please ignore this email.</p>
+                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>";
+
+    public const string EmailConfirmationSubject = "Confirm your email";
 }
