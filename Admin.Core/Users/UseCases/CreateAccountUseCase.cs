@@ -201,36 +201,7 @@ public sealed class CreateAccountUseCase
             return existingRole;
         }
 
-        var publicRole = new Role(
-            tenantId: tenantId,
-            name: PublicUserRoleName,
-            description: "Default role for self-registered public users.",
-            isActive: true,
-            isEditable: false,
-            isAssignableToNewUsers: false)
-        {
-            NormalizedName = _normalizer.NormalizeName(PublicUserRoleName),
-            ConcurrencyStamp = Guid.NewGuid().ToString("N")
-        };
-
-        _dbContext.Roles.Add(publicRole);
-
-        try
-        {
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            return publicRole;
-        }
-        catch (DbUpdateException)
-        {
-            _dbContext.Roles.Remove(publicRole);
-
-            return await _dbContext.Roles
-                .FirstOrDefaultAsync(
-                    x => x.TenantId == tenantId &&
-                         !x.IsDeleted &&
-                         x.Name == PublicUserRoleName,
-                    cancellationToken);
-        }
+        return default;
     }
 
     private static CreateAccountResult? ValidateRequest(
