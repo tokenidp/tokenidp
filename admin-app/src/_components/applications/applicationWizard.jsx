@@ -54,7 +54,7 @@ const isDeviceIotLabel = (label) => /device[\s_/-]*iot/i.test(String(label || ""
 
 const formatAppTypeLabel = (label) => {
   if (isDeviceIotLabel(label)) {
-    return "Device/IOT (Under Development)";
+    return "Device/IOT";
   }
   return String(label || "");
 };
@@ -128,7 +128,7 @@ function ApplicationWizard({
       2: "Installed desktop apps. Uses PKCE. No client secret.",
       3: "Server-rendered apps. Can securely store client secrets.",
       4: "Machine-to-machine services. Uses client credentials.",
-      5: "Device/IOT flow is under development. Device Code only.",
+      5: "Device and IoT apps use the Device Authorization flow with the device_code grant.",
     };
     if (normalized.length) {
       return normalized.map((option) => ({
@@ -344,7 +344,7 @@ function ApplicationWizard({
       grantTypes.includes(GrantTypeId.DeviceCode) &&
       (isSpa || isWeb || isBackend)
     ) {
-      setGrantError("Device Code is supported for Mobile and Desktop clients.");
+      setGrantError("Device Code is supported for Mobile, Desktop, and Device/IOT clients.");
       return false;
     }
     if (isDeviceIot && !grantTypes.includes(GrantTypeId.DeviceCode)) {

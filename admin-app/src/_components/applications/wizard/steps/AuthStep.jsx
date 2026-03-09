@@ -112,8 +112,8 @@ function AuthStep({
               )}
               {isDeviceIot && (
                 <div className="form-text text-muted">
-                  Device/IOT is under development: display QR code and user code hints in the
-                  device activation UX.
+                  Device and IoT clients sign in with the Device Authorization flow, where users
+                  complete verification on a separate activation screen.
                 </div>
               )}
               {isPublicClient && !isDeviceIot && (

@@ -4,7 +4,7 @@ export const fallbackAppTypes = [
   { label: "Desktop", value: "2", icon: "fa fa-desktop" },
   { label: "WebApp", value: "3", icon: "fa fa-window-maximize" },
   { label: "Backend", value: "4", icon: "fa fa-robot" },
-  { label: "Device/IOT (Under Development)", value: "5", icon: "fa fa-microchip" },
+  { label: "Device/IOT", value: "5", icon: "fa fa-microchip" },
 ];
 
 export const GrantTypeId = Object.freeze({
