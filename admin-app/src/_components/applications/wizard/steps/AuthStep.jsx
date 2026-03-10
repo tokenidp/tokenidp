@@ -107,7 +107,7 @@ function AuthStep({
               </div>
               {isWebClient && (
                 <div className="form-text text-muted">
-                  CIBA is an advanced grant for decoupled authentication journeys.
+                  CIBA is currently under development and is not yet available for use.
                 </div>
               )}
               {isDeviceIot && (

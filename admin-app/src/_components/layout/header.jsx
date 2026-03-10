@@ -26,10 +26,6 @@ function Header({ onToggleSidebar }) {
       >
         <i className="fa fa-bars"></i>
       </button>
-      <div className="search-box">
-        <i className="fa fa-search"></i>
-        <input type="text" className="form-control" placeholder="Quick Search..." />
-      </div>
       <div className="topbar-right">
         <span className="text-secondary">Hi, {name || "Admin"}</span>
         <i className="fa fa-bell text-secondary"></i>

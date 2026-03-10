@@ -176,6 +176,7 @@ body {
 .topbar-right {
   display: flex;
   align-items: center;
+  margin-left: auto;
   gap: 16px;
   color: #64748b;
   font-weight: 500;
