@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Us | TokenTresor</title>
+    <link rel="stylesheet" href="../assets/styles/site.css" />
+  </head>
+  <body class="blog-article-page">
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <a class="brand" href="../Landing.html" aria-label="TokenTresor home">
+          <img src="../assets/logos/tokentresor-wordmark-core.svg" alt="TokenTresor" />
+        </a>
+        <div class="nav-links">
+          <a href="../Landing.html">Home</a>
+          <details class="usecases-dropdown">
+            <summary>Use Cases</summary>
+            <div class="usecases-menu">
+              <a href="../UseCases/usecase-b2b-saas.html">B2B SaaS Applications</a>
+              <a href="../UseCases/usecase-compliance.html">Compliance-Driven Teams</a>
+              <a href="../UseCases/usecase-api-platform-builders.html">API Platform Builders</a>
+              <a href="../Landing.html#usecase-architecture">Enterprise Architecture</a>
+            </div>
+          </details>
+          <a href="../Docs/docs.html">Docs</a>
+          <a href="../Blogs/blogs.html">Blog</a>
+          <a href="contact.html" class="active-link">Contact us</a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="container blog-hero">
+      <span class="blog-category">Contact</span>
+      <h1>Talk to the TokenTresor Team</h1>
+      <p class="blog-date">
+        Reach out about product fit, deployment questions, or a short demo
+      </p>
+    </section>
+
+    <section class="container contact-section">
+      <div class="contact-layout">
+        <div class="contact-copy">
+          <h2>Contact with us</h2>
+          <p>
+            It is easy to get in touch with us. Use the contact form to discuss
+            your identity platform needs, deployment plans, or product
+            questions.
+          </p>
+
+          <div class="contact-meta">
+            <h3>Head Office</h3>
+            <p>121 King St, Melbourne VIC 3000, Australia</p>
+            <p><strong>Phone:</strong> +61 2 8376 6284</p>
+            <p>
+              <strong>Email:</strong>
+              <a href="mailto:hello@yourdomain.com">hello@yourdomain.com</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="contact-form-wrap">
+          <h3>Reach us quickly</h3>
+          <form class="contact-form">
+            <input
+              class="contact-field"
+              type="text"
+              name="name"
+              placeholder="Enter name"
+              aria-label="Enter name"
+            />
+            <input
+              class="contact-field"
+              type="email"
+              name="email"
+              placeholder="Enter email"
+              aria-label="Enter email"
+            />
+            <input
+              class="contact-field"
+              type="tel"
+              name="phone"
+              placeholder="Your Phone"
+              aria-label="Your phone"
+            />
+            <input
+              class="contact-field"
+              type="text"
+              name="company"
+              placeholder="Your Company"
+              aria-label="Your company"
+            />
+            <textarea
+              class="contact-field contact-message"
+              name="message"
+              placeholder="Message"
+              aria-label="Message"
+            ></textarea>
+            <button class="contact-submit" type="submit">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built
+      with security, privacy, and scalability in mind.
+    </footer>
+
+    <script>
+      document
+        .querySelectorAll("a, button, summary, [role='button']")
+        .forEach((el) =>
+          el.style.setProperty("cursor", "pointer", "important"),
+        );
+    </script>
+  </body>
+</html>

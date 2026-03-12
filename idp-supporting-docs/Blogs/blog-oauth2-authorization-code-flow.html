@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OAuth2 Authorization Code Flow Explained | TokenTresor</title>
+    <link rel="stylesheet" href="../assets/styles/site.css" />
+  </head>
+  <body class="blog-article-page">
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <a class="brand" href="../Landing.html" aria-label="TokenTresor home">
+          <img src="../assets/logos/tokentresor-wordmark-core.svg" alt="TokenTresor" />
+        </a>
+        <div class="nav-links">
+          <a href="../Landing.html">Home</a>
+          <details class="usecases-dropdown">
+            <summary>Use Cases</summary>
+            <div class="usecases-menu">
+              <a href="../UseCases/usecase-b2b-saas.html">B2B SaaS Applications</a>
+              <a href="../UseCases/usecase-compliance.html">Compliance-Driven Teams</a>
+              <a href="../UseCases/usecase-api-platform-builders.html">API Platform Builders</a>
+              <a href="../Landing.html#usecase-architecture">Enterprise Architecture</a>
+            </div>
+          </details>
+          <a href="../Docs/docs.html">Docs</a>
+          <a href="blogs.html" class="active-link">Blog</a>
+          <a href="../Contact/contact.html">Contact us</a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="container blog-hero">
+      <span class="blog-category">OAuth2</span>
+      <h1>OAuth2 Authorization Code Flow Explained</h1>
+      <p class="blog-date">Published March 2026</p>
+    </section>
+
+    <section class="container blog-content">
+      <p>
+        Authorization Code with PKCE is the default flow for modern browser and
+        mobile applications because it keeps tokens out of the front channel and
+        gives the authorization server control over client verification.
+      </p>
+
+      <h2>Why PKCE Matters</h2>
+      <p>
+        Public clients cannot safely store a client secret. PKCE solves that gap
+        by binding the authorization request to the token exchange with a one-time
+        verifier. If an authorization code is intercepted, the attacker still
+        cannot redeem it without the original verifier.
+      </p>
+
+      <h2>Flow Overview</h2>
+      <p>
+        The app redirects the user to the identity platform, the user
+        authenticates, consent is evaluated, and an authorization code is returned
+        to the client's redirect URI. The app then exchanges that code for tokens
+        through a back-channel request.
+      </p>
+      <p>
+        Backend APIs should validate issuer, audience, expiration, and signature
+        before trusting any access token. The browser never becomes the authority
+        for permission checks.
+      </p>
+
+      <h2>Operational Considerations</h2>
+      <p>
+        Keep redirect URIs exact, rotate refresh tokens, and log failed exchange
+        attempts. Those details usually matter more than the diagram when teams
+        move from local demos into production environments.
+      </p>
+    </section>
+
+    <section class="container blog-related">
+      <h2>Related Articles</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Designing Multi-Tenant Identity for SaaS</h3>
+          <p>Model tenants, clients, and roles without leaking boundaries.</p>
+          <a href="blog-multitenant-identity.html">Read article -&gt;</a>
+        </div>
+        <div class="card">
+          <h3>Secure Token Handling in APIs</h3>
+          <p>See what should happen after your API receives an access token.</p>
+          <a href="blog-secure-token-handling.html">Read article -&gt;</a>
+        </div>
+        <div class="card">
+          <h3>Implementing MFA in Identity Platforms</h3>
+          <p>Combine strong authentication with modern sign-in flows.</p>
+          <a href="blog-implementing-mfa.html">Read article -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built
+      with security, privacy, and scalability in mind.
+    </footer>
+
+    <script>
+      document
+        .querySelectorAll("a, button, summary, [role='button']")
+        .forEach((el) =>
+          el.style.setProperty("cursor", "pointer", "important"),
+        );
+    </script>
+  </body>
+</html>

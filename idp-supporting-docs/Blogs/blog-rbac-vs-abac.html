@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RBAC vs ABAC in Enterprise Applications | TokenTresor</title>
+    <link rel="stylesheet" href="../assets/styles/site.css" />
+  </head>
+  <body class="blog-article-page">
+    <nav class="top-nav">
+      <div class="nav-inner">
+        <a class="brand" href="../Landing.html" aria-label="TokenTresor home">
+          <img src="../assets/logos/tokentresor-wordmark-core.svg" alt="TokenTresor" />
+        </a>
+        <div class="nav-links">
+          <a href="../Landing.html">Home</a>
+          <details class="usecases-dropdown">
+            <summary>Use Cases</summary>
+            <div class="usecases-menu">
+              <a href="../UseCases/usecase-b2b-saas.html">B2B SaaS Applications</a>
+              <a href="../UseCases/usecase-compliance.html">Compliance-Driven Teams</a>
+              <a href="../UseCases/usecase-api-platform-builders.html">API Platform Builders</a>
+              <a href="../Landing.html#usecase-architecture">Enterprise Architecture</a>
+            </div>
+          </details>
+          <a href="../Docs/docs.html">Docs</a>
+          <a href="blogs.html" class="active-link">Blog</a>
+          <a href="../Contact/contact.html">Contact us</a>
+        </div>
+      </div>
+    </nav>
+
+    <section class="container blog-hero">
+      <span class="blog-category">Authorization</span>
+      <h1>RBAC vs ABAC in Enterprise Applications</h1>
+      <p class="blog-date">Published March 2026</p>
+    </section>
+
+    <section class="container blog-content">
+      <p>
+        Role-based access control is easier to explain, easier to operate, and
+        often enough for most product surfaces. Attribute-based access control is
+        more flexible, but that flexibility introduces policy complexity that
+        teams underestimate.
+      </p>
+
+      <h2>Where RBAC Fits</h2>
+      <p>
+        RBAC works well when access maps cleanly to job functions such as admin,
+        support, analyst, or viewer. It keeps tokens understandable and gives
+        product teams a stable contract for common authorization decisions.
+      </p>
+
+      <h2>Where ABAC Helps</h2>
+      <p>
+        ABAC becomes useful when decisions depend on context such as geography,
+        data sensitivity, subscription tier, or ownership of a resource. It is
+        especially valuable in enterprise systems with cross-cutting policy rules.
+      </p>
+
+      <h2>Practical Recommendation</h2>
+      <p>
+        Start with RBAC as the main model, then add attribute checks only for the
+        cases roles cannot represent cleanly. That hybrid approach keeps policy
+        authoring manageable while still supporting advanced enterprise controls.
+      </p>
+    </section>
+
+    <section class="container blog-related">
+      <h2>Related Articles</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Designing Multi-Tenant Identity for SaaS</h3>
+          <p>Tenant boundaries and role design are closely connected.</p>
+          <a href="blog-multitenant-identity.html">Read article -&gt;</a>
+        </div>
+        <div class="card">
+          <h3>Implementing MFA in Identity Platforms</h3>
+          <p>Security policies usually combine authentication and authorization.</p>
+          <a href="blog-implementing-mfa.html">Read article -&gt;</a>
+        </div>
+        <div class="card">
+          <h3>Secure Token Handling in APIs</h3>
+          <p>Token claims only help if your APIs evaluate them correctly.</p>
+          <a href="blog-secure-token-handling.html">Read article -&gt;</a>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built
+      with security, privacy, and scalability in mind.
+    </footer>
+
+    <script>
+      document
+        .querySelectorAll("a, button, summary, [role='button']")
+        .forEach((el) =>
+          el.style.setProperty("cursor", "pointer", "important"),
+        );
+    </script>
+  </body>
+</html>

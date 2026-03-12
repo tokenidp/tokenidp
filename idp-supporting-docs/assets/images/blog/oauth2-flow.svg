@@ -1,0 +1,30 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" rx="32" fill="#F8FAFC"/>
+  <rect x="44" y="44" width="1112" height="632" rx="28" fill="url(#bg)"/>
+  <rect x="106" y="222" width="210" height="154" rx="22" fill="#FFFFFF"/>
+  <rect x="495" y="122" width="210" height="154" rx="22" fill="#FFFFFF"/>
+  <rect x="884" y="222" width="210" height="154" rx="22" fill="#FFFFFF"/>
+  <rect x="495" y="432" width="210" height="154" rx="22" fill="#0F172A" fill-opacity="0.94"/>
+  <path d="M316 299H458" stroke="#2563EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M705 299H847" stroke="#2563EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M600 276V394" stroke="#2563EB" stroke-width="12" stroke-linecap="round"/>
+  <path d="M442 283L462 299L442 315" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M831 283L851 299L831 315" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M584 374L600 394L616 374" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="152" y="266" width="114" height="18" rx="9" fill="#BFDBFE"/>
+  <rect x="152" y="302" width="94" height="18" rx="9" fill="#E2E8F0"/>
+  <rect x="541" y="166" width="118" height="18" rx="9" fill="#BFDBFE"/>
+  <rect x="541" y="202" width="132" height="18" rx="9" fill="#E2E8F0"/>
+  <rect x="930" y="266" width="112" height="18" rx="9" fill="#BFDBFE"/>
+  <rect x="930" y="302" width="92" height="18" rx="9" fill="#E2E8F0"/>
+  <rect x="541" y="480" width="120" height="18" rx="9" fill="#93C5FD"/>
+  <rect x="541" y="516" width="112" height="18" rx="9" fill="#334155"/>
+  <circle cx="600" cy="299" r="56" fill="#DBEAFE"/>
+  <circle cx="600" cy="299" r="24" fill="#2563EB"/>
+  <defs>
+    <linearGradient id="bg" x1="44" y1="44" x2="1156" y2="676" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+  </defs>
+</svg>

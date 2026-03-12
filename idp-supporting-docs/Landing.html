@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enterprise Identity Platform for B2B SaaS</title>
-        <link rel="stylesheet" href="assets/styles/site.css" />
+    <link rel="stylesheet" href="assets/styles/site.css" />
   </head>
   <body class="landing-page">
     <nav class="top-nav">
@@ -17,25 +17,26 @@
           <details class="usecases-dropdown">
             <summary>Use Cases</summary>
             <div class="usecases-menu">
-              <a href="#usecase-saas">B2B SaaS Applications</a>
-              <a href="#usecase-compliance">Compliance-Driven Teams</a>
-              <a href="#usecase-integration">API Platform Builders</a>
+              <a href="UseCases/usecase-b2b-saas.html">B2B SaaS Applications</a>
+              <a href="UseCases/usecase-compliance.html">Compliance-Driven Teams</a>
+              <a href="UseCases/usecase-api-platform-builders.html">API Platform Builders</a>
               <a href="#usecase-architecture">Enterprise Architecture</a>
             </div>
           </details>
-          <a href="docs.html">Docs</a>
-          <a href="#contact">Contact us</a>
+          <a href="Docs/docs.html">Docs</a>
+          <a href="Blogs/blogs.html">Blog</a>
+          <a href="Contact/contact.html">Contact us</a>
         </div>
       </div>
     </nav>
 
     <header class="main-header">
-      <h1>Enterprise Identity for Growing SaaS Teams</h1>
+      <h1>One Identity for Every App and Service</h1>
       <p>
-        OAuth2, OpenID Connect, RBAC, and multi-tenant identity â€” built from
-        real-world experience, simple to deploy, and easy to operate.
+        OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
+        experience, simple to configure & deploy, and easy to operate.
       </p>
-      <a class="btn" href="#contact">Schedule a Demo</a>
+      <a class="btn" href="Contact/contact.html">Schedule a Demo</a>
     </header>
 
     <section class="origin-section">
@@ -55,118 +56,106 @@
 
     <section id="usecase-saas" class="container">
       <h2>Why Use a Dedicated Identity Platform?</h2>
-      <div class="card">
-        <h3>ðŸ”‘ OAuth 2.1 Grant Types</h3>
-        <p>
-          Supports modern OAuth flows suitable for real-world SaaS applications:
-        </p>
-        <ul class="list-tight">
-          <li>Authorization Code with PKCE (web & mobile apps)</li>
-          <li>Client Credentials (machine-to-machine APIs)</li>
-          <li>Refresh Tokens for secure session continuity</li>
-        </ul>
-        <p class="mt-8">
-          This ensures secure integration across browsers, mobile apps, and
-          backend services.
-        </p>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <h3>ðŸ” Secure Authentication</h3>
+      <div class="grid feature-grid">
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <rect x="18" y="14" width="28" height="36" rx="4"></rect>
+              <path d="M24 22h16"></path>
+              <path d="M24 30h16"></path>
+              <path d="M24 38h10"></path>
+              <path d="M32 50v-10"></path>
+              <path d="M25 44l7-7 7 7"></path>
+            </svg>
+          </div>
+          <h3>Self-Hosted & Data Control</h3>
           <p>
-            Implement modern login using OAuth 2.1 and OpenID Connect. Support
-            secure user authentication, token-based access, and Single Sign-On
-            (SSO) without building security infrastructure from scratch.
+            Keep identity data inside your own infrastructure and databases
+            without depending on external providers.
           </p>
         </div>
-        <div class="card">
-          <h3>ðŸ§© Roles & Permissions (RBAC)</h3>
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <circle cx="32" cy="18" r="6"></circle>
+              <circle cx="18" cy="34" r="5"></circle>
+              <circle cx="46" cy="34" r="5"></circle>
+              <circle cx="18" cy="50" r="5"></circle>
+              <circle cx="46" cy="50" r="5"></circle>
+              <path d="M28 22l-6 8"></path>
+              <path d="M36 22l6 8"></path>
+              <path d="M18 39v6"></path>
+              <path d="M46 39v6"></path>
+              <path d="M23 34h18"></path>
+              <path d="M22 47h20"></path>
+            </svg>
+          </div>
+          <h3>Centralized Identity</h3>
           <p>
-            Define roles and fine-grained permissions for users, admins,
-            partners, and support staff. Control who can access which features
-            across tenants and environments.
+            Manage users, login, and access across web apps, APIs, and internal
+            tools from one place.
           </p>
         </div>
-        <div class="card">
-          <h3>ðŸ¢ Multi-Tenant Ready</h3>
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <path
+                d="M32 12l16 7v12c0 11-6.7 17.8-16 21-9.3-3.2-16-10-16-21V19l16-7z"
+              ></path>
+              <path d="M25 32l5 5 9-10"></path>
+              <path d="M32 18v6"></path>
+            </svg>
+          </div>
+          <h3>Security Standards</h3>
           <p>
-            Built for B2B SaaS. Each customer (tenant) gets isolated users,
-            roles, and policies. Easily support multiple organizations within
-            one platform.
+            Built-in OAuth 2.1, OpenID Connect, RBAC, MFA, and GDPR by design
+            help meet modern security expectations.
           </p>
         </div>
-        <div class="card">
-          <h3>ðŸ“œ Audit & Traceability</h3>
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <rect x="14" y="18" width="18" height="28" rx="4"></rect>
+              <rect x="32" y="24" width="18" height="16" rx="4"></rect>
+              <path d="M23 32h18"></path>
+              <path d="M41 20l7 7-7 7"></path>
+            </svg>
+          </div>
+          <h3>API Token Access</h3>
           <p>
-            Maintain audit logs for logins, role changes, and sensitive actions.
-            Useful for security reviews, incident response, and compliance
-            requirements.
+            Secure access tokens let APIs and services authenticate and
+            authorize every request consistently.
           </p>
         </div>
-      </div>
-    </section>
-
-    <section id="usecase-compliance" class="container">
-      <h2>Compliance & Hosting</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>ðŸ‡ªðŸ‡º GDPR by Design</h3>
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <path d="M18 44l10-24 8 16 6-10 4 18"></path>
+              <path d="M16 48h32"></path>
+              <path d="M22 18h8"></path>
+              <path d="M20 22h4"></path>
+            </svg>
+          </div>
+          <h3>Faster Development</h3>
           <p>
-            Designed with data protection in mind. Supports data minimization,
-            secure handling of identity data, and privacy-by-design principles
-            suitable for EU companies.
+            Avoid building authentication from scratch and reduce delivery time
+            for new applications.
           </p>
         </div>
-        <div class="card">
-          <h3>â˜ï¸ EU Hosting</h3>
+        <div class="card feature-card">
+          <div class="feature-icon" aria-hidden="true">
+            <svg viewBox="0 0 64 64" role="presentation">
+              <path d="M16 18h32"></path>
+              <path d="M16 30h20"></path>
+              <path d="M16 42h14"></path>
+              <circle cx="44" cy="40" r="10"></circle>
+              <path d="M44 35v5l4 3"></path>
+            </svg>
+          </div>
+          <h3>Operational Visibility</h3>
           <p>
-            EU-based hosting is supported or available on the near-term roadmap
-            to meet data residency and compliance expectations common in Germany
-            and the EU.
-          </p>
-        </div>
-        <div class="card">
-          <h3>ðŸ›¡ï¸ Security Posture</h3>
-          <p>
-            Built with secure token handling, encrypted communication,
-            least-privilege access, and modern security practices suitable for
-            enterprise and regulated environments.
-          </p>
-        </div>
-        <div class="card">
-          <h3>ðŸ§· Multi-Factor Authentication (MFA)</h3>
-          <p>
-            Strengthen account security with configurable multi-factor
-            authentication:
-          </p>
-          <ul class="list-tight">
-            <li>â€¢ Email-based one-time codes</li>
-            <li>â€¢ Authenticator app support (TOTP)</li>
-            <li>â€¢ Policy-based enforcement per tenant, role, or risk level</li>
-          </ul>
-          <p class="mt-8">
-            MFA can be enforced for administrators, sensitive actions, or
-            compliance-critical users.
-          </p>
-        </div>
-      </div>
-    </section>
-    <section id="usecase-architecture" class="container">
-      <h2>Security & Standards</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Standards-Based</h3>
-          <p>
-            Built on open standards such as OAuth 2.1 and OpenID Connect. Avoids
-            vendor lock-in and integrates cleanly with modern web and API
-            stacks.
-          </p>
-        </div>
-        <div class="card">
-          <h3>Configurable Security Policies</h3>
-          <p>
-            Define authentication and access policies per tenant or user group,
-            including MFA requirements and session rules.
+            Monitor authentication activity from one dashboard for faster
+            operations and investigation.
           </p>
         </div>
       </div>
@@ -230,25 +219,71 @@ Authorization: Bearer &lt;access_token&gt;
       </div>
     </section>
 
-    <section id="contact" class="container">
-      <h2>Talk to Us</h2>
-      <div class="card">
-        <p>
-          If youâ€™re building a B2B SaaS or platform and want to avoid building
-          complex authentication and authorization systems yourself, letâ€™s
-          exchange experiences.
-        </p>
-        <p class="mt-12">
-          ðŸ“§ Email: <strong>hello@yourdomain.com</strong><br />
-          ðŸ“… Book a short discovery call (15 minutes)
-        </p>
+    <section id="contact" class="container contact-section">
+      <div class="contact-layout">
+        <div class="contact-copy">
+          <h2>Contact with us</h2>
+          <p>
+            It is easy to get in touch with us. Use the contact form to discuss
+            your identity platform needs, deployment plans, or product
+            questions.
+          </p>
+
+          <div class="contact-meta">
+            <h3>Head Office</h3>
+            <p>121 King St, Melbourne VIC 3000, Australia</p>
+            <p><strong>Phone:</strong> +61 2 8376 6284</p>
+            <p>
+              <strong>Email:</strong>
+              <a href="mailto:hello@yourdomain.com">hello@yourdomain.com</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="contact-form-wrap">
+          <h3>Reach us quickly</h3>
+          <form class="contact-form">
+            <input
+              class="contact-field"
+              type="text"
+              name="name"
+              placeholder="Enter name"
+              aria-label="Enter name"
+            />
+            <input
+              class="contact-field"
+              type="email"
+              name="email"
+              placeholder="Enter email"
+              aria-label="Enter email"
+            />
+            <input
+              class="contact-field"
+              type="tel"
+              name="phone"
+              placeholder="Your Phone"
+              aria-label="Your phone"
+            />
+            <input
+              class="contact-field"
+              type="text"
+              name="company"
+              placeholder="Your Company"
+              aria-label="Your company"
+            />
+            <textarea
+              class="contact-field contact-message"
+              name="message"
+              placeholder="Message"
+              aria-label="Message"
+            ></textarea>
+            <button class="contact-submit" type="submit">Send Message</button>
+          </form>
+        </div>
       </div>
     </section>
 
-    <footer>
-      Â© 2026 Your Company Â· Identity & Access Platform for B2B SaaS Â· Built with
-      security, privacy, and scalability in mind.
-    </footer>
+    <footer>© 2026 TokenTresor IDP</footer>
     <script>
       document
         .querySelectorAll("a, button, summary, [role='button']")
@@ -258,4 +293,3 @@ Authorization: Bearer &lt;access_token&gt;
     </script>
   </body>
 </html>
-
