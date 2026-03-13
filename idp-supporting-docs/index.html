@@ -175,6 +175,69 @@
       </div>
     </section>
 
+    <section class="container build-vs-buy">
+      <h2>Build vs Buy Identity Provider</h2>
+
+      <p class="section-intro">
+        Building authentication and access control systems from scratch
+        becomes complex as applications scale. TokenTresor provides a
+        ready-to-use identity platform so teams can focus on building
+        product features instead of security infrastructure.
+      </p>
+
+      <div class="comparison-wrap">
+        <div class="comparison-table">
+          <div class="comparison-column card">
+            <h3>Build Authentication Yourself</h3>
+            <div class="comparison-row">
+              <span class="comparison-label">Authentication Implementation</span>
+              <p>Design login flows and security protocols</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">User Management</span>
+              <p>Build user management from scratch</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Security Features</span>
+              <p>Implement password hashing, MFA, and security policies</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">API Authentication</span>
+              <p>Build custom API authentication logic</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Time to Launch</span>
+              <p>Months of development effort</p>
+            </div>
+          </div>
+
+          <div class="comparison-column comparison-column-primary card">
+            <h3>Use Token IDP</h3>
+            <div class="comparison-row">
+              <span class="comparison-label">Authentication Implementation</span>
+              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Ready-to-use OAuth2 and OpenID Connect</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">User Management</span>
+              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Centralized user and tenant management</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Security Features</span>
+              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in security features including MFA</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">API Authentication</span>
+              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Secure token-based access for APIs</p>
+            </div>
+            <div class="comparison-row">
+              <span class="comparison-label">Time to Launch</span>
+              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Integrate authentication in minutes</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="usecase-integration" class="container">
       <h2>How It Works (High-Level Architecture)</h2>
       <p class="architecture-intro">
@@ -193,42 +256,6 @@
         The platform issues secure tokens after login. Your backend validates
         these tokens and enforces access rules based on tenant and roles.
       </p>
-    </section>
-
-    <section class="container">
-      <h2>Integration Examples</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Frontend (React)</h3>
-          <p>
-            Integrate login into your web app with a client SDK. Users
-            authenticate via the Identity Platform and return with a secure
-            session.
-          </p>
-          <pre class="diagram">
-npm install @yourcompany/identity-sdk
-
-&lt;IdentityProvider clientId="..." domain="https://auth.yourcompany.com"&gt;
-  &lt;App /&gt;
-&lt;/IdentityProvider&gt;
-      </pre>
-        </div>
-        <div class="card">
-          <h3>Backend (API)</h3>
-          <p>
-            Protect APIs by validating access tokens. Roles and tenant
-            identifiers are used to authorize requests.
-          </p>
-          <pre class="diagram">
-GET /api/orders
-Authorization: Bearer &lt;access_token&gt;
-
--&gt; Validate token
--&gt; Check role &amp; tenant
--&gt; Allow or deny access
-      </pre>
-        </div>
-      </div>
     </section>
 
     <section class="container contact-section">

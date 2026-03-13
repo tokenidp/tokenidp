@@ -357,6 +357,87 @@ h3 {
   font-size: 1.03rem;
 }
 
+.build-vs-buy {
+  margin-top: 8px;
+}
+
+.comparison-wrap {
+  margin-top: 36px;
+}
+
+.comparison-table {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+.comparison-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #dbe5f1;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.comparison-column h3 {
+  margin: 0;
+  padding: 16px 18px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 1.15rem;
+}
+
+.comparison-column-primary {
+  background:
+    linear-gradient(180deg, rgba(219, 234, 254, 0.7) 0%, rgba(255, 255, 255, 0.98) 22%),
+    #ffffff;
+  border-color: #bfdbfe;
+}
+
+.comparison-column-primary h3 {
+  color: #172554;
+}
+
+.comparison-row {
+  min-height: 88px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.comparison-row:last-child {
+  border-bottom: 0;
+}
+
+.comparison-label {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+.comparison-row p {
+  margin: 0;
+  color: #334155;
+}
+
+.comparison-check {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  vertical-align: text-top;
+}
+
 .diagram {
   background: #0f172a;
   color: #e5e7eb;
@@ -882,6 +963,14 @@ footer {
 
   .contact-form {
     grid-template-columns: 1fr;
+  }
+
+  .comparison-table {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-row {
+    min-height: 0;
   }
 
   .usecase-grid {
