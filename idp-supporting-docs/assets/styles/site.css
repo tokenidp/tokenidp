@@ -11,6 +11,13 @@
   background: #f5f7fb;
   color: #1f2937;
   line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
 }
 
 a,
@@ -76,32 +83,47 @@ a * {
   position: relative;
 }
 
-.usecases-dropdown summary {
-  list-style: none;
-  cursor: pointer;
+.usecases-dropdown::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 100%;
+  height: 14px;
+}
+
+.usecases-trigger {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
   color: #1f2937;
   font-weight: 600;
   font-size: 1.08rem;
+  cursor: pointer;
 }
 
-.usecases-dropdown summary::-webkit-details-marker {
-  display: none;
-}
-
-.usecases-dropdown summary::after {
+.usecases-trigger::after {
   content: "\25BE";
   display: inline-block;
   margin-left: 6px;
   font-size: 0.82rem;
 }
 
-.usecases-dropdown[open] summary::after {
+.usecases-dropdown:hover .usecases-trigger,
+.usecases-dropdown:focus-within .usecases-trigger {
+  color: #1e3a8a;
+}
+
+.usecases-dropdown:hover .usecases-trigger::after,
+.usecases-dropdown:focus-within .usecases-trigger::after {
   transform: rotate(180deg);
 }
 
 .usecases-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 4px);
   right: 0;
   min-width: 220px;
   background: #fff;
@@ -110,6 +132,22 @@ a * {
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
   padding: 6px;
   z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    visibility 0.16s ease;
+}
+
+.usecases-dropdown:hover .usecases-menu,
+.usecases-dropdown:focus-within .usecases-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .usecases-menu a {
@@ -122,8 +160,14 @@ a * {
 }
 
 .usecases-menu a:hover {
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: #1e3a8a;
+  color: #f8fbff;
+}
+
+.usecases-menu a:focus-visible {
+  background: #1e3a8a;
+  color: #f8fbff;
+  outline: none;
 }
 
 .main-header {
@@ -180,17 +224,18 @@ a * {
 .btn {
   display: inline-block;
   margin-top: 24px;
-  padding: 12px 24px;
-  background: #2563eb;
+  padding: 14px 26px;
+  background: linear-gradient(115deg, #172554 0%, #1e3a8a 48%, #3b82f6 100%);
   color: #fff;
   text-decoration: none;
   cursor: pointer;
   border-radius: 8px;
   font-weight: 600;
+  box-shadow: 0 10px 24px rgba(30, 58, 138, 0.22);
 }
 
 .btn:hover {
-  background: #1d4ed8;
+  filter: brightness(1.05);
 }
 
 .origin-section {
@@ -328,6 +373,7 @@ footer {
   text-align: center;
   padding: 32px 16px;
   font-size: 0.9rem;
+  margin-top: auto;
 }
 
 .list-tight {
@@ -466,6 +512,27 @@ footer {
 
 .contact-submit:hover {
   filter: brightness(1.05);
+}
+
+.contact-page .blog-hero {
+  margin-top: 86px;
+  margin-bottom: 0;
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+
+.contact-page .contact-section {
+  padding-top: 24px;
+  padding-bottom: 32px;
+}
+
+.contact-page .contact-layout {
+  padding: 28px;
+  gap: 30px;
+}
+
+.contact-page .contact-message {
+  min-height: 120px;
 }
 
 .docs-wrap {

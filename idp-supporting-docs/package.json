@@ -1,0 +1,8 @@
+{
+  "name": "tokentresor-supporting-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node site-src/build.mjs"
+  }
+}
