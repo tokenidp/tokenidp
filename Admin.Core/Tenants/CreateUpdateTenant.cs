@@ -38,9 +38,6 @@ public sealed class TenantExternalProviderDetail
 
     public string ClientId { get; set; } = default!;
     public string? ClientSecret { get; set; }
-    public string Authority { get; set; } = default!;
-    public string Scopes { get; set; } = default!;
-    public string CallbackPath { get; set; } = default!;
 }
 
 public class TenantUISettingDetail

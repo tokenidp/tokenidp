@@ -7,9 +7,12 @@ namespace IDP.Infrastructure.ExternalProviders;
 
 internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
 {
+    private static readonly Uri Authority = new("https://github.com");
+    private const string Scope = "read:user user:email";
+
     public GitHubExternalProviderClient(
         IHttpClientFactory httpClientFactory,
-        ExternalProviders.ExternalProviderConfigurationResolver configurationResolver,
+        ExternalProviderConfigurationResolver configurationResolver,
         ITenantContextAccessor tenantContextAccessor,
         ISecretProtector secretProtector)
         : base(httpClientFactory, configurationResolver, tenantContextAccessor, secretProtector)
@@ -21,14 +24,13 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
     public override string BuildAuthorizeUrl(ExternalChallengeRequest request)
     {
         var config = ResolveConfigurationAsync(request.TenantId).GetAwaiter().GetResult();
-        var endpoint = Combine(config.Authority, "/login/oauth/authorize");
-        var scope = config.Scopes.Any() ? string.Join(' ', config.Scopes) : "read:user user:email";
+        var endpoint = Combine(Authority, "/login/oauth/authorize");
 
         var parameters = new Dictionary<string, string?>
         {
             ["client_id"] = config.ClientId,
             ["redirect_uri"] = request.CallbackUrl,
-            ["scope"] = scope,
+            ["scope"] = Scope,
             ["state"] = request.State
         };
 
@@ -40,7 +42,7 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
         CancellationToken cancellationToken)
     {
         var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
-        var endpoint = Combine(config.Authority, "/login/oauth/access_token");
+        var endpoint = Combine(Authority, "/login/oauth/access_token");
 
         using var client = CreateClient();
         client.DefaultRequestHeaders.Accept.Add(
@@ -55,7 +57,7 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
                 new("code", request.Code),
                 new("redirect_uri", request.CallbackUrl),
                 new("state", request.State),
-                new("scope", string.Join(" ", config.Scopes))
+                new("scope", Scope)
             ]),
             cancellationToken);
 

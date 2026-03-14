@@ -36,13 +36,8 @@ public sealed class TenantDetail
                     ClientSecret = p.OidcConfig != null &&
                                    p.OidcConfig.ClientSecret != null &&
                                    p.OidcConfig.ClientSecret != string.Empty
-                                       ? "********"
-                                       : null,
-                    Authority = p.OidcConfig != null ? p.OidcConfig.Authority.ToString() : string.Empty,
-                    Scopes = p.OidcConfig != null
-                        ? string.Join(" ", p.OidcConfig.Scopes)
-                        : string.Empty,
-                    CallbackPath = p.OidcConfig != null ? p.OidcConfig.CallbackPath : string.Empty
+                                        ? "********"
+                                        : null
                 })
                 .ToList()
         };

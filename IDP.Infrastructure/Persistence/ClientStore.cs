@@ -155,10 +155,7 @@ internal sealed class ClientStore : IClientStore
                                     cp.EnabledForClient,
                                     tp.Enabled,
                                     tp.OidcConfig!.ClientId,
-                                    tp.OidcConfig.ClientSecret,
-                                    tp.OidcConfig.Authority,
-                                    tp.OidcConfig.CallbackPath,
-                                    tp.OidcConfig.Scopes
+                                    tp.OidcConfig.ClientSecret
                                 )).ToListAsync();
 
             _logger.LogDebug("Cached client external providers for {CacheKey}", cacheKey);

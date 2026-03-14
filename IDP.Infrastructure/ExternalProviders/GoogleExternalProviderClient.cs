@@ -6,6 +6,9 @@ namespace IDP.Infrastructure.ExternalProviders;
 
 internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
 {
+    private static readonly Uri Authority = new("https://accounts.google.com");
+    private const string Scope = "openid profile email";
+
     public GoogleExternalProviderClient(
         IHttpClientFactory httpClientFactory,
         ExternalProviderConfigurationResolver configurationResolver,
@@ -20,15 +23,14 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
     public override string BuildAuthorizeUrl(ExternalChallengeRequest request)
     {
         var config = ResolveConfigurationAsync(request.TenantId).GetAwaiter().GetResult();
-        var endpoint = Combine(config.Authority, "/o/oauth2/v2/auth");
-        var scope = config.Scopes.Any() ? string.Join(' ', config.Scopes) : "openid profile email";
+        var endpoint = Combine(Authority, "/o/oauth2/v2/auth");
 
         var parameters = new Dictionary<string, string?>
         {
             ["client_id"] = config.ClientId,
             ["response_type"] = "code",
             ["redirect_uri"] = request.CallbackUrl,
-            ["scope"] = scope,
+            ["scope"] = Scope,
             ["state"] = request.State,
             ["nonce"] = request.Nonce,
             ["code_challenge"] = request.CodeVerifier is null ? null : PkceGenerator.CreateCodeChallenge(request.CodeVerifier),
@@ -52,7 +54,7 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
             new("client_secret", config.ClientSecret),
             new("code", request.Code),
             new("redirect_uri", request.CallbackUrl),
-            new("scope", string.Join(" ", config.Scopes))
+            new("scope", Scope)
         };
 
         if (!string.IsNullOrWhiteSpace(request.CodeVerifier))

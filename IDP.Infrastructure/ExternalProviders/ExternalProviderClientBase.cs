@@ -57,10 +57,7 @@ internal abstract class ExternalProviderClientBase : IExternalProviderClient
 
         return new ResolvedProviderConfiguration(
             config.ClientId,
-            clientSecret,
-            config.Authority,
-            config.CallbackPath,
-            config.Scopes);
+            clientSecret);
     }
 
     protected HttpClient CreateClient(string? bearerToken = null)
@@ -98,8 +95,5 @@ internal abstract class ExternalProviderClientBase : IExternalProviderClient
 
 internal sealed record ResolvedProviderConfiguration(
     string ClientId,
-    string ClientSecret,
-    Uri Authority,
-    string CallbackPath,
-    IReadOnlyCollection<string> Scopes
+    string ClientSecret
 );

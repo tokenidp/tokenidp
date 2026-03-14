@@ -49,10 +49,7 @@ public sealed class ExternalProviderConfigurationResolver
                     cp.EnabledForClient,
                     tp.Enabled,
                     tp.OidcConfig!.ClientId,
-                    tp.OidcConfig.ClientSecret,
-                    tp.OidcConfig.Authority,
-                    tp.OidcConfig.CallbackPath,
-                    tp.OidcConfig.Scopes)
+                    tp.OidcConfig.ClientSecret)
             ).FirstOrDefaultAsync(cancellationToken);
 
             _logger.LogDebug("Cached external provider config for {CacheKey}", cacheKey);

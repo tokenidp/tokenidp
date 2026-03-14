@@ -107,9 +107,6 @@ internal sealed class TenantCommandUseCase
         {
             var config = OidcClientConfig.Create(
                 clientId: p.ClientId,
-                authority: new Uri(p.Authority),
-                scopes: p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
-                callbackPath: p.CallbackPath,
                 clientSecret: EncryptProviderSecret(tenant.Id.ToString(), p.ProviderType, p.ClientSecret));
 
             var addResult = tenant.AddExternalProvider(p.ProviderType, config);
@@ -226,9 +223,6 @@ internal sealed class TenantCommandUseCase
 
             var config = OidcClientConfig.Create(
                 p.ClientId,
-                new Uri(p.Authority),
-                p.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries),
-                p.CallbackPath,
                 encryptedClientSecret);
 
             if (existingProvider is null)

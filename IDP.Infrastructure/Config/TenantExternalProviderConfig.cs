@@ -26,24 +26,6 @@ internal class TenantExternalProviderConfig : IEntityTypeConfiguration<TenantExt
             cfg.Property(p => p.ClientSecret)
                .HasColumnName("ClientSecret")
                .HasMaxLength(250);
-
-            cfg.Property(p => p.Authority)
-               .HasColumnName("Authority")
-               .HasMaxLength(250)
-               .HasConversion(
-                   v => v.ToString(),
-                   v => new Uri(v));
-
-            cfg.Property(p => p.Scopes)
-               .HasColumnName("Scopes")
-               .HasMaxLength(500)
-               .HasConversion(
-                   v => string.Join(' ', v),
-                   v => v.Split(' ', StringSplitOptions.RemoveEmptyEntries));
-
-            cfg.Property(p => p.CallbackPath)
-               .HasColumnName("CallbackPath")
-               .HasMaxLength(250);
         });
 
         builder.HasOne(t => t.Tenant)

@@ -6,6 +6,9 @@ namespace IDP.Infrastructure.ExternalProviders;
 
 internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBase
 {
+    private static readonly Uri Authority = new("https://login.microsoftonline.com/common");
+    private const string Scope = "openid profile email offline_access";
+
     public MicrosoftExternalProviderClient(
         IHttpClientFactory httpClientFactory,
         ExternalProviderConfigurationResolver configurationResolver,
@@ -20,15 +23,14 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
     public override string BuildAuthorizeUrl(ExternalChallengeRequest request)
     {
         var config = ResolveConfigurationAsync(request.TenantId).GetAwaiter().GetResult();
-        var endpoint = Combine(config.Authority, "/oauth2/v2.0/authorize");
-        var scope = config.Scopes.Any() ? string.Join(' ', config.Scopes) : "openid profile email offline_access";
+        var endpoint = Combine(Authority, "/oauth2/v2.0/authorize");
 
         var parameters = new Dictionary<string, string?>
         {
             ["client_id"] = config.ClientId,
             ["response_type"] = "code",
             ["redirect_uri"] = request.CallbackUrl,
-            ["scope"] = scope,
+            ["scope"] = Scope,
             ["state"] = request.State,
             ["nonce"] = request.Nonce,
             ["code_challenge"] = request.CodeVerifier is null ? null : PkceGenerator.CreateCodeChallenge(request.CodeVerifier),
@@ -43,7 +45,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
         CancellationToken cancellationToken)
     {
         var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
-        var endpoint = Combine(config.Authority, "/oauth2/v2.0/token");
+        var endpoint = Combine(Authority, "/oauth2/v2.0/token");
 
         var form = new List<KeyValuePair<string, string>>
         {
@@ -52,7 +54,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
             new("client_secret", config.ClientSecret),
             new("code", request.Code),
             new("redirect_uri", request.CallbackUrl),
-            new("scope", string.Join(" ", config.Scopes))
+            new("scope", Scope)
         };
 
         if (!string.IsNullOrWhiteSpace(request.CodeVerifier))
@@ -139,4 +141,3 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
         public string? Name { get; set; }
     }
 }
-
