@@ -77,7 +77,6 @@ function AddEditUser({ mode }) {
   );
   const [activeTab, setActiveTab] = useState("details");
   const [showPassword, setShowPassword] = useState(false);
-  const [showMetadata, setShowMetadata] = useState(false);
 
   const {
     register,
@@ -101,8 +100,6 @@ function AddEditUser({ mode }) {
       lockoutEnabled: false,
       accessFailedCount: 0,
       lockoutEnd: "",
-      securityStamp: "",
-      concurrencyStamp: "",
       addressType: "",
       addressLine1: "",
       addressLine2: "",
@@ -128,8 +125,6 @@ function AddEditUser({ mode }) {
   const lockoutEnabled = watch("lockoutEnabled");
   const emailConfirmed = watch("emailConfirmed");
   const phoneNumberConfirmed = watch("phoneNumberConfirmed");
-  const securityStamp = watch("securityStamp");
-  const concurrencyStamp = watch("concurrencyStamp");
   const addressType = watch("addressType");
   const contactType = watch("contactType");
   const contactRelationship = watch("contactRelationship");
@@ -215,14 +210,6 @@ function AddEditUser({ mode }) {
       setValue(
         "lockoutEnd",
         lockoutEnd ? String(lockoutEnd).slice(0, 16) : ""
-      );
-      setValue(
-        "securityStamp",
-        data.securityStamp ?? data.SecurityStamp ?? ""
-      );
-      setValue(
-        "concurrencyStamp",
-        data.concurrencyStamp ?? data.ConcurrencyStamp ?? ""
       );
       setValue("roles", data.roles ?? data.Roles ?? []);
       console.log("address object:", data.addresses ?? data.Addresses ?? []);
@@ -837,49 +824,6 @@ function AddEditUser({ mode }) {
                     </div>
                   </div>
 
-                  <div className="col-12">
-                    <div className="card">
-                      <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-center">
-                          <h6 className="card-title mb-0">System Metadata</h6>
-                          <button
-                            className="btn btn-link p-0"
-                            type="button"
-                            onClick={() => setShowMetadata((open) => !open)}
-                          >
-                            {showMetadata ? "Hide" : "Show"} details
-                          </button>
-                        </div>
-                        {showMetadata && (
-                          <div className="row g-3 mt-2">
-                            <div className="col-12 col-md-6">
-                              <label className="form-label">Security Stamp</label>
-                              <input
-                                className="form-control"
-                                type="text"
-                                value={securityStamp || ""}
-                                readOnly
-                              />
-                            </div>
-                            <div className="col-12 col-md-6">
-                              <label className="form-label">Concurrency Stamp</label>
-                              <input
-                                className="form-control"
-                                type="text"
-                                value={concurrencyStamp || ""}
-                                readOnly
-                              />
-                            </div>
-                            <div className="col-12">
-                              <div className="text-muted small">
-                                System managed values used for security and concurrency.
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
