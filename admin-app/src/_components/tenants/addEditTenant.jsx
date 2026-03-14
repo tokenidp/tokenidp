@@ -145,13 +145,8 @@ function AddEditTenant({ mode }) {
     return {
       providerType: toNumberOrDefault(providerType),
       enabled: isProviderEnabled(provider),
-      authority: String(getProviderField(provider, "authority", "Authority", "")),
       clientId: String(getProviderField(provider, "clientId", "ClientId", "")),
       clientSecret: "",
-      scopes: String(getProviderField(provider, "scopes", "Scopes", "")),
-      callbackPath: String(
-        getProviderField(provider, "callbackPath", "CallbackPath", "")
-      ),
       hasClientSecret: Boolean(hasClientSecretFlag),
       editingSecret: !hasClientSecretFlag,
       clientSecretChanged: false,
@@ -276,12 +271,6 @@ function AddEditTenant({ mode }) {
       if (!String(detail.clientId || "").trim()) {
         providerErrors.clientId = "Client ID is required when provider is enabled.";
       }
-      if (!String(detail.authority || "").trim()) {
-        providerErrors.authority = "Authority is required when provider is enabled.";
-      }
-      if (!String(detail.callbackPath || "").trim()) {
-        providerErrors.callbackPath = "Callback path is required when provider is enabled.";
-      }
 
       if (Object.keys(providerErrors).length) {
         nextErrors[providerKey] = providerErrors;
@@ -297,9 +286,6 @@ function AddEditTenant({ mode }) {
       providerType: toNumberOrDefault(detail.providerType ?? providerKey),
       enabled: Boolean(enabled),
       clientId: String(detail.clientId || "").trim(),
-      authority: String(detail.authority || "").trim(),
-      scopes: String(detail.scopes || "").trim(),
-      callbackPath: String(detail.callbackPath || "").trim(),
     };
 
     if (detail.clientSecretChanged && String(detail.clientSecret || "").trim()) {
@@ -436,12 +422,7 @@ function AddEditTenant({ mode }) {
           ...(next[providerKey] || {}),
           providerType: toNumberOrDefault(providerEnum ?? providerKey),
           enabled: isProviderEnabled(provider),
-          authority: String(getProviderField(provider, "authority", "Authority", "")),
           clientId: String(getProviderField(provider, "clientId", "ClientId", "")),
-          scopes: String(getProviderField(provider, "scopes", "Scopes", "")),
-          callbackPath: String(
-            getProviderField(provider, "callbackPath", "CallbackPath", "")
-          ),
           hasClientSecret: Boolean(
             getProviderField(provider, "hasClientSecret", "HasClientSecret", false) ||
               getProviderField(provider, "clientSecret", "ClientSecret", "")
@@ -878,12 +859,7 @@ function AddEditTenant({ mode }) {
                     const isEnabled = selectedProviderKeys.includes(providerKey);
                     const detail =
                       providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
-                    const authorityError = getProviderConfigError(providerKey, "authority");
                     const clientIdError = getProviderConfigError(providerKey, "clientId");
-                    const callbackPathError = getProviderConfigError(
-                      providerKey,
-                      "callbackPath"
-                    );
 
                     return (
                       <div className="col-12" key={providerKey}>
@@ -928,22 +904,6 @@ function AddEditTenant({ mode }) {
 
                           {isEnabled && (
                             <div className="row g-3 mt-2">
-                              <div className="col-12 col-md-6">
-                                <label className="form-label">Authority *</label>
-                                <input
-                                  className={`form-control${authorityError ? " is-invalid" : ""}`}
-                                  value={detail.authority || ""}
-                                  onChange={(event) => {
-                                    updateProviderDetail(providerKey, {
-                                      authority: event.target.value,
-                                    });
-                                    clearProviderFieldError(providerKey, "authority");
-                                  }}
-                                />
-                                {authorityError && (
-                                  <div className="error-msg">{authorityError}</div>
-                                )}
-                              </div>
                               <div className="col-12 col-md-6">
                                 <label className="form-label">Client ID *</label>
                                 <input
@@ -1012,36 +972,6 @@ function AddEditTenant({ mode }) {
                                       })
                                     }
                                   />
-                                )}
-                              </div>
-                              <div className="col-12 col-md-6">
-                                <label className="form-label">Scopes</label>
-                                <input
-                                  className="form-control"
-                                  value={detail.scopes || ""}
-                                  onChange={(event) =>
-                                    updateProviderDetail(providerKey, {
-                                      scopes: event.target.value,
-                                    })
-                                  }
-                                />
-                              </div>
-                              <div className="col-12">
-                                <label className="form-label">Callback Path *</label>
-                                <input
-                                  className={`form-control${
-                                    callbackPathError ? " is-invalid" : ""
-                                  }`}
-                                  value={detail.callbackPath || ""}
-                                  onChange={(event) => {
-                                    updateProviderDetail(providerKey, {
-                                      callbackPath: event.target.value,
-                                    });
-                                    clearProviderFieldError(providerKey, "callbackPath");
-                                  }}
-                                />
-                                {callbackPathError && (
-                                  <div className="error-msg">{callbackPathError}</div>
                                 )}
                               </div>
                             </div>
