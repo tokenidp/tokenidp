@@ -40,7 +40,7 @@ public class PreAuthorization : AggregateRoot<int>
         GrantType = grantType;
         State = state;
         ClientId_FK = clientid_fk;
-        Expiry = DateTime.UtcNow.AddMinutes(10);
+        Expiry = DateTime.UtcNow.AddMinutes(5);
     }
 
     public PreAuthorization(int tenantId,
