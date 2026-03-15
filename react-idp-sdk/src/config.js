@@ -8,6 +8,7 @@ export const defaultAuthConfig = {
   // endpoints (default paths)
   authorizePath: "/authorize",
   tokenPath: "/token",
+  logoutPath: "/logout",
   userPermissionsPath: "/admin/user/permissions",
 
   // storage: "memory" | "sessionStorage" | "localStorage"

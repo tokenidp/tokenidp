@@ -16,6 +16,7 @@ import {
   loadUserPermissions,
   extractToken,
   extractPermissions,
+  buildLogoutUrl,
 } from "./authApi";
 
 const AuthContext = createContext(null);
@@ -82,6 +83,13 @@ export function IdpAuthProvider({ children, config }) {
       clearTimeout(refreshTimerRef.current);
       refreshTimerRef.current = null;
     }
+  }
+
+  function clearLocalSession() {
+    storage.removeItem(mergedConfig.storageKey);
+    sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
+    sessionStorage.removeItem(mergedConfig.oauthStateKey);
+    dispatch({ type: "LOGOUT" });
   }
 
   async function tryRefreshWithRetry(retries, retryDelayMs) {
@@ -169,11 +177,16 @@ export function IdpAuthProvider({ children, config }) {
       },
 
       logout: () => {
+        const logoutUrl = buildLogoutUrl(mergedConfig);
         clearRefreshTimer();
-        storage.removeItem(mergedConfig.storageKey);
-        sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
-        sessionStorage.removeItem(mergedConfig.oauthStateKey);
-        dispatch({ type: "LOGOUT" });
+
+        if (typeof window !== "undefined" && logoutUrl) {
+          window.addEventListener("pagehide", clearLocalSession, { once: true });
+          window.location.assign(logoutUrl);
+          return;
+        }
+
+        clearLocalSession();
       },
 
       // exchanges code->tokens, loads permissions, stores everything

@@ -98,3 +98,14 @@ export async function loadUserPermissions(config, accessToken) {
   const url = config.authority + config.userPermissionsPath;
   return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
 }
+
+export function buildLogoutUrl(config) {
+  if (!config?.authority) return "";
+
+  const url = new URL(config.logoutPath || "/logout", config.authority);
+  if (config.clientId) {
+    url.searchParams.set("client_id", config.clientId);
+  }
+
+  return url.toString();
+}

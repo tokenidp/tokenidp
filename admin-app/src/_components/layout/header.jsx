@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "tokentresor-idp-react";
 
 function Header({ onToggleSidebar }) {
-  const navigate = useNavigate();
   const [name, setName] = useState("");
   const user  = useAuth();
 
@@ -13,7 +11,6 @@ function Header({ onToggleSidebar }) {
 
   function logout() {
     user.logout();
-    navigate("/login");
   }
 
   return (
