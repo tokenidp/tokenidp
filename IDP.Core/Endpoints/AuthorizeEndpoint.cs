@@ -30,6 +30,19 @@ internal class AuthorizeEndpoint : IEndpointDefinition
 
                 if (authResult.Succeeded && authResult.Principal?.Identity?.IsAuthenticated == true)
                 {
+                    var tenantClaim = authResult.Principal.FindFirst("uid")?.Value;
+
+                    if (!int.TryParse(tenantClaim, out var userTenantId))
+                        return Results.BadRequest("Invalid tenant claim.");
+
+                    if (userTenantId != existing.TenantId)
+                        return Results.BadRequest("Tenant mismatch.");
+
+                    var userId = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    if (string.IsNullOrWhiteSpace(userId))
+                        return Results.BadRequest("User id missing.");
+
                     var authRequest = new AuthorizationRequest
                     {
                         ClientId = existing.ClientId!,
@@ -40,12 +53,8 @@ internal class AuthorizeEndpoint : IEndpointDefinition
                         CodeChallengeMethod = existing.CodeChallengeMethod!
                     };
 
-                    var userId = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                    if (string.IsNullOrWhiteSpace(userId))
-                        return Results.BadRequest("User id missing.");
-
-                    var authCode = await authorizationCodeUseCase.GenerateAuthorizationCode(authRequest, Convert.ToInt32(userId));
+                    var authCode = await authorizationCodeUseCase
+                    .GenerateAuthorizationCode(authRequest, Convert.ToInt32(userId));
 
                     if (authCode != null && authCode.IsSuccess)
                     {

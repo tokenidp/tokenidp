@@ -5,7 +5,9 @@ namespace IDP.ExternalProviders.Abstractions;
 public interface IUserSignInService
 {
     Task SignInAsync(
-        User user,
+        int userId,
+        string userName,
+        string email,
         int tenantId,
         CancellationToken cancellationToken);
 }

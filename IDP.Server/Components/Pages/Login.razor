@@ -4,10 +4,12 @@
 @using IDP.Core.Model
 @using IDP.Core.OAuth
 @using IDP.Domain.AggregateRoots.Authorization
+@using IDP.ExternalProviders.Abstractions
 @using IDP.Foundation.Abstractions
 @using IDP.Foundation.Abstractions.Stores
 @using IDP.Foundation.Exceptions
 @using IDP.Server.Middlewares
+@using IDP.Server.RESTClients
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Logging
 
@@ -18,10 +20,9 @@
 
 @inject LoadService LoadService
 @inject NavigationManager Navigation
-@inject IAuthorizationCodeUseCase AuthUseCase
-@inject IAuthorizationStore authorizationStore;
+@inject IAuthorizationStore authorizationStore
 @inject IAuthorizationPageUiUseCase PageUiUseCase
-@inject ITenantContextAccessor TenantContext;
+@inject AntiforgeryStateProvider AntiforgeryProvider
 @inject IJSRuntime JSRuntime
 @inject ILogger<Login> logger
 
@@ -50,7 +51,8 @@ else if (ui != null)
 
         @if (ui.AllowLocalLogin)
         {
-            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                <AntiforgeryToken />
                 <DataAnnotationsValidator />
                 <div class="field">
                     <label for="username">Username</label>
@@ -252,17 +254,20 @@ else if (ui != null)
             CodeChallengeMethod = preAuthorization?.CodeChallengeMethod!,
             Scopes = preAuthorization?.Scopes!,
             RememberMe = loginModel.RememberMe,
-            AuthorizationContextId = preAuthorization?.CorrelationId!
+            AuthorizationContextId = preAuthorization?.CorrelationId!,
+            TenantId = preAuthorization?.TenantId ?? 0
         };
 
         try
         {
             LoadService.ShowLoader();
 
-            TenantContext.SetTenantId(preAuthorization?.TenantId ?? 0);
-            TenantContext.SetClientId(preAuthorization?.ClientId_FK ?? 0);
+            var tokenRequest = AntiforgeryProvider.GetAntiforgeryToken();
 
-            var authCodeResponse = await AuthUseCase.Authenticate(request);
+            var authCodeResponse = await JSRuntime.InvokeAsync<AuthResponseDto>(
+                "idpAuth.localLogin",
+                request,
+                tokenRequest?.Value);
 
             if (authCodeResponse?.IsSuccess == false)
             {
@@ -277,15 +282,7 @@ else if (ui != null)
                 return;
             }
 
-            var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                ["code"] = authCodeResponse?.AuthorizationCode
-            };
-
-            if (!string.IsNullOrWhiteSpace(preAuthorization?.State!))
-                parameters["state"] = preAuthorization?.State!;
-
-            Navigation.NavigateTo(BuildRedirectUri(request.RedirectUri, parameters), forceLoad: true);
+            Navigation.NavigateTo($"/authorize?ctx={preAuthorization?.CorrelationId}", forceLoad: true);
         }
         catch (Exception ex)
         {

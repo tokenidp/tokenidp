@@ -20,8 +20,6 @@ public class UserDetail
         LockoutEnabled = user.LockoutEnabled,
         AccessFailedCount = user.AccessFailedCount,
         LockoutEnd = user.LockoutEnd,
-        SecurityStamp = user.SecurityStamp,
-        ConcurrencyStamp = user.ConcurrencyStamp,
         UserCode = user.UserCode,
         Roles = user.UserRoles.Select(s => s.RoleId).ToArray(),
         Addresses = user.UserAddresses
@@ -71,8 +69,6 @@ public class UserDetail
     public bool LockoutEnabled { get; set; }
     public int AccessFailedCount { get; set; }
     public DateTimeOffset? LockoutEnd { get; set; }
-    public string? SecurityStamp { get; set; }
-    public string? ConcurrencyStamp { get; set; }
     public string UserCode { get; set; } = default!;
     public int[] Roles { get; set; } = Array.Empty<int>();
     public List<UserAddressDetail> Addresses { get; set; } = new();

@@ -77,15 +77,6 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddScoped<LoadService>();
 
-        //builder.Services.AddHttpClient("IDPClient", (serviceProvider, client) =>
-        //{
-        //    var tokenOptions = serviceProvider.GetRequiredService<IOptions<TokenOption>>().Value;
-        //    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-        //    var issuer = ResolveIssuer(tokenOptions, httpContextAccessor);
-        //    client.BaseAddress = new Uri(issuer);
-        //});
-        //services.AddScoped<AuthenticationService>();
-
         builder.Services.AddIDPServices(builder.Configuration);
 
         builder.Services.AddAdminServices(builder.Configuration);

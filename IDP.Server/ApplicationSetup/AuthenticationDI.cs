@@ -18,39 +18,55 @@ internal static class AuthenticationDI
         IHostEnvironment environment)
     {
         services
-            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
             .AddJwtBearer(options =>
             {
-                using var sp = services.BuildServiceProvider();
-
-                var tokenOptions = sp.GetRequiredService<IOptions<TokenOption>>().Value;
-                var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
-
-                var signingKey = ResolveSigningKey(tokenOptions, environment);
-                var audience = ResolveAudience(tokenOptions, configuration);
-
                 options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.SaveToken = false;
 
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.Events = new JwtBearerEvents
                 {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = signingKey,
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidAudience = audience,
-                    ClockSkew = TimeSpan.Zero,
-                    IssuerValidator = (issuer, token, parameters) =>
+                    OnMessageReceived = context =>
                     {
-                        var expected = ResolveIssuer(tokenOptions, httpContextAccessor);
-                        if (!string.Equals(issuer, expected, StringComparison.OrdinalIgnoreCase))
-                        {
-                            throw new SecurityTokenInvalidIssuerException(
-                                $"Issuer '{issuer}' is invalid. Expected '{expected}'.");
-                        }
+                        var services = context.HttpContext.RequestServices;
 
-                        return issuer;
+                        var tokenOptions = services
+                            .GetRequiredService<IOptions<TokenOption>>().Value;
+
+                        var httpContextAccessor = services
+                            .GetRequiredService<IHttpContextAccessor>();
+
+                        var signingKey = ResolveSigningKey(tokenOptions, environment);
+                        var audience = ResolveAudience(tokenOptions, configuration);
+
+                        context.Options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuerSigningKey = true,
+                            IssuerSigningKey = signingKey,
+                            ValidateIssuer = true,
+                            ValidateAudience = true,
+                            ValidateLifetime = true,
+                            ValidAudience = audience,
+                            ClockSkew = TimeSpan.Zero,
+                            IssuerValidator = (issuer, token, parameters) =>
+                            {
+                                var expected = ResolveIssuer(tokenOptions, httpContextAccessor);
+
+                                if (!string.Equals(issuer, expected, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    throw new SecurityTokenInvalidIssuerException(
+                                        $"Issuer '{issuer}' is invalid. Expected '{expected}'.");
+                                }
+
+                                return issuer;
+                            }
+                        };
+
+                        return Task.CompletedTask;
                     }
                 };
             })
@@ -68,6 +84,20 @@ internal static class AuthenticationDI
 
                 options.Cookie.SameSite = SameSiteMode.Lax;
             });
+
+        //services.AddHttpClient("IDPClient", (serviceProvider, client) =>
+        //{
+        //    var tokenOptions = serviceProvider.GetRequiredService<IOptions<TokenOption>>().Value;
+        //    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        //    var issuer = ResolveIssuer(tokenOptions, httpContextAccessor);
+        //    client.BaseAddress = new Uri(issuer);
+        //});
+
+        services.AddAntiforgery(options =>
+        {
+            // This tells the server to check this header name for the token
+            options.HeaderName = "X-XSRF-TOKEN";
+        });
     }
 
     private static string ResolveKeyMaterial(TokenOption settings)

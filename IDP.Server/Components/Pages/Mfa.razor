@@ -76,6 +76,7 @@
     private string? ErrorMessage;
     private bool isLoading;
     private string? flowType;
+    private string? correlationId;
     private Dictionary<string, string> QueryParams = new();
 
     protected override void OnInitialized()
@@ -96,6 +97,9 @@
 
             QueryParams.TryGetValue("flow", out var flow);
             flowType = flow;
+
+            QueryParams.TryGetValue("corid", out var corId);
+            correlationId = corId;
         }
     }
 
@@ -209,7 +213,7 @@
 
         var mfaRequest = new MfaRequest()
         {
-            CorrelationId = QueryParams["corid"],
+            CorrelationId = correlationId ?? string.Empty,
             Code = code,
             UserId = Convert.ToInt32(QueryParams["uid"])
         };
@@ -220,18 +224,7 @@
         {
             if (flowType == "authorize")
             {
-                var authCode = await AuthService.GenerateAuthorizationCode(authRequest!, mfaRequest.UserId);
-                if (authCode != null && authCode.IsSuccess)
-                {
-                    var redirectUri = Uri.UnescapeDataString(QueryParams["redirect_uri"]);
-                    var uri = $"{redirectUri}?code={authCode.AuthorizationCode}";
-                    Navigation.NavigateTo(uri, true);
-                }
-                else
-                {
-                    ErrorMessage = authResponse?.Error ?? "Unable to verify the code. Please try again.";
-                    IsInvalid = true;
-                }
+                Navigation.NavigateTo($"/authorize?ctx={correlationId}", true);               
             }
             else if (flowType == "device")
             {

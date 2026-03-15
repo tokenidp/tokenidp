@@ -1,5 +1,6 @@
 ﻿using IDP.Core.Policies;
 using IDP.Domain.AggregateRoots.Authorization;
+using IDP.ExternalProviders.Abstractions;
 using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Core.UseCases;
@@ -10,7 +11,6 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
     private readonly IAuthorizationStore _authorizationStore;
     private readonly IMfaUseCase _mfaUseCase;
     private readonly IClientStore _clientStore;
-    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
@@ -21,8 +21,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         IAuthorizationStore authorizationStore,
         TokenContextUseCase tokenContextUseCase,
         TenantUserMfaPolicy mfaPolicy,
-        IClientStore clientStore,
-        ITenantContextAccessor tenantContextAccessor)
+        IClientStore clientStore)
     {
         _identityService = identityService;
         _logger = appLogger;
@@ -31,13 +30,12 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         _tokenContextUseCase = tokenContextUseCase;
         _mfaPolicy = mfaPolicy;
         _clientStore = clientStore;
-        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<AuthorizationResponse> Authenticate(AuthorizationRequest request)
     {
         var context = await _identityService
-            .Authenticate(_tenantContextAccessor.TenantId, request.UserName, request.Password);
+            .Authenticate(request.TenantId, request.UserName, request.Password);
 
         if (!context.IsSuccess)
         {
@@ -57,9 +55,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
             return authResponse;
         }
 
-        authResponse = await GenerateAuthorizationCode(request, context.UserId);
-
-        return authResponse;
+        return AuthorizationResponse.Success(context.UserId, false);
     }
 
     public async Task<TokenContext> ValidateAuthorizationCodeAsync(TokenRequest tokenRequest)

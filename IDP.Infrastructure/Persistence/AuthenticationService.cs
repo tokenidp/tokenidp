@@ -1,5 +1,7 @@
 ﻿using Admin.Core.Common;
+using Azure.Core;
 using IDP.Domain.DomainEvents.Users;
+using IDP.ExternalProviders.Abstractions;
 using IDP.Foundation.Abstractions.Stores;
 
 namespace IDP.Core.OAuth;
@@ -11,6 +13,7 @@ internal sealed class AuthenticationService : IAuthenticationService
     private readonly IApplicationEventDispatcher _applicationEventDispatcher;
     private readonly IAppLogger<AuthenticationService> _logger;
     private readonly IUserStore _userStore;
+    private readonly IUserSignInService _userSignInService;
     private readonly PasswordService _passwordService;
 
     public AuthenticationService(IAppLogger<AuthenticationService> logger,
@@ -18,7 +21,8 @@ internal sealed class AuthenticationService : IAuthenticationService
         ICurrentUserService currentUserService,
         IApplicationEventDispatcher applicationEventDispatcher,
         PasswordService passwordService,
-        IUserStore userStore)
+        IUserStore userStore,
+        IUserSignInService userSignInService)
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
@@ -26,6 +30,7 @@ internal sealed class AuthenticationService : IAuthenticationService
         _applicationEventDispatcher = applicationEventDispatcher;
         _passwordService = passwordService;
         _userStore = userStore;
+        _userSignInService = userSignInService;
     }
 
     public async Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password)
@@ -104,6 +109,11 @@ internal sealed class AuthenticationService : IAuthenticationService
 
             user.ResetAccessFailed();
             await _userStore.UpdateUser(user);
+
+            await _userSignInService.SignInAsync(user.Id,
+                user.UserName,
+                user.Email,
+                user.TenantId, CancellationToken.None);
 
             return AuthenticationContext.Authenticated(user);
         }

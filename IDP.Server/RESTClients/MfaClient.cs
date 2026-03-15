@@ -38,7 +38,7 @@ public class MfaClient : IDisposable
                 "application/json");
 
             using var response = await _httpClient.PostAsync(
-                "auth/resend-mfa",
+                "mfa/resend",
                 content,
                 cancellationToken);
 
@@ -60,12 +60,12 @@ public class MfaClient : IDisposable
             var error = await TryReadErrorResponse(response, cancellationToken);
 
             _logger.LogWarning("Resend Mfa failed for {Username}. Status: {StatusCode}, Error: {ErrorMessage}",
-                    error.Value.CorrelationId,
+                    error?.Value?.CorrelationId ?? "invalid CorrelationId",
                     response.StatusCode,
-                    error.Value.Error);
+                    error?.Value?.Error ?? "invalid request");
 
             throw new AuthenticationException(
-                error.Value.Error ?? "Resend Mfa failed",
+                error?.Value?.Error ?? "Resend Mfa failed",
                 (int)response.StatusCode);
         }
         catch (OperationCanceledException ex)
@@ -101,7 +101,7 @@ public class MfaClient : IDisposable
                 "application/json");
 
             using var response = await _httpClient.PostAsync(
-                "auth/verify-mfa",
+                "mfa/verify",
                 content,
                 cancellationToken);
 
@@ -123,12 +123,12 @@ public class MfaClient : IDisposable
             var error = await TryReadErrorResponse(response, cancellationToken);
 
             _logger.LogWarning("Authentication failed for {Username}. Status: {StatusCode}, Error: {ErrorMessage}",
-                    error.Value.CorrelationId,
+                    error?.Value?.CorrelationId ?? "invalid CorrelationId",
                     response.StatusCode,
-                    error.Value.Error);
+                    error?.Value?.Error ?? "invalid request");
 
             throw new AuthenticationException(
-                error.Value.Error ?? "Authentication failed",
+                error?.Value?.Error ?? "Authentication failed",
                 (int)response.StatusCode);
         }
         catch (OperationCanceledException ex)

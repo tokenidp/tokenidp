@@ -2,6 +2,8 @@ using IDP.Core.Model;
 using IDP.Foundation;
 using IDP.Foundation.Abstractions;
 using IDP.Foundation.Contracts;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -24,14 +26,29 @@ public class AuthenticationClient : IDisposable
     }
 
     public async Task<AuthResponseDto> AuthenticateAsync(AuthorizationRequest request,
+        string? antiforgeryToken, // Add this parameter
         CancellationToken cancellationToken = default)
     {
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(
-                "authenticate",
-                request,
-                cancellationToken);
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, "local-login")
+            {
+                Content = JsonContent.Create(request)
+            };
+
+            if (!string.IsNullOrEmpty(antiforgeryToken))
+            {
+                // 'RequestToken' is the standard header name ASP.NET Core looks for
+                httpRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+            }
+
+            if (!string.IsNullOrEmpty(antiforgeryToken))
+            {
+                // 'RequestToken' is the standard header name ASP.NET Core looks for
+                httpRequest.Headers.Add("X-XSRF-TOKEN", antiforgeryToken);
+            }
+
+            using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -40,10 +57,10 @@ public class AuthenticationClient : IDisposable
                 _logger.LogWarning("Authentication failed for {Username}. Status: {StatusCode}, Error: {ErrorMessage}",
                     request.UserName,
                     response.StatusCode,
-                    errorResponse?.Value.Error);
+                    errorResponse?.Value?.Error ?? "invalid request");
 
                 throw new AuthenticationException(
-                    errorResponse?.Value.Error ?? "Authentication failed",
+                    errorResponse?.Value?.Error ?? "Authentication failed",
                     (int)response.StatusCode);
             }
 

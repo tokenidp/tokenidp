@@ -16,7 +16,9 @@ internal sealed class UserSignInService : IUserSignInService
     }
 
     public async Task SignInAsync(
-        User user,
+        int userId,
+        string userName,
+        string email,
         int tenantId,
         CancellationToken cancellationToken)
     {
@@ -27,14 +29,14 @@ internal sealed class UserSignInService : IUserSignInService
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.UserName),
+            new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new(ClaimTypes.Name, userName),
             new("uid", tenantId.ToString())
         };
 
-        if (!string.IsNullOrWhiteSpace(user.Email))
+        if (!string.IsNullOrWhiteSpace(email))
         {
-            claims.Add(new Claim(ClaimTypes.Email, user.Email));
+            claims.Add(new Claim(ClaimTypes.Email, email));
         }
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
