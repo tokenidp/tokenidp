@@ -71,6 +71,18 @@ const ICONS = {
 const ROUTES = {
   home: "index.html",
   docs: "docs/index.html",
+  docsAdminPortal: "docs/admin-portal/index.html",
+  docsKeyManagement: "docs/key-management/index.html",
+  docsAuthCodePkce: "docs/oauth/authorization-code-pkce/index.html",
+  docsClientCredentials: "docs/oauth/client-credentials/index.html",
+  docsRopc: "docs/oauth/resource-owner-password-credentials/index.html",
+  docsDeviceFlow: "docs/oauth/device-flow/index.html",
+  docsCiba: "docs/oauth/ciba/index.html",
+  docsRbac: "docs/roles-and-permissions/index.html",
+  docsTenants: "docs/multi-tenant-setup/index.html",
+  docsMfa: "docs/mfa-policies/index.html",
+  docsAudit: "docs/audit-logs/index.html",
+  docsApi: "docs/api-integration/index.html",
   blogs: "blogs/index.html",
   contact: "contact/index.html",
   usecaseSaas: "usecases/b2b-saas/index.html",
@@ -270,8 +282,13 @@ ${cards
     </section>`;
 }
 
-const DOC_TOPICS = {
-  "getting-started": `
+const DOC_PAGES = [
+  {
+    key: "getting-started",
+    route: ROUTES.docs,
+    navLabel: "Getting Started",
+    title: "Getting Started | Docs | Enterprise Identity Platform",
+    content: `
           <h2>Getting Started</h2>
           <p>
             Start by creating your tenant, registering an application, and setting
@@ -285,20 +302,261 @@ const DOC_TOPICS = {
             <li>Test login in a non-production environment first.</li>
           </ul>
         `,
-  oauth: `
-          <h2>OAuth 2.1 Flows</h2>
+  },
+  {
+    key: "admin-portal",
+    route: ROUTES.docsAdminPortal,
+    navLabel: "Admin Portal",
+    title: "Admin Portal | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>Admin Portal</h2>
           <p>
-            Use Authorization Code + PKCE for browser and mobile apps. Use Client
-            Credentials for service-to-service communication.
+            The Admin Portal is the operational surface for managing tenants,
+            applications, users, roles, authentication policies, and platform
+            security settings.
           </p>
-          <h3>Recommended By Client Type</h3>
+          <h3>Common Tasks</h3>
           <ul>
-            <li>Public apps: Authorization Code with PKCE.</li>
-            <li>Backend services: Client Credentials.</li>
-            <li>Long sessions: Refresh tokens with rotation.</li>
+            <li>Create and manage tenants.</li>
+            <li>Register applications and configure redirect URIs.</li>
+            <li>Assign roles and permissions to admins and operators.</li>
+            <li>Review sign-in events, audit trails, and policy changes.</li>
+          </ul>
+          <h3>Operational Areas</h3>
+          <ul>
+            <li><strong>Tenant management:</strong> Configure tenant metadata, branding, and access boundaries.</li>
+            <li><strong>Application management:</strong> Define clients, scopes, secrets, and callback settings.</li>
+            <li><strong>Security policies:</strong> Enforce MFA, session controls, and login requirements.</li>
+            <li><strong>Audit and support:</strong> Inspect activity logs and respond to operational issues.</li>
+          </ul>
+          <h3>Recommended Access Model</h3>
+          <p>
+            Limit high-privilege access to a small group of administrators, use
+            role-based delegation for support and operations teams, and require
+            MFA for all privileged accounts.
+          </p>
+        `,
+  },
+  {
+    key: "key-management",
+    route: ROUTES.docsKeyManagement,
+    navLabel: "Key Management",
+    title: "Key Management | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>Key Management</h2>
+          <p>
+            Key management controls how signing keys, encryption keys, client
+            secrets, and certificates are created, rotated, protected, and
+            retired across the platform.
+          </p>
+          <h3>Primary Responsibilities</h3>
+          <ul>
+            <li>Rotate signing keys without breaking token validation.</li>
+            <li>Protect private keys and sensitive secrets from application exposure.</li>
+            <li>Track key status, usage, and retirement windows.</li>
+            <li>Publish current verification material for dependent services.</li>
+          </ul>
+          <h3>Operational Guidance</h3>
+          <ul>
+            <li><strong>Generation:</strong> Create strong keys in trusted infrastructure and restrict export where possible.</li>
+            <li><strong>Storage:</strong> Use secure stores such as HSM-backed or vault-managed key storage.</li>
+            <li><strong>Rotation:</strong> Introduce new keys before retiring old ones so validators have overlap time.</li>
+            <li><strong>Revocation:</strong> Be able to disable compromised keys quickly and force dependent systems to refresh metadata.</li>
+          </ul>
+          <h3>Recommended Practices</h3>
+          <p>
+            Maintain documented rotation schedules, audit every privileged key
+            operation, and separate duties so no single operator can create,
+            approve, and deploy sensitive key material alone.
+          </p>
+        `,
+  },
+  {
+    key: "auth-code-pkce",
+    route: ROUTES.docsAuthCodePkce,
+    navLabel: "Authorization Code Flow with PKCE",
+    group: "OAuth Flows",
+    title: "Authorization Code Flow with PKCE | Docs | Enterprise Identity Platform",
+    content: (helpers) => {
+      const oauthFlowDiagram = helpers.relativePath("Auth Code Flow.svg");
+
+      return `
+          <h2>Authorization Code Flow with PKCE</h2>
+          <p>
+            This is the recommended OAuth flow for browser-based apps, native
+            mobile apps, and other public clients that cannot safely store a
+            long-lived client secret.
+          </p>
+          <figure class="docs-figure">
+            <img
+              src="${oauthFlowDiagram}"
+              alt="Authorization Code Flow with PKCE diagram"
+            />
+            <figcaption>
+              The diagram shows the browser redirect, user authentication,
+              authorization code return, and the token exchange protected by
+              PKCE.
+            </figcaption>
+          </figure>
+          <h3>What the Diagram Shows</h3>
+          <ul>
+            <li>The client starts the flow by redirecting the user to the authorization server.</li>
+            <li>A <code>code_challenge</code> is sent up front and tied to a one-time <code>code_verifier</code> kept by the client.</li>
+            <li>After sign-in and consent, the authorization server returns a short-lived authorization code.</li>
+            <li>The client exchanges that code for tokens by sending the original <code>code_verifier</code>.</li>
+            <li>The authorization server validates the verifier before issuing the access token and optional refresh token.</li>
+          </ul>
+          <h3>How the Flow Works</h3>
+          <ol>
+            <li>The application creates a random <code>code_verifier</code> and derives a hashed <code>code_challenge</code>.</li>
+            <li>The browser is redirected to the authorization endpoint with client details, redirect URI, scopes, state, and the PKCE challenge.</li>
+            <li>The user authenticates with the identity provider and approves the requested access.</li>
+            <li>The authorization server redirects the browser back to the application with an authorization code.</li>
+            <li>The application sends that code to the token endpoint together with the original <code>code_verifier</code>.</li>
+            <li>The authorization server compares the verifier to the earlier challenge and, if they match, returns tokens.</li>
+            <li>The client uses the access token for API calls and rotates refresh tokens if long-lived sessions are allowed.</li>
+          </ol>
+          <h3>Why PKCE Matters</h3>
+          <p>
+            PKCE prevents stolen authorization codes from being redeemed by an
+            attacker. Even if the code is intercepted, the token exchange fails
+            without the matching <code>code_verifier</code>.
+          </p>
+          <h3>Best Fit</h3>
+          <ul>
+            <li>Single-page applications.</li>
+            <li>iOS and Android apps.</li>
+            <li>Desktop applications.</li>
+            <li>Modern web apps that want a redirect-based sign-in flow.</li>
+          </ul>
+        `;
+    },
+  },
+  {
+    key: "client-credentials",
+    route: ROUTES.docsClientCredentials,
+    navLabel: "Client Credentials",
+    group: "OAuth Flows",
+    title: "Client Credentials | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>Client Credentials</h2>
+          <p>
+            Use this flow for machine-to-machine communication where no end user
+            is involved and the calling service can securely hold its own client
+            secret or private key.
+          </p>
+          <h3>How the Flow Works</h3>
+          <ol>
+            <li>The calling service authenticates directly with the token endpoint.</li>
+            <li>It sends its client credentials and requested scopes.</li>
+            <li>The authorization server validates the client identity.</li>
+            <li>An access token is issued for API-to-API communication.</li>
+          </ol>
+          <h3>When To Use It</h3>
+          <ul>
+            <li>Backend jobs and workers.</li>
+            <li>Internal service calls.</li>
+            <li>Trusted integrations between server-side systems.</li>
+          </ul>
+          <h3>Implementation Notes</h3>
+          <ul>
+            <li>Prefer private key JWT or certificate-based auth where supported.</li>
+            <li>Issue narrow scopes and short-lived access tokens.</li>
+            <li>Do not use this flow for browser or mobile apps.</li>
           </ul>
         `,
-  rbac: `
+  },
+  {
+    key: "ropc",
+    route: ROUTES.docsRopc,
+    navLabel: "Resource Owner Password Credentials",
+    group: "OAuth Flows",
+    title: "Resource Owner Password Credentials | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>Resource Owner Password Credentials</h2>
+          <p>
+            This is a legacy flow where the client collects the user's username
+            and password directly and exchanges them for tokens. It is
+            discouraged for new systems and should only appear in controlled
+            migration scenarios.
+          </p>
+          <h3>Why It Is Risky</h3>
+          <ul>
+            <li>The client handles raw user credentials directly.</li>
+            <li>It bypasses redirect-based login, consent, and many modern security controls.</li>
+            <li>It does not fit MFA, passwordless, or external identity federation well.</li>
+          </ul>
+          <h3>Use Only If</h3>
+          <ul>
+            <li>You are supporting a temporary migration from a legacy system.</li>
+            <li>You control both the client and the identity system end to end.</li>
+            <li>You have a clear deprecation plan to remove it.</li>
+          </ul>
+        `,
+  },
+  {
+    key: "device-flow",
+    route: ROUTES.docsDeviceFlow,
+    navLabel: "Device Flow",
+    group: "OAuth Flows",
+    title: "Device Flow | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>Device Flow</h2>
+          <p>
+            Device Flow is designed for TVs, terminals, printers, kiosks, and
+            other devices with limited input capability or no convenient browser.
+          </p>
+          <h3>How the Flow Works</h3>
+          <ol>
+            <li>The device requests a device code and user code from the authorization server.</li>
+            <li>The device displays the user code and verification URL to the user.</li>
+            <li>The user completes authentication on a separate trusted device, such as a phone or laptop.</li>
+            <li>The original device polls the token endpoint until the authorization completes.</li>
+            <li>Once approved, the authorization server returns tokens to the device.</li>
+          </ol>
+          <h3>Best Fit</h3>
+          <ul>
+            <li>Smart TVs and streaming devices.</li>
+            <li>CLI tools and headless terminals.</li>
+            <li>Shared or constrained hardware with limited keyboards.</li>
+          </ul>
+        `,
+  },
+  {
+    key: "ciba",
+    route: ROUTES.docsCiba,
+    navLabel: "Ciba",
+    group: "OAuth Flows",
+    title: "CIBA | Docs | Enterprise Identity Platform",
+    content: `
+          <h2>CIBA</h2>
+          <p>
+            Client-Initiated Backchannel Authentication is a decoupled flow where
+            authentication happens on a separate device or channel instead of in
+            the same browser session that started the request.
+          </p>
+          <h3>How the Flow Works</h3>
+          <ol>
+            <li>The client initiates an authentication request over a backchannel.</li>
+            <li>The authorization server triggers an approval request to the user's trusted device or banking app.</li>
+            <li>The user authenticates and approves the request out of band.</li>
+            <li>The client polls or receives a callback when the request completes.</li>
+            <li>The authorization server issues tokens after successful approval.</li>
+          </ol>
+          <h3>Best Fit</h3>
+          <ul>
+            <li>Banking and high-assurance approval journeys.</li>
+            <li>Cross-device login experiences.</li>
+            <li>Flows where the initiating channel should not handle the user password.</li>
+          </ul>
+        `,
+  },
+  {
+    key: "rbac",
+    route: ROUTES.docsRbac,
+    navLabel: "Roles and Permissions",
+    title: "Roles and Permissions | Docs | Enterprise Identity Platform",
+    content: `
           <h2>Roles and Permissions</h2>
           <p>
             Define roles based on job functions and map permissions to each role.
@@ -311,7 +569,13 @@ const DOC_TOPICS = {
             <li>Viewer: read-only reports and dashboards.</li>
           </ul>
         `,
-  tenants: `
+  },
+  {
+    key: "tenants",
+    route: ROUTES.docsTenants,
+    navLabel: "Multi-Tenant Setup",
+    title: "Multi-Tenant Setup | Docs | Enterprise Identity Platform",
+    content: `
           <h2>Multi-Tenant Setup</h2>
           <p>
             Isolate users, roles, and policies by tenant. Include tenant identifier
@@ -324,7 +588,13 @@ const DOC_TOPICS = {
             <li>Apply tenant-specific MFA and session policies.</li>
           </ul>
         `,
-  mfa: `
+  },
+  {
+    key: "mfa",
+    route: ROUTES.docsMfa,
+    navLabel: "MFA Policies",
+    title: "MFA Policies | Docs | Enterprise Identity Platform",
+    content: `
           <h2>MFA Policies</h2>
           <p>
             Strengthen authentication with policy-based MFA. Enforce higher security
@@ -337,7 +607,13 @@ const DOC_TOPICS = {
             <li>Allow tenant-level exemptions only with approval.</li>
           </ul>
         `,
-  audit: `
+  },
+  {
+    key: "audit",
+    route: ROUTES.docsAudit,
+    navLabel: "Audit Logs",
+    title: "Audit Logs | Docs | Enterprise Identity Platform",
+    content: `
           <h2>Audit Logs</h2>
           <p>
             Keep immutable logs for sign-ins, permission changes, token revocations,
@@ -350,7 +626,13 @@ const DOC_TOPICS = {
             <li>Before/after values for security-critical changes.</li>
           </ul>
         `,
-  api: `
+  },
+  {
+    key: "api",
+    route: ROUTES.docsApi,
+    navLabel: "API Integration",
+    title: "API Integration | Docs | Enterprise Identity Platform",
+    content: `
           <h2>API Integration</h2>
           <p>
             Protect APIs by validating access tokens and enforcing role + tenant
@@ -363,55 +645,114 @@ const DOC_TOPICS = {
             <li>Authorize against roles and tenant boundaries.</li>
           </ul>
         `,
-};
+  },
+];
 
-function renderDocsPage() {
+function renderDocsSidebar(activeKey, helpers) {
+  const gettingStartedPage = DOC_PAGES.find((page) => page.key === "getting-started");
+  const adminPortalPage = DOC_PAGES.find((page) => page.key === "admin-portal");
+  const keyManagementPage = DOC_PAGES.find((page) => page.key === "key-management");
+  const otherTopLevelPages = DOC_PAGES.filter(
+    (page) =>
+      !page.group &&
+      page.key !== "getting-started" &&
+      page.key !== "admin-portal" &&
+      page.key !== "key-management",
+  );
+  const oauthPages = DOC_PAGES.filter((page) => page.group === "OAuth Flows");
+  const hasActiveOauthPage = oauthPages.some((page) => page.key === activeKey);
+
   return `
-    <header class="main-header">
-      <h1>Documentation</h1>
-      <p>
-        Browse platform topics from the left navigation. Detailed guidance loads
-        on the right.
-      </p>
-    </header>
-
-    <section class="docs-wrap">
       <aside class="docs-sidebar">
         <h2>Topics</h2>
-        <button class="topic-link active" data-topic="getting-started">
-          Getting Started
-        </button>
-        <button class="topic-link" data-topic="oauth">OAuth 2.1 Flows</button>
-        <button class="topic-link" data-topic="rbac">Roles and Permissions</button>
-        <button class="topic-link" data-topic="tenants">Multi-Tenant Setup</button>
-        <button class="topic-link" data-topic="mfa">MFA Policies</button>
-        <button class="topic-link" data-topic="audit">Audit Logs</button>
-        <button class="topic-link" data-topic="api">API Integration</button>
-      </aside>
-
-      <article class="docs-content" id="docs-content"></article>
-    </section>`;
+        <a
+          class="topic-link${gettingStartedPage.key === activeKey ? " active" : ""}"
+          href="${helpers.relativePagePath(gettingStartedPage.route)}"
+        >
+          ${gettingStartedPage.navLabel}
+        </a>
+        <a
+          class="topic-link${adminPortalPage.key === activeKey ? " active" : ""}"
+          href="${helpers.relativePagePath(adminPortalPage.route)}"
+        >
+          ${adminPortalPage.navLabel}
+        </a>
+        <a
+          class="topic-link${keyManagementPage.key === activeKey ? " active" : ""}"
+          href="${helpers.relativePagePath(keyManagementPage.route)}"
+        >
+          ${keyManagementPage.navLabel}
+        </a>
+        <div
+          class="topic-group${hasActiveOauthPage ? " has-active-topic is-open" : ""}"
+          data-topic-group="oauth"
+        >
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="${hasActiveOauthPage ? "true" : "false"}"
+          >
+            OAuth Flows
+          </button>
+          <div class="topic-submenu"${hasActiveOauthPage ? "" : ' hidden'}>
+${oauthPages
+  .map(
+    (page) => `            <a
+              class="topic-link topic-sublink${page.key === activeKey ? " active" : ""}"
+              href="${helpers.relativePagePath(page.route)}"
+            >
+              ${page.navLabel}
+            </a>`,
+  )
+  .join("\n")}
+          </div>
+        </div>
+${otherTopLevelPages
+  .map(
+    (page) => `        <a
+          class="topic-link${page.key === activeKey ? " active" : ""}"
+          href="${helpers.relativePagePath(page.route)}"
+        >
+          ${page.navLabel}
+        </a>`,
+  )
+  .join("\n")}
+      </aside>`;
 }
 
 function docsScript() {
-  return `const topicData = ${JSON.stringify(DOC_TOPICS, null, 2)};
+  return `const docsTopicGroups = document.querySelectorAll("[data-topic-group]");
 
-const topicButtons = document.querySelectorAll(".topic-link");
-const docsContent = document.getElementById("docs-content");
+docsTopicGroups.forEach((group) => {
+  const toggle = group.querySelector(".topic-group-toggle");
+  const submenu = group.querySelector(".topic-submenu");
 
-function renderTopic(topicKey) {
-  docsContent.innerHTML = topicData[topicKey] || "<h2>Topic not found</h2>";
+  if (!toggle || !submenu) {
+    return;
+  }
+
+  toggle.addEventListener("click", () => {
+    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+    const nextState = !isOpen;
+
+    toggle.setAttribute("aria-expanded", String(nextState));
+    group.classList.toggle("is-open", nextState);
+    submenu.hidden = !nextState;
+  });
+});`;
 }
 
-topicButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    topicButtons.forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    renderTopic(button.dataset.topic);
-  });
-});
+function renderDocsPage(topic, helpers) {
+  const content =
+    typeof topic.content === "function" ? topic.content(helpers) : topic.content;
 
-renderTopic("getting-started");`;
+  return `
+    <section class="docs-wrap">
+${renderDocsSidebar(topic.key, helpers)}
+      <article class="docs-content">
+${content}
+      </article>
+    </section>`;
 }
 
 function renderContactSection() {
@@ -1155,6 +1496,15 @@ const blogArticles = [
   },
 ];
 
+const docsPages = DOC_PAGES.map((topic) => ({
+  outputPath: topic.route,
+  title: topic.title,
+  bodyClass: "docs-page",
+  activeNav: "docs",
+  render: (helpers) => renderDocsPage(topic, helpers),
+  extraScripts: () => [docsScript()],
+}));
+
 export const pages = [
   {
     outputPath: ROUTES.home,
@@ -1164,14 +1514,7 @@ export const pages = [
     brandLogo: "tokentresor-tt-lock.svg",
     render: renderLandingPage,
   },
-  {
-    outputPath: ROUTES.docs,
-    title: "Docs | Enterprise Identity Platform",
-    bodyClass: "docs-page",
-    activeNav: "docs",
-    render: renderDocsPage,
-    extraScripts: () => [docsScript()],
-  },
+  ...docsPages,
   {
     outputPath: ROUTES.blogs,
     title: "Blog | TokenTresor",

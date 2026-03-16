@@ -92,8 +92,13 @@ function renderNav(page) {
 }
 
 export function renderPage(page) {
-  const stylesheetHref = relativePath(page.outputPath, "assets/styles/site.css");
-  const extraScripts = page.extraScripts?.() ?? [];
+  const helpers = {
+    escapeHtml,
+    relativePath: (target) => relativePath(page.outputPath, target),
+    relativePagePath: (target) => relativePagePath(page.outputPath, target),
+  };
+  const stylesheetHref = helpers.relativePath("assets/styles/site.css");
+  const extraScripts = page.extraScripts?.(helpers) ?? [];
   const scripts = [...extraScripts, COMMON_SCRIPT]
     .map((script) => `    <script>\n${script}\n    </script>`)
     .join("\n");
@@ -109,11 +114,7 @@ export function renderPage(page) {
   <body class="${escapeHtml(page.bodyClass)}">
 ${renderNav(page)}
     <main>
-${page.render({
-  escapeHtml,
-  relativePath: (target) => relativePath(page.outputPath, target),
-  relativePagePath: (target) => relativePagePath(page.outputPath, target),
-})}
+${page.render(helpers)}
     </main>
     <footer>
       ${FOOTER_HTML}

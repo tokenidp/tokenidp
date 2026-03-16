@@ -11,3 +11,8 @@
 /infra-build-diagnostics.log
 /infra_build_diag_current.log
 /infra_build_no_restore_diag.log
+/idp-supporting-docs/docs/
+/idp-supporting-docs/blogs/
+/idp-supporting-docs/contact/
+/idp-supporting-docs/usecases/
+/idp-supporting-docs/.deploy-test/

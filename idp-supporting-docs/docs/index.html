@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docs | Enterprise Identity Platform</title>
+    <title>Getting Started | Docs | Enterprise Identity Platform</title>
     <link rel="stylesheet" href="../assets/styles/site.css" />
   </head>
   <body class="docs-page">
@@ -40,61 +40,144 @@
     </nav>
     <main>
 
-    <header class="main-header">
-      <h1>Documentation</h1>
-      <p>
-        Browse platform topics from the left navigation. Detailed guidance loads
-        on the right.
-      </p>
-    </header>
-
     <section class="docs-wrap">
+
       <aside class="docs-sidebar">
         <h2>Topics</h2>
-        <button class="topic-link active" data-topic="getting-started">
+        <a
+          class="topic-link active"
+          href="./"
+        >
           Getting Started
-        </button>
-        <button class="topic-link" data-topic="oauth">OAuth 2.1 Flows</button>
-        <button class="topic-link" data-topic="rbac">Roles and Permissions</button>
-        <button class="topic-link" data-topic="tenants">Multi-Tenant Setup</button>
-        <button class="topic-link" data-topic="mfa">MFA Policies</button>
-        <button class="topic-link" data-topic="audit">Audit Logs</button>
-        <button class="topic-link" data-topic="api">API Integration</button>
+        </a>
+        <a
+          class="topic-link"
+          href="admin-portal/"
+        >
+          Admin Portal
+        </a>
+        <a
+          class="topic-link"
+          href="key-management/"
+        >
+          Key Management
+        </a>
+        <div
+          class="topic-group"
+          data-topic-group="oauth"
+        >
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            OAuth Flows
+          </button>
+          <div class="topic-submenu" hidden>
+            <a
+              class="topic-link topic-sublink"
+              href="oauth/authorization-code-pkce/"
+            >
+              Authorization Code Flow with PKCE
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="oauth/client-credentials/"
+            >
+              Client Credentials
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="oauth/resource-owner-password-credentials/"
+            >
+              Resource Owner Password Credentials
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="oauth/device-flow/"
+            >
+              Device Flow
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="oauth/ciba/"
+            >
+              Ciba
+            </a>
+          </div>
+        </div>
+        <a
+          class="topic-link"
+          href="roles-and-permissions/"
+        >
+          Roles and Permissions
+        </a>
+        <a
+          class="topic-link"
+          href="multi-tenant-setup/"
+        >
+          Multi-Tenant Setup
+        </a>
+        <a
+          class="topic-link"
+          href="mfa-policies/"
+        >
+          MFA Policies
+        </a>
+        <a
+          class="topic-link"
+          href="audit-logs/"
+        >
+          Audit Logs
+        </a>
+        <a
+          class="topic-link"
+          href="api-integration/"
+        >
+          API Integration
+        </a>
       </aside>
+      <article class="docs-content">
 
-      <article class="docs-content" id="docs-content"></article>
+          <h2>Getting Started</h2>
+          <p>
+            Start by creating your tenant, registering an application, and setting
+            callback URLs for your environment.
+          </p>
+          <h3>Checklist</h3>
+          <ul>
+            <li>Create tenant and admin user.</li>
+            <li>Register app with <code>client_id</code> and redirect URL.</li>
+            <li>Enable required scopes for your APIs.</li>
+            <li>Test login in a non-production environment first.</li>
+          </ul>
+        
+      </article>
     </section>
     </main>
     <footer>
       &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.
     </footer>
     <script>
-const topicData = {
-  "getting-started": "\n          <h2>Getting Started</h2>\n          <p>\n            Start by creating your tenant, registering an application, and setting\n            callback URLs for your environment.\n          </p>\n          <h3>Checklist</h3>\n          <ul>\n            <li>Create tenant and admin user.</li>\n            <li>Register app with <code>client_id</code> and redirect URL.</li>\n            <li>Enable required scopes for your APIs.</li>\n            <li>Test login in a non-production environment first.</li>\n          </ul>\n        ",
-  "oauth": "\n          <h2>OAuth 2.1 Flows</h2>\n          <p>\n            Use Authorization Code + PKCE for browser and mobile apps. Use Client\n            Credentials for service-to-service communication.\n          </p>\n          <h3>Recommended By Client Type</h3>\n          <ul>\n            <li>Public apps: Authorization Code with PKCE.</li>\n            <li>Backend services: Client Credentials.</li>\n            <li>Long sessions: Refresh tokens with rotation.</li>\n          </ul>\n        ",
-  "rbac": "\n          <h2>Roles and Permissions</h2>\n          <p>\n            Define roles based on job functions and map permissions to each role.\n            Keep permissions granular to reduce risk.\n          </p>\n          <h3>Example Role Strategy</h3>\n          <ul>\n            <li>Admin: full tenant-level management permissions.</li>\n            <li>Operator: run operational tasks with limited settings access.</li>\n            <li>Viewer: read-only reports and dashboards.</li>\n          </ul>\n        ",
-  "tenants": "\n          <h2>Multi-Tenant Setup</h2>\n          <p>\n            Isolate users, roles, and policies by tenant. Include tenant identifier\n            in tokens and enforce checks in backend APIs.\n          </p>\n          <h3>Implementation Notes</h3>\n          <ul>\n            <li>Store tenant metadata separately from global platform settings.</li>\n            <li>Validate tenant context on every privileged request.</li>\n            <li>Apply tenant-specific MFA and session policies.</li>\n          </ul>\n        ",
-  "mfa": "\n          <h2>MFA Policies</h2>\n          <p>\n            Strengthen authentication with policy-based MFA. Enforce higher security\n            controls for administrators and sensitive actions.\n          </p>\n          <h3>Common Enforcement Rules</h3>\n          <ul>\n            <li>Always require MFA for admin and support roles.</li>\n            <li>Challenge users again for high-risk operations.</li>\n            <li>Allow tenant-level exemptions only with approval.</li>\n          </ul>\n        ",
-  "audit": "\n          <h2>Audit Logs</h2>\n          <p>\n            Keep immutable logs for sign-ins, permission changes, token revocations,\n            and policy updates.\n          </p>\n          <h3>What To Capture</h3>\n          <ul>\n            <li>Actor identity and tenant context.</li>\n            <li>Action timestamp and source IP.</li>\n            <li>Before/after values for security-critical changes.</li>\n          </ul>\n        ",
-  "api": "\n          <h2>API Integration</h2>\n          <p>\n            Protect APIs by validating access tokens and enforcing role + tenant\n            claims before executing business logic.\n          </p>\n          <h3>Backend Validation Flow</h3>\n          <ul>\n            <li>Validate token signature and expiration.</li>\n            <li>Check audience and issuer claims.</li>\n            <li>Authorize against roles and tenant boundaries.</li>\n          </ul>\n        "
-};
+const docsTopicGroups = document.querySelectorAll("[data-topic-group]");
 
-const topicButtons = document.querySelectorAll(".topic-link");
-const docsContent = document.getElementById("docs-content");
+docsTopicGroups.forEach((group) => {
+  const toggle = group.querySelector(".topic-group-toggle");
+  const submenu = group.querySelector(".topic-submenu");
 
-function renderTopic(topicKey) {
-  docsContent.innerHTML = topicData[topicKey] || "<h2>Topic not found</h2>";
-}
+  if (!toggle || !submenu) {
+    return;
+  }
 
-topicButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    topicButtons.forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    renderTopic(button.dataset.topic);
+  toggle.addEventListener("click", () => {
+    const isOpen = toggle.getAttribute("aria-expanded") === "true";
+    const nextState = !isOpen;
+
+    toggle.setAttribute("aria-expanded", String(nextState));
+    group.classList.toggle("is-open", nextState);
+    submenu.hidden = !nextState;
   });
 });
-
-renderTopic("getting-started");
     </script>
     <script>
 document

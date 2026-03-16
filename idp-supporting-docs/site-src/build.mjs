@@ -8,6 +8,7 @@ import { pages } from "./pages.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const siteRoot = path.resolve(__dirname, "..");
+const defaultDeployDir = "D:\\IIS Deployment\\IDPMarketing";
 
 const generatedArtifacts = [
   "index.html",
@@ -23,6 +24,32 @@ const generatedArtifacts = [
   "UseCases",
 ];
 
+const staticArtifacts = ["assets", "Auth Code Flow.svg"];
+
+function resolveDeployDir() {
+  const cliArgs = process.argv.slice(2);
+  const deployArgIndex = cliArgs.findIndex((arg) => arg === "--deployDir");
+  const deployArgValue =
+    deployArgIndex >= 0 ? cliArgs[deployArgIndex + 1] : undefined;
+  const envValue = process.env.IDP_SUPPORTING_DOCS_DEPLOY_DIR;
+  const deployDir = deployArgValue || envValue || defaultDeployDir;
+
+  return path.resolve(deployDir);
+}
+
+function copyArtifact(sourceRoot, targetRoot, artifact) {
+  const sourcePath = path.join(sourceRoot, artifact);
+
+  if (!fs.existsSync(sourcePath)) {
+    return;
+  }
+
+  const targetPath = path.join(targetRoot, artifact);
+  fs.rmSync(targetPath, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  fs.cpSync(sourcePath, targetPath, { recursive: true });
+}
+
 for (const artifact of generatedArtifacts) {
   fs.rmSync(path.join(siteRoot, artifact), { recursive: true, force: true });
 }
@@ -37,4 +64,14 @@ for (const page of pages) {
   fs.writeFileSync(outputPath, html, "utf8");
 }
 
+const deployDir = resolveDeployDir();
+const artifactsToCopy = [...generatedArtifacts, ...staticArtifacts];
+
+fs.mkdirSync(deployDir, { recursive: true });
+
+for (const artifact of artifactsToCopy) {
+  copyArtifact(siteRoot, deployDir, artifact);
+}
+
 console.log(`Generated ${pages.length} HTML pages in ${siteRoot}`);
+console.log(`Copied site output to ${deployDir}`);
