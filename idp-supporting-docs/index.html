@@ -41,12 +41,17 @@
     <main>
 
     <header class="main-header">
-      <h1>One Identity for Every App and Service</h1>
-      <p>
-        OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
-        experience, simple to configure &amp; deploy, and easy to operate.
-      </p>
-      <a class="btn" href="contact/">Schedule a Demo</a>
+      <div class="hero-content">
+        <h1>One Identity for Every App and Service</h1>
+        <p>
+          OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
+          experience, simple to configure &amp; deploy, and easy to operate.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="docs/getting-started/">Get Started</a>
+          <a class="btn" href="contact/">Schedule a Demo</a>
+        </div>
+      </div>
     </header>
 
     <section class="origin-section">
@@ -65,7 +70,7 @@
     </section>
 
     <section id="usecase-saas" class="container">
-      <h2>Why Use a Dedicated Identity Platform?</h2>
+      <h2>Core Features</h2>
       <div class="grid feature-grid">
 
         <div class="card feature-card">
@@ -105,7 +110,7 @@
           </div>
           <h3>Centralized Identity</h3>
           <p>
-            Manage users, login, and access across web apps, APIs, and internal tools from one place.
+            Manage users, roles, tenant policies, and identity operations from one control place.
           </p>
         </div>
 
@@ -134,9 +139,9 @@
               <path d="M41 20l7 7-7 7"></path>
             </svg>
           </div>
-          <h3>API Token Access</h3>
+          <h3>API Authorization</h3>
           <p>
-            Secure access tokens let APIs and services authenticate and authorize every request consistently.
+            Protect APIs with scopes, token validation, and consistent access control across services.
           </p>
         </div>
 
@@ -167,71 +172,72 @@
               <path d="M44 35v5l4 3"></path>
             </svg>
           </div>
-          <h3>Operational Visibility</h3>
+          <h3>Admin Portal</h3>
           <p>
-            Monitor authentication activity from one dashboard for faster operations and investigation.
+            UI to manage tenants, applications, users, and security settings, with a dashboard for monitoring authentication activity.
           </p>
         </div>
       </div>
     </section>
 
-    <section class="container build-vs-buy">
-      <h2>Build vs Buy Identity Provider</h2>
+    <section class="build-vs-buy-shell">
+      <svg class="build-vs-buy-wave" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 40C180 120 360 10 540 48C720 86 900 150 1080 104C1260 58 1350 12 1440 34V0H0Z"></path>
+      </svg>
+      <div class="container build-vs-buy">
+        <h2>Build vs Buy Identity Provider</h2>
 
-      <p class="section-intro">
-        Building authentication and access control systems from scratch
-        becomes complex as applications scale. TokenTresor provides a
-        ready-to-use identity platform so teams can focus on building
-        product features instead of security infrastructure.
-      </p>
+        <p class="section-intro">
+          Building authentication and access control systems from scratch
+          becomes complex as applications scale. TokenTresor provides a
+          ready-to-use identity platform so teams can focus on building
+          product features instead of security infrastructure.
+        </p>
 
-      <div class="comparison-wrap">
-        <div class="comparison-table">
-          <div class="comparison-column card">
-            <h3>Build Authentication Yourself</h3>
-            <div class="comparison-row">
-              <span class="comparison-label">Authentication Implementation</span>
-              <p>Design login flows and security protocols</p>
+        <div class="comparison-wrap">
+          <div class="comparison-table">
+            <div class="comparison-column card">
+              <h3>Build Authentication Yourself</h3>
+              <div class="comparison-row comparison-row-compact">
+                <p>Design login + OAuth flows</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Build user, rbac &amp; tenant management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Implement token management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Maintain security policies</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Weeks or Months of development effort</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Requires deep knowledge of standard protocols</p>
+              </div>
             </div>
-            <div class="comparison-row">
-              <span class="comparison-label">User Management</span>
-              <p>Build user management from scratch</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Security Features</span>
-              <p>Implement password hashing, MFA, and security policies</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">API Authentication</span>
-              <p>Build custom API authentication logic</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Time to Launch</span>
-              <p>Months of development effort</p>
-            </div>
-          </div>
 
-          <div class="comparison-column comparison-column-primary card">
-            <h3>Use Token IDP</h3>
-            <div class="comparison-row">
-              <span class="comparison-label">Authentication Implementation</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Ready-to-use OAuth2 and OpenID Connect</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">User Management</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Centralized user and tenant management</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Security Features</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in security features including MFA</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">API Authentication</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Secure token-based access for APIs</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Time to Launch</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Integrate authentication in minutes</p>
+            <div class="comparison-column comparison-column-primary card">
+              <h3>Use TokenIDP</h3>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>OAuth2 + OpenID Connect ready</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in user, rbac &amp; tenant management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in token management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>MFA &amp; security policies</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Integrate in minutes</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>No deep protocol knowledge required</p>
+              </div>
             </div>
           </div>
         </div>
@@ -243,19 +249,223 @@
       <p class="architecture-intro">
         Your application delegates authentication and authorization to the
         Identity Platform, while keeping full control of business logic and
-        data.
+        data. The platform issues secure tokens after login. Your backend
+        validates these tokens and enforces access rules based on tenant and
+        roles.
       </p>
 
-      <div class="diagram">
-        User Browser / Mobile App | | (Login / SSO) v Identity Platform (Auth,
-        Tokens, RBAC) | | (Access Token with roles &amp; tenant) v Your API /
-        Backend Services | v Business Data &amp; Applications
+      <figure class="workflow-figure diagram-placeholder">
+        <img
+          src="Integration Workflow.png"
+          alt="Integration workflow showing the application, identity platform, and token-based authorization flow"
+        />
+      </figure>
+    </section>
+    
+    <section class="container standards-section">
+      <h2>Standards-Based Authentication</h2>
+      <p class="section-intro">
+        TokenIDP is designed around the standards most teams need in production,
+        so applications can integrate with clear protocol boundaries instead of
+        custom authentication logic.
+      </p>
+      <div class="standards-layout">
+        <div class="card standards-copy">
+          <ul class="standards-list">
+            <li><strong>OAuth 2.1-aligned architecture</strong><br />Designed for secure, standards-driven authorization without custom implementations.</li>
+            <li><strong>OpenID Connect (OIDC) identity layer</strong><br />Enables reliable authentication and user identity verification.</li>
+            <li><strong>Authorization Code Flow with PKCE</strong><br />Industry-recommended flow for web and mobile applications, preventing authorization code interception.</li>
+            <li><strong>Client Credentials Flow for machine-to-machine access</strong><br />Ideal for backend services, APIs, and microservices communication.</li>
+            <li><strong>Device Authorization Flow (Device Flow)</strong><br />Enables secure authentication for devices with limited input capabilities such as TVs and IoT devices.</li>
+            <li><strong>Secure Refresh Token handling</strong><br />Supports long-lived sessions with controlled and secure token renewal.</li>
+            <li><strong>Token Revocation support</strong><br />Allows clients to invalidate access or refresh tokens to immediately terminate sessions and prevent unauthorized access.</li>
+          </ul>
+        </div>
+        <div class="card standards-diagram-card">
+
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: OAUTH FLOW DIAGRAMS</text>
+          </svg>
+        </div>
+        </div>
       </div>
+    </section>
 
-      <p class="mt-16">
-        The platform issues secure tokens after login. Your backend validates
-        these tokens and enforces access rules based on tenant and roles.
+    <section class="container admin-portal-section">
+      <h2>Admin Portal</h2>
+      <p class="section-intro">
+        Operate tenants, applications, users, and policy settings through a
+        central management interface built for support teams and platform owners.
       </p>
+      <div class="admin-carousel card" data-carousel>
+        <div class="admin-carousel-toolbar">
+          <h3>Portal Screens</h3>
+          <div class="carousel-controls">
+            <button class="carousel-control" type="button" data-carousel-prev aria-label="Previous slide">
+              Prev
+            </button>
+            <button class="carousel-control" type="button" data-carousel-next aria-label="Next slide">
+              Next
+            </button>
+          </div>
+        </div>
+        <div class="admin-carousel-viewport">
+
+          <article class="admin-slide is-active">
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: DASHBOARD</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>Dashboard</h3>
+              <p>Monitor tenant activity, token posture, and operational signals from one overview screen.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: APPLICATIONS</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>Applications</h3>
+              <p>Register clients, grant scopes, and manage redirect URIs and secrets in one place.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: TENANT MANAGEMENT</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>Tenant Management</h3>
+              <p>Configure tenant-specific boundaries, branding, and policy settings without custom admin tooling.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: USER MANAGEMENT</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>User Management</h3>
+              <p>Manage users, status, roles, and lifecycle operations from a central identity directory.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: ROLES & PERMISSIONS</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>Roles & Permissions</h3>
+              <p>Model access with controlled role definitions and permission boundaries for operators and applications.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: MFA POLICIES</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>MFA Policies</h3>
+              <p>Apply stronger authentication requirements for administrators and higher-risk access scenarios.</p>
+            </div>
+          </article>
+
+          <article class="admin-slide" hidden>
+            
+        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: EXTERNAL PROVIDERS</text>
+          </svg>
+        </div>
+            <div class="admin-slide-copy">
+              <h3>External Providers</h3>
+              <p>Connect third-party identity providers while keeping TokenTresor as the central control plane.</p>
+            </div>
+          </article>
+        </div>
+        <div class="carousel-dots">
+          <button class="carousel-dot is-active" type="button" aria-label="Go to slide 1" aria-current="true"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 2" aria-current="false"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 3" aria-current="false"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 4" aria-current="false"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 5" aria-current="false"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 6" aria-current="false"></button>
+          <button class="carousel-dot" type="button" aria-label="Go to slide 7" aria-current="false"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="container integrate-section">
+      <h2>Integrate in Minutes</h2>
+      <p class="section-intro">
+        Developers can get started with the existing host integration patterns,
+        the React SDK, and discovery-based configuration instead of building
+        authentication plumbing from zero.
+      </p>
+      <div class="integration-layout">
+        <div class="card integration-points">
+          <ul class="standards-list">
+            <li>NuGet package</li>
+            <li>React SDK</li>
+            <li>OAuth discovery endpoint</li>
+          </ul>
+        </div>
+        <div class="card integration-code-card">
+          <pre class="integration-code"><code>services.AddTokenTresorAuthentication();</code></pre>
+        </div>
+      </div>
     </section>
 
     <section class="container contact-section">
@@ -280,6 +490,10 @@
         </div>
 
         <div class="contact-form-wrap">
+          <p class="contact-form-lead">
+            Have questions about integrating TokenTresor into your architecture?
+            Our team can help with deployment, integration, and best practices.
+          </p>
           <h3>Reach us quickly</h3>
           <form class="contact-form">
             <input
@@ -321,10 +535,57 @@
         </div>
       </div>
     </section>
+
+    <section class="container final-cta-section">
+      <div class="final-cta-card">
+        <h2>Start Building Secure Applications Today</h2>
+        <div class="final-cta-actions">
+          <a class="btn" href="docs/getting-started/">Get Started</a>
+          <a class="btn" href="docs/">View Documentation</a>
+        </div>
+      </div>
+    </section>
     </main>
     <footer>
       &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.
     </footer>
+    <script>
+document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+  const slides = Array.from(carousel.querySelectorAll(".admin-slide"));
+  const dots = Array.from(carousel.querySelectorAll(".carousel-dot"));
+  const prev = carousel.querySelector("[data-carousel-prev]");
+  const next = carousel.querySelector("[data-carousel-next]");
+  let index = 0;
+
+  if (!slides.length) {
+    return;
+  }
+
+  const show = (nextIndex) => {
+    index = (nextIndex + slides.length) % slides.length;
+
+    slides.forEach((slide, slideIndex) => {
+      const active = slideIndex === index;
+      slide.classList.toggle("is-active", active);
+      slide.hidden = !active;
+    });
+
+    dots.forEach((dot, dotIndex) => {
+      const active = dotIndex === index;
+      dot.classList.toggle("is-active", active);
+      dot.setAttribute("aria-current", active ? "true" : "false");
+    });
+  };
+
+  prev?.addEventListener("click", () => show(index - 1));
+  next?.addEventListener("click", () => show(index + 1));
+  dots.forEach((dot, dotIndex) => {
+    dot.addEventListener("click", () => show(dotIndex));
+  });
+
+  show(0);
+});
+    </script>
     <script>
 document
   .querySelectorAll("a, button, summary, [role='button']")

@@ -1,3 +1,5 @@
+import { createDocsPages } from "./docs.mjs";
+
 const ICONS = {
   selfHosted: `
             <svg viewBox="0 0 64 64" role="presentation">
@@ -107,6 +109,68 @@ ${ICONS[card.icon]}
             ${card.description}
           </p>
         </div>`;
+}
+
+function renderPlaceholderGraphic(label, modifierClass = "") {
+  return `
+        <div class="placeholder-figure${modifierClass ? ` ${modifierClass}` : ""}" aria-hidden="true">
+          <svg viewBox="0 0 640 360" role="presentation">
+            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
+            <path d="M92 116h456"></path>
+            <path d="M92 180h320"></path>
+            <path d="M92 244h388"></path>
+            <text x="320" y="302" text-anchor="middle">${label}</text>
+          </svg>
+        </div>`;
+}
+
+function renderAdminCarouselSlide(slide, index) {
+  return `
+          <article class="admin-slide${index === 0 ? " is-active" : ""}"${index === 0 ? "" : " hidden"}>
+            ${renderPlaceholderGraphic(`PLACEHOLDER: ${slide.title.toUpperCase()}`, "placeholder-figure-compact")}
+            <div class="admin-slide-copy">
+              <h3>${slide.title}</h3>
+              <p>${slide.description}</p>
+            </div>
+          </article>`;
+}
+
+function landingPageScript() {
+  return `document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+  const slides = Array.from(carousel.querySelectorAll(".admin-slide"));
+  const dots = Array.from(carousel.querySelectorAll(".carousel-dot"));
+  const prev = carousel.querySelector("[data-carousel-prev]");
+  const next = carousel.querySelector("[data-carousel-next]");
+  let index = 0;
+
+  if (!slides.length) {
+    return;
+  }
+
+  const show = (nextIndex) => {
+    index = (nextIndex + slides.length) % slides.length;
+
+    slides.forEach((slide, slideIndex) => {
+      const active = slideIndex === index;
+      slide.classList.toggle("is-active", active);
+      slide.hidden = !active;
+    });
+
+    dots.forEach((dot, dotIndex) => {
+      const active = dotIndex === index;
+      dot.classList.toggle("is-active", active);
+      dot.setAttribute("aria-current", active ? "true" : "false");
+    });
+  };
+
+  prev?.addEventListener("click", () => show(index - 1));
+  next?.addEventListener("click", () => show(index + 1));
+  dots.forEach((dot, dotIndex) => {
+    dot.addEventListener("click", () => show(dotIndex));
+  });
+
+  show(0);
+});`;
 }
 
 function renderUseCasePage(useCase) {
@@ -779,6 +843,10 @@ function renderContactSection() {
         </div>
 
         <div class="contact-form-wrap">
+          <p class="contact-form-lead">
+            Have questions about integrating TokenTresor into your architecture?
+            Our team can help with deployment, integration, and best practices.
+          </p>
           <h3>Reach us quickly</h3>
           <form class="contact-form">
             <input
@@ -836,14 +904,60 @@ ${renderContactSection()}`;
 
 function renderLandingPage(helpers) {
   const contactHref = helpers.relativePagePath(ROUTES.contact);
+  const docsHref = helpers.relativePagePath(ROUTES.docs);
+  const getStartedHref = helpers.relativePagePath("docs/getting-started/index.html");
+  const integrationWorkflowDiagram = helpers.relativePath("Integration Workflow.png");
+  const adminSlides = [
+    {
+      title: "Dashboard",
+      description:
+        "Monitor tenant activity, token posture, and operational signals from one overview screen.",
+    },
+    {
+      title: "Applications",
+      description:
+        "Register clients, grant scopes, and manage redirect URIs and secrets in one place.",
+    },
+    {
+      title: "Tenant Management",
+      description:
+        "Configure tenant-specific boundaries, branding, and policy settings without custom admin tooling.",
+    },
+    {
+      title: "User Management",
+      description:
+        "Manage users, status, roles, and lifecycle operations from a central identity directory.",
+    },
+    {
+      title: "Roles & Permissions",
+      description:
+        "Model access with controlled role definitions and permission boundaries for operators and applications.",
+    },
+    {
+      title: "MFA Policies",
+      description:
+        "Apply stronger authentication requirements for administrators and higher-risk access scenarios.",
+    },
+    {
+      title: "External Providers",
+      description:
+        "Connect third-party identity providers while keeping TokenTresor as the central control plane.",
+    },
+  ];
+
   return `
     <header class="main-header">
-      <h1>One Identity for Every App and Service</h1>
-      <p>
-        OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
-        experience, simple to configure &amp; deploy, and easy to operate.
-      </p>
-      <a class="btn" href="${contactHref}">Schedule a Demo</a>
+      <div class="hero-content">
+        <h1>One Identity for Every App and Service</h1>
+        <p>
+          OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
+          experience, simple to configure &amp; deploy, and easy to operate.
+        </p>
+        <div class="hero-actions">
+          <a class="btn" href="${getStartedHref}">Get Started</a>
+          <a class="btn" href="${contactHref}">Schedule a Demo</a>
+        </div>
+      </div>
     </header>
 
     <section class="origin-section">
@@ -862,7 +976,7 @@ function renderLandingPage(helpers) {
     </section>
 
     <section id="usecase-saas" class="container">
-      <h2>Why Use a Dedicated Identity Platform?</h2>
+      <h2>Core Features</h2>
       <div class="grid feature-grid">
 ${[
   {
@@ -875,7 +989,7 @@ ${[
     icon: "centralized",
     title: "Centralized Identity",
     description:
-      "Manage users, login, and access across web apps, APIs, and internal tools from one place.",
+      "Manage users, roles, tenant policies, and identity operations from one control place.",
   },
   {
     icon: "security",
@@ -885,9 +999,9 @@ ${[
   },
   {
     icon: "api",
-    title: "API Token Access",
+    title: "API Authorization",
     description:
-      "Secure access tokens let APIs and services authenticate and authorize every request consistently.",
+      "Protect APIs with scopes, token validation, and consistent access control across services.",
   },
   {
     icon: "growth",
@@ -897,9 +1011,9 @@ ${[
   },
   {
     icon: "audit",
-    title: "Operational Visibility",
+    title: "Admin Portal",
     description:
-      "Monitor authentication activity from one dashboard for faster operations and investigation.",
+      "UI to manage tenants, applications, users, and security settings, with a dashboard for monitoring authentication activity.",
   },
 ]
   .map(renderFeatureCard)
@@ -907,63 +1021,64 @@ ${[
       </div>
     </section>
 
-    <section class="container build-vs-buy">
-      <h2>Build vs Buy Identity Provider</h2>
+    <section class="build-vs-buy-shell">
+      <svg class="build-vs-buy-wave" viewBox="0 0 1440 140" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0 40C180 120 360 10 540 48C720 86 900 150 1080 104C1260 58 1350 12 1440 34V0H0Z"></path>
+      </svg>
+      <div class="container build-vs-buy">
+        <h2>Build vs Buy Identity Provider</h2>
 
-      <p class="section-intro">
-        Building authentication and access control systems from scratch
-        becomes complex as applications scale. TokenTresor provides a
-        ready-to-use identity platform so teams can focus on building
-        product features instead of security infrastructure.
-      </p>
+        <p class="section-intro">
+          Building authentication and access control systems from scratch
+          becomes complex as applications scale. TokenTresor provides a
+          ready-to-use identity platform so teams can focus on building
+          product features instead of security infrastructure.
+        </p>
 
-      <div class="comparison-wrap">
-        <div class="comparison-table">
-          <div class="comparison-column card">
-            <h3>Build Authentication Yourself</h3>
-            <div class="comparison-row">
-              <span class="comparison-label">Authentication Implementation</span>
-              <p>Design login flows and security protocols</p>
+        <div class="comparison-wrap">
+          <div class="comparison-table">
+            <div class="comparison-column card">
+              <h3>Build Authentication Yourself</h3>
+              <div class="comparison-row comparison-row-compact">
+                <p>Design login + OAuth flows</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Build user, rbac &amp; tenant management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Implement token management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Maintain security policies</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Weeks or Months of development effort</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p>Requires deep knowledge of standard protocols</p>
+              </div>
             </div>
-            <div class="comparison-row">
-              <span class="comparison-label">User Management</span>
-              <p>Build user management from scratch</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Security Features</span>
-              <p>Implement password hashing, MFA, and security policies</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">API Authentication</span>
-              <p>Build custom API authentication logic</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Time to Launch</span>
-              <p>Months of development effort</p>
-            </div>
-          </div>
 
-          <div class="comparison-column comparison-column-primary card">
-            <h3>Use Token IDP</h3>
-            <div class="comparison-row">
-              <span class="comparison-label">Authentication Implementation</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Ready-to-use OAuth2 and OpenID Connect</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">User Management</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Centralized user and tenant management</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Security Features</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in security features including MFA</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">API Authentication</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Secure token-based access for APIs</p>
-            </div>
-            <div class="comparison-row">
-              <span class="comparison-label">Time to Launch</span>
-              <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Integrate authentication in minutes</p>
+            <div class="comparison-column comparison-column-primary card">
+              <h3>Use TokenIDP</h3>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>OAuth2 + OpenID Connect ready</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in user, rbac &amp; tenant management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Built-in token management</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>MFA &amp; security policies</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>Integrate in minutes</p>
+              </div>
+              <div class="comparison-row comparison-row-compact">
+                <p><span class="comparison-check" aria-hidden="true">&#10003;</span>No deep protocol knowledge required</p>
+              </div>
             </div>
           </div>
         </div>
@@ -975,21 +1090,106 @@ ${[
       <p class="architecture-intro">
         Your application delegates authentication and authorization to the
         Identity Platform, while keeping full control of business logic and
-        data.
+        data. The platform issues secure tokens after login. Your backend
+        validates these tokens and enforces access rules based on tenant and
+        roles.
       </p>
 
-      <div class="diagram">
-        User Browser / Mobile App | | (Login / SSO) v Identity Platform (Auth,
-        Tokens, RBAC) | | (Access Token with roles &amp; tenant) v Your API /
-        Backend Services | v Business Data &amp; Applications
-      </div>
-
-      <p class="mt-16">
-        The platform issues secure tokens after login. Your backend validates
-        these tokens and enforces access rules based on tenant and roles.
-      </p>
+      <figure class="workflow-figure diagram-placeholder">
+        <img
+          src="${integrationWorkflowDiagram}"
+          alt="Integration workflow showing the application, identity platform, and token-based authorization flow"
+        />
+      </figure>
     </section>
-${renderContactSection()}`;
+    
+    <section class="container standards-section">
+      <h2>Standards-Based Authentication</h2>
+      <p class="section-intro">
+        TokenIDP is designed around the standards most teams need in production,
+        so applications can integrate with clear protocol boundaries instead of
+        custom authentication logic.
+      </p>
+      <div class="standards-layout">
+        <div class="card standards-copy">
+          <ul class="standards-list">
+            <li><strong>OAuth 2.1-aligned architecture</strong><br />Designed for secure, standards-driven authorization without custom implementations.</li>
+            <li><strong>OpenID Connect (OIDC) identity layer</strong><br />Enables reliable authentication and user identity verification.</li>
+            <li><strong>Authorization Code Flow with PKCE</strong><br />Industry-recommended flow for web and mobile applications, preventing authorization code interception.</li>
+            <li><strong>Client Credentials Flow for machine-to-machine access</strong><br />Ideal for backend services, APIs, and microservices communication.</li>
+            <li><strong>Device Authorization Flow (Device Flow)</strong><br />Enables secure authentication for devices with limited input capabilities such as TVs and IoT devices.</li>
+            <li><strong>Secure Refresh Token handling</strong><br />Supports long-lived sessions with controlled and secure token renewal.</li>
+            <li><strong>Token Revocation support</strong><br />Allows clients to invalidate access or refresh tokens to immediately terminate sessions and prevent unauthorized access.</li>
+          </ul>
+        </div>
+        <div class="card standards-diagram-card">
+${renderPlaceholderGraphic("PLACEHOLDER: OAUTH FLOW DIAGRAMS", "placeholder-figure-compact")}
+        </div>
+      </div>
+    </section>
+
+    <section class="container admin-portal-section">
+      <h2>Admin Portal</h2>
+      <p class="section-intro">
+        Operate tenants, applications, users, and policy settings through a
+        central management interface built for support teams and platform owners.
+      </p>
+      <div class="admin-carousel card" data-carousel>
+        <div class="admin-carousel-toolbar">
+          <h3>Portal Screens</h3>
+          <div class="carousel-controls">
+            <button class="carousel-control" type="button" data-carousel-prev aria-label="Previous slide">
+              Prev
+            </button>
+            <button class="carousel-control" type="button" data-carousel-next aria-label="Next slide">
+              Next
+            </button>
+          </div>
+        </div>
+        <div class="admin-carousel-viewport">
+${adminSlides.map(renderAdminCarouselSlide).join("\n")}
+        </div>
+        <div class="carousel-dots">
+${adminSlides
+  .map(
+    (_, index) => `          <button class="carousel-dot${index === 0 ? " is-active" : ""}" type="button" aria-label="Go to slide ${index + 1}" aria-current="${index === 0 ? "true" : "false"}"></button>`,
+  )
+  .join("\n")}
+        </div>
+      </div>
+    </section>
+
+    <section class="container integrate-section">
+      <h2>Integrate in Minutes</h2>
+      <p class="section-intro">
+        Developers can get started with the existing host integration patterns,
+        the React SDK, and discovery-based configuration instead of building
+        authentication plumbing from zero.
+      </p>
+      <div class="integration-layout">
+        <div class="card integration-points">
+          <ul class="standards-list">
+            <li>NuGet package</li>
+            <li>React SDK</li>
+            <li>OAuth discovery endpoint</li>
+          </ul>
+        </div>
+        <div class="card integration-code-card">
+          <pre class="integration-code"><code>services.AddTokenTresorAuthentication();</code></pre>
+        </div>
+      </div>
+    </section>
+${renderContactSection()}
+
+    <section class="container final-cta-section">
+      <div class="final-cta-card">
+        <h2>Start Building Secure Applications Today</h2>
+        <div class="final-cta-actions">
+          <a class="btn" href="${getStartedHref}">Get Started</a>
+          <a class="btn" href="${docsHref}">View Documentation</a>
+        </div>
+      </div>
+    </section>`;
 }
 
 const useCases = [
@@ -1496,14 +1696,7 @@ const blogArticles = [
   },
 ];
 
-const docsPages = DOC_PAGES.map((topic) => ({
-  outputPath: topic.route,
-  title: topic.title,
-  bodyClass: "docs-page",
-  activeNav: "docs",
-  render: (helpers) => renderDocsPage(topic, helpers),
-  extraScripts: () => [docsScript()],
-}));
+const docsPages = createDocsPages();
 
 export const pages = [
   {
@@ -1513,6 +1706,7 @@ export const pages = [
     activeNav: null,
     brandLogo: "tokentresor-tt-lock.svg",
     render: renderLandingPage,
+    extraScripts: () => [landingPageScript()],
   },
   ...docsPages,
   {

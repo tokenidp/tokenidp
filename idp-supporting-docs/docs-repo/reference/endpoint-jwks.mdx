@@ -1,0 +1,54 @@
+# `/.well-known/jwks.json`
+
+Expose the public signing keys that clients and APIs use to validate TokenIDP-issued JWTs.
+
+> Audience: Developers
+>
+> Read this page when configuring token validation or planning signing key rotation.
+
+## Method
+
+- `GET /.well-known/jwks.json`
+
+## Authentication Requirements
+
+- None
+
+## Working Example
+
+## Example Request
+
+```bash
+curl https://localhost:5001/.well-known/jwks.json
+```
+
+## Example Response
+
+```json
+{
+  "keys": [
+    {
+      "kty": "RSA",
+      "use": "sig",
+      "alg": "RS256",
+      "kid": "2026-03-16",
+      "n": "vT0z6nKk...",
+      "e": "AQAB"
+    }
+  ]
+}
+```
+
+## Error Responses
+
+- `500` in production if certificate-based signing is required but no certificate can be loaded
+
+## Common Pitfalls
+
+- Copying public keys into downstream services manually instead of using JWKS discovery.
+- Forgetting that key rotation changes the `kid`.
+
+## Troubleshooting Tips
+
+- If a downstream API rejects signatures, compare the token header `kid` to the active key in JWKS.
+- If production JWKS is unavailable, verify `TokenOptions:CertificateThumbprint` or `TokenOptions:CertificateSubjectName`.

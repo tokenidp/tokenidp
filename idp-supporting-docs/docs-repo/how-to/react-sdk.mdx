@@ -1,0 +1,92 @@
+# React SDK Integration
+
+Integrate a React single-page app with TokenIDP using Authorization Code + PKCE.
+
+> Audience: Developers
+>
+> Read this guide when you need a browser-based login flow with token handling and callback support.
+
+> Prerequisites
+>
+> - A registered public Application
+> - Redirect URI such as `http://localhost:5173/callback`
+> - TokenIDP discovery endpoint reachable from the browser
+
+## Working Example
+
+## Install
+
+```bash
+npm install @smartdevcon/idp-react
+```
+
+## Configure the Provider
+
+```tsx
+import { IdpAuthProvider } from "tokentresor-idp-react";
+
+export function AppProviders() {
+  return (
+    <IdpAuthProvider
+      config={{
+        authority: "https://localhost:5001",
+        clientId: "tokenidp-react-dev",
+        redirectUri: "http://localhost:5173/callback",
+        postLoginRedirectUri: "/dashboard",
+        scope: "openid profile email offline_access api.read",
+        storage: "localStorage"
+      }}
+    >
+      <App />
+    </IdpAuthProvider>
+  );
+}
+```
+
+## Handle Login and Logout
+
+```tsx
+import { useAuth } from "@smartdevcon/idp-react";
+
+export function SessionControls() {
+  const { login, logout, isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) {
+    return <button onClick={() => login()}>Sign in</button>;
+  }
+
+  return (
+    <>
+      <span>{user?.profile?.email}</span>
+      <button onClick={() => logout()}>Sign out</button>
+    </>
+  );
+}
+```
+
+## Add a Callback Route
+
+```tsx
+import { AuthCallback } from "@smartdevcon/idp-react";
+import { Route, Routes } from "react-router-dom";
+
+export function RouterConfig() {
+  return (
+    <Routes>
+      <Route path="/callback" element={<AuthCallback />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
+  );
+}
+```
+
+## Common Pitfalls
+
+- Registering the Application as confidential instead of public.
+- Using a redirect URI in the SDK that is not registered in TokenIDP.
+- Storing tokens in insecure custom browser storage without a clear threat model.
+
+## Troubleshooting Tips
+
+- If the callback page never resolves, confirm the SDK is preserving the PKCE verifier between the login redirect and the callback exchange.
+- If logout returns to the wrong place, verify the Application's logout redirect URIs and the `/logout` request parameters.

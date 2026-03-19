@@ -1,0 +1,68 @@
+# `/introspect`
+
+Validate token state and return an activity result for trusted relying services.
+
+> Audience: Developers, CTOs
+>
+> Read this page when a service needs centralized token status checks.
+
+> Prerequisites
+>
+> - Token value to inspect
+> - A deployment decision on which callers are allowed to introspect
+
+## Method
+
+- `POST /introspect`
+
+## Authentication Requirements
+
+- Current implementation accepts a JSON request body.
+- Restrict this endpoint to trusted internal callers or an API gateway policy in production.
+
+## Parameters
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `token` | Yes | Token to inspect |
+
+## Working Example
+
+## Example Request
+
+```bash
+curl -X POST https://localhost:5001/introspect \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDMtMTYifQ..."
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "isSuccess": true,
+  "data": {
+    "active": true,
+    "sub": "42",
+    "client_id": "orders-worker",
+    "scope": "orders.read",
+    "exp": 1773651025
+  }
+}
+```
+
+## Error Responses
+
+- `400 Bad Request` with `Invalid request.` when the token field is empty
+- Inactive-token results when the token is expired, revoked, or otherwise invalid
+
+## Common Pitfalls
+
+- Exposing introspection publicly.
+- Logging full token values in troubleshooting code.
+
+## Troubleshooting Tips
+
+- If `active` is false unexpectedly, compare expiry time, revocation state, and signing key validity.

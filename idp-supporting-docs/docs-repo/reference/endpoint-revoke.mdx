@@ -1,0 +1,64 @@
+# `/revoke`
+
+Revoke a Refresh Token and prevent future refresh exchanges with that token value.
+
+> Audience: Developers, CTOs
+>
+> Read this page when implementing sign-out, compromise response, or token hygiene workflows.
+
+> Prerequisites
+>
+> - Token value to revoke
+> - A reason string for auditability
+
+## Method
+
+- `DELETE /revoke`
+
+## Authentication Requirements
+
+- Current implementation accepts a JSON request body and records caller IP.
+- Restrict this endpoint to trusted callers or protect it at the edge for production deployments.
+
+## Parameters
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `token` | Yes | Refresh Token to revoke |
+| `reasonRevoked` | Recommended | Human-readable reason |
+| `ipAddress` | No | Populated by the server |
+
+## Working Example
+
+## Example Request
+
+```bash
+curl -X DELETE https://localhost:5001/revoke \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "35b31ab0-53a1-4566-b2ff-4460c70d9ad3",
+    "reasonRevoked": "suspected_compromise"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "message": "Refresh token revoked."
+}
+```
+
+## Error Responses
+
+- Domain validation errors if the token is missing or invalid
+- Operational failures if the revocation store cannot persist the change
+
+## Common Pitfalls
+
+- Assuming revocation is identical to RFC 7009 form posts.
+- Leaving the endpoint exposed more broadly than necessary.
+
+## Troubleshooting Tips
+
+- If revocation succeeds but the user still has access, check for already-issued Access Tokens or a newer rotated Refresh Token.

@@ -1,0 +1,82 @@
+# `/token`
+
+Exchange authorization artifacts for tokens or obtain tokens using non-browser grant types.
+
+> Audience: Developers
+>
+> Read this page when calling the TokenIDP token endpoint directly.
+
+> Prerequisites
+>
+> - One supported grant type
+> - Application registration aligned to that grant type
+
+## Method
+
+- `POST /token`
+
+## Authentication Requirements
+
+- Public clients: typically no client secret, but PKCE is required for authorization code exchange.
+- Confidential clients: authenticate with `client_secret_basic` or `client_secret_post`.
+
+## Request Fields
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `grantType` | Yes | `authorization_code`, `client_credentials`, `refresh_token`, or `device_code` |
+| `clientId` | Yes | Application identifier |
+| `clientSecret` | Conditional | Required for confidential clients |
+| `code` | Conditional | Authorization code |
+| `codeVerifier` | Conditional | PKCE verifier for code exchange |
+| `redirectUri` | Conditional | Redirect URI used during authorization |
+| `refreshToken` | Conditional | Refresh Token value |
+| `deviceCode` | Conditional | Device code from `/device_authorization` |
+| `scope` | Optional | Requested scopes depending on grant |
+
+## Working Example
+
+## Example Request
+
+```bash
+curl -X POST https://localhost:5001/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grantType": "client_credentials",
+    "clientId": "orders-worker",
+    "clientSecret": "replace-with-real-secret",
+    "scope": "orders.read"
+  }'
+```
+
+## Example Response
+
+```json
+{
+  "isSuccess": true,
+  "data": {
+    "accessToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDMtMTYifQ...",
+    "tokenType": "Bearer",
+    "expiresIn": 3600
+  }
+}
+```
+
+## Error Responses
+
+- `400` or domain-level validation errors for unsupported grant requests
+- Invalid client or invalid secret for confidential clients
+- Invalid or expired authorization code
+- Invalid or revoked Refresh Token
+- Authorization pending or expired device code for device flow
+
+## Common Pitfalls
+
+- Mixing confidential-client and public-client request shapes.
+- Sending the wrong `redirectUri` for authorization code exchange.
+- Forgetting `offline_access` in the initial authorization request and then expecting a Refresh Token.
+
+## Troubleshooting Tips
+
+- If a client library expects form encoding, verify it can be adapted to TokenIDP's JSON request model.
+- If token exchange fails only in production, verify the Application's allowed grant types and secret rotation state.

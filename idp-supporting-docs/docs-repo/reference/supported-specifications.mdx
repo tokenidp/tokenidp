@@ -1,0 +1,73 @@
+# Supported Specifications
+
+This page lists what TokenIDP currently supports, what is partially implemented, and what is not part of the current product surface.
+
+> Audience: Developers, CTOs
+>
+> Read this page before committing to a client architecture or compliance target.
+
+## Supported
+
+- OAuth 2.0 Authorization Code grant for browser and app sign-in
+- PKCE on the authorization flow for public clients
+- OAuth 2.0 Client Credentials grant
+- Refresh Token grant
+- Device Code grant via `/device_authorization` and `/token`
+- OpenID Connect Discovery via `/.well-known/openid-configuration`
+- JWKS publishing via `/.well-known/jwks.json`
+- OpenID Connect UserInfo via `/userinfo`
+- Token revocation via `/revoke`
+- Token introspection via `/introspect`
+- Logout via `/logout`
+- JWT signing with `RS256`
+- Client authentication on the token endpoint with `client_secret_basic` and `client_secret_post`
+- Discovery-advertised grant types: `authorization_code`, `client_credentials`, `refresh_token`, `device_code`, `ciba`
+
+## Partially Supported or Implementation-Specific
+
+- CIBA appears in discovery metadata, but you should validate your user experience, client policy, and notification model before using it broadly.
+- Revocation and introspection endpoints are present, but their request shape is JSON-based and implementation-specific rather than a strict form-encoded standards profile.
+- A password grant handler exists in the server code, but it is not advertised in discovery metadata and should be treated as legacy or internal-only, not a preferred public integration.
+
+## Not Supported for New Integrations
+
+- Implicit flow
+- Hybrid flow
+- Pushed Authorization Requests
+- JARM
+- Dynamic Client Registration
+- `private_key_jwt` client authentication
+- MTLS-bound access tokens
+- DPoP
+- Front-channel logout specification
+- Back-channel logout specification
+
+## Specification References
+
+- OAuth 2.0 Authorization Framework, RFC 6749
+- OAuth 2.0 for Native Apps, RFC 8252
+- OAuth 2.0 PKCE, RFC 7636
+- OAuth 2.0 Token Revocation, RFC 7009
+- OAuth 2.0 Token Introspection, RFC 7662
+- OAuth 2.0 Device Authorization Grant, RFC 8628
+- OpenID Connect Core 1.0
+- OpenID Connect Discovery 1.0
+- JSON Web Key, RFC 7517
+- JSON Web Token, RFC 7519
+
+## Working Example
+
+```bash
+curl https://localhost:5001/.well-known/openid-configuration
+```
+
+Confirm that `grant_types_supported`, `response_types_supported`, and `token_endpoint_auth_methods_supported` match your client's expectations.
+
+## Common Pitfalls
+
+- Assuming discovery metadata alone proves full spec conformance for every optional feature.
+- Treating legacy grants as recommended simply because a handler exists in code.
+
+## Troubleshooting Tips
+
+- When in doubt, compare the actual endpoint request and response formats to the Reference section before picking a client library.

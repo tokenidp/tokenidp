@@ -1,0 +1,33 @@
+# Tutorials
+
+Follow these step-by-step tutorials when you need a guided path from installation to a working login.
+
+> Audience: Developers, CTOs
+>
+> Tutorials are best for first-time setup and proof-of-concept work.
+
+## Available Tutorials
+
+- [Getting Started](./getting-started.mdx)
+
+## What You Will Build
+
+You will stand up TokenIDP, create bootstrap data for the first Tenant and admin user, configure CORS, and connect a React single-page app using Authorization Code with PKCE.
+
+## Working Example
+
+```bash
+dotnet run --project IDP/IDP.Server
+```
+
+On first run, the host creates the database schema and seeds bootstrap data when `Bootstrap:Enable` is set to `true`.
+
+## Common Pitfalls
+
+- Treating tutorials as production configuration. They are intentionally simple.
+- Forgetting to disable bootstrap after the first successful run.
+
+## Troubleshooting Tips
+
+- If startup fails, inspect database connectivity and the `ConnectionStrings` section first.
+- If the browser is redirected back with an OAuth error, compare the configured redirect URI to the one registered for the Application.

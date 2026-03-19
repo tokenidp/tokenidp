@@ -1,0 +1,56 @@
+# `/.well-known/openid-configuration`
+
+Discover TokenIDP metadata for client and API integration.
+
+> Audience: Developers
+>
+> Read this page when configuring an OIDC client library or debugging metadata assumptions.
+
+## Method
+
+- `GET /.well-known/openid-configuration`
+
+## Authentication Requirements
+
+- None
+
+## Working Example
+
+## Example Request
+
+```bash
+curl https://localhost:5001/.well-known/openid-configuration
+```
+
+## Example Response
+
+```json
+{
+  "issuer": "https://localhost:5001",
+  "jwks_uri": "https://localhost:5001/.well-known/jwks.json",
+  "authorization_endpoint": "https://localhost:5001/authorize",
+  "token_endpoint": "https://localhost:5001/token",
+  "introspect_endpoint": "https://localhost:5001/introspect",
+  "revoke_token_endpoint": "https://localhost:5001/revoke",
+  "userinfo_endpoint": "https://localhost:5001/userinfo",
+  "response_types_supported": ["code"],
+  "subject_types_supported": ["public"],
+  "id_token_signing_alg_values_supported": ["RS256"],
+  "token_endpoint_auth_methods_supported": ["client_secret_basic", "client_secret_post"],
+  "grant_types_supported": ["authorization_code", "client_credentials", "refresh_token", "device_code", "ciba"],
+  "scopes_supported": ["openid", "profile", "email", "phone", "offline_access"]
+}
+```
+
+## Error Responses
+
+- `500` if the host is misconfigured badly enough that issuer or key resolution cannot complete
+
+## Common Pitfalls
+
+- Assuming metadata automatically proves the Application is registered correctly.
+- Expecting unsupported response types such as `token` or `id_token`.
+
+## Troubleshooting Tips
+
+- If the Issuer is wrong, set `TokenOptions:Issuer` explicitly instead of relying on inferred host headers.

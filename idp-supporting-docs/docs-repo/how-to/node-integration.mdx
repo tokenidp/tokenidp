@@ -1,0 +1,58 @@
+# Node Integration
+
+Validate TokenIDP Access Tokens in a Node.js API or backend-for-frontend.
+
+> Audience: Developers
+>
+> Read this guide when your service runs on Node.js and needs to trust TokenIDP-issued JWTs.
+
+> Prerequisites
+>
+> - Node.js runtime
+> - TokenIDP Issuer URL
+> - Expected Audience value
+
+## Working Example
+
+```ts
+import express from "express";
+import { createRemoteJWKSet, jwtVerify } from "jose";
+
+const app = express();
+const issuer = "https://localhost:5001";
+const audience = "tokenidp-api";
+const jwks = createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`));
+
+app.get("/profile", async (req, res) => {
+  const auth = req.headers.authorization ?? "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+
+  try {
+    const { payload } = await jwtVerify(token, jwks, { issuer, audience });
+    res.json({ sub: payload.sub, scope: payload.scope });
+  } catch {
+    res.status(401).json({ error: "invalid_token" });
+  }
+});
+
+app.listen(3000);
+```
+
+## When to Use
+
+Use this pattern for resource servers and backend-for-frontend components that must validate bearer tokens locally.
+
+## When Not to Use
+
+Do not introspect every JWT on every request unless you specifically need near-real-time revocation checks and accept the extra latency.
+
+## Common Pitfalls
+
+- Hardcoding signing keys instead of consuming JWKS.
+- Ignoring issuer validation.
+- Using the wrong audience when the API has its own resource identifier.
+
+## Troubleshooting Tips
+
+- If validation fails after key rotation, restart any process that incorrectly caches JWKS forever.
+- If the token looks structurally valid but access is denied, inspect whether the requested Scope is actually present.

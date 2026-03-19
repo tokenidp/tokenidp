@@ -1,0 +1,57 @@
+# `/logout`
+
+End the interactive TokenIDP session and redirect the browser to an allowed logout destination.
+
+> Audience: Developers
+>
+> Read this page when implementing sign-out from browser-based clients.
+
+> Prerequisites
+>
+> - Interactive session cookie present
+> - Application logout redirect URIs registered
+
+## Method
+
+- `GET /logout`
+
+## Authentication Requirements
+
+- Anonymous access is allowed, but effect depends on whether an interactive session exists.
+
+## Parameters
+
+| Name | Required | Description |
+| --- | --- | --- |
+| `client_id` | Recommended | Application identifier used to resolve allowed logout redirect URIs |
+| `post_logout_redirect_uri` | Optional | Must match one of the configured logout redirect URIs for the client |
+
+## Working Example
+
+## Example Request
+
+```http
+GET /logout?client_id=portal-spa&post_logout_redirect_uri=https%3A%2F%2Fportal.example.com%2Fsigned-out HTTP/1.1
+Host: id.example.com
+```
+
+## Example Response
+
+```http
+HTTP/1.1 302 Found
+Location: https://portal.example.com/signed-out?logged_out=1
+```
+
+## Error Responses
+
+- Unknown clients fall back to `/login`
+- Invalid post-logout redirect URIs are ignored in favor of the first allowed logout redirect URI
+
+## Common Pitfalls
+
+- Expecting arbitrary post-logout redirects to be accepted.
+- Forgetting to clear client-side cached tokens after redirect.
+
+## Troubleshooting Tips
+
+- If logout returns to the wrong URL, compare the request value to the client's configured logout redirect list exactly.

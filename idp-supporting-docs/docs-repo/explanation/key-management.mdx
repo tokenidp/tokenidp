@@ -1,0 +1,83 @@
+# Key Management
+
+Signing keys determine whether TokenIDP tokens can be trusted. Plan for normal rotation and emergency rollover before production launch.
+
+> Audience: Developers, CTOs
+>
+> Read this page when preparing production signing, verifying JWKS behavior, or responding to key compromise.
+
+> Prerequisites
+>
+> - Access to certificate lifecycle management
+> - A deployment process that can update configuration safely
+
+## Development vs Production
+
+In development, TokenIDP can fall back to a development signing key when no certificate is configured. In production, TokenIDP requires certificate-based signing and rejects the development key.
+
+## Certificate-Based Signing
+
+Use one of these production options:
+
+- `TokenOptions:CertificateThumbprint`
+- `TokenOptions:CertificateSubjectName`
+
+Optional supporting settings:
+
+- `TokenOptions:CertificateStoreName`
+- `TokenOptions:CertificateStoreLocation`
+- `TokenOptions:Issuer`
+- `TokenOptions:Audience`
+
+## Example Configuration
+
+```json
+{
+  "TokenOptions": {
+    "Issuer": "https://id.example.com",
+    "Audience": "tokenidp-api",
+    "CertificateThumbprint": "‎ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12",
+    "CertificateStoreName": "My",
+    "CertificateStoreLocation": "LocalMachine"
+  }
+}
+```
+
+## JWKS Publishing
+
+TokenIDP exposes public key material at `/.well-known/jwks.json`. Downstream APIs should resolve keys from JWKS instead of copying certificates manually.
+
+## Emergency Key Rollover
+
+If a private key is compromised:
+
+1. Generate and deploy a new signing certificate.
+2. Confirm the new public key appears in JWKS.
+3. Restart or refresh downstream validators that incorrectly pin old keys.
+4. Revoke sensitive Refresh Tokens if compromise scope is unclear.
+5. Review audit logs for unusual token issuance or admin actions.
+
+## Key Rotation Runbook
+
+- Inventory every API and client that validates TokenIDP tokens.
+- Add the new certificate to the target environment.
+- Deploy configuration pointing TokenIDP to the new certificate.
+- Verify discovery and JWKS output.
+- Issue a fresh token and validate it against a downstream API.
+- Monitor validation failures and cache behavior.
+- Remove the retired key only after validation consumers have moved.
+
+## Working Example
+
+Issue a new token after rotation and confirm a downstream API validates it against the new `kid` from `/.well-known/jwks.json`.
+
+## Common Pitfalls
+
+- Reusing development keys beyond local testing.
+- Rotating signing keys without confirming downstream JWKS refresh behavior.
+- Treating certificate deployment as an application-only change.
+
+## Troubleshooting Tips
+
+- If production startup fails, verify the certificate can actually be resolved from the configured store and thumbprint.
+- If JWTs suddenly fail downstream after rotation, compare token `kid`, JWKS, and any API-side key cache policy.

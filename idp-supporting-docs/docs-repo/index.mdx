@@ -1,0 +1,46 @@
+# TokenIDP Documentation
+
+TokenIDP is an OAuth 2.0 and OpenID Connect identity provider for multi-tenant applications, admin-managed client registrations, and standards-aligned token issuance.
+
+> Audience: Developers, CTOs, Marketing
+>
+> Read this page if you need the top-level map of the TokenIDP documentation set.
+
+## Documentation Map
+
+- [Tutorials](./tutorials/index.mdx): step-by-step onboarding and first integration
+- [How-to Guides](./how-to/index.mdx): task-focused guides for OAuth flows, SDKs, and deployment work
+- [Reference](./reference/index.mdx): supported specifications, endpoints, scopes, resources, and request details
+- [Explanation](./explanation/index.mdx): security model, key management, and operational concepts
+- [Admin Portal](./admin/index.mdx): portal workflows for operators and tenant administrators
+
+## What TokenIDP Does
+
+TokenIDP issues Access Tokens, Refresh Tokens, and ID Tokens for registered Applications in a Tenant. It exposes discovery metadata, JWKS publishing, `/authorize`, `/token`, `/userinfo`, `/revoke`, `/introspect`, `/device_authorization`, and `/logout` endpoints.
+
+## Recommended Reading Order
+
+1. Start with [Getting Started](./tutorials/getting-started.mdx).
+2. Configure your browser and API origins with [Configure CORS](./how-to/configure-cors.mdx).
+3. Choose the OAuth flow that matches your client type.
+4. Use the Reference section when you need exact endpoint behavior.
+5. Review [Security Model](./explanation/security-model.mdx) before production go-live.
+
+## Working Example
+
+```bash
+curl https://id.example.com/.well-known/openid-configuration
+```
+
+Expected result: a JSON metadata document listing the Issuer, authorization endpoint, token endpoint, JWKS URI, supported grant types, and supported scopes.
+
+## Common Pitfalls
+
+- Treating all client types the same. Public clients need PKCE and tighter redirect URI controls.
+- Reusing development signing keys in production.
+- Exposing overly broad scopes such as `api.full_access` to every Application.
+
+## Troubleshooting Tips
+
+- If an integration fails early, verify the Issuer, redirect URI, and client registration before debugging tokens.
+- If token validation fails in downstream APIs, compare the API's configured audience to the `aud` claim actually issued by TokenIDP.

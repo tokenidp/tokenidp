@@ -1,0 +1,42 @@
+# Admin Portal
+
+The Admin Portal is where operators manage Tenants, Applications, Users, Roles, security posture, token controls, and operational settings for TokenIDP.
+
+> Audience: Developers, CTOs, Marketing
+>
+> Admin Portal pages are useful for tenant administrators, operators, support teams, and implementation leads.
+
+![Admin dashboard](../images/admin-dashboard.svg)
+
+## Admin Pages
+
+- [Dashboard](./dashboard.mdx)
+- [Applications](./applications.mdx)
+- [Tenant Management](./tenant-management.mdx)
+- [User Management](./user-management.mdx)
+- [Roles and Permissions](./roles-permissions.mdx)
+- [Token Management](./token-management.mdx)
+- [MFA Policies](./mfa-policies.mdx)
+- [Activities](./activities.mdx)
+- [Configurations](./configurations.mdx)
+- [Password Reset](./password-reset.mdx)
+- [Forgot Password](./forgot-password.mdx)
+- [Stay Signed In](./stay-signed-in.mdx)
+- [External Providers Management](./external-providers-management.mdx)
+- [Create Free Account](./create-free-account.mdx)
+
+## Working Example
+
+1. Open the Admin Portal.
+2. Select the Tenant you want to manage.
+3. Open Applications.
+4. Register a new confidential client and capture its Client ID and secret.
+
+## Common Pitfalls
+
+- Granting admin access broadly instead of role-scoping portal permissions.
+- Treating production token operations as routine actions without audit review.
+
+## Troubleshooting Tips
+
+- If a portal action succeeds in the UI but not in runtime behavior, inspect the Activities page and confirm the Tenant context used for the action.

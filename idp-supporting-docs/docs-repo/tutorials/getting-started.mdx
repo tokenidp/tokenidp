@@ -1,0 +1,176 @@
+# Getting Started
+
+Stand up TokenIDP, bootstrap your first Tenant and admin user, configure CORS, and connect a React app with Authorization Code + PKCE.
+
+> Audience: Developers, CTOs
+>
+> Read this page if you are installing TokenIDP for the first time or validating a new environment.
+
+> Prerequisites
+>
+> - .NET SDK installed for the TokenIDP host
+> - SQL Server connectivity
+> - A React application that can host a callback route
+> - A registered Application with redirect URIs for local development
+
+## Working Example
+
+## 1. Install the NuGet Package
+
+```bash
+dotnet add package TokenIDP.AspNetCore
+```
+
+If you are hosting TokenIDP from the current codebase, use the provided server project and shared application setup instead of adding a package to a blank host.
+
+## 2. Configure `appsettings.json`
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=TokenIDP;Trusted_Connection=True;TrustServerCertificate=True"
+  },
+  "TokenOptions": {
+    "Issuer": "https://localhost:5001",
+    "Audience": "tokenidp-api",
+    "Key": "dev-only-signing-key-replace-before-production"
+  },
+  "Bootstrap": {
+    "Enable": true,
+    "ClientId": "tokenidp-react-dev",
+    "RedirectUri": "http://localhost:5173/callback",
+    "LogoutRedirectUri": "http://localhost:5173",
+    "AdminName": "admin@tokenidp.local",
+    "AdminTempPassword": "ChangeThisTempPassword123!"
+  }
+}
+```
+
+## 3. Add TokenIDP to the Host
+
+The current host integration uses `AddTresorAuthServices(...)` and `UseTresorAuthAsync(...)`.
+
+```csharp
+using IDP.Server.ApplicationSetup;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddTresorAuthServices(
+    connectionStringName: "DefaultConnection",
+    audience: "tokenidp-api");
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DefaultCors", policy =>
+        policy.WithOrigins(
+                "https://admin.tokenidp.local",
+                "http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
+
+var app = builder.Build();
+
+app.UseCors("DefaultCors");
+app.UseAuthentication();
+app.UseAuthorization();
+
+await app.UseTresorAuthAsync("DefaultConnection");
+
+app.Run();
+```
+
+## 4. Understand First-Run Bootstrap
+
+When `Bootstrap:Enable` is `true`, TokenIDP creates the initial Tenant, Application, and admin user if they do not already exist. This is useful for local development and first-time installation.
+
+**Production warning:** do not leave bootstrap enabled after the first successful production deployment. Treat the bootstrap values as privileged seed credentials and rotate the temporary admin password immediately.
+
+## 5. Configure CORS
+
+You typically need three origin decisions:
+
+- Admin Portal origin, for example `https://admin.tokenidp.local`
+- SPA origin, for example `http://localhost:5173`
+- Server-side callers to `/token` and `/authorize`
+
+For browser flows, allow only the exact front-end origins that render login and callback pages. Do not use wildcard origins with credentials.
+
+See [Configure CORS](../how-to/configure-cors.mdx) for a full checklist.
+
+## 6. Setup a React App with Authorization Code + PKCE
+
+Install the React SDK:
+
+```bash
+npm install @smartdevcon/idp-react
+```
+
+Wrap the app:
+
+```tsx
+import { IdpAuthProvider } from "tokentresor-idp-react";
+
+export function Root() {
+  return (
+    <IdpAuthProvider
+      config={{
+        authority: "https://localhost:5001",
+        clientId: "tokenidp-react-dev",
+        redirectUri: "http://localhost:5173/callback",
+        postLoginRedirectUri: "/dashboard",
+        scope: "openid profile email offline_access api.read",
+        storage: "localStorage"
+      }}
+    >
+      <App />
+    </IdpAuthProvider>
+  );
+}
+```
+
+Add a callback route:
+
+```tsx
+import { Route, Routes } from "react-router-dom";
+import { AuthCallback } from "@smartdevcon/idp-react";
+
+export function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/callback" element={<AuthCallback />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
+  );
+}
+```
+
+Trigger login:
+
+```tsx
+import { useAuth } from "@smartdevcon/idp-react";
+
+export function SignInButton() {
+  const { login, isAuthenticated, user } = useAuth();
+
+  if (isAuthenticated) {
+    return <div>Signed in as {user?.profile?.name ?? "unknown user"}</div>;
+  }
+
+  return <button onClick={() => login()}>Sign in</button>;
+}
+```
+
+## Common Pitfalls
+
+- Keeping `Bootstrap:Enable` turned on after initialization.
+- Reusing a development signing key in production.
+- Registering `http://localhost:5173/` in the client but sending `http://localhost:5173/callback` in the authorization request.
+- Allowing the SPA origin in CORS but forgetting the Admin Portal origin.
+
+## Troubleshooting Tips
+
+- If startup throws a production key error, configure `TokenOptions:CertificateThumbprint` or `TokenOptions:CertificateSubjectName`.
+- If the SPA loops between callback and login, inspect the browser network trace for a redirect URI mismatch or missing `code_verifier`.
+- If token validation fails in your API, compare `Issuer`, `Audience`, and JWKS settings on both sides.

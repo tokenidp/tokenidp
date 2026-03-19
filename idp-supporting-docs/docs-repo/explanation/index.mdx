@@ -1,0 +1,30 @@
+# Explanation
+
+These pages explain why TokenIDP behaves the way it does, how its security boundaries work, and which defaults matter in production.
+
+> Audience: Developers, CTOs, Marketing
+>
+> Read these pages when you need conceptual clarity rather than a procedural checklist.
+
+## Pages
+
+- [Overview](./overview.mdx)
+- [Security Model](./security-model.mdx)
+- [Key Management](./key-management.mdx)
+- [Logs and Cache](./logs-and-cache.mdx)
+
+## Working Example
+
+```text
+Question: Why does TokenIDP require PKCE for browser-based clients?
+Answer: To mitigate authorization code interception and avoid relying on a client secret that cannot be protected in the browser.
+```
+
+## Common Pitfalls
+
+- Skipping the explanation pages and treating security defaults as optional.
+- Assuming OAuth terminology is interchangeable. In TokenIDP, Scope, Resource, and Audience must stay distinct.
+
+## Troubleshooting Tips
+
+- If teams disagree on configuration choices, map the decision back to the threat or operational concern described in these pages.

@@ -1,0 +1,70 @@
+# Configure CORS
+
+Allow the right browser origins for TokenIDP without overexposing OAuth endpoints.
+
+> Audience: Developers, CTOs
+>
+> Read this guide when you are wiring browser-based apps, the Admin Portal, or local development environments.
+
+> Prerequisites
+>
+> - A list of exact Admin Portal and SPA origins
+> - Registered redirect URIs for each Application
+
+## Recommended Model
+
+- Allow the Admin Portal origin explicitly.
+- Allow each SPA origin explicitly.
+- Allow credentials only when the browser needs cookies or authenticated portal calls.
+- Keep machine-to-machine `/token` usage server-side whenever possible.
+
+## Example
+
+```csharp
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("TokenIdpBrowserClients", policy =>
+        policy.WithOrigins(
+                "https://admin.tokenidp.local",
+                "http://localhost:5173",
+                "https://app.example.com")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
+```
+
+Apply the policy before endpoint execution:
+
+```csharp
+app.UseCors("TokenIdpBrowserClients");
+```
+
+## Endpoint Considerations
+
+- `/authorize`: browser-facing, so the redirect URI and origin strategy must align.
+- `/token`: browser SPAs usually call this indirectly through the SDK after receiving the authorization code.
+- Admin endpoints such as `/admin/client` and `/admin/user`: restrict to the Admin Portal origin.
+
+## Working Example
+
+Allow `https://admin.tokenidp.local` and `http://localhost:5173`, then test `/authorize` from the SPA and an authenticated admin call from the portal.
+
+## When to Use
+
+Use strict CORS when TokenIDP serves browser apps and the Admin Portal from separate origins.
+
+## When Not to Use
+
+Do not depend on permissive CORS to solve server-to-server integration issues. Back-end callers do not need browser-origin access.
+
+## Common Pitfalls
+
+- Using `AllowAnyOrigin()` together with credentials.
+- Forgetting that a redirect URI check is separate from CORS.
+- Adding localhost ports inconsistently across environments.
+
+## Troubleshooting Tips
+
+- If the browser shows a CORS error before login starts, inspect the `Origin` header and compare it to the configured allowed origins.
+- If authorization starts but the callback fails, check redirect URI registration rather than CORS first.

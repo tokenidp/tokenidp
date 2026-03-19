@@ -1,0 +1,114 @@
+# Security Model
+
+TokenIDP uses strict redirect validation, PKCE for public clients, signed tokens, and operational controls to reduce common OAuth and OIDC attack risks.
+
+> Audience: Developers, CTOs
+>
+> Read this page before production rollout, threat modeling, or security review.
+
+## CSRF and State Misuse
+
+Use a high-entropy `state` value for every interactive authorization request and validate it on the callback. `state` binds the browser response to the original session intent.
+
+Do:
+
+- Generate a unique `state` per login attempt.
+- Tie `state` to the browser session.
+- Reject missing or mismatched `state`.
+
+Don't:
+
+- Reuse a static `state` string.
+- Skip validation because PKCE is present.
+
+## Authorization Code Interception and PKCE
+
+Authorization codes are short-lived but still bearer artifacts during transit. PKCE prevents a stolen code from being redeemed without the matching verifier.
+
+Do:
+
+- Use `S256`.
+- Keep the verifier only for the duration of the flow.
+- Use exact redirect URI matching.
+
+Don't:
+
+- Use weak or predictable verifiers.
+- Log codes or verifiers.
+
+## Redirect URI Manipulation
+
+An attacker who can alter the redirect URI can capture the authorization code or tokens. TokenIDP should only accept registered redirect URIs.
+
+Do:
+
+- Register exact redirect URIs.
+- Separate development and production clients.
+- Review logout redirect URIs with the same rigor.
+
+Don't:
+
+- Use wildcard redirect URIs.
+- Share one callback URI across unrelated tenants without careful routing and validation.
+
+## Token Leakage
+
+Tokens leak through logs, browser storage, referer headers, screenshots, support tooling, and copied URLs.
+
+Do:
+
+- Keep tokens out of URLs.
+- Redact tokens in logs.
+- Use secure storage patterns appropriate to the client type.
+
+Don't:
+
+- Paste live tokens into tickets or chat.
+- Store Refresh Tokens casually in front-end code.
+
+## Replay and Refresh Token Rotation
+
+Replay risk increases when long-lived bearer credentials are duplicated. Refresh Token rotation limits the usefulness of a stolen historical token.
+
+Recommended default:
+
+- Short Access Token lifetime
+- Rotate Refresh Tokens on use
+- Revoke suspicious refresh chains quickly
+
+## Clickjacking and Framing
+
+Interactive login UI should not be embeddable in attacker-controlled frames.
+
+Do:
+
+- Apply anti-framing headers on login pages.
+- Keep authentication UI first-party where possible.
+
+Don't:
+
+- Embed login inside arbitrary third-party iframes.
+
+## Recommended Defaults
+
+- Authorization Code + PKCE for public clients
+- Client Credentials for service-to-service
+- Exact redirect URIs only
+- RS256 signing with managed rotation
+- Restricted revocation and introspection access
+
+## Working Example
+
+```text
+Threat: intercepted authorization code
+Mitigation: PKCE verifier required at /token, so the stolen code alone is insufficient
+```
+
+## Common Pitfalls
+
+- Assuming HTTPS alone solves front-channel threats.
+- Treating Refresh Tokens like low-risk session cookies.
+
+## Troubleshooting Tips
+
+- If a security review flags a login weakness, map it to one of these attack classes first, then verify the specific TokenIDP control or missing deployment control.

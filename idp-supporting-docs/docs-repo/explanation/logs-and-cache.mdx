@@ -1,0 +1,65 @@
+# Logs and Cache
+
+TokenIDP logs security-relevant events and caches selected lookup and authorization data to reduce repeated store access.
+
+> Audience: Developers, CTOs
+>
+> Read this page when operating TokenIDP in production or investigating runtime behavior.
+
+## Logging
+
+The codebase logs:
+
+- Authentication attempts and outcomes
+- Authorization code issuance and validation
+- Token issuance, refresh, revocation, and introspection
+- MFA challenges and correlation identifiers
+- Cache hits, misses, writes, and evictions
+- Admin operations such as user updates, password reset events, and token administration
+
+## Correlation IDs and Audit
+
+TokenIDP generates correlation identifiers in runtime services and stores activity records with actor, target, severity, category, and correlation metadata. Use those values to connect UI actions, API requests, and worker-side behavior during investigations.
+
+## Redaction Rules
+
+Recommended defaults:
+
+- Never log raw passwords.
+- Avoid logging full Access Tokens, Refresh Tokens, authorization codes, or PKCE verifiers.
+- If you must identify a token in logs, log a suffix, hash, or token ID only.
+
+## Cache Behavior
+
+The in-memory cache uses a default absolute expiration of 30 minutes when a custom expiration is not supplied.
+
+Current cache key families include:
+
+- `PAUTH`: pre-authorization context
+- `AUTH`: authorization data
+- `DAUTH`: device authorization data
+- `CLT`: client data
+- `CNFG`: configuration data
+- `CLT:EXP`: dashboard client-secret expiry views
+
+## Eviction and Debugging
+
+The cache logs eviction events and reasons such as expired, removed, replaced, token expired, and capacity pressure.
+
+## Working Example
+
+```text
+Symptom: repeated database reads for client lookups
+Check: cache miss logs for CLT-prefixed keys and whether entries are being evicted early
+```
+
+## Common Pitfalls
+
+- Treating logs as a safe place for full bearer credentials.
+- Assuming cached configuration changes are visible instantly everywhere.
+- Ignoring capacity eviction warnings.
+
+## Troubleshooting Tips
+
+- If portal dashboards show stale counts, verify whether cached dashboard entries are still within TTL.
+- If a login issue is hard to reproduce, trace the correlation ID across authentication, MFA, and authorization logs.

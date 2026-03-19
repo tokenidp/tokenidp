@@ -1,0 +1,43 @@
+# Overview
+
+TokenIDP provides multi-tenant identity, application registration, token issuance, user management, and operational controls in one platform.
+
+> Audience: Developers, CTOs, Marketing
+>
+> Read this page when you need a concise explanation of the product and its deployment role.
+
+## Core Concepts
+
+- Tenant: the isolation boundary for configuration, applications, users, roles, and keys
+- Application (Client): the OAuth or OIDC client registered to request tokens
+- User: the authenticated subject
+- Role: a grouping of permissions used by admin and business policies
+- Scope: a delegated permission requested during authorization
+- Resource: the API or service protected by the issued token
+- Signing Key: the private key or certificate that signs tokens
+- JWKS: the published public keys used for verification
+- Issuer: the canonical URL that identifies the TokenIDP instance
+
+## How TokenIDP Fits
+
+TokenIDP sits between Applications and protected APIs:
+
+1. Applications redirect users to TokenIDP or authenticate directly with allowed grants.
+2. TokenIDP validates the request in Tenant context.
+3. TokenIDP issues tokens signed by the current Signing Key.
+4. APIs validate the token against the Issuer and JWKS.
+
+## Working Example
+
+```text
+SPA -> /authorize -> TokenIDP login -> /token -> Access Token -> API -> JWKS validation
+```
+
+## Common Pitfalls
+
+- Mixing user authentication concerns with API authorization concerns.
+- Treating Tenant configuration as globally shared across all customers.
+
+## Troubleshooting Tips
+
+- If teams disagree on where a setting belongs, ask whether it is Tenant-specific, Application-specific, or runtime-host specific.

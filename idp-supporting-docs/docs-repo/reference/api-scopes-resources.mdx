@@ -1,0 +1,71 @@
+# API Scopes and API Resources
+
+Scopes tell TokenIDP what an Application wants to do. API Resources define which downstream service or audience the token is intended for.
+
+> Audience: Developers, CTOs
+>
+> Read this page when designing authorization boundaries between Applications and APIs.
+
+## Terminology
+
+- Tenant: the organizational boundary that owns users, clients, roles, and configuration
+- Application (Client): the OAuth client that requests tokens
+- Resource: the protected API or service
+- Scope: the permission label requested by the client
+- Audience: the value that identifies the intended Resource in the token
+
+## Recommended Mapping
+
+Map scopes to a specific API Resource instead of treating scopes as global feature flags.
+
+Example:
+
+- Resource: `orders-api`
+- Audience: `orders-api`
+- Scopes: `orders.read`, `orders.write`, `orders.approve`
+
+## Working Example
+
+## Example Authorization Request
+
+```http
+GET /authorize?client_id=portal-spa&redirect_uri=https%3A%2F%2Fportal.example.com%2Fcallback&response_type=code&scope=openid%20profile%20offline_access%20orders.read&state=6f2f14df&code_challenge=abc123&code_challenge_method=S256 HTTP/1.1
+Host: id.example.com
+```
+
+## Example Token Claims
+
+```json
+{
+  "iss": "https://id.example.com",
+  "aud": "orders-api",
+  "sub": "42",
+  "client_id": "portal-spa",
+  "scope": [
+    "openid",
+    "profile",
+    "orders.read"
+  ],
+  "role": [
+    "operator"
+  ]
+}
+```
+
+## Design Guidance
+
+- Give each API its own Audience.
+- Keep scopes verb-based and resource-specific.
+- Use roles for user grouping and scopes for delegated API permission.
+- Avoid a single catch-all scope such as `api.full_access`.
+
+## Common Pitfalls
+
+- Using roles as if they were scopes.
+- Sharing one Audience across unrelated APIs.
+- Granting write scopes to read-only clients.
+
+## Troubleshooting Tips
+
+- If an API accepts a token but denies action-level access, inspect both the `aud` and `scope` claims.
+- If a client receives fewer scopes than requested, verify the Application's granted scopes in the Admin Portal.

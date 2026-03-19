@@ -1,0 +1,65 @@
+# .NET API Integration
+
+Validate TokenIDP-issued JWTs in an ASP.NET Core API.
+
+> Audience: Developers
+>
+> Read this guide when your API accepts Access Tokens from TokenIDP-protected clients.
+
+> Prerequisites
+>
+> - TokenIDP Issuer URL
+> - Expected Audience value
+> - An API that uses ASP.NET Core authentication and authorization
+
+## Working Example
+
+```csharp
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "https://localhost:5001";
+        options.Audience = "tokenidp-api";
+        options.RequireHttpsMetadata = true;
+    });
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapGet("/orders", (ClaimsPrincipal user) =>
+{
+    return Results.Ok(new
+    {
+        subject = user.FindFirst("sub")?.Value,
+        scopes = user.FindAll("scope").Select(c => c.Value).ToArray()
+    });
+}).RequireAuthorization();
+
+app.Run();
+```
+
+## What to Verify
+
+- `Authority` matches the TokenIDP Issuer.
+- `Audience` matches the `aud` claim your API expects.
+- Your API authorization policies map scopes and roles intentionally.
+
+## Common Pitfalls
+
+- Accepting tokens without checking the expected audience.
+- Treating every role claim as API authorization without scope checks.
+- Pinning JWKS manually and forgetting to update it during key rotation.
+
+## Troubleshooting Tips
+
+- If signature validation fails, fetch `/.well-known/jwks.json` directly and compare the `kid` to the token header.
+- If a token authenticates but authorization fails, inspect both the `scope` claims and the role claims.

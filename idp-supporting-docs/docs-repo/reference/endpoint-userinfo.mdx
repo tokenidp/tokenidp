@@ -1,0 +1,54 @@
+# `/userinfo`
+
+Return user claims for the currently authenticated Access Token.
+
+> Audience: Developers
+>
+> Read this page when your OIDC client needs profile data from TokenIDP after login.
+
+> Prerequisites
+>
+> - A valid bearer Access Token
+> - Relevant OIDC scopes such as `openid`, `profile`, `email`, or `phone`
+
+## Method
+
+- `GET /userinfo`
+
+## Authentication Requirements
+
+- Bearer token required
+
+## Working Example
+
+## Example Request
+
+```bash
+curl https://localhost:5001/userinfo \
+  -H "Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjIwMjYtMDMtMTYifQ..."
+```
+
+## Example Response
+
+```json
+{
+  "sub": "42",
+  "name": "Aisha Khan",
+  "email": "aisha@example.com",
+  "phone_number": "+1-555-0100"
+}
+```
+
+## Error Responses
+
+- `401 Unauthorized` for missing or invalid bearer tokens
+- `403 Forbidden` if scope or policy prevents claim release
+
+## Common Pitfalls
+
+- Calling UserInfo without requesting the relevant identity scopes.
+- Expecting API authorization scopes to populate profile claims.
+
+## Troubleshooting Tips
+
+- If claims are missing, inspect the requested scopes and the user's available profile data.

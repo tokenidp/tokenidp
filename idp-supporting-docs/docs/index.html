@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Getting Started | Docs | Enterprise Identity Platform</title>
+    <title>TokenIDP Documentation | Docs | TokenIDP</title>
     <link rel="stylesheet" href="../assets/styles/site.css" />
   </head>
   <body class="docs-page">
@@ -48,110 +48,365 @@
           class="topic-link active"
           href="./"
         >
-          Getting Started
+          Overview
         </a>
-        <a
-          class="topic-link"
-          href="admin-portal/"
-        >
-          Admin Portal
-        </a>
-        <a
-          class="topic-link"
-          href="key-management/"
-        >
-          Key Management
-        </a>
-        <div
-          class="topic-group"
-          data-topic-group="oauth"
-        >
+        <div class="topic-group" data-topic-group="tutorials">
           <button
             class="topic-group-toggle"
             type="button"
             aria-expanded="false"
           >
-            OAuth Flows
+            Tutorials
           </button>
           <div class="topic-submenu" hidden>
             <a
               class="topic-link topic-sublink"
-              href="oauth/authorization-code-pkce/"
+              href="tutorials/"
             >
-              Authorization Code Flow with PKCE
+              Overview
             </a>
             <a
               class="topic-link topic-sublink"
-              href="oauth/client-credentials/"
+              href="tutorials/getting-started/"
+            >
+              Getting Started
+            </a>
+          </div>
+        </div>
+        <div class="topic-group" data-topic-group="how-to">
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            How-to Guides
+          </button>
+          <div class="topic-submenu" hidden>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/"
+            >
+              Overview
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/configure-cors/"
+            >
+              Configure CORS
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/react-sdk/"
+            >
+              React SDK Integration
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/dotnet-api-integration/"
+            >
+              .NET API Integration
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/node-integration/"
+            >
+              Node Integration
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/oauth-authorization-code-pkce/"
+            >
+              Authorization Code + PKCE
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/oauth-client-credentials/"
             >
               Client Credentials
             </a>
             <a
               class="topic-link topic-sublink"
-              href="oauth/resource-owner-password-credentials/"
+              href="how-to/oauth-refresh-token/"
             >
-              Resource Owner Password Credentials
+              Refresh Token
             </a>
             <a
               class="topic-link topic-sublink"
-              href="oauth/device-flow/"
+              href="how-to/oauth-device-code/"
             >
-              Device Flow
+              Device Code
             </a>
             <a
               class="topic-link topic-sublink"
-              href="oauth/ciba/"
+              href="how-to/oauth-token-revocation/"
             >
-              Ciba
+              Token Revocation
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="how-to/oauth-token-introspection/"
+            >
+              Token Introspection
             </a>
           </div>
         </div>
-        <a
-          class="topic-link"
-          href="roles-and-permissions/"
-        >
-          Roles and Permissions
-        </a>
-        <a
-          class="topic-link"
-          href="multi-tenant-setup/"
-        >
-          Multi-Tenant Setup
-        </a>
-        <a
-          class="topic-link"
-          href="mfa-policies/"
-        >
-          MFA Policies
-        </a>
-        <a
-          class="topic-link"
-          href="audit-logs/"
-        >
-          Audit Logs
-        </a>
-        <a
-          class="topic-link"
-          href="api-integration/"
-        >
-          API Integration
-        </a>
+        <div class="topic-group" data-topic-group="reference">
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            Reference
+          </button>
+          <div class="topic-submenu" hidden>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/"
+            >
+              Overview
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/supported-specifications/"
+            >
+              Supported Specifications
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/api-scopes-resources/"
+            >
+              API Scopes and API Resources
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-authorize/"
+            >
+              `/authorize`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-token/"
+            >
+              `/token`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-openid-configuration/"
+            >
+              `/.well-known/openid-configuration`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-jwks/"
+            >
+              `/.well-known/jwks.json`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-userinfo/"
+            >
+              `/userinfo`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-revoke/"
+            >
+              `/revoke`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-introspect/"
+            >
+              `/introspect`
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="reference/endpoint-logout/"
+            >
+              `/logout`
+            </a>
+          </div>
+        </div>
+        <div class="topic-group" data-topic-group="explanation">
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            Explanation
+          </button>
+          <div class="topic-submenu" hidden>
+            <a
+              class="topic-link topic-sublink"
+              href="explanation/"
+            >
+              Overview
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="explanation/overview/"
+            >
+              Overview
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="explanation/security-model/"
+            >
+              Security Model
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="explanation/key-management/"
+            >
+              Key Management
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="explanation/logs-and-cache/"
+            >
+              Logs and Cache
+            </a>
+          </div>
+        </div>
+        <div class="topic-group" data-topic-group="admin">
+          <button
+            class="topic-group-toggle"
+            type="button"
+            aria-expanded="false"
+          >
+            Admin Portal
+          </button>
+          <div class="topic-submenu" hidden>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/"
+            >
+              Overview
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/dashboard/"
+            >
+              Dashboard
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/applications/"
+            >
+              Applications
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/tenant-management/"
+            >
+              Tenant Management
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/user-management/"
+            >
+              User Management
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/roles-permissions/"
+            >
+              Roles and Permissions
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/token-management/"
+            >
+              Token Management
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/mfa-policies/"
+            >
+              MFA Policies
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/activities/"
+            >
+              Activities
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/configurations/"
+            >
+              Configurations
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/password-reset/"
+            >
+              Password Reset
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/forgot-password/"
+            >
+              Forgot Password
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/stay-signed-in/"
+            >
+              Stay Signed In
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/external-providers-management/"
+            >
+              External Providers Management
+            </a>
+            <a
+              class="topic-link topic-sublink"
+              href="admin/create-free-account/"
+            >
+              Create Free Account
+            </a>
+          </div>
+        </div>
       </aside>
-      <article class="docs-content">
-
-          <h2>Getting Started</h2>
-          <p>
-            Start by creating your tenant, registering an application, and setting
-            callback URLs for your environment.
-          </p>
-          <h3>Checklist</h3>
-          <ul>
-            <li>Create tenant and admin user.</li>
-            <li>Register app with <code>client_id</code> and redirect URL.</li>
-            <li>Enable required scopes for your APIs.</li>
-            <li>Test login in a non-production environment first.</li>
-          </ul>
-        
+      <article class="docs-content docs-markdown">
+<h1>TokenIDP Documentation</h1>
+<p>TokenIDP is an OAuth 2.0 and OpenID Connect identity provider for multi-tenant applications, admin-managed client registrations, and standards-aligned token issuance.</p>
+<blockquote class="docs-callout"><p>Audience: Developers, CTOs, Marketing</p>
+<p>Read this page if you need the top-level map of the TokenIDP documentation set.</p></blockquote>
+<h2>Documentation Map</h2>
+<ul>
+  <li><a href="tutorials/">Tutorials</a>: step-by-step onboarding and first integration</li>
+  <li><a href="how-to/">How-to Guides</a>: task-focused guides for OAuth flows, SDKs, and deployment work</li>
+  <li><a href="reference/">Reference</a>: supported specifications, endpoints, scopes, resources, and request details</li>
+  <li><a href="explanation/">Explanation</a>: security model, key management, and operational concepts</li>
+  <li><a href="admin/">Admin Portal</a>: portal workflows for operators and tenant administrators</li>
+</ul>
+<h2>What TokenIDP Does</h2>
+<p>TokenIDP issues Access Tokens, Refresh Tokens, and ID Tokens for registered Applications in a Tenant. It exposes discovery metadata, JWKS publishing, <code>/authorize</code>, <code>/token</code>, <code>/userinfo</code>, <code>/revoke</code>, <code>/introspect</code>, <code>/device_authorization</code>, and <code>/logout</code> endpoints.</p>
+<h2>Recommended Reading Order</h2>
+<ol>
+  <li>Start with <a href="tutorials/getting-started/">Getting Started</a>.</li>
+  <li>Configure your browser and API origins with <a href="how-to/configure-cors/">Configure CORS</a>.</li>
+  <li>Choose the OAuth flow that matches your client type.</li>
+  <li>Use the Reference section when you need exact endpoint behavior.</li>
+  <li>Review <a href="explanation/security-model/">Security Model</a> before production go-live.</li>
+</ol>
+<h2>Working Example</h2>
+<pre><code class="language-bash">curl https://id.example.com/.well-known/openid-configuration</code></pre>
+<p>Expected result: a JSON metadata document listing the Issuer, authorization endpoint, token endpoint, JWKS URI, supported grant types, and supported scopes.</p>
+<h2>Common Pitfalls</h2>
+<ul>
+  <li>Treating all client types the same. Public clients need PKCE and tighter redirect URI controls.</li>
+  <li>Reusing development signing keys in production.</li>
+  <li>Exposing overly broad scopes such as <code>api.full_access</code> to every Application.</li>
+</ul>
+<h2>Troubleshooting Tips</h2>
+<ul>
+  <li>If an integration fails early, verify the Issuer, redirect URI, and client registration before debugging tokens.</li>
+  <li>If token validation fails in downstream APIs, compare the API&#39;s configured audience to the <code>aud</code> claim actually issued by TokenIDP.</li>
+</ul>
       </article>
     </section>
     </main>

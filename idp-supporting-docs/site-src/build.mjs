@@ -24,7 +24,9 @@ const generatedArtifacts = [
   "UseCases",
 ];
 
-const staticArtifacts = ["assets", "Auth Code Flow.svg"];
+const staticArtifacts = ["assets", "Auth Code Flow.svg", "Integration Workflow.png"];
+const docsImagesSourceDir = path.join(siteRoot, "docs-repo", "images");
+const docsImagesOutputDir = path.join(siteRoot, "docs", "images");
 
 function resolveDeployDir() {
   const cliArgs = process.argv.slice(2);
@@ -50,6 +52,16 @@ function copyArtifact(sourceRoot, targetRoot, artifact) {
   fs.cpSync(sourcePath, targetPath, { recursive: true });
 }
 
+function copyIfExists(sourcePath, targetPath) {
+  if (!fs.existsSync(sourcePath)) {
+    return;
+  }
+
+  fs.rmSync(targetPath, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  fs.cpSync(sourcePath, targetPath, { recursive: true });
+}
+
 for (const artifact of generatedArtifacts) {
   fs.rmSync(path.join(siteRoot, artifact), { recursive: true, force: true });
 }
@@ -63,6 +75,17 @@ for (const page of pages) {
     renderPage(page);
   fs.writeFileSync(outputPath, html, "utf8");
 }
+
+if (fs.existsSync(docsImagesSourceDir)) {
+  fs.mkdirSync(path.dirname(docsImagesOutputDir), { recursive: true });
+  fs.rmSync(docsImagesOutputDir, { recursive: true, force: true });
+  fs.cpSync(docsImagesSourceDir, docsImagesOutputDir, { recursive: true });
+}
+
+copyIfExists(
+  path.join(siteRoot, "docs", "tutorials", "getting-started"),
+  path.join(siteRoot, "docs", "getting-started"),
+);
 
 const deployDir = resolveDeployDir();
 const artifactsToCopy = [...generatedArtifacts, ...staticArtifacts];

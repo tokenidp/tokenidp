@@ -1,0 +1,37 @@
+# How-to Guides
+
+Use these guides when you already know what you want to accomplish and need the shortest path to completion.
+
+> Audience: Developers, CTOs
+>
+> Each guide focuses on one operational or integration task.
+
+## Guides
+
+- [Configure CORS](./configure-cors.mdx)
+- [React SDK Integration](./react-sdk.mdx)
+- [.NET API Integration](./dotnet-api-integration.mdx)
+- [Node Integration](./node-integration.mdx)
+- [Authorization Code + PKCE](./oauth-authorization-code-pkce.mdx)
+- [Client Credentials](./oauth-client-credentials.mdx)
+- [Refresh Token](./oauth-refresh-token.mdx)
+- [Device Code](./oauth-device-code.mdx)
+- [Token Revocation](./oauth-token-revocation.mdx)
+- [Token Introspection](./oauth-token-introspection.mdx)
+
+## Working Example
+
+```bash
+curl -X POST https://id.example.com/token
+```
+
+The exact payload depends on the grant type you are using. The flow-specific guides provide ready-to-adapt requests and responses.
+
+## Common Pitfalls
+
+- Copying a confidential-client example into a browser-based client.
+- Enabling a grant type for every Application instead of the smallest required set.
+
+## Troubleshooting Tips
+
+- Always verify the registered grant types, redirect URIs, and scopes for the Application before assuming a server bug.
