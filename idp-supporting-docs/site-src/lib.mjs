@@ -1,7 +1,7 @@
 import path from "node:path";
 
 const FOOTER_HTML =
-  "&copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.";
+  "&copy; 2026 TokenIDP | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.";
 
 const COMMON_SCRIPT = `document
   .querySelectorAll("a, button, summary, [role='button']")
@@ -62,8 +62,8 @@ function renderNav(page) {
   return `
     <nav class="top-nav">
       <div class="nav-inner">
-        <a class="brand" href="${homeHref}" aria-label="TokenTresor home">
-          <img src="${logoHref}" alt="TokenTresor" />
+        <a class="brand" href="${homeHref}" aria-label="TokenIDP home">
+          <img src="${logoHref}" alt="TokenIDP" />
         </a>
         <div class="nav-links">
           <a href="${homeHref}"${homeClass}>Home</a>

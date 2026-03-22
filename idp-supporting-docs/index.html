@@ -11,8 +11,8 @@
 
     <nav class="top-nav">
       <div class="nav-inner">
-        <a class="brand" href="./" aria-label="TokenTresor home">
-          <img src="assets/logos/tokentresor-tt-lock.svg" alt="TokenTresor" />
+        <a class="brand" href="./" aria-label="TokenIDP home">
+          <img src="assets/logos/tokentresor-tt-lock.svg" alt="TokenIDP" />
         </a>
         <div class="nav-links">
           <a href="./">Home</a>
@@ -189,7 +189,7 @@
 
         <p class="section-intro">
           Building authentication and access control systems from scratch
-          becomes complex as applications scale. TokenTresor provides a
+          becomes complex as applications scale. TokenIDP provides a
           ready-to-use identity platform so teams can focus on building
           product features instead of security infrastructure.
         </p>
@@ -282,16 +282,12 @@
           </ul>
         </div>
         <div class="card standards-diagram-card">
-
-        <div class="placeholder-figure placeholder-figure-compact" aria-hidden="true">
-          <svg viewBox="0 0 640 360" role="presentation">
-            <rect x="1" y="1" width="638" height="358" rx="24"></rect>
-            <path d="M92 116h456"></path>
-            <path d="M92 180h320"></path>
-            <path d="M92 244h388"></path>
-            <text x="320" y="302" text-anchor="middle">PLACEHOLDER: OAUTH FLOW DIAGRAMS</text>
-          </svg>
-        </div>
+          <figure class="standards-diagram-figure">
+            <img
+              src="Device Flow.png"
+              alt="Device Flow diagram showing verification on a separate device"
+            />
+          </figure>
         </div>
       </div>
     </section>
@@ -431,7 +427,7 @@
         </div>
             <div class="admin-slide-copy">
               <h3>External Providers</h3>
-              <p>Connect third-party identity providers while keeping TokenTresor as the central control plane.</p>
+              <p>Connect third-party identity providers while keeping TokenIDP as the central control plane.</p>
             </div>
           </article>
         </div>
@@ -463,7 +459,7 @@
           </ul>
         </div>
         <div class="card integration-code-card">
-          <pre class="integration-code"><code>services.AddTokenTresorAuthentication();</code></pre>
+          <pre class="integration-code"><code>services.AddTokenIDPAuthentication();</code></pre>
         </div>
       </div>
     </section>
@@ -491,7 +487,7 @@
 
         <div class="contact-form-wrap">
           <p class="contact-form-lead">
-            Have questions about integrating TokenTresor into your architecture?
+            Have questions about integrating TokenIDP into your architecture?
             Our team can help with deployment, integration, and best practices.
           </p>
           <h3>Reach us quickly</h3>
@@ -547,7 +543,7 @@
     </section>
     </main>
     <footer>
-      &copy; 2026 TokenTresor | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.
+      &copy; 2026 TokenIDP | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.
     </footer>
     <script>
 document.querySelectorAll("[data-carousel]").forEach((carousel) => {

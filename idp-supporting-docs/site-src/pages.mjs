@@ -173,15 +173,27 @@ function landingPageScript() {
 });`;
 }
 
-function renderUseCasePage(useCase) {
+function renderCtaPageHeader(title, subtitle, helpers, options = {}) {
+  const contactHref = helpers.relativePagePath(ROUTES.contact);
+  const getStartedHref = helpers.relativePagePath("docs/getting-started/index.html");
+  const showScheduleDemo = options.showScheduleDemo ?? true;
+
   return `
-    <section class="container blog-hero">
-      <span class="blog-category">Use Case</span>
-      <h1>${useCase.heroTitle}</h1>
-      <p class="blog-date">
-        ${useCase.heroSubtitle}
-      </p>
-    </section>
+    <header class="main-header">
+      <div class="hero-content">
+        <h1>${title}</h1>
+        ${subtitle ? `<p>${subtitle}</p>` : ""}
+        <div class="hero-actions">
+          <a class="btn" href="${getStartedHref}">Get Started</a>
+          ${showScheduleDemo ? `<a class="btn" href="${contactHref}">Schedule a Demo</a>` : ""}
+        </div>
+      </div>
+    </header>`;
+}
+
+function renderUseCasePage(useCase, helpers) {
+  return `
+    ${renderCtaPageHeader(useCase.heroTitle, useCase.heroSubtitle, helpers)}
 
     <section class="container">
       <h2>${useCase.pageTitle}</h2>
@@ -311,13 +323,11 @@ function renderBlogsIndex(helpers) {
   ];
 
   return `
-    <section class="container blog-header">
-      <h1>Engineering Blog</h1>
-      <p>
-        Insights on OAuth2, identity architecture, security hardening, and SaaS
-        engineering patterns teams can apply in production.
-      </p>
-    </section>
+    ${renderCtaPageHeader(
+      "Blogs",
+      "Insights on OAuth2, identity architecture, security hardening, and SaaS engineering patterns teams can apply in production.",
+      helpers,
+    )}
 
     <section class="container">
       <div class="grid blog-grid">
@@ -442,7 +452,7 @@ const DOC_PAGES = [
     group: "OAuth Flows",
     title: "Authorization Code Flow with PKCE | Docs | Enterprise Identity Platform",
     content: (helpers) => {
-      const oauthFlowDiagram = helpers.relativePath("Auth Code Flow.svg");
+      const oauthFlowDiagram = helpers.relativePath("Auth Code Flow.png");
 
       return `
           <h2>Authorization Code Flow with PKCE</h2>
@@ -564,12 +574,25 @@ const DOC_PAGES = [
     navLabel: "Device Flow",
     group: "OAuth Flows",
     title: "Device Flow | Docs | Enterprise Identity Platform",
-    content: `
+    content: (helpers) => {
+      const deviceFlowDiagram = helpers.relativePath("Device Flow.png");
+
+      return `
           <h2>Device Flow</h2>
           <p>
             Device Flow is designed for TVs, terminals, printers, kiosks, and
             other devices with limited input capability or no convenient browser.
           </p>
+          <figure class="docs-figure">
+            <img
+              src="${deviceFlowDiagram}"
+              alt="Device Flow diagram showing the user code and secondary-device verification flow"
+            />
+            <figcaption>
+              The diagram shows the device code request, the user verification step on a second device,
+              and the token polling sequence back to the authorization server.
+            </figcaption>
+          </figure>
           <h3>How the Flow Works</h3>
           <ol>
             <li>The device requests a device code and user code from the authorization server.</li>
@@ -584,7 +607,8 @@ const DOC_PAGES = [
             <li>CLI tools and headless terminals.</li>
             <li>Shared or constrained hardware with limited keyboards.</li>
           </ul>
-        `,
+        `;
+    },
   },
   {
     key: "ciba",
@@ -844,7 +868,7 @@ function renderContactSection() {
 
         <div class="contact-form-wrap">
           <p class="contact-form-lead">
-            Have questions about integrating TokenTresor into your architecture?
+            Have questions about integrating TokenIDP into your architecture?
             Our team can help with deployment, integration, and best practices.
           </p>
           <h3>Reach us quickly</h3>
@@ -890,15 +914,14 @@ function renderContactSection() {
     </section>`;
 }
 
-function renderContactPage() {
+function renderContactPage(helpers) {
   return `
-    <section class="container blog-hero">
-      <span class="blog-category">Contact</span>
-      <h1>Talk to the TokenTresor Team</h1>
-      <p class="blog-date">
-        Reach out about product fit, deployment questions, or a short demo
-      </p>
-    </section>
+    ${renderCtaPageHeader(
+      "Contact Us",
+      "Reach out about product fit, deployment questions, or a short demo.",
+      helpers,
+      { showScheduleDemo: false },
+    )}
 ${renderContactSection()}`;
 }
 
@@ -907,6 +930,7 @@ function renderLandingPage(helpers) {
   const docsHref = helpers.relativePagePath(ROUTES.docs);
   const getStartedHref = helpers.relativePagePath("docs/getting-started/index.html");
   const integrationWorkflowDiagram = helpers.relativePath("Integration Workflow.png");
+  const deviceFlowDiagram = helpers.relativePath("Device Flow.png");
   const adminSlides = [
     {
       title: "Dashboard",
@@ -941,7 +965,7 @@ function renderLandingPage(helpers) {
     {
       title: "External Providers",
       description:
-        "Connect third-party identity providers while keeping TokenTresor as the central control plane.",
+        "Connect third-party identity providers while keeping TokenIDP as the central control plane.",
     },
   ];
 
@@ -1030,7 +1054,7 @@ ${[
 
         <p class="section-intro">
           Building authentication and access control systems from scratch
-          becomes complex as applications scale. TokenTresor provides a
+          becomes complex as applications scale. TokenIDP provides a
           ready-to-use identity platform so teams can focus on building
           product features instead of security infrastructure.
         </p>
@@ -1123,7 +1147,12 @@ ${[
           </ul>
         </div>
         <div class="card standards-diagram-card">
-${renderPlaceholderGraphic("PLACEHOLDER: OAUTH FLOW DIAGRAMS", "placeholder-figure-compact")}
+          <figure class="standards-diagram-figure">
+            <img
+              src="${deviceFlowDiagram}"
+              alt="Device Flow diagram showing verification on a separate device"
+            />
+          </figure>
         </div>
       </div>
     </section>
@@ -1175,7 +1204,7 @@ ${adminSlides
           </ul>
         </div>
         <div class="card integration-code-card">
-          <pre class="integration-code"><code>services.AddTokenTresorAuthentication();</code></pre>
+          <pre class="integration-code"><code>services.AddTokenIDPAuthentication();</code></pre>
         </div>
       </div>
     </section>
@@ -1195,8 +1224,8 @@ ${renderContactSection()}
 const useCases = [
   {
     outputPath: ROUTES.usecaseSaas,
-    title: "B2B SaaS Applications | TokenTresor",
-    bodyClass: "blog-article-page",
+    title: "B2B SaaS Applications | TokenIDP",
+    bodyClass: "usecase-page",
     activeNav: null,
     render: (helpers) =>
       renderUseCasePage({
@@ -1205,13 +1234,13 @@ const useCases = [
           "Identity infrastructure for scalable multi-tenant SaaS platforms",
         pageTitle: "Identity Infrastructure for B2B SaaS Platforms",
         intro:
-          "Building a B2B SaaS platform means managing users from multiple organizations while ensuring each customer's data and access remain secure and isolated. Authentication, user management, and role-based permissions quickly become complex as your product grows. A dedicated identity platform like TokenTresor simplifies this challenge by providing centralized authentication, secure access control, and tenant-based user management for all your applications. Instead of building identity infrastructure from scratch, SaaS teams can integrate a ready-to-use platform and focus on delivering core product features.",
+          "Building a B2B SaaS platform means managing users from multiple organizations while ensuring each customer's data and access remain secure and isolated. Authentication, user management, and role-based permissions quickly become complex as your product grows. A dedicated identity platform like TokenIDP simplifies this challenge by providing centralized authentication, secure access control, and tenant-based user management for all your applications. Instead of building identity infrastructure from scratch, SaaS teams can integrate a ready-to-use platform and focus on delivering core product features.",
         features: [
           {
             icon: "multiTenant",
             title: "Multi-Tenant Identity",
             description:
-              "TokenTresor keeps each customer organization isolated with its own users, roles, and authentication settings on one secure platform.",
+              "TokenIDP keeps each customer organization isolated with its own users, roles, and authentication settings on one secure platform.",
           },
           {
             icon: "centralized",
@@ -1236,14 +1265,14 @@ const useCases = [
           kicker: "Delivery Impact",
           title: "Faster Product Development",
           description:
-            "Building a secure identity system internally can take months and requires deep security expertise. TokenTresor delivers these capabilities out of the box so product teams can focus on shipping customer-facing features instead of maintaining identity infrastructure.",
+            "Building a secure identity system internally can take months and requires deep security expertise. TokenIDP delivers these capabilities out of the box so product teams can focus on shipping customer-facing features instead of maintaining identity infrastructure.",
         },
-      }),
+      }, helpers),
   },
   {
     outputPath: ROUTES.usecaseCompliance,
-    title: "Compliance-Driven Teams | TokenTresor",
-    bodyClass: "blog-article-page",
+    title: "Compliance-Driven Teams | TokenIDP",
+    bodyClass: "usecase-page",
     activeNav: null,
     render: (helpers) =>
       renderUseCasePage({
@@ -1252,7 +1281,7 @@ const useCases = [
           "Identity controls for regulated and security-sensitive organizations",
         pageTitle: "Identity Platform for Compliance-Driven Organizations",
         intro:
-          "Organizations operating in regulated industries must meet strict security and privacy requirements when managing user identities and system access. Authentication systems must ensure that only authorized users can access sensitive data while maintaining clear audit trails of login activity and permission changes. TokenTresor provides a secure, self-hosted identity platform designed to help teams implement strong authentication, centralized access control, and detailed visibility into user activity. By separating identity management from business applications, organizations can maintain consistent security policies while supporting compliance and operational governance.",
+          "Organizations operating in regulated industries must meet strict security and privacy requirements when managing user identities and system access. Authentication systems must ensure that only authorized users can access sensitive data while maintaining clear audit trails of login activity and permission changes. TokenIDP provides a secure, self-hosted identity platform designed to help teams implement strong authentication, centralized access control, and detailed visibility into user activity. By separating identity management from business applications, organizations can maintain consistent security policies while supporting compliance and operational governance.",
         features: [
           {
             icon: "security",
@@ -1283,14 +1312,14 @@ const useCases = [
           kicker: "Why It Fits",
           title: "Built for Regulated Environments",
           description:
-            "Compliance-driven teams in healthcare, finance, insurance, government, and privacy-sensitive SaaS environments need secure authentication, clear auditability, least-privilege access control, and internal data ownership. TokenTresor is especially well suited to these organizations because it is self-hosted and keeps identity operations inside the customer's own environment.",
+            "Compliance-driven teams in healthcare, finance, insurance, government, and privacy-sensitive SaaS environments need secure authentication, clear auditability, least-privilege access control, and internal data ownership. TokenIDP is especially well suited to these organizations because it is self-hosted and keeps identity operations inside the customer's own environment.",
         },
-      }),
+      }, helpers),
   },
   {
     outputPath: ROUTES.usecaseApi,
-    title: "API Platform Builders | TokenTresor",
-    bodyClass: "blog-article-page",
+    title: "API Platform Builders | TokenIDP",
+    bodyClass: "usecase-page",
     activeNav: null,
     render: (helpers) =>
       renderUseCasePage({
@@ -1299,7 +1328,7 @@ const useCases = [
           "Identity infrastructure for token-secured APIs and distributed services",
         pageTitle: "Identity Infrastructure for API Platforms",
         intro:
-          "Modern applications rely heavily on APIs to connect services, applications, and external integrations. Securing these APIs while managing authentication for different clients can quickly become complex. TokenTresor provides a centralized identity platform designed for API-driven systems, enabling applications to authenticate users and services securely using standardized token-based access. With support for OAuth2 and OpenID Connect, development teams can protect APIs, manage client applications, and control access permissions across distributed systems.",
+          "Modern applications rely heavily on APIs to connect services, applications, and external integrations. Securing these APIs while managing authentication for different clients can quickly become complex. TokenIDP provides a centralized identity platform designed for API-driven systems, enabling applications to authenticate users and services securely using standardized token-based access. With support for OAuth2 and OpenID Connect, development teams can protect APIs, manage client applications, and control access permissions across distributed systems.",
         features: [
           {
             icon: "security",
@@ -1330,14 +1359,14 @@ const useCases = [
           kicker: "Architecture Fit",
           title: "Built for API-First Systems",
           description:
-            "Teams building public APIs, partner integrations, internal developer platforms, and microservices architectures need centralized identity, client registration, and reliable token validation. TokenTresor gives API platform teams one secure control point for authentication and authorization across distributed systems.",
+            "Teams building public APIs, partner integrations, internal developer platforms, and microservices architectures need centralized identity, client registration, and reliable token validation. TokenIDP gives API platform teams one secure control point for authentication and authorization across distributed systems.",
         },
-      }),
+      }, helpers),
   },
   {
     outputPath: ROUTES.usecaseEnterprise,
-    title: "Enterprise Architecture | TokenTresor",
-    bodyClass: "blog-article-page",
+    title: "Enterprise Architecture | TokenIDP",
+    bodyClass: "usecase-page",
     activeNav: null,
     render: (helpers) =>
       renderUseCasePage({
@@ -1346,7 +1375,7 @@ const useCases = [
           "Identity infrastructure for large application ecosystems and internal platforms",
         pageTitle: "Identity Platform for Enterprise Architectures",
         intro:
-          "Large organizations often operate multiple applications, services, and internal platforms that require secure and consistent identity management. Without a centralized identity system, authentication and access control can become fragmented across systems. TokenTresor provides a unified identity platform that enables enterprises to manage authentication, authorization, and security policies across all applications while maintaining a scalable and standards-based architecture.",
+          "Large organizations often operate multiple applications, services, and internal platforms that require secure and consistent identity management. Without a centralized identity system, authentication and access control can become fragmented across systems. TokenIDP provides a unified identity platform that enables enterprises to manage authentication, authorization, and security policies across all applications while maintaining a scalable and standards-based architecture.",
         features: [
           {
             icon: "centralized",
@@ -1377,16 +1406,16 @@ const useCases = [
           kicker: "Enterprise Fit",
           title: "One Identity Layer Across the Organization",
           description:
-            "Customer portals, employee portals, partner systems, mobile apps, internal APIs, and legacy applications all need consistent authentication and authorization. TokenTresor gives enterprise architects a central identity layer that reduces duplication, aligns policy enforcement, and scales across diverse application environments.",
+            "Customer portals, employee portals, partner systems, mobile apps, internal APIs, and legacy applications all need consistent authentication and authorization. TokenIDP gives enterprise architects a central identity layer that reduces duplication, aligns policy enforcement, and scales across diverse application environments.",
         },
-      }),
+      }, helpers),
   },
 ];
 
 const blogArticles = [
   {
     outputPath: ROUTES.blogMultiTenant,
-    title: "Designing Multi-Tenant Identity for B2B SaaS | TokenTresor",
+    title: "Designing Multi-Tenant Identity for B2B SaaS | TokenIDP",
     bodyClass: "blog-article-page",
     activeNav: "blog",
     render: (helpers) =>
@@ -1456,7 +1485,7 @@ const blogArticles = [
   },
   {
     outputPath: ROUTES.blogOauth2,
-    title: "OAuth2 Authorization Code Flow Explained | TokenTresor",
+    title: "OAuth2 Authorization Code Flow Explained | TokenIDP",
     bodyClass: "blog-article-page",
     activeNav: "blog",
     render: (helpers) =>
@@ -1517,7 +1546,7 @@ const blogArticles = [
   },
   {
     outputPath: ROUTES.blogRbac,
-    title: "RBAC vs ABAC in Enterprise Applications | TokenTresor",
+    title: "RBAC vs ABAC in Enterprise Applications | TokenIDP",
     bodyClass: "blog-article-page",
     activeNav: "blog",
     render: (helpers) =>
@@ -1576,7 +1605,7 @@ const blogArticles = [
   },
   {
     outputPath: ROUTES.blogMfa,
-    title: "Implementing MFA in Identity Platforms | TokenTresor",
+    title: "Implementing MFA in Identity Platforms | TokenIDP",
     bodyClass: "blog-article-page",
     activeNav: "blog",
     render: (helpers) =>
@@ -1636,7 +1665,7 @@ const blogArticles = [
   },
   {
     outputPath: ROUTES.blogTokens,
-    title: "Secure Token Handling in APIs | TokenTresor",
+    title: "Secure Token Handling in APIs | TokenIDP",
     bodyClass: "blog-article-page",
     activeNav: "blog",
     render: (helpers) =>
@@ -1711,7 +1740,7 @@ export const pages = [
   ...docsPages,
   {
     outputPath: ROUTES.blogs,
-    title: "Blog | TokenTresor",
+    title: "Blog | TokenIDP",
     bodyClass: "blogs-page",
     activeNav: "blog",
     render: renderBlogsIndex,
@@ -1720,7 +1749,7 @@ export const pages = [
   ...useCases,
   {
     outputPath: ROUTES.contact,
-    title: "Contact Us | TokenTresor",
+    title: "Contact Us | TokenIDP",
     bodyClass: "blog-article-page contact-page",
     activeNav: "contact",
     render: renderContactPage,
