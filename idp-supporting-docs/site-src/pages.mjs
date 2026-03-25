@@ -972,10 +972,11 @@ function renderLandingPage(helpers) {
   return `
     <header class="main-header">
       <div class="hero-content">
-        <h1>One Identity for Every App and Service</h1>
+        <h1>One Identity for Every<br>App and Service</h1>
         <p>
-          OAuth2, OpenID Connect, RBAC, and User Management, built from real-world
-          experience, simple to configure &amp; deploy, and easy to operate.
+          OAuth2, OpenID Connect, RBAC,<br>
+          and User Management, built from real-world experience,<br>
+          simple to configure &amp; deploy, and easy to operate.
         </p>
         <div class="hero-actions">
           <a class="btn" href="${getStartedHref}">Get Started</a>
@@ -1147,6 +1148,7 @@ ${[
           </ul>
         </div>
         <div class="card standards-diagram-card">
+          <h3 class="standards-diagram-title">Device Flow</h3>
           <figure class="standards-diagram-figure">
             <img
               src="${deviceFlowDiagram}"
@@ -1208,17 +1210,8 @@ ${adminSlides
         </div>
       </div>
     </section>
-${renderContactSection()}
 
-    <section class="container final-cta-section">
-      <div class="final-cta-card">
-        <h2>Start Building Secure Applications Today</h2>
-        <div class="final-cta-actions">
-          <a class="btn" href="${getStartedHref}">Get Started</a>
-          <a class="btn" href="${docsHref}">View Documentation</a>
-        </div>
-      </div>
-    </section>`;
+    `;
 }
 
 const useCases = [

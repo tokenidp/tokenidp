@@ -1,8 +1,5 @@
 import path from "node:path";
 
-const FOOTER_HTML =
-  "&copy; 2026 TokenIDP | Identity &amp; Access Platform for B2B SaaS | Built with security, privacy, and scalability in mind.";
-
 const COMMON_SCRIPT = `document
   .querySelectorAll("a, button, summary, [role='button']")
   .forEach((el) => el.style.setProperty("cursor", "pointer", "important"));`;
@@ -91,6 +88,49 @@ function renderNav(page) {
     </nav>`;
 }
 
+function renderFooter(page) {
+  const getStartedHref = relativePagePath(
+    page.outputPath,
+    "docs/getting-started/index.html",
+  );
+  const contactHref = relativePagePath(page.outputPath, "contact/index.html");
+
+  return `
+    <footer class="footer-section">
+      <div class="footer-wave" aria-hidden="true">
+        <svg viewBox="0 0 1440 160" preserveAspectRatio="none">
+          <path fill="#00A9FF" d="M0,64C120,140,240,150,360,110C480,70,600,0,720,10C840,20,960,110,1080,130C1200,150,1320,100,1440,40L1440,160L0,160Z"></path>
+        </svg>
+      </div>
+      <div class="footer-content">
+        <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="logo">
+              <span>TokenIDP</span>
+            </div>
+            <p>
+              TokenIDP helps teams manage authentication, authorization, tenant
+              access, and identity operations through a standards-based platform
+              built for modern B2B SaaS applications.
+            </p>
+          </div>
+          <div class="footer-cta">
+            <h3 class="footer-title">Start Building Secure Applications Today</h3>
+            <div class="footer-cta-actions">
+              <a class="footer-cta-btn footer-cta-btn-primary" href="${getStartedHref}">Get Started</a>
+              <a class="footer-cta-btn footer-cta-btn-secondary" href="${contactHref}">Schedule a Demo</a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          &copy; 2026 TokenIDP | Built with security, privacy, and scalability in mind.
+        </div>
+        </div>
+      </div>
+    </footer>`;
+}
+
 export function renderPage(page) {
   const helpers = {
     escapeHtml,
@@ -116,9 +156,7 @@ ${renderNav(page)}
     <main>
 ${page.render(helpers)}
     </main>
-    <footer>
-      ${FOOTER_HTML}
-    </footer>
+${renderFooter(page)}
 ${scripts}
   </body>
 </html>
