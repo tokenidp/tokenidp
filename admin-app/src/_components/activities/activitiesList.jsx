@@ -295,7 +295,7 @@ function ActivitiesList() {
           <div className="text-center py-5">Loading activities...</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th>Timestamp</th>
@@ -312,20 +312,26 @@ function ActivitiesList() {
                   const eventType = getField(item, "eventType", "EventType");
                   const actor = getField(item, "actor", "Actor");
                   const target = getField(item, "target", "Target");
-                  const description = getField(item, "description", "Description");
+                  const description = getField(
+                    item,
+                    "description",
+                    "Description",
+                  );
                   const status = getField(item, "status", "Status");
 
                   return (
                     <tr key={`${timestamp}-${eventType}-${actor}`}>
-                      <td>{formatLocalDateTime(timestamp) || "2025-01-10 12:42"}</td>
+                      <td>
+                        {formatLocalDateTime(timestamp) || "2025-01-10 12:42"}
+                      </td>
                       <td>
                         <i
                           className={`fa ${
                             eventType === "Login"
                               ? "fa-right-to-bracket"
                               : eventType === "Token"
-                              ? "fa-key"
-                              : "fa-shield"
+                                ? "fa-key"
+                                : "fa-shield"
                           } me-2 text-secondary`}
                         ></i>
                         {eventType || "Login"}

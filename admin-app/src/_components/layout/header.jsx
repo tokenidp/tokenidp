@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "tokentresor-idp-react";
 
-function Header({ onToggleSidebar }) {
+function Header({ onToggleSidebar, onToggleTheme, theme }) {
   const [name, setName] = useState("");
-  const user  = useAuth();
+  const user = useAuth();
 
   useEffect(() => {
     setName(user.userName);

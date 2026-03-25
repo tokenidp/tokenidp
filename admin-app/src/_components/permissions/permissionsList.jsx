@@ -95,8 +95,7 @@ function PermissionsList() {
     .map((item) => getField(item, "id", "Id"))
     .filter((id) => id !== undefined && id !== null);
   const allSelected =
-    displayedIds.length > 0 &&
-    displayedIds.every((id) => selectedIds.has(id));
+    displayedIds.length > 0 && displayedIds.every((id) => selectedIds.has(id));
   const someSelected =
     displayedIds.some((id) => selectedIds.has(id)) && !allSelected;
 
@@ -209,7 +208,7 @@ function PermissionsList() {
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
-            <Link className="btn btn-primary-solid" to="new">
+            <Link className="btn btn-primary" to="new">
               <i className="fa fa-plus"></i> Add New
             </Link>
           </div>
@@ -219,7 +218,7 @@ function PermissionsList() {
           <div className="text-center py-5">Loading permissions...</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th className="table-checkbox">
@@ -276,12 +275,16 @@ function PermissionsList() {
                         }}
                       />
                     </td>
-                    <td>{getField(item, "permissionName", "PermissionName")}</td>
+                    <td>
+                      {getField(item, "permissionName", "PermissionName")}
+                    </td>
                     <td className="text-muted">
                       {getField(item, "permissionKey", "PermissionKey")}
                     </td>
                     <td>{getField(item, "controlType", "ControlType")}</td>
-                    <td className="text-muted">{getField(item, "url", "Url")}</td>
+                    <td className="text-muted">
+                      {getField(item, "url", "Url")}
+                    </td>
                     <td>{getField(item, "sequence", "Sequence")}</td>
                     <td>
                       <span
@@ -304,14 +307,17 @@ function PermissionsList() {
                           const permissionKey = getField(
                             item,
                             "permissionKey",
-                            "PermissionKey"
+                            "PermissionKey",
                           );
                           if (!permissionKey) {
                             return;
                           }
-                          navigate(`edit/${encodeURIComponent(String(permissionKey))}`, {
-                            state: { id },
-                          });
+                          navigate(
+                            `edit/${encodeURIComponent(String(permissionKey))}`,
+                            {
+                              state: { id },
+                            },
+                          );
                         }}
                       >
                         <i className="fa fa-pen"></i>

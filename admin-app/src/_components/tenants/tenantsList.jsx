@@ -23,9 +23,11 @@ const getLookupLabel = (options, value) => {
   const match = (options || []).find(
     (option) =>
       String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) ===
-      normalized
+      normalized,
   );
-  return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "Unknown";
+  return (
+    match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "Unknown"
+  );
 };
 
 function TenantsList() {
@@ -124,7 +126,10 @@ function TenantsList() {
   const resolveStatus = (item) => {
     const isActive = getField(item, "isActive", "IsActive");
     const key = String(isActive).toLowerCase();
-    return getLookupLabel(state.statuses, key) || (key === "true" ? "Active" : "Inactive");
+    return (
+      getLookupLabel(state.statuses, key) ||
+      (key === "true" ? "Active" : "Inactive")
+    );
   };
 
   return (
@@ -204,7 +209,7 @@ function TenantsList() {
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
-            <Link className="btn btn-primary-solid" to="new">
+            <Link className="btn btn-primary" to="new">
               <i className="fa fa-plus"></i> Add New
             </Link>
           </div>
@@ -212,9 +217,9 @@ function TenantsList() {
 
         {state.loading ? (
           <div className="text-center py-5">Loading tenants...</div>
-        ) :  (
+        ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th className="table-checkbox">
@@ -231,9 +236,10 @@ function TenantsList() {
               <tbody>
                 {state.items.map((item) => {
                   const statusLabel = resolveStatus(item);
-                  const isActive = String(
-                    getField(item, "isActive", "IsActive")
-                  ).toLowerCase() === "true";
+                  const isActive =
+                    String(
+                      getField(item, "isActive", "IsActive"),
+                    ).toLowerCase() === "true";
                   return (
                     <tr key={getField(item, "id", "Id")}>
                       <td className="table-checkbox">
@@ -247,7 +253,11 @@ function TenantsList() {
                       <td>
                         {getLookupLabel(
                           state.authenticationModes,
-                          getField(item, "authenticationMode", "AuthenticationMode")
+                          getField(
+                            item,
+                            "authenticationMode",
+                            "AuthenticationMode",
+                          ),
                         )}
                       </td>
                       <td>
@@ -265,13 +275,20 @@ function TenantsList() {
                           type="button"
                           onClick={() => {
                             const id = getField(item, "id", "Id");
-                            const tenantCode = getField(item, "tenantCode", "TenantCode");
+                            const tenantCode = getField(
+                              item,
+                              "tenantCode",
+                              "TenantCode",
+                            );
                             if (!tenantCode) {
                               return;
                             }
-                            navigate(`edit/${encodeURIComponent(String(tenantCode))}`, {
-                              state: { id },
-                            });
+                            navigate(
+                              `edit/${encodeURIComponent(String(tenantCode))}`,
+                              {
+                                state: { id },
+                              },
+                            );
                           }}
                           title="Edit"
                         >
@@ -280,11 +297,11 @@ function TenantsList() {
                         <button
                           className="btn btn-link p-0 text-danger ButtonLink"
                           type="button"
-                          onClick={() => requestDelete(getField(item, "id", "Id"))}
+                          onClick={() =>
+                            requestDelete(getField(item, "id", "Id"))
+                          }
                           title={
-                            isActive
-                              ? "Deactivate before deleting"
-                              : "Delete"
+                            isActive ? "Deactivate before deleting" : "Delete"
                           }
                           disabled={isActive}
                         >

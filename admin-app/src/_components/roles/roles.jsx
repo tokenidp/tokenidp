@@ -60,7 +60,13 @@ function Roles() {
         {!state.loading &&
           state.items.map((role) => {
             const roleId = getField(role, "id", "Id");
-            const roleName = getField(role, "roleName", "RoleName", "name", "Name");
+            const roleName = getField(
+              role,
+              "roleName",
+              "RoleName",
+              "name",
+              "Name",
+            );
             return (
               <div key={roleId} className="col-12 col-md-6 col-xl-4">
                 <div className="role-card">
@@ -78,11 +84,15 @@ function Roles() {
                           if (!roleName) {
                             return;
                           }
-                          navigate(`edit/${encodeURIComponent(String(roleName))}`, {
-                            state: { id: roleId },
-                          });
+                          navigate(
+                            `edit/${encodeURIComponent(String(roleName))}`,
+                            {
+                              state: { id: roleId },
+                            },
+                          );
                         }}
                       >
+                        <i className="fa fa-edit me-1" aria-hidden="true"></i>
                         Edit Role
                       </button>
                       <button
@@ -92,6 +102,7 @@ function Roles() {
                           requestDelete({ id: roleId, name: roleName })
                         }
                       >
+                        <i className="fa fa-trash me-1" aria-hidden="true"></i>
                         Delete
                       </button>
                     </div>
@@ -113,7 +124,7 @@ function Roles() {
               <p className="text-muted mb-3">
                 Add new role, if it doesn&#39;t exist.
               </p>
-              <Link className="btn btn-primary-solid no-hover" to="new">
+              <Link className="btn btn-primary no-hover" to="new">
                 Add New
               </Link>
             </div>

@@ -8,7 +8,8 @@ import { useUsers } from "../../_hooks/useUsers";
 
 function Users() {
   const navigate = useNavigate();
-  const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus } = useUsers();
+  const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus } =
+    useUsers();
 
   const defaultSearch = {
     pageNumber: 1,
@@ -28,7 +29,10 @@ function Users() {
   });
   const [resetPasswordSubmitting, setResetPasswordSubmitting] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const [pendingResetUser, setPendingResetUser] = useState({ id: 0, userName: "" });
+  const [pendingResetUser, setPendingResetUser] = useState({
+    id: 0,
+    userName: "",
+  });
   const [statusUpdatingUserId, setStatusUpdatingUserId] = useState(0);
   const [statusConfirmOpen, setStatusConfirmOpen] = useState(false);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState({
@@ -128,7 +132,7 @@ function Users() {
     if (statusId !== undefined && statusId !== null) {
       const statusLookup = state.statuses.find(
         (status) =>
-          String(status.key ?? status.id ?? status.Id) === String(statusId)
+          String(status.key ?? status.id ?? status.Id) === String(statusId),
       );
       const statusValue =
         statusLookup?.value ?? statusLookup?.name ?? statusLookup?.Name;
@@ -147,7 +151,9 @@ function Users() {
 
   const openResetPassword = (item) => {
     const id = Number(getField(item, "id", "Id") || 0);
-    const userName = String(getField(item, "userName", "UserName", "email", "Email") || "");
+    const userName = String(
+      getField(item, "userName", "UserName", "email", "Email") || "",
+    );
     if (!id) {
       return;
     }
@@ -195,7 +201,8 @@ function Users() {
     setPendingStatusUpdate({
       id,
       userName: String(
-        getField(item, "fullName", "name", "Name", "userName", "UserName") || "this user"
+        getField(item, "fullName", "name", "Name", "userName", "UserName") ||
+          "this user",
       ),
       status: getNextStatus(item),
     });
@@ -372,7 +379,7 @@ function Users() {
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
-            <Link className="btn btn-primary-solid" to="new">
+            <Link className="btn btn-primary" to="new">
               <i className="fa fa-plus"></i> Add New
             </Link>
           </div>
@@ -382,7 +389,7 @@ function Users() {
           <div className="text-center py-5">Loading users...</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th className="table-checkbox">
@@ -409,7 +416,9 @@ function Users() {
                     <td className="col-phone">
                       {getField(item, "phoneNumber", "PhoneNumber")}
                     </td>
-                    <td className="col-roles">{getField(item, "roles", "Roles")}</td>
+                    <td className="col-roles">
+                      {getField(item, "roles", "Roles")}
+                    </td>
                     <td>
                       <span
                         className={`status-pill ${
@@ -435,13 +444,20 @@ function Users() {
                         type="button"
                         onClick={() => {
                           const id = getField(item, "id", "Id");
-                          const userName = getField(item, "userName", "UserName");
+                          const userName = getField(
+                            item,
+                            "userName",
+                            "UserName",
+                          );
                           if (!userName) {
                             return;
                           }
-                          navigate(`edit/${encodeURIComponent(String(userName))}`, {
-                            state: { id },
-                          });
+                          navigate(
+                            `edit/${encodeURIComponent(String(userName))}`,
+                            {
+                              state: { id },
+                            },
+                          );
                         }}
                         title="Edit"
                       >
@@ -449,16 +465,23 @@ function Users() {
                       </button>
                       <button
                         className={`btn btn-link p-0 ButtonLink ${
-                          getNextStatus(item) === "Inactive" ? "text-danger" : "text-success"
+                          getNextStatus(item) === "Inactive"
+                            ? "text-danger"
+                            : "text-success"
                         }`}
                         type="button"
                         title={`Set ${getNextStatus(item)}`}
-                        disabled={statusUpdatingUserId === Number(getField(item, "id", "Id"))}
+                        disabled={
+                          statusUpdatingUserId ===
+                          Number(getField(item, "id", "Id"))
+                        }
                         onClick={() => openStatusConfirm(item)}
                       >
                         <i
                           className={`fa ${
-                            getNextStatus(item) === "Inactive" ? "fa-ban" : "fa-check"
+                            getNextStatus(item) === "Inactive"
+                              ? "fa-ban"
+                              : "fa-check"
                           }`}
                         ></i>
                       </button>
@@ -500,7 +523,9 @@ function Users() {
             ? `Send a password reset email to ${pendingResetUser.userName || "this user"}?`
             : "Send password reset email?"
         }
-        confirmLabel={resetPasswordSubmitting ? "Sending..." : "Send Reset Email"}
+        confirmLabel={
+          resetPasswordSubmitting ? "Sending..." : "Send Reset Email"
+        }
         onConfirm={submitResetPassword}
         onClose={closeResetPassword}
       />

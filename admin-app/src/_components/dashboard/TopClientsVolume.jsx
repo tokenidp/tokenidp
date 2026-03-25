@@ -12,7 +12,7 @@ function TopClientsVolume({ topClients }) {
       </div>
       <div className="card-body">
         <div className="table-responsive">
-          <table className="table table-sm mb-0">
+          <table className="table table-sm mb-0 table-striped table-bordered">
             <thead className="tbl-heading-gradient">
               <tr>
                 <th>Client</th>

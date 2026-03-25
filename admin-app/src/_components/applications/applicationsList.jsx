@@ -21,21 +21,28 @@ const getField = (item, ...keys) =>
 const getLookupLabel = (options, value) => {
   const normalized = String(value ?? "");
   const match = (options || []).find(
-    (option) => String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) === normalized
+    (option) =>
+      String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) ===
+      normalized,
   );
-  return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "Unknown";
+  return (
+    match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "Unknown"
+  );
 };
 
 const getLookupValue = (options, key) => {
   const normalized = String(key ?? "");
   const match = (options || []).find(
-    (option) => String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) === normalized
+    (option) =>
+      String(option?.key ?? option?.id ?? option?.Key ?? option?.Id) ===
+      normalized,
   );
   return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "";
 };
 
 function ApplicationsList() {
-  const { state, loadApplications, loadLookups, deleteApplication } = useApplications();
+  const { state, loadApplications, loadLookups, deleteApplication } =
+    useApplications();
   const navigate = useNavigate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
@@ -67,21 +74,21 @@ function ApplicationsList() {
     if (filters.appType) {
       const value = getLookupValue(state.appTypes, filters.appType);
       if (value) {
-      criterias.push({
-        ColumnName: "AppType",
-        Value: value,
-        ColumnType: 1,
-      });
+        criterias.push({
+          ColumnName: "AppType",
+          Value: value,
+          ColumnType: 1,
+        });
       }
     }
     if (filters.tokenType) {
       const value = getLookupValue(state.tokenTypes, filters.tokenType);
       if (value) {
-      criterias.push({
-        ColumnName: "TokenType",
-        Value: value,
-        ColumnType: 1,
-      });
+        criterias.push({
+          ColumnName: "TokenType",
+          Value: value,
+          ColumnType: 1,
+        });
       }
     }
     if (filters.status) {
@@ -267,7 +274,7 @@ function ApplicationsList() {
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
-            <Link className="btn btn-primary-solid" to="/applications/new">
+            <Link className="btn btn-primary" to="/applications/new">
               <i className="fa fa-plus"></i> Add New
             </Link>
           </div>
@@ -276,7 +283,7 @@ function ApplicationsList() {
           <div className="text-center py-5">Loading applications...</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th className="table-checkbox">
@@ -292,7 +299,7 @@ function ApplicationsList() {
               </thead>
               <tbody>
                 {state.items.map((item) => (
-                  <tr key={getField(item, "id", "Id")}> 
+                  <tr key={getField(item, "id", "Id")}>
                     <td className="table-checkbox">
                       <input type="checkbox" />
                     </td>
@@ -303,13 +310,19 @@ function ApplicationsList() {
                     <td>
                       {getLookupLabel(
                         state.appTypes,
-                        getField(item, "appType", "AppType")
+                        getField(item, "appType", "AppType"),
                       )}
                     </td>
                     <td>
                       {getLookupLabel(
                         state.tokenTypes,
-                        getField(item, "tokenType", "TokenType", "accessTokenType", "AccessTokenType")
+                        getField(
+                          item,
+                          "tokenType",
+                          "TokenType",
+                          "accessTokenType",
+                          "AccessTokenType",
+                        ),
                       )}
                     </td>
                     <td>
@@ -331,13 +344,20 @@ function ApplicationsList() {
                         type="button"
                         onClick={() => {
                           const id = getField(item, "id", "Id");
-                          const clientId = getField(item, "clientId", "ClientId");
+                          const clientId = getField(
+                            item,
+                            "clientId",
+                            "ClientId",
+                          );
                           if (!clientId) {
                             return;
                           }
-                          navigate(`edit/${encodeURIComponent(String(clientId))}`, {
-                            state: { id },
-                          });
+                          navigate(
+                            `edit/${encodeURIComponent(String(clientId))}`,
+                            {
+                              state: { id },
+                            },
+                          );
                         }}
                         title="Edit"
                       >
@@ -346,7 +366,9 @@ function ApplicationsList() {
                       <button
                         className="btn btn-link p-0 text-danger ButtonLink"
                         type="button"
-                        onClick={() => requestDelete(getField(item, "id", "Id"))}
+                        onClick={() =>
+                          requestDelete(getField(item, "id", "Id"))
+                        }
                         title="Delete"
                       >
                         <i className="fa fa-trash"></i>

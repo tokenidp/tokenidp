@@ -21,9 +21,15 @@ function DefaultLayout(props) {
         onClick={props.onClick}
         isOpen={sidebarOpen}
         onNavigate={handleNavigate}
+        onToggleTheme={props.onToggleTheme}
+        theme={props.theme}
       />
       <div className="right-panel">
-        <Header onToggleSidebar={handleToggleSidebar} />
+        {/* <Header
+          onToggleSidebar={handleToggleSidebar}
+          onToggleTheme={props.onToggleTheme}
+          theme={props.theme}
+        /> */}
         <GlobalErrorBanner />
         <div className="content-area">
           <Outlet />

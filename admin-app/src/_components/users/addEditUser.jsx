@@ -73,7 +73,7 @@ function AddEditUser({ mode }) {
   } = useUsers();
   const { clearError } = useGlobalError();
   const [currentUserId, setCurrentUserId] = useState(
-    location?.state?.id ? Number(location.state.id) : 0
+    location?.state?.id ? Number(location.state.id) : 0,
   );
   const [activeTab, setActiveTab] = useState("details");
   const [showPassword, setShowPassword] = useState(false);
@@ -172,45 +172,41 @@ function AddEditUser({ mode }) {
 
       const data = await getUserById(resolvedId);
       if (!data) return;
-      const resolvedDataId =
-        data.id ?? data.Id ?? Number(currentUserId || 0);
+      const resolvedDataId = data.id ?? data.Id ?? Number(currentUserId || 0);
       setCurrentUserId(resolvedDataId);
       setValue("firstName", data.firstName ?? data.FirstName ?? "");
       setValue("lastName", data.lastName ?? data.LastName ?? "");
       setValue("userName", data.userName ?? data.UserName ?? "");
       setValue(
         "normalizedUserName",
-        data.normalizedUserName ?? data.NormalizedUserName ?? ""
+        data.normalizedUserName ?? data.NormalizedUserName ?? "",
       );
       setValue("email", data.email ?? data.Email ?? "");
       setValue("phone", data.phone ?? data.Phone ?? "");
       setValue("status", data.statusId ?? data.StatusId ?? data.status ?? "");
       setValue(
         "emailConfirmed",
-        data.emailConfirmed ?? data.EmailConfirmed ?? false
+        data.emailConfirmed ?? data.EmailConfirmed ?? false,
       );
       setValue(
         "phoneNumberConfirmed",
-        data.phoneNumberConfirmed ?? data.PhoneNumberConfirmed ?? false
+        data.phoneNumberConfirmed ?? data.PhoneNumberConfirmed ?? false,
       );
       setValue(
         "twoFactorEnabled",
-        data.twoFactorEnabled ?? data.TwoFactorEnabled ?? false
+        data.twoFactorEnabled ?? data.TwoFactorEnabled ?? false,
       );
       setValue(
         "lockoutEnabled",
-        data.lockoutEnabled ?? data.LockoutEnabled ?? false
+        data.lockoutEnabled ?? data.LockoutEnabled ?? false,
       );
       setValue(
         "accessFailedCount",
-        data.accessFailedCount ?? data.AccessFailedCount ?? 0
+        data.accessFailedCount ?? data.AccessFailedCount ?? 0,
       );
       const lockoutEnd =
         data.lockoutEnd ?? data.LockoutEnd ?? data.lockoutEndDate ?? "";
-      setValue(
-        "lockoutEnd",
-        lockoutEnd ? String(lockoutEnd).slice(0, 16) : ""
-      );
+      setValue("lockoutEnd", lockoutEnd ? String(lockoutEnd).slice(0, 16) : "");
       setValue("roles", data.roles ?? data.Roles ?? []);
       console.log("address object:", data.addresses ?? data.Addresses ?? []);
       const addresses = data.addresses ?? data.Addresses ?? [];
@@ -220,68 +216,65 @@ function AddEditUser({ mode }) {
       setAddressTypeSeed(rawAddressType);
       setValue(
         "addressType",
-        resolveAddressTypeValue(rawAddressType, addressTypeOptions)
+        resolveAddressTypeValue(rawAddressType, addressTypeOptions),
       );
       setValue(
         "addressLine1",
-        primaryAddress.addressLine1 ?? primaryAddress.AddressLine1 ?? ""
+        primaryAddress.addressLine1 ?? primaryAddress.AddressLine1 ?? "",
       );
       setValue(
         "addressLine2",
-        primaryAddress.addressLine2 ?? primaryAddress.AddressLine2 ?? ""
+        primaryAddress.addressLine2 ?? primaryAddress.AddressLine2 ?? "",
       );
       setValue("city", primaryAddress.city ?? primaryAddress.City ?? "");
       setValue("state", primaryAddress.state ?? primaryAddress.State ?? "");
       setValue(
         "postalCode",
-        primaryAddress.postalCode ?? primaryAddress.PostalCode ?? ""
+        primaryAddress.postalCode ?? primaryAddress.PostalCode ?? "",
       );
       setValue(
         "country",
-        primaryAddress.country ?? primaryAddress.Country ?? ""
+        primaryAddress.country ?? primaryAddress.Country ?? "",
       );
 
       const contacts = data.contacts ?? data.Contacts ?? [];
       const primaryContact = contacts[0] || {};
       setValue(
         "contactType",
-        primaryContact.contactType ?? primaryContact.ContactType ?? ""
+        primaryContact.contactType ?? primaryContact.ContactType ?? "",
       );
       setValue(
         "contactRelationship",
-        primaryContact.relationship ?? primaryContact.Relationship ?? ""
+        primaryContact.relationship ?? primaryContact.Relationship ?? "",
       );
       setValue(
         "contactEmail",
-        primaryContact.email ?? primaryContact.Email ?? ""
+        primaryContact.email ?? primaryContact.Email ?? "",
       );
       setValue(
         "contactPhoneNumber",
-        primaryContact.phoneNumber ?? primaryContact.PhoneNumber ?? ""
+        primaryContact.phoneNumber ?? primaryContact.PhoneNumber ?? "",
       );
       setValue(
         "contactAddressLine1",
-        primaryContact.addressLine1 ?? primaryContact.AddressLine1 ?? ""
+        primaryContact.addressLine1 ?? primaryContact.AddressLine1 ?? "",
       );
       setValue(
         "contactAddressLine2",
-        primaryContact.addressLine2 ?? primaryContact.AddressLine2 ?? ""
+        primaryContact.addressLine2 ?? primaryContact.AddressLine2 ?? "",
       );
-      setValue(
-        "contactCity",
-        primaryContact.city ?? primaryContact.City ?? ""
-      );
+      setValue("contactCity", primaryContact.city ?? primaryContact.City ?? "");
       setValue(
         "contactState",
-        primaryContact.state ?? primaryContact.State ?? ""
+        primaryContact.state ?? primaryContact.State ?? "",
       );
       setValue(
         "contactPostalCode",
-        primaryContact.postalCode ?? primaryContact.PostalCode ?? ""
+        primaryContact.postalCode ?? primaryContact.PostalCode ?? "",
       );
       setValue(
         "contactCountry",
-        primaryContact.country ?? primaryContact.Country ?? ""
+        primaryContact.country ?? primaryContact.Country ?? "",
       );
     };
     loadUser();
@@ -306,7 +299,7 @@ function AddEditUser({ mode }) {
     if (mode === "edit" && decodedUserKey && addressTypeSeed !== null) {
       setValue(
         "addressType",
-        resolveAddressTypeValue(addressTypeSeed, addressTypeOptions)
+        resolveAddressTypeValue(addressTypeSeed, addressTypeOptions),
       );
     }
   }, [addressTypeOptions, addressTypeSeed, decodedUserKey, mode, setValue]);
@@ -316,7 +309,7 @@ function AddEditUser({ mode }) {
     if (addressType || addressTypeOptions.length === 0) return;
     const firstOptionValue = resolveAddressTypeValue(
       getLookupValue(addressTypeOptions[0]),
-      addressTypeOptions
+      addressTypeOptions,
     );
     if (firstOptionValue) {
       setValue("addressType", firstOptionValue);
@@ -362,9 +355,7 @@ function AddEditUser({ mode }) {
       : [];
 
     const routeUserId = Number(currentUserId || 0);
-    const resolvedUserId = mode === "edit"
-      ? routeUserId
-      : currentUserId || 0;
+    const resolvedUserId = mode === "edit" ? routeUserId : currentUserId || 0;
     const payload = {
       id: resolvedUserId,
       tenantId: 0,
@@ -377,7 +368,9 @@ function AddEditUser({ mode }) {
       twoFactorEnabled: !!data.twoFactorEnabled,
       lockoutEnabled: !!data.lockoutEnabled,
       accessFailedCount: Number(data.accessFailedCount || 0),
-      lockoutEnd: data.lockoutEnd ? new Date(data.lockoutEnd).toISOString() : null,
+      lockoutEnd: data.lockoutEnd
+        ? new Date(data.lockoutEnd).toISOString()
+        : null,
       addresses: [addressPayload],
       contacts: contactsPayload,
       roles: data.roles || [],
@@ -421,9 +414,7 @@ function AddEditUser({ mode }) {
             </div>
           </div>
         </div>
-        {state.error && (
-          <div className="text-danger mb-3">{state.error}</div>
-        )}
+        {state.error && <div className="text-danger mb-3">{state.error}</div>}
 
         <ul className="nav nav-tabs app-tabs">
           <li className="nav-item">
@@ -481,12 +472,7 @@ function AddEditUser({ mode }) {
                               >
                                 <option value="">Select Status</option>
                                 {state.statuses.map((status) => (
-                                  <option
-                                    key={status.key}
-                                    value={
-                                      status.value
-                                    }
-                                  >
+                                  <option key={status.key} value={status.value}>
                                     {status.value}
                                   </option>
                                 ))}
@@ -499,18 +485,24 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">Lockout Enabled</label>
+                            <label className="form-label">
+                              Lockout Enabled
+                            </label>
                             <div className="form-check form-switch app-switch account-status-switch">
                               <input
                                 className="form-check-input app-switch-input"
                                 type="checkbox"
                                 {...register("lockoutEnabled")}
                               />
-                              <label className="form-check-label">Enabled</label>
+                              <label className="form-check-label">
+                                Enabled
+                              </label>
                             </div>
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">Access Failed Count</label>
+                            <label className="form-label">
+                              Access Failed Count
+                            </label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-triangle-exclamation"></i>
@@ -622,7 +614,9 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Email Address *</label>
+                            <label className="form-label">
+                              Email Address *
+                            </label>
                             <div className="d-flex align-items-center gap-2">
                               <div className="input-group">
                                 <span className="input-group-text">
@@ -678,7 +672,9 @@ function AddEditUser({ mode }) {
                                     : "bg-secondary"
                                 }`}
                               >
-                                {phoneNumberConfirmed ? "Confirmed" : "Unconfirmed"}
+                                {phoneNumberConfirmed
+                                  ? "Confirmed"
+                                  : "Unconfirmed"}
                               </span>
                             </div>
                             {errors.phone && (
@@ -709,10 +705,13 @@ function AddEditUser({ mode }) {
                                 type="checkbox"
                                 {...register("twoFactorEnabled")}
                               />
-                              <label className="form-check-label">Enabled</label>
+                              <label className="form-check-label">
+                                Enabled
+                              </label>
                             </div>
                             <div className="form-text">
-                              Enabling MFA requires users to confirm a second factor.
+                              Enabling MFA requires users to confirm a second
+                              factor.
                             </div>
                           </div>
                           <div className="col-12 col-md-6">
@@ -729,7 +728,9 @@ function AddEditUser({ mode }) {
                                 }`}
                                 type={showPassword ? "text" : "password"}
                                 placeholder={
-                                  mode === "add" ? "Set a password" : "Leave blank to keep"
+                                  mode === "add"
+                                    ? "Set a password"
+                                    : "Leave blank to keep"
                                 }
                                 {...register("password", {
                                   validate: (value) => {
@@ -745,7 +746,9 @@ function AddEditUser({ mode }) {
                                 type="button"
                                 onClick={() => setShowPassword((prev) => !prev)}
                                 aria-label={
-                                  showPassword ? "Hide password" : "Show password"
+                                  showPassword
+                                    ? "Hide password"
+                                    : "Show password"
                                 }
                               >
                                 <i
@@ -779,7 +782,9 @@ function AddEditUser({ mode }) {
                         />
                         <div className="row g-3">
                           {state.roles.length === 0 && (
-                            <div className="text-muted">No roles available.</div>
+                            <div className="text-muted">
+                              No roles available.
+                            </div>
                           )}
                           {state.roles.map((role) => {
                             const roleId = role.key ?? role.id ?? role.Id;
@@ -798,7 +803,9 @@ function AddEditUser({ mode }) {
                                     className="form-check-input mt-0"
                                     type="checkbox"
                                     id={`role-${roleId}`}
-                                    checked={selectedRoles.includes(Number(roleId))}
+                                    checked={selectedRoles.includes(
+                                      Number(roleId),
+                                    )}
                                     onChange={() => toggleRole(roleId)}
                                   />
                                   <label
@@ -818,12 +825,12 @@ function AddEditUser({ mode }) {
                           </div>
                         )}
                         <div className="form-text mt-2">
-                          Assign one or more roles to control access permissions.
+                          Assign one or more roles to control access
+                          permissions.
                         </div>
                       </div>
                     </div>
                   </div>
-
                 </div>
               </div>
             )}
@@ -868,7 +875,9 @@ function AddEditUser({ mode }) {
                             )}
                           </div>
                           <div className="col-12 col-md-6">
-                            <label className="form-label">Address Line 1 *</label>
+                            <label className="form-label">
+                              Address Line 1 *
+                            </label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-map-marker-alt"></i>
@@ -922,11 +931,15 @@ function AddEditUser({ mode }) {
                               />
                             </div>
                             {errors.city && (
-                              <div className="error-msg">{errors.city.message}</div>
+                              <div className="error-msg">
+                                {errors.city.message}
+                              </div>
                             )}
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">State / Province *</label>
+                            <label className="form-label">
+                              State / Province *
+                            </label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-map"></i>
@@ -943,7 +956,9 @@ function AddEditUser({ mode }) {
                               />
                             </div>
                             {errors.state && (
-                              <div className="error-msg">{errors.state.message}</div>
+                              <div className="error-msg">
+                                {errors.state.message}
+                              </div>
                             )}
                           </div>
                           <div className="col-12 col-md-4">
@@ -994,7 +1009,8 @@ function AddEditUser({ mode }) {
                           </div>
                         </div>
                         <div className="form-text mt-2">
-                          Primary address used for account notifications and compliance checks.
+                          Primary address used for account notifications and
+                          compliance checks.
                         </div>
                       </div>
                     </div>
@@ -1124,7 +1140,9 @@ function AddEditUser({ mode }) {
                             </div>
                           </div>
                           <div className="col-12 col-md-4">
-                            <label className="form-label">State / Province</label>
+                            <label className="form-label">
+                              State / Province
+                            </label>
                             <div className="input-group">
                               <span className="input-group-text">
                                 <i className="fa fa-map"></i>
@@ -1167,7 +1185,8 @@ function AddEditUser({ mode }) {
                           </div>
                         </div>
                         <div className="form-text mt-2">
-                          Add contact details for account recovery or emergency use.
+                          Add contact details for account recovery or emergency
+                          use.
                         </div>
                       </div>
                     </div>
@@ -1179,13 +1198,15 @@ function AddEditUser({ mode }) {
 
           <div className="d-flex justify-content-end gap-2 mt-4">
             <button
-              className="btn btn-outline-secondary"
+              className="btn btn-soft"
               type="button"
               onClick={() => navigate(-1)}
             >
+              <i className="fa fa-times me-1" aria-hidden="true"></i>
               Cancel
             </button>
-            <button className="btn btn-primary-solid" type="submit">
+            <button className="btn btn-primary" type="submit">
+              <i className="fa fa-save me-1" aria-hidden="true"></i>
               {mode === "edit" ? "Save Changes" : "Create User"}
             </button>
           </div>

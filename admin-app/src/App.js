@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./_assets/portal.css";
 import Roles from "./_components/roles/roles";
@@ -35,8 +35,25 @@ import { AuthCallback } from "tokentresor-idp-react";
 import { LoginPage } from "./_components/LoginPage"; // simple UI, not OAuth logic
 
 function App() {
+  const getInitialTheme = () => {
+    const saved = localStorage.getItem("adminAppTheme");
+    if (saved === "light" || saved === "dark") return saved;
+    return window.matchMedia?.("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
+  };
+  const [theme, setTheme] = useState(getInitialTheme);
   const [claimId, setClaimId] = useState(0);
   const [pageName, setPageName] = useState(0);
+
+  useEffect(() => {
+    document.body.classList.toggle("theme-dark", theme === "dark");
+    localStorage.setItem("adminAppTheme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
 
   const onClick = (id, name) => {
     setClaimId(id);
@@ -49,7 +66,15 @@ function App() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LandingLayout />} />
-        <Route element={<DefaultLayout onClick={onClick} />}>
+        <Route
+          element={
+            <DefaultLayout
+              onClick={onClick}
+              onToggleTheme={toggleTheme}
+              theme={theme}
+            />
+          }
+        >
           <Route element={<PrivateRoute />}>
             <Route
               path="/dashboard"

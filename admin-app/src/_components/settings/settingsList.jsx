@@ -49,7 +49,7 @@ const normalizeScopeValue = (value) => {
   }
   if (typeof value === "string") {
     const match = scopeValueOptions.find(
-      (option) => option.label.toLowerCase() === value.toLowerCase()
+      (option) => option.label.toLowerCase() === value.toLowerCase(),
     );
     return match ? match.value : null;
   }
@@ -75,7 +75,7 @@ const normalizeValueType = (value) => {
   }
   if (typeof value === "string") {
     const match = valueTypeOptions.find(
-      (option) => option.label.toLowerCase() === value.toLowerCase()
+      (option) => option.label.toLowerCase() === value.toLowerCase(),
     );
     return match ? match.value : Number(value);
   }
@@ -214,11 +214,10 @@ function SettingsList() {
       const key = getField(item, "key", "Key");
       const value = draft.value ?? getField(item, "value", "Value") ?? "";
       const valueType = normalizeValueType(
-        draft.valueType ?? getField(item, "valueType", "ValueType")
+        draft.valueType ?? getField(item, "valueType", "ValueType"),
       );
       const scope =
-        draft.scope ??
-        normalizeScopeValue(getField(item, "scope", "Scope"));
+        draft.scope ?? normalizeScopeValue(getField(item, "scope", "Scope"));
       const isEditable =
         draft.isEditable ?? getField(item, "isEditable", "IsEditable") ?? true;
 
@@ -249,7 +248,10 @@ function SettingsList() {
     const payload = buildBulkItems();
     const invalid = payload.find((item) => !item.Key || !item.Value);
     if (invalid) {
-      openInfo("Validation error", "Key and value are required for all entries.");
+      openInfo(
+        "Validation error",
+        "Key and value are required for all entries.",
+      );
       return;
     }
 
@@ -334,7 +336,7 @@ function SettingsList() {
             </select>
             <div className="settings-toolbar-buttons">
               <button
-                className="btn btn-outline-secondary"
+                className="btn btn-primary"
                 type="button"
                 onClick={() =>
                   setNewEntry({
@@ -349,11 +351,12 @@ function SettingsList() {
                 <i className="fa fa-plus"></i> Add Entry
               </button>
               <button
-                className="btn btn-primary-solid"
+                className="btn btn-primary"
                 type="button"
                 disabled={!hasPendingChanges || state.saving}
                 onClick={saveChanges}
               >
+                <i className="fa fa-save me-1" aria-hidden="true"></i>
                 {state.saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
@@ -364,7 +367,7 @@ function SettingsList() {
           <div className="text-center py-5">Loading configurations...</div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th>Key</th>
@@ -475,16 +478,17 @@ function SettingsList() {
                   const id = getField(item, "id", "Id");
                   const key = getField(item, "key", "Key");
                   const valueType = normalizeValueType(
-                    getField(item, "valueType", "ValueType")
+                    getField(item, "valueType", "ValueType"),
                   );
                   const scope = getField(item, "scope", "Scope");
                   const isEditable =
                     getField(item, "isEditable", "IsEditable") ?? true;
                   const draft = drafts[id] || {};
                   const effectiveValueType = normalizeValueType(
-                    draft.valueType ?? valueType
+                    draft.valueType ?? valueType,
                   );
-                  const effectiveScope = draft.scope ?? normalizeScopeValue(scope);
+                  const effectiveScope =
+                    draft.scope ?? normalizeScopeValue(scope);
 
                   return (
                     <tr key={id || key}>
@@ -497,7 +501,8 @@ function SettingsList() {
                               type="checkbox"
                               checked={
                                 String(
-                                  draft.value ?? getField(item, "value", "Value")
+                                  draft.value ??
+                                    getField(item, "value", "Value"),
                                 ).toLowerCase() === "true"
                               }
                               disabled={!isEditable}
@@ -505,7 +510,7 @@ function SettingsList() {
                                 handleDraftChange(
                                   id,
                                   "value",
-                                  event.target.checked ? "true" : "false"
+                                  event.target.checked ? "true" : "false",
                                 )
                               }
                             />
@@ -515,7 +520,9 @@ function SettingsList() {
                             className="form-control font-monospace"
                             rows="2"
                             disabled={!isEditable}
-                            value={draft.value ?? getField(item, "value", "Value")}
+                            value={
+                              draft.value ?? getField(item, "value", "Value")
+                            }
                             onChange={(event) =>
                               handleDraftChange(id, "value", event.target.value)
                             }
@@ -525,7 +532,9 @@ function SettingsList() {
                             className="form-control"
                             type={effectiveValueType === 1 ? "number" : "text"}
                             disabled={!isEditable}
-                            value={draft.value ?? getField(item, "value", "Value")}
+                            value={
+                              draft.value ?? getField(item, "value", "Value")
+                            }
                             onChange={(event) =>
                               handleDraftChange(id, "value", event.target.value)
                             }
@@ -541,7 +550,7 @@ function SettingsList() {
                             handleDraftChange(
                               id,
                               "valueType",
-                              Number(event.target.value)
+                              Number(event.target.value),
                             )
                           }
                         >
@@ -563,11 +572,13 @@ function SettingsList() {
                               "scope",
                               event.target.value === ""
                                 ? null
-                                : Number(event.target.value)
+                                : Number(event.target.value),
                             )
                           }
                         >
-                          <option value="">{resolveScopeLabel(scope) || "None"}</option>
+                          <option value="">
+                            {resolveScopeLabel(scope) || "None"}
+                          </option>
                           {scopeValueOptions.map((option) => (
                             <option key={option.value} value={option.value}>
                               {option.label}
@@ -578,7 +589,9 @@ function SettingsList() {
                       <td>
                         <span
                           className={`status-pill ${
-                            isEditable ? "status-pill-success" : "status-pill-off"
+                            isEditable
+                              ? "status-pill-success"
+                              : "status-pill-off"
                           }`}
                         >
                           {isEditable ? "Yes" : "No"}

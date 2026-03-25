@@ -33,7 +33,7 @@ function AddPermission({ mode = "add" }) {
             { key: "Action", value: "Action" },
             { key: "WorkflowAction", value: "WorkflowAction" },
           ],
-    [state.controlTypes]
+    [state.controlTypes],
   );
 
   const {
@@ -55,8 +55,7 @@ function AddPermission({ mode = "add" }) {
   });
 
   const controlType = watch("controlType");
-  const isNavControl =
-    controlType === "NavGroup" || controlType === "NavLink";
+  const isNavControl = controlType === "NavGroup" || controlType === "NavLink";
 
   useEffect(() => {
     loadParents();
@@ -145,7 +144,10 @@ function AddPermission({ mode = "add" }) {
             <h6 className="card-title">Control Types</h6>
             <div className="row g-3">
               {controlTypeOptions.map((option) => (
-                <div key={option.key || option.value} className="col-12 col-md-6">
+                <div
+                  key={option.key || option.value}
+                  className="col-12 col-md-6"
+                >
                   <div
                     className={`option-card d-flex align-items-center gap-3 ${
                       controlType === (option.key || option.value)
@@ -219,7 +221,7 @@ function AddPermission({ mode = "add" }) {
                           {
                             shouldValidate: true,
                             shouldDirty: true,
-                          }
+                          },
                         );
                       },
                     })}
@@ -326,12 +328,14 @@ function AddPermission({ mode = "add" }) {
       <div className="d-flex justify-content-end gap-2 mt-4">
         <button
           type="button"
-          className="btn btn-outline-secondary"
+          className="btn btn-soft"
           onClick={() => navigate(-1)}
         >
+          <i className="fa fa-times me-1" aria-hidden="true"></i>
           Cancel
         </button>
-        <button className="btn btn-primary-solid" onClick={handleSubmit(onSubmit)}>
+        <button className="btn btn-primary" onClick={handleSubmit(onSubmit)}>
+          <i className="fa fa-save me-1" aria-hidden="true"></i>
           {mode === "edit" ? "Update Permission" : "Save Permission"}
         </button>
       </div>

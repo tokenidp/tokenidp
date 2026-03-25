@@ -245,14 +245,30 @@ function TokensList() {
   const renderSkeletonRows = () =>
     Array.from({ length: Math.min(pageSize, 6) }).map((_, index) => (
       <tr key={`skeleton-${index}`} className="placeholder-glow">
-        <td><span className="placeholder col-6"></span></td>
-        <td><span className="placeholder col-4"></span></td>
-        <td><span className="placeholder col-6"></span></td>
-        <td><span className="placeholder col-6"></span></td>
-        <td><span className="placeholder col-5"></span></td>
-        <td><span className="placeholder col-5"></span></td>
-        <td><span className="placeholder col-4"></span></td>
-        <td className="text-right"><span className="placeholder col-6"></span></td>
+        <td>
+          <span className="placeholder col-6"></span>
+        </td>
+        <td>
+          <span className="placeholder col-4"></span>
+        </td>
+        <td>
+          <span className="placeholder col-6"></span>
+        </td>
+        <td>
+          <span className="placeholder col-6"></span>
+        </td>
+        <td>
+          <span className="placeholder col-5"></span>
+        </td>
+        <td>
+          <span className="placeholder col-5"></span>
+        </td>
+        <td>
+          <span className="placeholder col-4"></span>
+        </td>
+        <td className="text-right">
+          <span className="placeholder col-6"></span>
+        </td>
       </tr>
     ));
 
@@ -381,7 +397,7 @@ function TokensList() {
 
         {state.loading ? (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped">
               <thead>
                 <tr>
                   <th>Token ID</th>
@@ -399,7 +415,7 @@ function TokensList() {
           </div>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle">
+            <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
                   <th
@@ -454,9 +470,12 @@ function TokensList() {
                   const expiresAt = getField(item, "expiresAt", "ExpiresAt");
                   const status = getField(item, "status", "Status");
 
-                  const normalizedSourceType = String(sourceType || "").toLowerCase();
+                  const normalizedSourceType = String(
+                    sourceType || "",
+                  ).toLowerCase();
                   const normalizedStatus = String(status ?? "").toLowerCase();
-                  const isRevoked = normalizedStatus === "2" || normalizedStatus === "revoked";
+                  const isRevoked =
+                    normalizedStatus === "2" || normalizedStatus === "revoked";
                   const supportsRevocation =
                     normalizedSourceType === "refresh" ||
                     normalizedSourceType === "referencetoken" ||
@@ -498,7 +517,9 @@ function TokensList() {
                         <button
                           className="btn btn-link p-0 text-danger ButtonLink"
                           type="button"
-                          onClick={() => canManageToken && requestAction("revoke", item)}
+                          onClick={() =>
+                            canManageToken && requestAction("revoke", item)
+                          }
                           title={
                             !supportsRevocation
                               ? "Revocation not supported for this token type"
@@ -513,7 +534,9 @@ function TokensList() {
                         <button
                           className="btn btn-link p-0 text-warning ButtonLink"
                           type="button"
-                          onClick={() => canManageToken && requestAction("expire", item)}
+                          onClick={() =>
+                            canManageToken && requestAction("expire", item)
+                          }
                           title={
                             !supportsRevocation
                               ? "Force expire not supported for this token type"
@@ -551,7 +574,11 @@ function TokensList() {
 
       <ConfirmModal
         open={confirmOpen}
-        title={confirmAction?.action === "expire" ? "Force Expire Token" : "Revoke Token"}
+        title={
+          confirmAction?.action === "expire"
+            ? "Force Expire Token"
+            : "Revoke Token"
+        }
         message={
           confirmAction?.action === "expire"
             ? "Force expire this token immediately? Active sessions may be interrupted."

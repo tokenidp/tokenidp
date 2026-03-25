@@ -47,12 +47,12 @@ function AddEditRole({ mode }) {
     watch,
     formState: { errors },
   } = useForm({
-      defaultValues: {
-        name: "",
-        description: "",
-        isActive: true,
-        isAssignableToNewUsers: false,
-      },
+    defaultValues: {
+      name: "",
+      description: "",
+      isActive: true,
+      isAssignableToNewUsers: false,
+    },
   });
   const { setSuccess } = useGlobalSuccess();
   const {
@@ -61,8 +61,7 @@ function AddEditRole({ mode }) {
     getRoleById,
     resolveRoleIdByName,
     loadAssignablePermissions,
-  } =
-    useRoles();
+  } = useRoles();
   const { createTree } = useTree();
   const location = useLocation();
   const params = useParams();
@@ -81,7 +80,9 @@ function AddEditRole({ mode }) {
       : undefined;
 
   const onSubmit = async (data) => {
-    const selectedIdSet = new Set(Array.from(selectedIds).map((id) => String(id)));
+    const selectedIdSet = new Set(
+      Array.from(selectedIds).map((id) => String(id)),
+    );
 
     const rolePermissions =
       mode === "edit"
@@ -91,10 +92,14 @@ function AddEditRole({ mode }) {
               const permissionKey = getField(
                 permission,
                 "permissionKey",
-                "PermissionKey"
+                "PermissionKey",
               );
 
-              if (permissionId === undefined || permissionId === null || !permissionKey) {
+              if (
+                permissionId === undefined ||
+                permissionId === null ||
+                !permissionKey
+              ) {
                 return null;
               }
 
@@ -109,27 +114,30 @@ function AddEditRole({ mode }) {
         : Array.from(selectedIds)
             .map((id) => {
               const permission = permissions.find(
-                (item) => String(getField(item, "id", "Id")) === String(id)
+                (item) => String(getField(item, "id", "Id")) === String(id),
               );
               if (!permission) return null;
               return {
                 roleId: roleId ? Number(roleId) : 0,
                 permissionId: getField(permission, "id", "Id"),
-                permissionKey: getField(permission, "permissionKey", "PermissionKey"),
+                permissionKey: getField(
+                  permission,
+                  "permissionKey",
+                  "PermissionKey",
+                ),
                 isAllowed: true,
               };
             })
             .filter(Boolean);
 
-      const payload = {
-        id: roleId ? Number(roleId) : 0,
-        roleName: data.name.trim(),
-        roleDescription: data.description.trim(),
-        isActive: !!data.isActive,
-        isAssignableToNewUsers:
-          !!data.isActive && !!data.isAssignableToNewUsers,
-        rolePermissions,
-      };
+    const payload = {
+      id: roleId ? Number(roleId) : 0,
+      roleName: data.name.trim(),
+      roleDescription: data.description.trim(),
+      isActive: !!data.isActive,
+      isAssignableToNewUsers: !!data.isActive && !!data.isAssignableToNewUsers,
+      rolePermissions,
+    };
 
     const response =
       mode === "edit" && roleId
@@ -180,16 +188,13 @@ function AddEditRole({ mode }) {
       setValue("name", getField(role, "name", "Name") ?? "");
       setValue(
         "description",
-        getField(role, "roleDescription", "RoleDescription") ?? ""
+        getField(role, "roleDescription", "RoleDescription") ?? "",
       );
       setValue("isActive", getField(role, "isActive", "IsActive") ?? true);
       setValue(
         "isAssignableToNewUsers",
-        getField(
-          role,
-          "isAssignableToNewUsers",
-          "IsAssignableToNewUsers"
-        ) ?? false
+        getField(role, "isAssignableToNewUsers", "IsAssignableToNewUsers") ??
+          false,
       );
       setIsRoleEditable(getField(role, "isEditable", "IsEditable") ?? true);
       const rolePermissions =
@@ -198,18 +203,26 @@ function AddEditRole({ mode }) {
         new Set(
           rolePermissions
             .filter((p) => p?.isAllowed ?? p?.IsAllowed)
-            .map((p) =>
-              p?.permissionId ??
-              p?.PermissionId ??
-              p?.tenantPermissionId ??
-              p?.TenantPermissionId
+            .map(
+              (p) =>
+                p?.permissionId ??
+                p?.PermissionId ??
+                p?.tenantPermissionId ??
+                p?.TenantPermissionId,
             )
-            .filter((id) => id !== undefined && id !== null)
-        )
+            .filter((id) => id !== undefined && id !== null),
+        ),
       );
     };
     loadRole();
-  }, [decodedRoleKey, getRoleById, mode, resolveRoleIdByName, roleId, setValue]);
+  }, [
+    decodedRoleKey,
+    getRoleById,
+    mode,
+    resolveRoleIdByName,
+    roleId,
+    setValue,
+  ]);
 
   useEffect(() => {
     const load = async () => {
@@ -230,7 +243,7 @@ function AddEditRole({ mode }) {
 
   const tree = useMemo(
     () => createTree(permissions, { allowedControlTypes: "all" }),
-    [permissions]
+    [permissions],
   );
 
   const filteredTree = useMemo(() => {
@@ -343,7 +356,10 @@ function AddEditRole({ mode }) {
       >
         <div className="permission-tree-row">
           <div className="permission-tree-row-main">
-            <span className="permission-tree-indent" style={{ width: level * 18 }} />
+            <span
+              className="permission-tree-indent"
+              style={{ width: level * 18 }}
+            />
             {hasChildren ? (
               <button
                 type="button"
@@ -351,7 +367,9 @@ function AddEditRole({ mode }) {
                 onClick={() => toggleExpand(node.id)}
                 aria-label={isExpanded ? "Collapse" : "Expand"}
               >
-                <i className={`fa fa-chevron-${isExpanded ? "down" : "right"}`}></i>
+                <i
+                  className={`fa fa-chevron-${isExpanded ? "down" : "right"}`}
+                ></i>
               </button>
             ) : (
               <span className="permission-tree-toggle-placeholder" />
@@ -372,7 +390,9 @@ function AddEditRole({ mode }) {
               }
             />
             <span className="permission-tree-text">
-              <span className={`permission-tree-title ${isMenu ? "is-menu" : ""}`}>
+              <span
+                className={`permission-tree-title ${isMenu ? "is-menu" : ""}`}
+              >
                 {node.permissionName}
               </span>
             </span>
@@ -381,7 +401,7 @@ function AddEditRole({ mode }) {
         {hasChildren && isExpanded && (
           <div className="permission-tree-children">
             {(node.childrens || []).map((child) =>
-              renderPermissionItem(child, level + 1)
+              renderPermissionItem(child, level + 1),
             )}
           </div>
         )}
@@ -399,7 +419,7 @@ function AddEditRole({ mode }) {
           <Breadcrumbs className="app-breadcrumb mb-0" />
         </div>
         <div className="page-actions">
-          <Link className="btn btn-outline-primary btn-sm" to="/permissions/new">
+          <Link className="btn btn-primary btn-sm" to="/permissions/new">
             Add Permission
           </Link>
         </div>
@@ -409,7 +429,7 @@ function AddEditRole({ mode }) {
         <div className="row g-3">
           <div className="col-12">
             <div className="card">
-              <div className="card-body">               
+              <div className="card-body">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="row g-3">
                     <div className="col-12 col-md-6">
@@ -448,12 +468,12 @@ function AddEditRole({ mode }) {
                     </div>
                     <div className="col-12 col-md-6 ps-md-2">
                       <div className="d-flex align-items-center gap-1 pb-1">
-                          <label
-                            className="form-label mb-0"
-                            htmlFor="role-is-assignable-to-new-users"
-                          >
-                            Assignable To New Users
-                          </label>
+                        <label
+                          className="form-label mb-0"
+                          htmlFor="role-is-assignable-to-new-users"
+                        >
+                          Assignable To New Users
+                        </label>
                         <div className="form-check form-switch app-switch account-status-switch mb-0">
                           <input
                             className="form-check-input app-switch-input"
@@ -535,9 +555,9 @@ function AddEditRole({ mode }) {
                     <div className="text-muted">No permissions found.</div>
                   ) : (
                     <div className="permission-tree-shell">
-                      {filteredTree.map((node) => (
-                        renderPermissionItem(node, 0)
-                      ))}
+                      {filteredTree.map((node) =>
+                        renderPermissionItem(node, 0),
+                      )}
                     </div>
                   )}
                 </div>
@@ -551,14 +571,16 @@ function AddEditRole({ mode }) {
       </div>
 
       <div className="d-flex justify-content-end gap-2 mt-4">
-        <Link className="btn btn-outline-secondary" to="/roles">
+        <Link className="btn btn-soft" to="/roles">
+          <i className="fa fa-times me-1" aria-hidden="true"></i>
           Cancel
         </Link>
         <button
-          className="btn btn-primary-solid"
+          className="btn btn-primary"
           type="button"
           onClick={handleSubmit(onSubmit)}
         >
+          <i className="fa fa-save me-1" aria-hidden="true"></i>
           Save
         </button>
       </div>
