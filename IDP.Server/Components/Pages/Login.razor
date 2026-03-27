@@ -42,8 +42,12 @@ else if (ui != null)
             <span>✒️</span>
         }
     </div> *@
-    <div class="logo">✒️</div>
+
     <div class="card" data-theme="@ui.Theme" style="@GetAccentStyle(ui.AccentColor)">
+        <div class="logo">
+            <img src="/_content/IDP.Server/images/TokenIDP.svg" alt="tokeidp logo" width="250" />
+        </div>
+
         <h1>Sign in to @ui.ProductName</h1>
 
         <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
@@ -136,7 +140,7 @@ else if (ui != null)
     @if (ui.AllowSignup)
     {
         <div class="footer">
-            <a href="#" @onclick="GoToSignup">@ui.SignupText</a>
+            <span>Don't have an account?</span> <a href="#" @onclick="GoToSignup">@ui.SignupText</a>
         </div>
     }
 }
@@ -295,7 +299,15 @@ else if (ui != null)
     }
 
     private void GoToForgotPassword()
-        => Navigation.NavigateTo($"/forgot-password{authorizationContextId}");
+    {
+        var url = QueryHelpers.AddQueryString("/forgot-password",
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ctx"] = authorizationContextId
+            });
+
+        Navigation.NavigateTo(url);
+    }
 
     private void GoToSignup()
     {

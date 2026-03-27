@@ -52,7 +52,8 @@ public static class DependencyInjection
                 sp.GetRequiredService<IAuthorizationStore>(),
                 sp.GetRequiredService<TokenContextUseCase>(),
                 sp.GetRequiredService<TenantUserMfaPolicy>(),
-                sp.GetRequiredService<IClientStore>()));
+                sp.GetRequiredService<IClientStore>(),
+                sp.GetRequiredService<IUserSignInService>()));
 
         services.AddScoped<IAuthorizationRequestValidator, AuthorizationRequestValidator>();
         services.AddScoped<IAuthorizationPageUiUseCase, AuthorizationPageUiUseCase>();

@@ -14,6 +14,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
+    private readonly IUserSignInService _userSignInService;
 
     internal AuthorizationCodeUseCase(IAuthenticationService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
@@ -21,7 +22,8 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         IAuthorizationStore authorizationStore,
         TokenContextUseCase tokenContextUseCase,
         TenantUserMfaPolicy mfaPolicy,
-        IClientStore clientStore)
+        IClientStore clientStore,
+        IUserSignInService userSignInService)
     {
         _identityService = identityService;
         _logger = appLogger;
@@ -30,6 +32,7 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         _tokenContextUseCase = tokenContextUseCase;
         _mfaPolicy = mfaPolicy;
         _clientStore = clientStore;
+        _userSignInService = userSignInService;
     }
 
     public async Task<AuthorizationResponse> Authenticate(AuthorizationRequest request)
@@ -54,6 +57,13 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 
             return authResponse;
         }
+
+        await _userSignInService.SignInAsync(context.UserId,
+                context.User.UserName,
+                context.User.Email,
+                context.User.TenantId,
+                request.RememberMe,
+                CancellationToken.None);
 
         return AuthorizationResponse.Success(context.UserId, false);
     }

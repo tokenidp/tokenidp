@@ -1,3 +1,5 @@
+using IDP.Foundation.Options;
+using IDP.Foundation.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using System.Security.Cryptography;
@@ -74,13 +76,11 @@ internal class DiscoveryEndpoints : IEndpointDefinition
 
     private string BuildJwksAsync(IConfiguration configuration, IHostEnvironment environment)
     {
-        // Support certificate based keys or PEM/base64 encoded RSA keys
-        var certThumb = configuration["TokenOptions:CertificateThumbprint"];
-        var certSubject = configuration["TokenOptions:CertificateSubjectName"];
+        var settings = ReadTokenOptions(configuration);
 
-        if (!string.IsNullOrWhiteSpace(certThumb) || !string.IsNullOrWhiteSpace(certSubject))
+        if (TokenSigningMaterialResolver.HasCertificateConfiguration(settings))
         {
-            var cert = LoadCertificateFromConfig(configuration);
+            var cert = TokenSigningMaterialResolver.LoadCertificate(settings);
 
             var rsa = cert.GetRSAPublicKey();
 
@@ -99,7 +99,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
                 " Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
         }
 
-        var keyMaterial = ResolveKeyMaterialFromConfig(configuration);
+        var keyMaterial = TokenSigningMaterialResolver.ResolveKeyMaterial(settings);
 
         using var rsaKey = RSA.Create();
 
@@ -173,83 +173,16 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         await http.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));
     }
 
-    private string ResolveKeyMaterialFromConfig(IConfiguration configuration)
+    private static TokenOption ReadTokenOptions(IConfiguration configuration)
     {
-        var keyPath = configuration["TokenOptions:KeyPath"];
-        var key = configuration["TokenOptions:Key"];
-
-        if (!string.IsNullOrWhiteSpace(keyPath))
+        return new TokenOption
         {
-            if (!File.Exists(keyPath))
-            {
-                throw new FileNotFoundException("Token signing key file was not found.", keyPath);
-            }
-
-            return File.ReadAllText(keyPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(key))
-        {
-            return key;
-        }
-
-        throw new InvalidOperationException("Token signing key is missing.");
-    }
-
-    private X509Certificate2 LoadCertificateFromConfig(IConfiguration configuration)
-    {
-        var storeName = Enum.TryParse(configuration["TokenOptions:CertificateStoreName"], true, out StoreName parsedStore)
-            ? parsedStore
-            : StoreName.My;
-
-        var storeLocation = Enum.TryParse(configuration["TokenOptions:CertificateStoreLocation"], true, out StoreLocation parsedLocation)
-            ? parsedLocation
-            : StoreLocation.CurrentUser;
-
-        using var store = new X509Store(storeName, storeLocation);
-        store.Open(OpenFlags.ReadOnly);
-
-        X509Certificate2Collection matches;
-        var thumbprint = configuration["TokenOptions:CertificateThumbprint"]?.Replace(" ", string.Empty);
-
-        if (!string.IsNullOrWhiteSpace(thumbprint))
-        {
-            matches = store.Certificates
-                .Find(X509FindType.FindByThumbprint, thumbprint, validOnly: false);
-
-            if (matches.Count == 0)
-            {
-                throw new InvalidOperationException($"Certificate with thumbprint '{thumbprint}' was not found.");
-            }
-
-            return matches[0];
-        }
-
-        var subjectName = configuration["TokenOptions:CertificateSubjectName"]?.Trim();
-        if (string.IsNullOrWhiteSpace(subjectName))
-        {
-            throw new InvalidOperationException("Certificate thumbprint or subject name is required.");
-        }
-
-        matches = store.Certificates
-            .Find(X509FindType.FindBySubjectName, subjectName, validOnly: false);
-
-        if (matches.Count == 0)
-        {
-            throw new InvalidOperationException($"Certificate with subject name '{subjectName}' was not found.");
-        }
-
-        var candidate = matches
-            .OfType<X509Certificate2>()
-            .Where(cert => cert.HasPrivateKey)
-            .OrderByDescending(cert => cert.NotAfter)
-            .FirstOrDefault();
-
-        if (candidate is null)
-        {
-            throw new InvalidOperationException($"No certificate with subject name '{subjectName}' has a private key.");
-        }
-
-        return candidate;
+            Key = configuration["TokenOptions:Key"],
+            KeyPath = configuration["TokenOptions:KeyPath"],
+            CertificateThumbprint = configuration["TokenOptions:CertificateThumbprint"],
+            CertificateSubjectName = configuration["TokenOptions:CertificateSubjectName"],
+            CertificateStoreName = configuration["TokenOptions:CertificateStoreName"],
+            CertificateStoreLocation = configuration["TokenOptions:CertificateStoreLocation"]
+        };
     }
 }

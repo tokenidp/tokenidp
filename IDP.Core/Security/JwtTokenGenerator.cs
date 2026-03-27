@@ -1,4 +1,5 @@
 ﻿using IDP.Foundation.Options;
+using IDP.Foundation.Security;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -18,8 +19,18 @@ internal sealed class JwtTokenGenerator
         ICurrentUserService currentUserService)
     {
         _settings = settings.Value;
-        var keyMaterial = GetKeyMaterial(_settings);
-        _signingKey = CreateSigningKey(keyMaterial);
+
+        if (TokenSigningMaterialResolver.HasCertificateConfiguration(_settings))
+        {
+            var certificate = TokenSigningMaterialResolver.LoadCertificate(_settings, requirePrivateKey: true);
+            _signingKey = new X509SecurityKey(certificate);
+        }
+        else
+        {
+            var keyMaterial = TokenSigningMaterialResolver.ResolveKeyMaterial(_settings);
+            _signingKey = CreateSigningKey(keyMaterial);
+        }
+
         _signingCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.RsaSha256);
         _currentUserService = currentUserService;
     }
@@ -231,25 +242,5 @@ internal sealed class JwtTokenGenerator
         {
             throw new InvalidOperationException("Token signing key must be PEM or base64-encoded RSA private key.", ex);
         }
-    }
-
-    private string GetKeyMaterial(TokenOption settings)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.KeyPath))
-        {
-            if (!File.Exists(settings.KeyPath))
-            {
-                throw new FileNotFoundException("Token signing key file was not found.", settings.KeyPath);
-            }
-
-            return File.ReadAllText(settings.KeyPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(settings.Key))
-        {
-            return settings.Key;
-        }
-
-        throw new InvalidOperationException("Token signing key is missing.");
     }
 }

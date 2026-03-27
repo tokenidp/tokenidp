@@ -20,6 +20,7 @@ internal sealed class UserSignInService : IUserSignInService
         string userName,
         string email,
         int tenantId,
+        bool rememberMe,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -47,9 +48,19 @@ internal sealed class UserSignInService : IUserSignInService
             principal,
             new AuthenticationProperties
             {
-                IsPersistent = true,
+                IsPersistent = rememberMe,
                 AllowRefresh = true,
-                IssuedUtc = DateTimeOffset.UtcNow
+                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(60),
             });
+    }
+
+    public async Task SignOutAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var context = _httpContextAccessor.HttpContext
+                            ?? throw new InvalidOperationException("HTTP context is not available for sign-out.");
+
+        await context.SignOutAsync("idp_session");
     }
 }

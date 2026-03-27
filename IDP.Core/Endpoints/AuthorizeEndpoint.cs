@@ -62,7 +62,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         var userId = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrWhiteSpace(userId))
-            return Results.BadRequest("User id missing.");
+            return Results.BadRequest("ResumeAuthorization: User id missing.");
 
         var authRequest = new AuthorizationRequest
         {
@@ -75,7 +75,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         };
 
         return await IssueAuthorizationCodeForSession(
-            httpContext,
+            authResult.Principal,
             authRequest,
             existing.State!,
             authorizationCodeUseCase);
@@ -140,7 +140,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         if (authResult.Succeeded && authResult.Principal?.Identity?.IsAuthenticated == true)
         {
             return await IssueAuthorizationCodeForSession(
-                httpContext,
+                authResult.Principal,
                 authorizationRequest,
                 state,
                 authorizationCodeUseCase);
@@ -155,15 +155,15 @@ internal class AuthorizeEndpoint : IEndpointDefinition
     }
 
     private static async Task<IResult> IssueAuthorizationCodeForSession(
-        HttpContext httpContext,
+        ClaimsPrincipal claimsPrincipal,
         AuthorizationRequest authorizationRequest,
         string state,
         IAuthorizationCodeUseCase authorizationCodeUseCase)
     {
-        var userId = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrWhiteSpace(userId))
-            return Results.BadRequest("User id missing.");
+            return Results.BadRequest("IssueAuthorizationCodeForSession: User id missing.");
 
         var authCode = await authorizationCodeUseCase
             .GenerateAuthorizationCode(authorizationRequest, Convert.ToInt32(userId));

@@ -43,7 +43,7 @@ internal static class DefaultClients
 
             Audiences = new List<string>
             {
-                "tresor.admin.api"
+                "tokenidp.admin.api"
             },
 
             // Public client (SPA) → no secret

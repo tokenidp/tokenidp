@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Users;
-
-namespace IDP.ExternalProviders.Abstractions;
+﻿namespace IDP.ExternalProviders.Abstractions;
 
 public interface IUserSignInService
 {
@@ -9,5 +7,8 @@ public interface IUserSignInService
         string userName,
         string email,
         int tenantId,
+        bool rememberMe,
         CancellationToken cancellationToken);
+
+    Task SignOutAsync(CancellationToken cancellationToken);
 }

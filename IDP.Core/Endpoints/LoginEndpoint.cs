@@ -1,15 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿namespace IDP.Core.Endpoints;
 
-namespace IDP.Core.Endpoints;
-
-public class AuthenticationEndpoint : IEndpointDefinition
+public class LoginEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/local-login");
-
-        authGroup.MapPost("", async (AuthorizationRequest request,
-            IAppLogger<AuthenticationEndpoint> _logger,
+        app.MapPost("/local-login", async (AuthorizationRequest request,
+            IAppLogger<LoginEndpoint> _logger,
             IAuthorizationCodeUseCase _identityService) =>
         {
             _logger.LogInfo("Authenticate called for user: {Username}", request.UserName);
@@ -28,7 +24,8 @@ public class AuthenticationEndpoint : IEndpointDefinition
 
             return Results.Ok(response);
 
-        }).AllowAnonymous()
+        })
+        .AllowAnonymous()
         .WithName("LocalLogin")
         .WithTags("LocalLogin");
     }

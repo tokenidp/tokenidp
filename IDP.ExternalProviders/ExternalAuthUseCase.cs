@@ -162,10 +162,12 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
                 identity,
                 cancellationToken);
 
-            await _userSignInService.SignInAsync(user.Id, 
-                user.UserName, 
-                user.Email, 
-                session.TenantId, cancellationToken);
+            await _userSignInService.SignInAsync(user.Id,
+                user.UserName,
+                user.Email,
+                session.TenantId,
+                false,
+                cancellationToken);
 
             var resumeUrl = BuildResumeAuthorizeUrl(session.AuthorizationContextId);
 

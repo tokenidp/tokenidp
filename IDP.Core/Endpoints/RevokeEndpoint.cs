@@ -1,6 +1,4 @@
 ﻿using IDP.Core.UseCases;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IDP.Core.Endpoints;

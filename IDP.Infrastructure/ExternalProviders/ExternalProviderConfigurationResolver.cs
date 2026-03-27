@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Clients;
-
-namespace IDP.Infrastructure.ExternalProviders;
+﻿namespace IDP.Infrastructure.ExternalProviders;
 
 public sealed class ExternalProviderConfigurationResolver
 {

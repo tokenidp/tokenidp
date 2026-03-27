@@ -18,9 +18,9 @@ try
     // Add NLog as the ONLY provider
     builder.Host.UseNLog();
 
-    builder.AddTresorAuthServices("Identity_DB", "tresor.admin.api");
+    builder.AddTokenIDPServices("Identity_DB", "tresor.admin.api");
 
-    //builder.AddTokenTresorServices(
+    //builder.AddTokenIDPServices(
     //    connectionStringName: "DefaultConnection",
     //    audience: "idp-api",
     //    configureToken: options =>
@@ -62,9 +62,9 @@ try
     app.MapRazorComponents<App>()
        .AddInteractiveServerRenderMode();
 
-    await app.UseTresorAuthAsync("Identity_DB");
+    await app.UseTokenIDPAsync("Identity_DB");
 
-    app.MapGet("/", () => "IDP is running.");
+    app.MapGet("/", () => "TokenIDP is running.");
 
     await app.RunAsync();
 }

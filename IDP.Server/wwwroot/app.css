@@ -2,8 +2,8 @@
    Design Tokens (Themeable)
    ========================= */
 :root {
-    --primary: #1e3a8a;
-    --primary-hover: #163075;
+    --primary: #00A9FF;
+    --primary-hover: #0939a9;
     --primary-focus: rgba(30, 58, 138, 0.35);
     --secondary-bg: #ffffff;
     --secondary-border: #e5e7eb;
@@ -52,16 +52,9 @@ body {
    Logo / Card
    ========================= */
 .logo {
-    width: 48px;
+    width: 250px;
     height: 48px;
-    border-radius: 50%;
-    background: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 22px;
-    margin-bottom: 20px;
+    margin: 0 auto 15px auto;
 }
 
 .card {

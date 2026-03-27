@@ -1,6 +1,4 @@
-﻿using IDP.Domain.AggregateRoots.Tenants;
-
-namespace IDP.Domain.AggregateRoots.Clients;
+﻿namespace IDP.Domain.AggregateRoots.Clients;
 
 public sealed class ClientExternalProviderSnapshot
 {

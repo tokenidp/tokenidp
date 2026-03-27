@@ -1,4 +1,4 @@
-﻿namespace IDP.Foundation.Primitives;
+﻿namespace IDP.Foundation.Security;
 
 
 public static class TokenKeyDefault

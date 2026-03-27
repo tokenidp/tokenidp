@@ -5,7 +5,7 @@ using IDP.Core;
 using IDP.Core.Endpoints;
 using IDP.Foundation.Abstractions;
 using IDP.Foundation.Options;
-using IDP.Foundation.Primitives;
+using IDP.Foundation.Security;
 using IDP.Infrastructure;
 using IDP.Projection;
 using IDP.Projection.HealthChecks;
@@ -24,13 +24,13 @@ namespace IDP.Server.ApplicationSetup;
 
 public static class ApplicationBuilderExtensions
 {
-    public static WebApplicationBuilder AddTresorAuthServices(
+    public static WebApplicationBuilder AddTokenIDPServices(
         this WebApplicationBuilder builder,
         string connectionStringName,
         string audience)
-        => builder.AddTresorAuthServices(connectionStringName, audience, null);
+        => builder.AddTokenIDPServices(connectionStringName, audience, null);
 
-    public static WebApplicationBuilder AddTresorAuthServices(
+    public static WebApplicationBuilder AddTokenIDPServices(
         this WebApplicationBuilder builder,
         string connectionStringName,
         string audience,
@@ -101,7 +101,7 @@ public static class ApplicationBuilderExtensions
         return builder;
     }
 
-    public static async Task<WebApplication> UseTresorAuthAsync(this WebApplication app, string connectionStringName = "")
+    public static async Task<WebApplication> UseTokenIDPAsync(this WebApplication app, string connectionStringName = "")
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -111,9 +111,9 @@ public static class ApplicationBuilderExtensions
 
         app.RegisterAdminEndpoints();
 
-        //app.MapHealthChecks("/health");
-
         await app.EnsureSystemBootstrap(connectionStringName);
+
+        //app.MapHealthChecks("/health");
 
         app.MapHealthChecks("/health", new HealthCheckOptions
         {

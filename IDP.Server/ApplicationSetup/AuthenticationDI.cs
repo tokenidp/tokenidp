@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
+using IDP.Foundation.Security;
 
 namespace IDP.Server.ApplicationSetup;
 
@@ -100,32 +100,11 @@ internal static class AuthenticationDI
         });
     }
 
-    private static string ResolveKeyMaterial(TokenOption settings)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.KeyPath))
-        {
-            if (!File.Exists(settings.KeyPath))
-            {
-                throw new FileNotFoundException("Token signing key file was not found.", settings.KeyPath);
-            }
-
-            return File.ReadAllText(settings.KeyPath);
-        }
-
-        if (!string.IsNullOrWhiteSpace(settings.Key))
-        {
-            return settings.Key;
-        }
-
-        throw new InvalidOperationException("Token signing key is missing.");
-    }
-
     private static SecurityKey ResolveSigningKey(TokenOption settings, IHostEnvironment environment)
     {
-        if (!string.IsNullOrWhiteSpace(settings.CertificateThumbprint) ||
-            !string.IsNullOrWhiteSpace(settings.CertificateSubjectName))
+        if (TokenSigningMaterialResolver.HasCertificateConfiguration(settings))
         {
-            var certificate = LoadCertificate(settings);
+            var certificate = TokenSigningMaterialResolver.LoadCertificate(settings);
             return new X509SecurityKey(certificate);
         }
 
@@ -135,7 +114,7 @@ internal static class AuthenticationDI
                 "Token signing certificate is required in production. Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
         }
 
-        var keyMaterial = ResolveKeyMaterial(settings);
+        var keyMaterial = TokenSigningMaterialResolver.ResolveKeyMaterial(settings);
         return CreateSigningKey(keyMaterial);
     }
 
@@ -159,66 +138,6 @@ internal static class AuthenticationDI
         {
             throw new InvalidOperationException("Token signing key must be PEM or base64-encoded RSA private key.", ex);
         }
-    }
-
-    private static X509Certificate2 LoadCertificate(TokenOption settings)
-    {
-        var storeName = Enum.TryParse(settings.CertificateStoreName, true, out StoreName parsedStore)
-            ? parsedStore
-            : StoreName.My;
-
-        var storeLocation = Enum.TryParse(settings.CertificateStoreLocation, true, out StoreLocation parsedLocation)
-            ? parsedLocation
-            : StoreLocation.CurrentUser;
-
-        using var store = new X509Store(storeName, storeLocation);
-
-        store.Open(OpenFlags.ReadOnly);
-
-        X509Certificate2Collection matches;
-
-        var thumbprint = settings.CertificateThumbprint?.Replace(" ", string.Empty);
-
-        if (!string.IsNullOrWhiteSpace(thumbprint))
-        {
-            matches = store.Certificates
-                .Find(X509FindType.FindByThumbprint, thumbprint, validOnly: false);
-
-            if (matches.Count == 0)
-            {
-                throw new InvalidOperationException($"Certificate with thumbprint '{thumbprint}' was not found.");
-            }
-
-            return matches[0];
-        }
-
-        var subjectName = settings.CertificateSubjectName?.Trim();
-
-        if (string.IsNullOrWhiteSpace(subjectName))
-        {
-            throw new InvalidOperationException("Certificate thumbprint or subject name is required.");
-        }
-
-        matches = store.Certificates
-            .Find(X509FindType.FindBySubjectName, subjectName, validOnly: false);
-
-        if (matches.Count == 0)
-        {
-            throw new InvalidOperationException($"Certificate with subject name '{subjectName}' was not found.");
-        }
-
-        var candidate = matches
-            .OfType<X509Certificate2>()
-            .Where(cert => cert.HasPrivateKey)
-            .OrderByDescending(cert => cert.NotAfter)
-            .FirstOrDefault();
-
-        if (candidate is null)
-        {
-            throw new InvalidOperationException($"No certificate with subject name '{subjectName}' has a private key.");
-        }
-
-        return candidate;
     }
 
     private static string ResolveIssuer(TokenOption settings, IHttpContextAccessor httpContextAccessor)
