@@ -30,6 +30,8 @@ const isProviderEnabled = (provider) =>
 const getProviderField = (provider, camel, pascal, fallback = "") =>
   provider?.[camel] ?? provider?.[pascal] ?? fallback;
 
+const SHOW_EXTERNAL_PROVIDERS_SECTION = false;
+
 function AddEditTenant({ mode }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -846,155 +848,159 @@ function AddEditTenant({ mode }) {
             </div>
           </div>
 
-          <div className="col-12">
-            <div className="card">
-              <div className="card-body">
-                <h6 className="card-title">External Providers</h6>
-                <div className="text-muted small mb-3">
-                  Select external identity providers from tenant lookups.
-                </div>
-                <div className="row g-3">
-                  {externalProviderOptions.map((providerOption) => {
-                    const providerKey = String(providerOption.value);
-                    const isEnabled = selectedProviderKeys.includes(providerKey);
-                    const detail =
-                      providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
-                    const clientIdError = getProviderConfigError(providerKey, "clientId");
+          {SHOW_EXTERNAL_PROVIDERS_SECTION && (
+            <div className="col-12">
+              <div className="card">
+                <div className="card-body">
+                  <h6 className="card-title">External Providers</h6>
+                  <div className="text-muted small mb-3">
+                    Select external identity providers from tenant lookups.
+                  </div>
+                  <div className="row g-3">
+                    {externalProviderOptions.map((providerOption) => {
+                      const providerKey = String(providerOption.value);
+                      const isEnabled = selectedProviderKeys.includes(providerKey);
+                      const detail =
+                        providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
+                      const clientIdError = getProviderConfigError(providerKey, "clientId");
 
-                    return (
-                      <div className="col-12" key={providerKey}>
-                        <div className="border rounded p-3">
-                          <div className="form-check">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              value={providerKey}
-                              id={`provider-${providerKey}`}
-                                {...register("externalProviderKeys", {
-                                  onChange: (event) => {
-                                    const checked = event.target.checked;
-                                  updateProviderDetail(providerKey, {
-                                    enabled: checked,
-                                    ...(checked
-                                      ? {}
-                                      : { showSecret: false, revealedSecret: "" }),
-                                  });
-                                  if (!checked) {
-                                    clearRevealTimer(providerKey);
-                                    setProviderConfigErrors((prev) => {
-                                      if (!prev[providerKey]) {
-                                        return prev;
-                                      }
-                                      const next = { ...prev };
-                                      delete next[providerKey];
-                                      return next;
-                                    });
-                                  }
-                                  clearErrors("externalProviderKeys");
-                                },
-                              })}
-                            />
-                            <label
-                              className="form-check-label fw-semibold"
-                              htmlFor={`provider-${providerKey}`}
-                            >
-                              {providerOption.label}
-                            </label>
-                          </div>
-
-                          {isEnabled && (
-                            <div className="row g-3 mt-2">
-                              <div className="col-12 col-md-6">
-                                <label className="form-label">Client ID *</label>
-                                <input
-                                  className={`form-control${clientIdError ? " is-invalid" : ""}`}
-                                  value={detail.clientId || ""}
-                                  onChange={(event) => {
+                      return (
+                        <div className="col-12" key={providerKey}>
+                          <div className="border rounded p-3">
+                            <div className="form-check">
+                              <input
+                                className="form-check-input"
+                                type="checkbox"
+                                value={providerKey}
+                                id={`provider-${providerKey}`}
+                                  {...register("externalProviderKeys", {
+                                    onChange: (event) => {
+                                      const checked = event.target.checked;
                                     updateProviderDetail(providerKey, {
-                                      clientId: event.target.value,
+                                      enabled: checked,
+                                      ...(checked
+                                        ? {}
+                                        : { showSecret: false, revealedSecret: "" }),
                                     });
-                                    clearProviderFieldError(providerKey, "clientId");
-                                  }}
-                                />
-                                {clientIdError && (
-                                  <div className="error-msg">{clientIdError}</div>
-                                )}
-                              </div>
-                              <div className="col-12 col-md-6">
-                                <label className="form-label">Client Secret</label>
-                                {detail.hasClientSecret && !detail.editingSecret ? (
-                                  <div>
+                                    if (!checked) {
+                                      clearRevealTimer(providerKey);
+                                      setProviderConfigErrors((prev) => {
+                                        if (!prev[providerKey]) {
+                                          return prev;
+                                        }
+                                        const next = { ...prev };
+                                        delete next[providerKey];
+                                        return next;
+                                      });
+                                    }
+                                    clearErrors("externalProviderKeys");
+                                  },
+                                })}
+                              />
+                              <label
+                                className="form-check-label fw-semibold"
+                                htmlFor={`provider-${providerKey}`}
+                              >
+                                {providerOption.label}
+                              </label>
+                            </div>
+
+                            {isEnabled && (
+                              <div className="row g-3 mt-2">
+                                <div className="col-12 col-md-6">
+                                  <label className="form-label">Client ID *</label>
+                                  <input
+                                    className={`form-control${clientIdError ? " is-invalid" : ""}`}
+                                    value={detail.clientId || ""}
+                                    onChange={(event) => {
+                                      updateProviderDetail(providerKey, {
+                                        clientId: event.target.value,
+                                      });
+                                      clearProviderFieldError(providerKey, "clientId");
+                                    }}
+                                  />
+                                  {clientIdError && (
+                                    <div className="error-msg">{clientIdError}</div>
+                                  )}
+                                </div>
+                                <div className="col-12 col-md-6">
+                                  <label className="form-label">Client Secret</label>
+                                  {detail.hasClientSecret && !detail.editingSecret ? (
+                                    <div>
+                                      <input
+                                        className="form-control mb-2"
+                                        type={detail.showSecret ? "text" : "password"}
+                                        readOnly
+                                        value={
+                                          detail.showSecret
+                                            ? detail.revealedSecret || ""
+                                            : SECRET_MASK
+                                        }
+                                      />
+                                      <div className="d-flex gap-2">
+                                        <button
+                                          type="button"
+                                          className="btn btn-outline-secondary btn-sm"
+                                          onClick={() => toggleRevealSecret(providerKey)}
+                                        >
+                                          {detail.showSecret ? "Hide Secret" : "Show Secret"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="btn btn-outline-secondary btn-sm"
+                                          onClick={() => {
+                                            clearRevealTimer(providerKey);
+                                            updateProviderDetail(providerKey, {
+                                              editingSecret: true,
+                                              showSecret: false,
+                                              revealedSecret: "",
+                                            });
+                                          }}
+                                        >
+                                          Change Secret
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
                                     <input
-                                      className="form-control mb-2"
-                                      type={detail.showSecret ? "text" : "password"}
-                                      readOnly
-                                      value={
-                                        detail.showSecret
-                                          ? detail.revealedSecret || ""
-                                          : SECRET_MASK
+                                      className="form-control"
+                                      type="password"
+                                      value={detail.clientSecret || ""}
+                                      onChange={(event) =>
+                                        updateProviderDetail(providerKey, {
+                                          clientSecret: event.target.value,
+                                          clientSecretChanged: Boolean(
+                                            String(event.target.value || "").trim()
+                                          ),
+                                        })
                                       }
                                     />
-                                    <div className="d-flex gap-2">
-                                      <button
-                                        type="button"
-                                        className="btn btn-outline-secondary btn-sm"
-                                        onClick={() => toggleRevealSecret(providerKey)}
-                                      >
-                                        {detail.showSecret ? "Hide Secret" : "Show Secret"}
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="btn btn-outline-secondary btn-sm"
-                                        onClick={() => {
-                                          clearRevealTimer(providerKey);
-                                          updateProviderDetail(providerKey, {
-                                            editingSecret: true,
-                                            showSecret: false,
-                                            revealedSecret: "",
-                                          });
-                                        }}
-                                      >
-                                        Change Secret
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <input
-                                    className="form-control"
-                                    type="password"
-                                    value={detail.clientSecret || ""}
-                                    onChange={(event) =>
-                                      updateProviderDetail(providerKey, {
-                                        clientSecret: event.target.value,
-                                        clientSecretChanged: Boolean(
-                                          String(event.target.value || "").trim()
-                                        ),
-                                      })
-                                    }
-                                  />
-                                )}
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
           <div className="d-flex justify-content-end gap-2 mt-4">
             <button
-              className="btn btn-outline-secondary"
+              className="btn btn-soft"
               type="button"
               onClick={() => navigate("/tenants")}
             >
+              <i className="fa fa-times me-1" aria-hidden="true"></i>
               Cancel
             </button>
-            <button className="btn btn-primary-solid" type="submit" disabled={state.loading}>
+            <button className="btn btn-primary" type="submit" disabled={state.loading}>
+              <i className="fa fa-save pe-2" aria-hidden="true"></i> 
               {state.loading ? "Saving..." : "Save Changes"}
             </button>
           </div>

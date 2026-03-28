@@ -1,11 +1,11 @@
 import { React, useState, useEffect } from "react";
-import companyLogo from "../../_assets/images/login-logo.png";
+import companyLogo from "../../_assets/images/TokenIDP.svg";
 
 function NavBarHeader() {
   return (
     <header className="nav-header d-flex justify-content-between fixed-top">
       <a href="#">
-        <img src={companyLogo} width="163" alt="SmartDevCon" />
+        <img src={companyLogo} width="163" alt="TokenIDP" />
       </a>
       <button>
         <svg

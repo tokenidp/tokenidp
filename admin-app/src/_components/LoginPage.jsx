@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useAuth } from "tokentresor-idp-react";
+import logo from "../_assets/images/TokenIDP.svg";
 
 export function LoginPage() {
   const auth = useAuth();
@@ -29,7 +30,10 @@ export function LoginPage() {
               <p className="text-muted">
                 Start a new session when you are ready.
               </p>
-              <button className="btn btn-primary mt-3" onClick={() => auth.login()}>
+              <button
+                className="btn btn-primary mt-3"
+                onClick={() => auth.login()}
+              >
                 Sign in again
               </button>
             </div>
@@ -44,8 +48,10 @@ export function LoginPage() {
       <section className="login-section-container">
         <div className="login-section redirect-card">
           <div className="p-4 text-center">
-            <div className="logo mb-3">✒️</div>
-            <h1>Redirecting to SmartDevCon IDP…</h1>
+            <div className="mb-3">
+              <img src={logo} alt="TokenIDP logo" width="250" />
+            </div>
+            <h1>Redirecting to TokenIDP...</h1>
             <p className="text-muted">
               Please wait while we securely connect to Identity.
             </p>
