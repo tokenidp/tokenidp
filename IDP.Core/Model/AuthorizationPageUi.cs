@@ -2,7 +2,7 @@
 
 public sealed class AuthorizationPageUi
 {
-    public string ProductName { get; set; } = "SmartDevCon";
+    public string ProductName { get; set; } = "TokenIDP";
     public string? LogoUrl { get; set; }
     public string? Theme { get; set; }
     public string? AccentColor { get; set; }
@@ -11,7 +11,7 @@ public sealed class AuthorizationPageUi
     public bool AllowStaySignedIn { get; set; } = true;
 
     public bool AllowSignup { get; set; } = true;
-    public string SignupText { get; set; } = "Create free account";
+    public string SignupText { get; set; } = "Create account";
     public string SignupUrl { get; set; } = "/signup";
 
     public List<ExternalProviderUi> ExternalProviders { get; set; } = new();

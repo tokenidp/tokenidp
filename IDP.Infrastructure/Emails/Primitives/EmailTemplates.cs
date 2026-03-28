@@ -20,7 +20,7 @@ internal static class EmailTemplates
             <p>This code expires in <strong style='color: #dc2626;'>10 minutes</strong>. Do not share it with anyone.</p>
             <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
                 <p>If you didn't request this, please ignore this email.</p>
-                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+                <p>© {YEAR} TokenIDP. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -48,7 +48,7 @@ internal static class EmailTemplates
             <p>This link expires in <strong><%EXPIRY_MINUTES%> minutes</strong>.</p>
             <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
                 <p>If you didn't request this, please ignore this email.</p>
-                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+                <p>© {YEAR} TokenIDP. All rights reserved.</p>
             </div>
         </div>
     </body>
@@ -76,7 +76,7 @@ internal static class EmailTemplates
             <p>This confirmation link expires in <strong><%EXPIRY_HOURS%> hours</strong>.</p>
             <div style='margin-top: 30px; font-size: 12px; color: #6b7280;'>
                 <p>If you didn't create this account, please ignore this email.</p>
-                <p>© {YEAR} SmartDevCon. All rights reserved.</p>
+                <p>© {YEAR} TokenIDP. All rights reserved.</p>
             </div>
         </div>
     </body>

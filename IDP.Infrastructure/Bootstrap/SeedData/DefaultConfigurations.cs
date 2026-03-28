@@ -11,8 +11,8 @@ internal static class DefaultConfigurations
         new("smtpusername", "SMTP_USERNAME", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
         new("smtppassword", "SMTP_PASSWORD", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
         new("smtpusessl", "true", ValueTypes.Bool, ConfigurationScopes.Notification, isEditable: true),
-        new("fromemail", "naeem.raza@smartdevcon.com", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
-        new("fromname", "SmartDevCon", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
+        new("fromemail", "admin@mail.com", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
+        new("fromname", "Administrator", ValueTypes.String, ConfigurationScopes.Notification, isEditable: true),
         new("retryattempts", "2", ValueTypes.Int, ConfigurationScopes.Notification, isEditable: true),
         new("retrydelay", "5", ValueTypes.Int, ConfigurationScopes.Notification, isEditable: true),
         new("emailprovidertype", "SMTP", ValueTypes.String, ConfigurationScopes.Notification, isEditable: false)
