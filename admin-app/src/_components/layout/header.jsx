@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "tokentresor-idp-react";
+import { useAuth } from "tokenidp-react";
 
 function Header({ onToggleSidebar, onToggleTheme, theme }) {
   const [name, setName] = useState("");

@@ -7,7 +7,7 @@ import { GlobalErrorProvider } from "./_hooks/useGlobalError";
 import { GlobalSuccessProvider } from "./_hooks/useGlobalSuccess";
 import Spinner from "./_components/common/spinner";
 import GlobalSuccessToast from "./_components/common/globalSuccessToast";
-import { IdpAuthProvider } from "tokentresor-idp-react";
+import { IdpAuthProvider } from "tokenidp-react";
 
 const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);

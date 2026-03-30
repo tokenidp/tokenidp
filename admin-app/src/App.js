@@ -31,7 +31,7 @@ import SettingsLayout from "./_components/settings/settingsLayout";
 import AddPermission from "./_components/permissions/addPermission";
 import PermissionsList from "./_components/permissions/permissionsList";
 import PermissionsLayout from "./_components/permissions/permissionsLayout";
-import { AuthCallback } from "tokentresor-idp-react";
+import { AuthCallback } from "tokenidp-react";
 import { LoginPage } from "./_components/LoginPage"; // simple UI, not OAuth logic
 
 function App() {

@@ -1,6 +1,6 @@
 {
-  "name": "tokentresor-idp-react",
-  "version": "0.2.5",
+  "name": "tokenidp-react",
+  "version": "0.2.6",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "files": [

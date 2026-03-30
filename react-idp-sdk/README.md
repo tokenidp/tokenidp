@@ -74,7 +74,7 @@ npm pack
 
 Admin App
 
-npm install "D:\\Solutions\\VSCode\\React-App\\idp-sdk\\tokentresor-idp-react-0.1.0.tgz"
+npm install "D:\\Solutions\\VSCode\\React-App\\idp-sdk\\tokenidp-react-0.1.0.tgz"
 
 
 
@@ -82,7 +82,7 @@ Wrap App with Provider
 
 
 
-import { IdpAuthProvider } from "tokentresor-idp-react";
+import { IdpAuthProvider } from "tokenidp-react";
 
 
 

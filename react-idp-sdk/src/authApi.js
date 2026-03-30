@@ -14,9 +14,7 @@ async function httpPostJson(url, body, extraHeaders = {}) {
   }
 
   if (!res.ok) {
-    const msg =
-      (data && (data.error_description || data.error || data.message)) ||
-      `HTTP ${res.status}`;
+    const msg = getErrorMessage(data, res.status);
     const err = new Error(msg);
     err.status = res.status;
     err.data = data;
@@ -41,9 +39,7 @@ async function httpGetJson(url, extraHeaders = {}) {
   }
 
   if (!res.ok) {
-    const msg =
-      (data && (data.error_description || data.error || data.message)) ||
-      `HTTP ${res.status}`;
+    const msg = getErrorMessage(data, res.status);
     const err = new Error(msg);
     err.status = res.status;
     err.data = data;
@@ -51,6 +47,28 @@ async function httpGetJson(url, extraHeaders = {}) {
   }
 
   return data;
+}
+
+function getErrorMessage(data, status) {
+  if (!data) return `HTTP ${status}`;
+
+  const wrappedError =
+    data.error && typeof data.error === "object"
+      ? data.error
+      : data.value?.error && typeof data.value.error === "object"
+        ? data.value.error
+        : null;
+
+  return (
+    data.error_description ||
+    wrappedError?.error ||
+    wrappedError?.Error ||
+    wrappedError?.message ||
+    wrappedError?.Message ||
+    (typeof data.error === "string" ? data.error : "") ||
+    data.message ||
+    `HTTP ${status}`
+  );
 }
 
 export function extractToken(tokenPayload) {

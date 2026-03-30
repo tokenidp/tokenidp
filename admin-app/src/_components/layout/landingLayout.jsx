@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "tokentresor-idp-react";
+import { useAuth } from "tokenidp-react";
 
 function LandingLayout() {
   const auth = useAuth();

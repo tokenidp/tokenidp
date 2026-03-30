@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "tokentresor-idp-react";
+import { useAuth } from "tokenidp-react";
 import logo from "../_assets/images/TokenIDP.svg";
 
 export function LoginPage() {
