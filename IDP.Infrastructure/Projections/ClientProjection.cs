@@ -14,6 +14,7 @@ internal static class ClientProjection
             client.IsActive,
             client.RedirectUri,
             client.LogoutRedirectUri,
+            client.ClientType,
             client.TokenType,
             client.ClientGrantTypes.Select(g => g.AllowedGrantType),
             client.ClientScopes.Select(s => s.Scope),

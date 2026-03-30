@@ -1,4 +1,5 @@
-﻿using IDP.Core.GrantHandlers;
+﻿using IDP.Core.Endpoints;
+using IDP.Core.GrantHandlers;
 using IDP.Core.Policies;
 using IDP.Core.UseCases;
 using IDP.Domain.AggregateRoots.Clients;
@@ -28,6 +29,7 @@ public static class DependencyInjection
     private static void AddUseCases(IServiceCollection services)
     {
         services.AddScoped<GrantTypeValidatorUseCase>();
+        services.AddScoped<TokenEndpointClientAuthService>();
         services.AddScoped<UserInfoUseCase>();
         services.AddScoped<TokenIssuerUseCase>();
         services.AddScoped<RevokeTokenUseCase>();

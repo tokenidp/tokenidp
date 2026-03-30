@@ -52,7 +52,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
             ["response_types_supported"] = new[] { "code" },
             ["subject_types_supported"] = new[] { "public" },
             ["id_token_signing_alg_values_supported"] = new[] { "RS256" },
-            ["token_endpoint_auth_methods_supported"] = new[] { "client_secret_basic", "client_secret_post" },
+            ["token_endpoint_auth_methods_supported"] = new[] { "client_secret_basic", "client_secret_post", "none" },
             ["grant_types_supported"] = new[] { "authorization_code", "client_credentials", "refresh_token", "device_code", "ciba" },
             ["scopes_supported"] = new[] { "openid", "profile", "email", "phone", "offline_access" }
         };

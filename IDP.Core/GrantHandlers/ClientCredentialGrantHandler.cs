@@ -1,6 +1,4 @@
 ﻿using IDP.Core.UseCases;
-using IDP.Foundation.Security;
-using System.Text;
 
 namespace IDP.Core.GrantHandlers;
 
@@ -28,7 +26,7 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
 
         var tokenContext = await _tokenContextUseCase.BuildClientCredentialTokenContextAsync(normalized.ClientId);
 
-        ValidateClientSecret(normalized.ClientSecret, tokenContext.ActiveSecretHashes.FirstOrDefault(), normalized.ClientId);
+        ValidateClientSecret(normalized.ClientSecret, tokenContext.ActiveSecretHashes, normalized.ClientId);
 
         var scopes = ResolveScopes(normalized.Scope, tokenContext.Scopes, normalized.ClientId);
 
@@ -44,13 +42,13 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
     private static NormalizedRequest NormalizeRequest(TokenRequest request)
     {
         if (request is null)
-            throw new GrantValidationException("invalid_request", "Request is missing.");
+            throw new TokenRequestValidationException("invalid_request", "Request is missing.");
 
         if (!string.Equals(request.GrantType, GrantTypeValue, StringComparison.Ordinal))
-            throw new GrantValidationException("unsupported_grant_type", "Invalid grant_type.");
+            throw new TokenRequestValidationException("unsupported_grant_type", "Invalid grant_type.");
 
         if (string.IsNullOrWhiteSpace(request.ClientId))
-            throw new GrantValidationException("invalid_request", "client_id is required.");
+            throw new TokenRequestValidationException("invalid_request", "client_id is required.");
 
         return new NormalizedRequest(
             request.ClientId.Trim(),
@@ -60,27 +58,14 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
         );
     }
 
-    private void ValidateClientSecret(string? providedSecret, string? storedSecret, string clientId)
+    private void ValidateClientSecret(string? providedSecret, IReadOnlySet<string> storedSecrets, string clientId)
     {
-        if (!AreSecretsEqual(providedSecret, storedSecret))
+        if (!ClientSecretValidator.Matches(providedSecret, storedSecrets))
         {
             _logger.LogWarning("Client {ClientId} rejected: {Reason}.", clientId, "secret mismatch");
 
-            throw new GrantValidationException("invalid_client", "Client secret is invalid.");
+            throw new TokenRequestValidationException("invalid_client", "Client secret is invalid.");
         }
-    }
-
-    private static bool AreSecretsEqual(string? providedSecret, string? storedSecret)
-    {
-        if (string.IsNullOrWhiteSpace(providedSecret) || string.IsNullOrWhiteSpace(storedSecret))
-            return false;
-
-        providedSecret = SecretHasher.HashSecret(providedSecret);
-
-        var providedBytes = Encoding.UTF8.GetBytes(providedSecret);
-        var storedBytes = Encoding.UTF8.GetBytes(storedSecret);
-
-        return SecretHasher.FixedTimeEquals(providedBytes, storedBytes);
     }
 
     private HashSet<string> ResolveScopes(string? requestedScope, string[] allowedScopes, string clientId)
@@ -100,7 +85,7 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
         {
             _logger.LogWarning("Invalid scopes requested for client {ClientId}: {Scopes}", clientId, invalid);
 
-            throw new GrantValidationException("invalid_scope", "One or more scopes are not allowed.");
+            throw new TokenRequestValidationException("invalid_scope", "One or more scopes are not allowed.");
         }
 
         return requested!;
@@ -111,15 +96,4 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
         string? Scope,
         string? IpAddress,
         string? ClientSecret);
-
-    public sealed class GrantValidationException : Exception
-    {
-        public string Error { get; }
-
-        public GrantValidationException(string error, string description)
-            : base(description)
-        {
-            Error = error;
-        }
-    }
 }

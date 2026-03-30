@@ -2,8 +2,8 @@
 
 public class TokenRequest
 {
-    public required string GrantType { get; init; }
-    public required string ClientId { get; init; }
+    public string GrantType { get; set; } = string.Empty;
+    public string ClientId { get; set; } = string.Empty;
 
     public string UserName { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
@@ -19,6 +19,7 @@ public class TokenRequest
     public string? IpAddress { get; set; }
 
     public string? ClientSecret { get; set; }
+    public string? ClientAuthenticationMethod { get; private set; }
 
     // Not bindable from client
     public int TenantId { get; private set; }
@@ -26,5 +27,10 @@ public class TokenRequest
     public void SetTenantId(int tenantId)
     {
         TenantId = tenantId;
+    }
+
+    public void SetClientAuthenticationMethod(string authenticationMethod)
+    {
+        ClientAuthenticationMethod = authenticationMethod;
     }
 }

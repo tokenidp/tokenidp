@@ -37,7 +37,7 @@ internal sealed class DashboardQueryUseCase
         await GetTokensLast24hAsync(currentHourBucketStart, ct);
         await GetAuthSummaryLast24hAsync(currentHourBucketStart, ct);
         await GetTopClientsCurrentHourAsync(currentHourBucketStart, ct);
-        await GetFailedLoginSpikes15MinAsync(latest15MinBucketStart, threshold: 5, ct);
+        await GetFailedLoginSpikes15MinAsync(latest15MinBucketStart, threshold: 100, ct);
         await GetClientExpiringSecretsAsync(ct);
 
         dashboardResponse.LastUpdated = now;

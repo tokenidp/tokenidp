@@ -40,7 +40,16 @@ internal sealed class TokenGrantPipeline : ITokenGrantUseCase
 
         request.SetTenantId(tenantId);
 
-        var response = await tokenGrantHandler.HandleAsync(request);
+        TokenResponse response;
+
+        try
+        {
+            response = await tokenGrantHandler.HandleAsync(request);
+        }
+        catch (TokenRequestValidationException ex)
+        {
+            return TokenRequestValidationResultFactory.Create(ex);
+        }
 
         _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}",
             request.ClientId, request.GrantType);
