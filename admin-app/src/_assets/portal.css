@@ -34,7 +34,7 @@
   --radius-full: 999px;
 
   /* Button */
-  --btn-hover-bg-color: #0939a9;
+  --btn-hover-bg-color: #006FA6;
   --btn-padding: 8px 16px;
   --btn-soft-bg: #e4e7f1;
   --btn-soft-hover-bg: #d8dded;
@@ -100,11 +100,11 @@
   --status-danger-text: #b91c1c;
 
   /* Bootstrap overrides */
-  --bs-primary: #1e3a8a;
-  --bs-btn-bg: #1e3a8a;
-  --bs-btn-border-color: #1e3a8a;
-  --bs-btn-hover-bg: #0939a9;
-  --bs-btn-hover-border-color: #0939a9;
+  --bs-primary: #006FA6;
+  --bs-btn-bg: #006FA6;
+  --bs-btn-border-color: #006FA6;
+  --bs-btn-hover-bg: #006FA6;
+  --bs-btn-hover-border-color: #006FA6;
   --bs-btn-focus-shadow-rgb: 30, 58, 138;
   --bs-table-bg: #ffffff;
   --bs-table-striped-bg: #f8fafc;
