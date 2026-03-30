@@ -648,7 +648,8 @@ a {
   background-color: var(--bs-table-active-bg, var(--surface-soft));
 }
 
-th.text-right {
+th.text-right,
+td.text-right {
   text-align: right;
 }
 
@@ -801,6 +802,7 @@ table td i {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .table-checkbox input {

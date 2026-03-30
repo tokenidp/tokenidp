@@ -23,7 +23,7 @@ function Spinner() {
           height: "100%",
         }}
       >
-        <ThreeDots color="#1e3a8a" height="100" width="100" />
+        <ThreeDots color="#00a9ff" height="100" width="100" />
       </div>
     )
   );
