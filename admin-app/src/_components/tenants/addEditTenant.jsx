@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
+import ProviderIcon from "../common/providerIcon";
 import { useTenants } from "../../_hooks/useTenants";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
@@ -30,7 +31,7 @@ const isProviderEnabled = (provider) =>
 const getProviderField = (provider, camel, pascal, fallback = "") =>
   provider?.[camel] ?? provider?.[pascal] ?? fallback;
 
-const SHOW_EXTERNAL_PROVIDERS_SECTION = false;
+const SHOW_EXTERNAL_PROVIDERS_SECTION = true;
 
 function AddEditTenant({ mode }) {
   const navigate = useNavigate();
@@ -898,10 +899,11 @@ function AddEditTenant({ mode }) {
                                 })}
                               />
                               <label
-                                className="form-check-label fw-semibold"
+                                className="form-check-label fw-semibold d-inline-flex align-items-center gap-2"
                                 htmlFor={`provider-${providerKey}`}
                               >
-                                {providerOption.label}
+                                <ProviderIcon label={providerOption.label} />
+                                <span>{providerOption.label}</span>
                               </label>
                             </div>
 

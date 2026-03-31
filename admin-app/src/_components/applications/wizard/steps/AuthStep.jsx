@@ -1,4 +1,5 @@
 import React from "react";
+import ProviderIcon from "../../../common/providerIcon";
 import { GrantTypeId } from "../wizardState";
 
 function AuthStep({
@@ -365,10 +366,11 @@ function AuthStep({
                         {...register("externalProviders")}
                       />
                       <label
-                        className="form-check-label"
+                        className="form-check-label d-inline-flex align-items-center gap-2"
                         htmlFor={`client-provider-${option.value}`}
                       >
-                        {option.label}
+                        <ProviderIcon label={option.label} />
+                        <span>{option.label}</span>
                       </label>
                     </div>
                   </div>
