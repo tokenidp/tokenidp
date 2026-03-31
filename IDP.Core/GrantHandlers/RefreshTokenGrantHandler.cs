@@ -44,7 +44,11 @@ internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
         }
 
         var tokenInfo = await _tokenContextUseCase
-            .BuildTokenContextAsync(request.ClientId, existingToken.UserId ?? 0);
+            .BuildTokenContextAsync(
+                request.ClientId,
+                existingToken.UserId ?? 0,
+                GrantTypes.refresh_token,
+                request.Scope.IsSafe() ? request.Scope : existingToken.Scope);
 
         _logger.LogInfo("Generating refresh token for client {ClientId} from {IPAddress}",
             request.ClientId, request.IpAddress ?? string.Empty);

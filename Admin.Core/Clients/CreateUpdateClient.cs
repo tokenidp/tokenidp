@@ -21,8 +21,8 @@ public class CreateUpdateClient
     public int? QueueLimit { get; set; }
     public bool? EnableITracking { get; set; }
     public List<string> Scopes { get; set; } = new();
+    public List<string> ApiResources { get; set; } = new();
     public List<GrantTypes> GrantTypes { get; set; } = new();
-    public List<string> Audiences { get; set; } = new();
     public string? ClientSecret { get; set; }
     public string? ClientSecretDescription { get; set; }
     public ClientAuthPolicyDetail AuthPolicy { get; set; } = new();

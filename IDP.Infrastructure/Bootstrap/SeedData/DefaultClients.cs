@@ -41,7 +41,7 @@ internal static class DefaultClients
                 "offline_access"
             },
 
-            Audiences = new List<string>
+            ApiResources = new List<string>
             {
                 "tokenidp.admin.api"
             },

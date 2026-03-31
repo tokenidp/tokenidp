@@ -1,20 +1,21 @@
-﻿using IDP.Foundation.Security;
-
-namespace Admin.Core.Clients.UseCases;
+﻿namespace Admin.Core.Clients.UseCases;
 
 internal sealed class ClientCommandUseCase
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IAppLogger<CreateUpdateClient> _logger;
+    private readonly ClientCommandValidator _validator;
+    private readonly IAppLogger<ClientCommandUseCase> _logger;
 
     public ClientCommandUseCase(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
-        IAppLogger<CreateUpdateClient> logger)
+        ClientCommandValidator validator,
+        IAppLogger<ClientCommandUseCase> logger)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
+        _validator = validator;
         _logger = logger;
     }
 
@@ -22,24 +23,19 @@ internal sealed class ClientCommandUseCase
         CreateUpdateClient request,
         CancellationToken cancellationToken = default)
     {
-        var authPolicyRequest = request.AuthPolicy ?? new ClientAuthPolicyDetail();
+        var tenantId = _currentUserService.TenantId;
+        var command = NormalizedClientCommand.Create(request, tenantId);
         var clientId = Guid.NewGuid().ToString();
 
-        _logger.LogDebug("Creating client {ClientId} for tenant {TenantId}",
-           clientId, _currentUserService.TenantId);
+        _logger.LogDebug("Creating client {ClientId} for tenant {TenantId}", clientId, tenantId);
 
-        var tenantId = _currentUserService.TenantId;
-
-        var existing = await _dbContext.Clients
-            .AsNoTracking()
-            .AnyAsync(c => c.TenantId == tenantId
-                && c.ClientId.ToLower() == clientId.ToLower(),
-                cancellationToken);
-
-        if (existing)
+        var duplicateClientIdResult = await _validator.ValidateNewClientIdUniqueAsync(
+            tenantId,
+            clientId,
+            cancellationToken);
+        if (!duplicateClientIdResult.IsSuccess)
         {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("client.id.duplicate", "Client Id already exists."));
+            return FailureFromResult(duplicateClientIdResult);
         }
 
         var createResult = Client.Create(
@@ -67,87 +63,13 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(createResult);
         }
 
-        var scopeResult = BuildScopes(request.Scopes, out var scopes);
-        if (!scopeResult.IsSuccess)
+        var applyChangesResult = await PrepareAndApplyAsync(client, command, cancellationToken);
+        if (!applyChangesResult.IsSuccess)
         {
-            return FailureFromResult(scopeResult);
-        }
-
-        var grantResult = BuildGrantTypes(request.GrantTypes, out var grants);
-        if (!grantResult.IsSuccess)
-        {
-            return FailureFromResult(grantResult);
-        }
-
-        var audienceResult = BuildAudiences(request.Audiences, out var audiences);
-        if (!audienceResult.IsSuccess)
-        {
-            return FailureFromResult(audienceResult);
-        }
-
-        var secretResult = BuildSecret(
-            request.ClientSecret,
-            request.ClientSecretDescription,
-            request.ClientSecretExpiry,
-            out var clientSecret);
-        if (!secretResult.IsSuccess)
-        {
-            return FailureFromResult(secretResult);
-        }
-
-        client.ReplaceScopes(scopes);
-        client.ReplaceGrantTypes(grants);
-        client.ReplaceAudiences(audiences);
-        if (clientSecret != null)
-        {
-            client.AddSecret(clientSecret);
-        }
-
-        var authPolicyResult = client.ConfigureAuthPolicy(
-            authPolicyRequest.AllowLocalLoginOverride,
-            authPolicyRequest.AllowSelfRegistrationOverride,
-            authPolicyRequest.MfaPolicyOverride,
-            authPolicyRequest.ShowExternalProviders,
-            authPolicyRequest.ShowStaySignedIn,
-            authPolicyRequest.ShowCreateAccountLink,
-            authPolicyRequest.AutoCreateUsers,
-            authPolicyRequest.DefaultRoleId);
-        if (!authPolicyResult.IsSuccess)
-        {
-            return FailureFromResult(authPolicyResult);
-        }
-
-        var selectedProviderIds = authPolicyRequest.ShowExternalProviders
-            ? (request.ExternalProviders ?? new List<int>())
-            : new List<int>();
-
-        var providerValidationResult = await ValidateExternalProviders(
-            tenantId,
-            selectedProviderIds,
-            cancellationToken);
-        if (!providerValidationResult.IsSuccess)
-        {
-            return FailureFromResult(providerValidationResult);
-        }
-
-        var providerResult = client.ReplaceExternalProviders(selectedProviderIds);
-        if (!providerResult.IsSuccess)
-        {
-            return FailureFromResult(providerResult);
-        }
-
-        var provisioningPolicyResult = await ValidateProvisioningPolicySettings(
-            tenantId,
-            authPolicyRequest.AutoCreateUsers,
-            authPolicyRequest.DefaultRoleId,
-            cancellationToken);
-        if (!provisioningPolicyResult.IsSuccess)
-        {
-            return FailureFromResult(provisioningPolicyResult);
+            return FailureFromResult(applyChangesResult);
         }
 
         _dbContext.Clients.Add(client);
-
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         _logger.LogInfo("Client created with Id {ClientId}", client.Id);
@@ -160,18 +82,19 @@ internal sealed class ClientCommandUseCase
         CreateUpdateClient request,
         CancellationToken cancellationToken = default)
     {
-        var authPolicyRequest = request.AuthPolicy ?? new ClientAuthPolicyDetail();
+        var tenantId = _currentUserService.TenantId;
+        var command = NormalizedClientCommand.Create(request, tenantId);
 
         _logger.LogDebug("Updating client {ClientId}", id);
 
         var client = await _dbContext.Clients
             .Include(c => c.ClientScopes)
             .Include(c => c.ClientGrantTypes)
-            .Include(c => c.ClientAudiences)
+            .Include(c => c.ClientApiResources)
             .Include(c => c.ClientAuthPolicy)
             .Include(c => c.ClientExternalProviders)
             .FirstOrDefaultAsync(c => c.Id == id
-                && c.TenantId == _currentUserService.TenantId,
+                && c.TenantId == tenantId,
                 cancellationToken);
 
         if (client == null)
@@ -203,83 +126,10 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(updateResult);
         }
 
-        var scopeResult = BuildScopes(request.Scopes, out var scopes);
-        if (!scopeResult.IsSuccess)
+        var applyChangesResult = await PrepareAndApplyAsync(client, command, cancellationToken);
+        if (!applyChangesResult.IsSuccess)
         {
-            return FailureFromResult(scopeResult);
-        }
-
-        var grantResult = BuildGrantTypes(request.GrantTypes, out var grants);
-        if (!grantResult.IsSuccess)
-        {
-            return FailureFromResult(grantResult);
-        }
-
-        var audienceResult = BuildAudiences(request.Audiences, out var audiences);
-        if (!audienceResult.IsSuccess)
-        {
-            return FailureFromResult(audienceResult);
-        }
-
-        var secretResult = BuildSecret(
-            request.ClientSecret,
-            request.ClientSecretDescription,
-            request.ClientSecretExpiry,
-            out var clientSecret);
-        if (!secretResult.IsSuccess)
-        {
-            return FailureFromResult(secretResult);
-        }
-
-        client.ReplaceScopes(scopes);
-        client.ReplaceGrantTypes(grants);
-        client.ReplaceAudiences(audiences);
-        if (clientSecret != null)
-        {
-            client.AddSecret(clientSecret);
-        }
-
-        var authPolicyResult = client.ConfigureAuthPolicy(
-            authPolicyRequest.AllowLocalLoginOverride,
-            authPolicyRequest.AllowSelfRegistrationOverride,
-            authPolicyRequest.MfaPolicyOverride,
-            authPolicyRequest.ShowExternalProviders,
-            authPolicyRequest.ShowStaySignedIn,
-            authPolicyRequest.ShowCreateAccountLink,
-            authPolicyRequest.AutoCreateUsers,
-            authPolicyRequest.DefaultRoleId);
-        if (!authPolicyResult.IsSuccess)
-        {
-            return FailureFromResult(authPolicyResult);
-        }
-
-        var selectedProviderIds = authPolicyRequest.ShowExternalProviders
-            ? (request.ExternalProviders ?? new List<int>())
-            : new List<int>();
-
-        var providerValidationResult = await ValidateExternalProviders(
-            _currentUserService.TenantId,
-            selectedProviderIds,
-            cancellationToken);
-        if (!providerValidationResult.IsSuccess)
-        {
-            return FailureFromResult(providerValidationResult);
-        }
-
-        var providerResult = client.ReplaceExternalProviders(selectedProviderIds);
-        if (!providerResult.IsSuccess)
-        {
-            return FailureFromResult(providerResult);
-        }
-
-        var provisioningPolicyResult = await ValidateProvisioningPolicySettings(
-            _currentUserService.TenantId,
-            authPolicyRequest.AutoCreateUsers,
-            authPolicyRequest.DefaultRoleId,
-            cancellationToken);
-        if (!provisioningPolicyResult.IsSuccess)
-        {
-            return FailureFromResult(provisioningPolicyResult);
+            return FailureFromResult(applyChangesResult);
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -314,199 +164,29 @@ internal sealed class ClientCommandUseCase
         return ApiResult<int>.Success(clientId);
     }
 
-    private static Result BuildSecret(
-        string? secret,
-        string? description,
-        int? clientSecretExpiry,
-        out ClientSecret? mapped)
-    {
-        mapped = null;
-
-        if (string.IsNullOrWhiteSpace(secret))
-        {
-            return Result.Success(0);
-        }
-
-        var hash = SecretHasher.HashSecret(secret);
-        var expiresAt = clientSecretExpiry.HasValue
-            ? DateTime.UtcNow.AddDays(clientSecretExpiry.Value)
-            : (DateTime?)null;
-
-        return ClientSecret.Create(hash, description, expiresAt, out mapped);
-    }
-
     private static ApiResult<int> FailureFromResult(Result result)
     {
         return ApiResult<int>.Failure(
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
     }
 
-    private static Result BuildScopes(IEnumerable<string> scopes, out List<ClientScope> mapped)
-    {
-        mapped = new List<ClientScope>();
-
-        if (scopes == null)
-        {
-            return Result.Success(0);
-        }
-
-        var combined = Result.Success(0);
-        foreach (var scope in scopes)
-        {
-            var result = ClientScope.Create(scope, out var created);
-            if (!result.IsSuccess)
-            {
-                combined = combined.Combine(result);
-                continue;
-            }
-
-            if (created != null)
-            {
-                mapped.Add(created);
-            }
-        }
-
-        return combined;
-    }
-
-    private static Result BuildGrantTypes(IEnumerable<GrantTypes> grantTypes, out List<ClientGrantType> mapped)
-    {
-        mapped = new List<ClientGrantType>();
-
-        if (grantTypes == null)
-        {
-            return Result.Success(0);
-        }
-
-        var combined = Result.Success(0);
-        foreach (var grantType in grantTypes)
-        {
-            var result = ClientGrantType.Create(grantType, out var created);
-            if (!result.IsSuccess)
-            {
-                combined = combined.Combine(result);
-                continue;
-            }
-
-            if (created != null)
-            {
-                mapped.Add(created);
-            }
-        }
-
-        return combined;
-    }
-
-    private static Result BuildAudiences(IEnumerable<string> audiences, out List<ClientAudience> mapped)
-    {
-        mapped = new List<ClientAudience>();
-
-        if (audiences == null)
-        {
-            return Result.Success(0);
-        }
-
-        var combined = Result.Success(0);
-        foreach (var audience in audiences)
-        {
-            var result = ClientAudience.Create(audience, true, out var created);
-            if (!result.IsSuccess)
-            {
-                combined = combined.Combine(result);
-                continue;
-            }
-
-            if (created != null)
-            {
-                mapped.Add(created);
-            }
-        }
-
-        return combined;
-    }
-
-    private async Task<Result> ValidateExternalProviders(
-        int tenantId,
-        IEnumerable<int> providerIds,
+    private async Task<Result> PrepareAndApplyAsync(
+        Client client,
+        NormalizedClientCommand command,
         CancellationToken cancellationToken)
     {
-        providerIds ??= Array.Empty<int>();
-
-        if (providerIds.Any(id => id <= 0))
+        var validationResult = await _validator.ValidateForSaveAsync(command, cancellationToken);
+        if (!validationResult.IsSuccess)
         {
-            return Result.Failure(
-                "client.external_providers.invalid",
-                "One or more selected external providers are invalid.");
+            return validationResult;
         }
 
-        var selectedProviderIds = providerIds
-            .Where(id => id > 0)
-            .Distinct()
-            .ToList();
-
-        if (selectedProviderIds.Count == 0)
+        var buildChangesResult = ClientCommandMapper.BuildChanges(command, out var changes);
+        if (!buildChangesResult.IsSuccess || changes == null)
         {
-            return Result.Success(0);
+            return buildChangesResult;
         }
 
-        var tenantProviderIds = await _dbContext.TenantExternalProviders
-            .AsNoTracking()
-            .Where(provider => provider.TenantId == tenantId)
-            .Select(provider => provider.Id)
-            .ToListAsync(cancellationToken);
-
-        var invalidProviderIds = selectedProviderIds
-            .Where(providerId => !tenantProviderIds.Contains(providerId))
-            .ToList();
-
-        if (invalidProviderIds.Count > 0)
-        {
-            return Result.Failure(
-                "client.external_providers.invalid",
-                "One or more selected external providers are invalid for this tenant.");
-        }
-
-        return Result.Success(0);
-    }
-
-    private async Task<Result> ValidateProvisioningPolicySettings(
-        int tenantId,
-        bool autoCreateUsers,
-        int? defaultRoleId,
-        CancellationToken cancellationToken)
-    {
-        if (autoCreateUsers && !defaultRoleId.HasValue)
-        {
-            return Result.Failure(
-                "client.auth_policy.default_role.required",
-                "A default role is required when auto-create users is enabled.");
-        }
-
-        if (defaultRoleId.HasValue)
-        {
-            var role = await _dbContext.Roles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r =>
-                        r.Id == defaultRoleId.Value
-                        && r.TenantId == tenantId
-                        && !r.IsDeleted,
-                    cancellationToken);
-
-            if (role is null)
-            {
-                return Result.Failure(
-                    "client.auth_policy.default_role.invalid",
-                    "Selected default role is invalid for this tenant.");
-            }
-
-            if (!role.IsActive || !role.IsAssignableToNewUsers)
-            {
-                return Result.Failure(
-                    "client.auth_policy.default_role.invalid",
-                    "Selected default role cannot be assigned to new users.");
-            }
-        }
-
-        return Result.Success(0);
+        return ClientCommandMapper.ApplyToClient(client, command, changes);
     }
 }

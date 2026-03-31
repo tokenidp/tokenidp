@@ -39,7 +39,11 @@ internal class DeviceFlowGrantHandler : ITokenGrantHandler
         await _authorizationStore.UpdateDeviceAuthorization(deviceRequest);
 
         var tokenContext = await _tokenContextUseCase
-            .BuildTokenContextAsync(request.ClientId, Convert.ToInt32(deviceRequest.SubjectUserId));
+            .BuildTokenContextAsync(
+                request.ClientId,
+                Convert.ToInt32(deviceRequest.SubjectUserId),
+                GrantTypes.device_code,
+                deviceRequest.Scopes);
 
         var token = await _tokenService.IssueTokenAsync(tokenContext);
 

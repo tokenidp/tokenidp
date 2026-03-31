@@ -36,14 +36,14 @@ internal sealed class ClientLookupsUseCase
                     AppTypes = ClientLookupMapper.MapAppTypes(),
                     TokenTypes = ClientLookupMapper.MapTokenTypes(),
                     ClientScopes = ClientLookupMapper.MapClientScopes(),
+                    ApiResources = await ClientLookupMapper
+                        .MapApiResources(_currentUserService.TenantId, _appDbContext, cancellationToken),
                     GrantTypes = ClientLookupMapper.MapGrantTypes(),
                     ExternalProviders = await ClientLookupMapper
                         .MapExternalProviders(_currentUserService.TenantId, _appDbContext),
                     Roles = await ClientLookupMapper.MapRoles(_currentUserService.TenantId, _appDbContext)
                 };
             }, TimeSpan.FromMinutes(15));
-
-
 
         _logger.LogDebug("Client lookups fetched for tenant {TenantId}", _currentUserService.TenantId);
 

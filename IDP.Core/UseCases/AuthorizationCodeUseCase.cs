@@ -95,11 +95,12 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         }
 
         var tokenInfo = await _tokenContextUseCase
-            .BuildTokenContextAsync(tokenRequest.ClientId,
-            authorizationCode.UserId,
-            authorizationCode.RememberMe);
-
-        tokenInfo.AddAuthorizedScopes(authorizationCode.Scopes ?? string.Empty);
+            .BuildTokenContextAsync(
+                tokenRequest.ClientId,
+                authorizationCode.UserId,
+                GrantTypes.authorization_code,
+                authorizationCode.Scopes,
+                authorizationCode.RememberMe);
 
         return tokenInfo;
     }

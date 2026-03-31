@@ -18,7 +18,7 @@ try
     // Add NLog as the ONLY provider
     builder.Host.UseNLog();
 
-    builder.AddTokenIDPServices("Identity_DB", "tresor.admin.api");
+    builder.AddTokenIDPServices("Identity_DB", "tokenidp.admin.api");
 
     //builder.AddTokenIDPServices(
     //    connectionStringName: "DefaultConnection",

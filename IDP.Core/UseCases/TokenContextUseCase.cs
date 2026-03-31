@@ -20,8 +20,11 @@ internal class TokenContextUseCase
         _identityStore = identityStore;
     }
 
-    internal async Task<TokenContext> BuildTokenContextAsync(string clientId,
+    internal async Task<TokenContext> BuildTokenContextAsync(
+        string clientId,
         int userId,
+        GrantTypes grantType,
+        string? requestedScope,
         bool rememberMe = false)
     {
         _logger.LogInfo("Generating user info for token for user:{userId}", userId);
@@ -31,76 +34,118 @@ internal class TokenContextUseCase
         if (user == null)
         {
             _logger.LogWarning("User not found with Id: {UserId}", userId);
-
             throw new NotFoundException("User not found.");
         }
-
-        _logger.LogInfo("User found: {UserName}", user.UserName ?? "user.Username is empty.");
 
         var userRoles = await _roleService.GetUserRoles(userId);
 
         if (!userRoles.IsSafe())
         {
             _logger.LogWarning("No active roles found for user {UserId}", userId);
-
             throw new NotFoundException("Roles not found.");
         }
 
         var distinctRoles = userRoles.Distinct().ToArray();
-
         var client = await _clientStore.GetActiveByClientId(clientId);
+        var scopeSelection = ResolveScopeSelection(client, requestedScope);
 
-        if (client == null)
-        {
-            _logger.LogWarning("Client not found.");
-
-            throw new NotFoundException("Client not found.");
-        }
-
-        _logger.LogInfo("Roles found for UserId: {UserId} => {Roles}", userId, string.Join(", ", userRoles));
-
-        var userInfo = TokenContext.Create(userId,
+        var tokenContext = TokenContext.Create(
+            userId,
             user.TenantId,
             client.ClientName,
             user.UserName ?? string.Empty,
             clientId,
+            grantType,
             client.TokenType,
             client.ClientSecretExpiry ?? 0,
             client.AccessTokenLifetime,
             client.RefreshTokenExpiration,
             rememberMe,
             distinctRoles,
-            client.Scopes.ToArray(),
-            client.Audiences.ToArray());
+            scopeSelection.Scopes,
+            scopeSelection.Audiences);
 
-        return userInfo;
+        return tokenContext;
     }
 
-    internal async Task<TokenContext> BuildClientCredentialTokenContextAsync(string clientId)
+    internal async Task<TokenContext> BuildClientCredentialTokenContextAsync(
+        string clientId,
+        string? requestedScope)
     {
         _logger.LogInfo("Generating token context for token for client:{clientId}", clientId);
 
         var client = await _clientStore.GetActiveByClientId(clientId);
+        var scopeSelection = ResolveScopeSelection(client, requestedScope);
 
-        if (client == null)
-        {
-            _logger.LogWarning("Client not found.");
-
-            throw new NotFoundException("Client not found.");
-        }
-
-        var userInfo = TokenContext.Create(
+        return TokenContext.Create(
             client.TenantId,
             client.ClientName,
             clientId,
+            GrantTypes.client_credentials,
             client.TokenType,
             client.ClientSecretExpiry ?? 0,
             client.AccessTokenLifetime,
             client.RefreshTokenExpiration,
-            client.Scopes.ToArray(),
-            client.Audiences.ToArray(),
+            scopeSelection.Scopes,
+            scopeSelection.Audiences,
             client.ActiveSecretHashes);
+    }
 
-        return userInfo;
+    internal (string[] Scopes, string[] Audiences) ResolveScopeSelection(
+        ClientValidationSnapshot client,
+        string? requestedScope)
+    {
+        var requestedScopes = string.IsNullOrWhiteSpace(requestedScope)
+            ? client.Scopes.ToArray()
+            : requestedScope
+                .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+        var invalidScopes = requestedScopes
+            .Where(scope => !client.Scopes.Contains(scope))
+            .ToArray();
+
+        if (invalidScopes.Length > 0)
+        {
+            throw new TokenRequestValidationException(
+                "invalid_scope",
+                $"Invalid scope: {invalidScopes[0]} not found or not allowed");
+        }
+
+        var audiences = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var scopeName in requestedScopes)
+        {
+            if (StandardScopes.Supported.Contains(scopeName))
+            {
+                continue;
+            }
+
+            if (!client.TryGetApiResourceForScope(scopeName, out var apiResourceName))
+            {
+                throw new TokenRequestValidationException(
+                    "invalid_scope",
+                    $"Invalid scope: {scopeName} not found or not allowed");
+            }
+
+            if (!client.ApiResources.Contains(apiResourceName))
+            {
+                throw new TokenRequestValidationException(
+                    "invalid_scope",
+                    $"Scope {scopeName} belongs to ApiResource {apiResourceName} which is not assigned to this client");
+            }
+
+            audiences.Add(apiResourceName);
+        }
+
+        if (audiences.Count > 1)
+        {
+            throw new TokenRequestValidationException(
+                "multiple_audiences_not_supported",
+                $"Multiple audiences detected: {string.Join(", ", audiences.OrderBy(x => x))}. This IDP requires single audience per token request");
+        }
+
+        return (requestedScopes, audiences.ToArray());
     }
 }

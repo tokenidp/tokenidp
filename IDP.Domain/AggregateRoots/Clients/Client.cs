@@ -43,7 +43,6 @@ public class Client : AggregateRoot<int>, ITenant
     public virtual ICollection<ClientScope> ClientScopes { get; private set; } = default!;
     public virtual ICollection<ClientGrantType> ClientGrantTypes { get; private set; } = default!;
     public virtual ICollection<ClientSecret> ClientSecrets { get; private set; } = default!;
-    public virtual ICollection<ClientAudience> ClientAudiences { get; private set; } = default!;
     public virtual ICollection<ClientApiResource> ClientApiResources { get; private set; } = default!;
 
     private Client()
@@ -90,7 +89,7 @@ public class Client : AggregateRoot<int>, ITenant
         ClientScopes = new List<ClientScope>();
         ClientGrantTypes = new List<ClientGrantType>();
         ClientSecrets = new List<ClientSecret>();
-        ClientAudiences = new List<ClientAudience>();
+        ClientApiResources = new List<ClientApiResource>();
         ClientExternalProviders = new List<ClientExternalProvider>();
     }
 
@@ -185,17 +184,17 @@ public class Client : AggregateRoot<int>, ITenant
         return Result.Success(Id);
     }
 
-    public Result ReplaceAudiences(IEnumerable<ClientAudience> audiences)
+    public Result ReplaceApiResources(IEnumerable<ClientApiResource> apiResources)
     {
-        if (audiences == null)
+        if (apiResources == null)
         {
             return Result.Success(Id);
         }
 
-        ClientAudiences.Clear();
-        foreach (var audience in audiences)
+        ClientApiResources.Clear();
+        foreach (var apiResource in apiResources)
         {
-            ClientAudiences.Add(audience);
+            ClientApiResources.Add(apiResource);
         }
 
         return Result.Success(Id);

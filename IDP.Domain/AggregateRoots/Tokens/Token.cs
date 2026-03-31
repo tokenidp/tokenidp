@@ -54,6 +54,7 @@ public sealed class Token : AggregateRoot<Guid>
             IssuedAt = ctx.IssuedAt,
             ExpiresAt = ctx.ExpiresAt,
             Scope = string.Join(" ", ctx.Scopes),
+            Audience = ctx.Audiences.FirstOrDefault(),
             CreatedByIpAddress = ctx.IpAddress,
             Roles = string.Join(" ", ctx.Roles)
         };

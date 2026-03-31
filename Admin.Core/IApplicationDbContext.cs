@@ -24,7 +24,9 @@ public interface IApplicationDbContext
     DbSet<DeviceAuthorization> DeviceAuthorizations { get; }
     DbSet<Client> Clients { get; }
     DbSet<ClientScope> ClientScopes { get; }
-    DbSet<ClientAudience> ClientAudiences { get; }
+    DbSet<ClientApiResource> ClientApiResources { get; }
+    DbSet<ApiResource> ApiResources { get; }
+    DbSet<ApiScope> ApiScopes { get; }
     DbSet<ClientSecret> ClientSecrets { get; }
     DbSet<ClientGrantType> ClientGrantTypes { get; }
     DbSet<ClientAuthPolicy> ClientAuthPolicies { get; }

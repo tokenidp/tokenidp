@@ -17,24 +17,26 @@ public class TokenContext
     public DateTime IssuedAt { get; private set; }
     public DateTime ExpiresAt { get; private set; }
     public DateTime RefreshExpiresAt { get; private set; }
-    public string[] Scopes { get; private set; } = default!;
-    public string[] Audiences { get; private set; } = default!;
+    public string[] Scopes { get; private set; } = Array.Empty<string>();
+    public string[] Audiences { get; private set; } = Array.Empty<string>();
     public string[] Roles { get; private set; } = Array.Empty<string>();
     public IReadOnlySet<string> ActiveSecretHashes { get; private set; } = default!;
 
-    public static TokenContext Create(int userId,
+    public static TokenContext Create(
+        int userId,
         int tenantId,
         string clientName,
         string userName,
         string clientId,
+        GrantTypes grantType,
         TokenTypes tokenType,
         int clientSecretExpiry,
         int accessTokenLifetime,
         int refreshTokenExpiration,
         bool rememberMe,
         string[] roles,
-        string[] scope,
-        string[] audience,
+        string[] scopes,
+        string[] audiences,
         string ipAddress = "")
     {
         return new TokenContext()
@@ -44,13 +46,14 @@ public class TokenContext
             ClientName = clientName,
             UserName = userName,
             ClientId = clientId,
+            GrantType = grantType,
             TokenType = tokenType,
             Roles = roles,
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
             RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
-            Scopes = scope,
-            Audiences = audience,
+            Scopes = scopes,
+            Audiences = audiences,
             IpAddress = ipAddress,
             RememberMe = rememberMe
         };
@@ -60,12 +63,13 @@ public class TokenContext
         int tenantId,
         string clientName,
         string clientId,
+        GrantTypes grantType,
         TokenTypes tokenType,
         int clientSecretExpiry,
         int accessTokenLifetime,
         int refreshTokenExpiration,
-        string[] scope,
-        string[] audience,
+        string[] scopes,
+        string[] audiences,
         IReadOnlySet<string> secrets,
         string ipAddress = "")
     {
@@ -74,14 +78,15 @@ public class TokenContext
             TenantId = tenantId,
             ClientName = clientName,
             ClientId = clientId,
+            GrantType = grantType,
             TokenType = tokenType,
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
             RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
-            Scopes = scope,
-            Audiences = audience,
+            Scopes = scopes,
+            Audiences = audiences,
             IpAddress = ipAddress,
-            ActiveSecretHashes = secrets
+            ActiveSecretHashes = secrets,
         };
     }
 
@@ -110,6 +115,28 @@ public class TokenContext
             return;
         }
 
-        Scopes = scope.Split(' ');
+        Scopes = scope
+            .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
+            .ToArray();
+    }
+
+    public void SetAuthorizedScopes(IEnumerable<string> scopes)
+    {
+        Scopes = scopes?
+            .Where(scope => !string.IsNullOrWhiteSpace(scope))
+            .Select(scope => scope.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray()
+            ?? Array.Empty<string>();
+    }
+
+    public void SetAudiences(IEnumerable<string> audiences)
+    {
+        Audiences = audiences?
+            .Where(audience => !string.IsNullOrWhiteSpace(audience))
+            .Select(audience => audience.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray()
+            ?? Array.Empty<string>();
     }
 }

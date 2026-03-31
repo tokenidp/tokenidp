@@ -24,17 +24,17 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
     {
         var normalized = NormalizeRequest(request);
 
-        var tokenContext = await _tokenContextUseCase.BuildClientCredentialTokenContextAsync(normalized.ClientId);
+        var tokenContext = await _tokenContextUseCase.BuildClientCredentialTokenContextAsync(
+            normalized.ClientId,
+            normalized.Scope);
 
         ValidateClientSecret(normalized.ClientSecret, tokenContext.ActiveSecretHashes, normalized.ClientId);
-
-        var scopes = ResolveScopes(normalized.Scope, tokenContext.Scopes, normalized.ClientId);
 
         var token = await _tokenService.IssueTokenAsync(tokenContext);
 
         _logger.LogInfo("Client credentials token issued. ClientId={ClientId}, Scopes={Scopes}",
             normalized.ClientId,
-            string.Join(' ', scopes));
+            string.Join(' ', tokenContext.Scopes));
 
         return token;
     }
@@ -67,30 +67,6 @@ internal sealed class ClientCredentialGrantHandler : ITokenGrantHandler
             throw new TokenRequestValidationException("invalid_client", "Client secret is invalid.");
         }
     }
-
-    private HashSet<string> ResolveScopes(string? requestedScope, string[] allowedScopes, string clientId)
-    {
-        var requested = requestedScope?
-             .Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
-             .ToHashSet(StringComparer.Ordinal);
-
-        var allowed = allowedScopes.ToHashSet(StringComparer.Ordinal);
-
-        if (requested?.Count == 0)
-            requested = allowed;
-
-        var invalid = requested?.Except(allowed, StringComparer.Ordinal).ToArray();
-
-        if (invalid?.Length > 0)
-        {
-            _logger.LogWarning("Invalid scopes requested for client {ClientId}: {Scopes}", clientId, invalid);
-
-            throw new TokenRequestValidationException("invalid_scope", "One or more scopes are not allowed.");
-        }
-
-        return requested!;
-    }
-
     private sealed record NormalizedRequest(
         string ClientId,
         string? Scope,

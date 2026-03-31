@@ -32,6 +32,19 @@ public class ClientScope : Entity<int>
         return Result.Success(0);
     }
 
+    public Result Rename(string scope)
+    {
+        var validation = ValidateRequired(scope, "client.scope.invalid",
+            "Scope cannot be empty.");
+        if (!validation.IsSuccess)
+        {
+            return validation;
+        }
+
+        Scope = scope.Trim();
+        return Result.Success(Id);
+    }
+
     private static Result ValidateRequired(string? value, string code, string message)
     {
         return string.IsNullOrWhiteSpace(value)

@@ -31,13 +31,59 @@ internal sealed class ClientStore : IClientStore
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-            .Where(x => x.ClientId == clientId && x.IsActive)
-            .Select(ClientProjection.ValidationSnapshot)
-            .FirstOrDefaultAsync();
+                .AsNoTracking()
+                .Include(x => x.ClientGrantTypes)
+                .Include(x => x.ClientScopes)
+                .Include(x => x.ClientApiResources)
+                .Include(x => x.ClientSecrets)
+                .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive);
+
+            if (client == null)
+            {
+                return null;
+            }
+
+            var activeApiResourceNames = client.ClientApiResources
+                .Where(x => x.IsActive)
+                .Select(x => x.Name)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+
+            var apiScopeAssignments = activeApiResourceNames.Length == 0
+                ? new List<ClientApiScopeAssignment>()
+                : await _dbContext.ApiResources
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.TenantId == client.TenantId &&
+                        x.Enabled &&
+                        activeApiResourceNames.Contains(x.Name))
+                    .SelectMany(resource => resource.Scopes
+                        .Where(scope => scope.Enabled)
+                        .Select(scope => new ClientApiScopeAssignment(scope.Name, resource.Name)))
+                    .ToListAsync();
 
             _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
-            return client;
+            return new ClientValidationSnapshot(
+                client.ClientId,
+                client.ClientName,
+                client.TenantId,
+                client.IsActive,
+                client.RedirectUri,
+                client.LogoutRedirectUri,
+                client.ClientType,
+                client.TokenType,
+                client.ClientGrantTypes.Select(g => g.AllowedGrantType),
+                client.ClientScopes.Select(s => s.Scope),
+                activeApiResourceNames,
+                apiScopeAssignments,
+                client.ClientSecrets
+                    .Where(s => s.ExpiresAt > DateTime.UtcNow && s.IsRevoked != true)
+                    .Select(s => s.SecretHash),
+                client.AccessTokenLifetime,
+                client.AuthorizationCodeLifetime,
+                client.RefreshTokenExpiration,
+                client.ClientSecretExpiry);
         });
 
         _logger.LogDebug("Retrieved client {ClientId}", clientId);
@@ -54,9 +100,9 @@ internal sealed class ClientStore : IClientStore
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-            .Where(x => x.Id == clientId)
-            .Select(ClientShortInfoProjection.Projection)
-            .FirstOrDefaultAsync();
+                .Where(x => x.Id == clientId)
+                .Select(ClientShortInfoProjection.Projection)
+                .FirstOrDefaultAsync();
 
             _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
@@ -77,9 +123,9 @@ internal sealed class ClientStore : IClientStore
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-            .Where(x => x.ClientId == clientId)
-            .Select(ClientShortInfoProjection.Projection)
-            .FirstOrDefaultAsync();
+                .Where(x => x.ClientId == clientId)
+                .Select(ClientShortInfoProjection.Projection)
+                .FirstOrDefaultAsync();
 
             _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
@@ -177,8 +223,8 @@ internal sealed class ClientStore : IClientStore
         var authPolicy = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.ClientAuthPolicies
-            .Where(s => s.ClientId == clientId)
-            .FirstOrDefaultAsync();
+                .Where(s => s.ClientId == clientId)
+                .FirstOrDefaultAsync();
 
             _logger.LogDebug("Cached client auth policy for {CacheKey}", cacheKey);
 

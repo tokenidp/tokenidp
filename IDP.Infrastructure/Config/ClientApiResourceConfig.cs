@@ -8,26 +8,20 @@ internal class ClientApiResourceConfig : IEntityTypeConfiguration<ClientApiResou
 
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id).ValueGeneratedOnAdd();
+        builder.Property(x => x.ClientId).IsRequired();
+        builder.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.IsActive).IsRequired();
 
         builder.HasOne(s => s.Client)
             .WithMany(c => c.ClientApiResources)
             .HasForeignKey(x => x.ClientId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired();
 
-        builder.HasOne(s => s.Permission)
-            .WithMany()
-            .HasForeignKey(x => x.PermissionId)
-            .IsRequired()
-            .OnDelete(DeleteBehavior.NoAction);
-
-        // Prevent duplicate permissions per client
-        builder.HasIndex(x => new { x.ClientId, x.PermissionId })
+        builder.HasIndex(x => new { x.ClientId, x.Name })
             .IsUnique()
-            .HasDatabaseName("IX_ClientApiResources_ClientId_PermissionId");
+            .HasDatabaseName("IX_ClientApiResources_ClientId_Name");
 
-        // Fast loading of all permissions for a client
-        builder.HasIndex(x => x.ClientId)
-            .HasDatabaseName("IX_ClientApiResources_ClientId");
+        builder.HasIndex(x => new { x.ClientId, x.IsActive })
+            .HasDatabaseName("IX_ClientApiResources_ClientId_IsActive");
     }
 }

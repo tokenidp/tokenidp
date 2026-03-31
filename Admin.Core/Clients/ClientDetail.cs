@@ -23,8 +23,11 @@ internal class ClientDetail
             QueueLimit = client.QueueLimit,
             EnableITracking = client.EnableITracking,
             Scopes = client.ClientScopes.Select(scope => scope.Scope).ToList(),
+            ApiResources = client.ClientApiResources
+                .Where(apiResource => apiResource.IsActive)
+                .Select(apiResource => apiResource.Name)
+                .ToList(),
             GrantTypes = client.ClientGrantTypes.Select(grant => grant.AllowedGrantType).ToList(),
-            Audiences = client.ClientAudiences.Select(audience => audience.Name).ToList(),
             AuthPolicy = client.ClientAuthPolicy == null
                 ? new ClientAuthPolicyDetail()
                 : new ClientAuthPolicyDetail
@@ -62,8 +65,9 @@ internal class ClientDetail
     public int? QueueLimit { get; private set; }
     public bool? EnableITracking { get; private set; }
     public List<string> Scopes { get; private set; } = new();
+    public List<string> ApiResources { get; private set; } = new();
     public List<GrantTypes> GrantTypes { get; private set; } = new();
-    public List<string> Audiences { get; private set; } = new();
     public ClientAuthPolicyDetail AuthPolicy { get; private set; } = new();
     public List<int> ExternalProviders { get; private set; } = new();
+    public List<string> Audiences => ApiResources;
 }

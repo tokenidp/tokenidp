@@ -56,7 +56,11 @@ internal class PasswordGrantHandler : ITokenGrantHandler
         }
 
         var tokenInfo = await _tokenContextUseCase
-            .BuildTokenContextAsync(request.ClientId, context.UserId);
+            .BuildTokenContextAsync(
+                request.ClientId,
+                context.UserId,
+                GrantTypes.password,
+                request.Scope);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 
@@ -73,7 +77,11 @@ internal class PasswordGrantHandler : ITokenGrantHandler
         }
 
         var tokenInfo = await _tokenContextUseCase
-            .BuildTokenContextAsync(authRequest?.ClientId!, request.UserId);
+            .BuildTokenContextAsync(
+                authRequest?.ClientId!,
+                request.UserId,
+                GrantTypes.password,
+                authRequest?.Scopes);
 
         var token = await _tokenService.IssueTokenAsync(tokenInfo);
 

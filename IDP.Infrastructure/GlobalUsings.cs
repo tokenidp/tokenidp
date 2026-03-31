@@ -1,4 +1,5 @@
 ﻿global using Admin.Core;
+global using IDP.Domain.AggregateRoots.ApiResources;
 global using IDP.Domain.AggregateRoots.Clients;
 global using IDP.Domain.AggregateRoots.Roles;
 global using IDP.Domain.AggregateRoots.Tenants;

@@ -2,6 +2,34 @@
 
 internal static class ClientLookupMapper
 {
+    public static Task<List<ApiResourceLookup>> MapApiResources(
+        int tenantId,
+        IApplicationDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        return db.ApiResources
+            .AsNoTracking()
+            .Where(x => x.TenantId == tenantId && x.Enabled)
+            .OrderBy(x => x.DisplayName)
+            .Select(x => new ApiResourceLookup
+            {
+                Id = x.Id,
+                Name = x.Name,
+                DisplayName = x.DisplayName,
+                Scopes = x.Scopes
+                    .Where(scope => scope.Enabled)
+                    .OrderBy(scope => scope.DisplayName)
+                    .Select(scope => new ApiScopeLookup
+                    {
+                        Id = scope.Id,
+                        Name = scope.Name,
+                        DisplayName = scope.DisplayName
+                    })
+                    .ToList()
+            })
+            .ToListAsync(cancellationToken);
+    }
+
     public static List<LookupItem> MapAppTypes()
     {
         return Enum.GetValues<ClientTypes>()
@@ -55,7 +83,7 @@ internal static class ClientLookupMapper
             .ToList();
     }
 
-    public async static Task<List<LookupItem>> MapExternalProviders(int tenantId, IApplicationDbContext db)
+    public static async Task<List<LookupItem>> MapExternalProviders(int tenantId, IApplicationDbContext db)
     {
         var providers = await db.TenantExternalProviders
             .Where(t => t.TenantId == tenantId && t.Enabled == true)
@@ -76,7 +104,7 @@ internal static class ClientLookupMapper
             .ToList();
     }
 
-    public async static Task<List<LookupItem>> MapRoles(int tenantId, IApplicationDbContext db)
+    public static async Task<List<LookupItem>> MapRoles(int tenantId, IApplicationDbContext db)
     {
         var roles = await db.Roles
             .Where(t =>

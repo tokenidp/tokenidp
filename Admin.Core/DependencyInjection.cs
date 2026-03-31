@@ -1,4 +1,6 @@
 ﻿using Admin.Core.Activities.UseCases;
+using Admin.Core.ApiResources.UseCases;
+using Admin.Core.Clients;
 using Admin.Core.Clients.UseCases;
 using Admin.Core.Common;
 using Admin.Core.Configurations;
@@ -20,6 +22,10 @@ public static class DependencyInjection
     public static void AddAdminServices(this IServiceCollection services,
          IConfiguration configuration)
     {
+        services.AddScoped<ApiResourceCommandUseCase>();
+        services.AddScoped<ApiResourceQueryUseCase>();
+
+        services.AddScoped<ClientCommandValidator>();
         services.AddScoped<ClientCommandUseCase>();
         services.AddScoped<ClientLookupsUseCase>();
         services.AddScoped<ClientQueryUseCase>();

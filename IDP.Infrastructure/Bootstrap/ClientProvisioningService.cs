@@ -35,11 +35,11 @@ internal class ClientProvisioningService : IClientProvisioningService
 
         BuildGrantTypes(command.GrantTypes, out var grants);
 
-        BuildAudiences(command.Audiences, out var audiences);
+        BuildApiResources(command.ApiResources, out var apiResources);
 
         client!.ReplaceScopes(scopes);
         client!.ReplaceGrantTypes(grants);
-        client!.ReplaceAudiences(audiences);
+        client!.ReplaceApiResources(apiResources);
 
         var authPolicy = command.AuthPolicy ?? new ClientAuthPolicyDetail();
         client.ConfigureAuthPolicy(
@@ -116,15 +116,15 @@ internal class ClientProvisioningService : IClientProvisioningService
         }
     }
 
-    private static void BuildAudiences(IEnumerable<string> audiences,
-        out List<ClientAudience> mapped)
+    private static void BuildApiResources(IEnumerable<string> apiResources,
+        out List<ClientApiResource> mapped)
     {
-        mapped = new List<ClientAudience>();
+        mapped = new List<ClientApiResource>();
 
         var combined = Result.Success(0);
-        foreach (var audience in audiences)
+        foreach (var apiResource in apiResources)
         {
-            var result = ClientAudience.Create(audience, true, out var created);
+            var result = ClientApiResource.Create(apiResource, true, out var created);
             if (!result.IsSuccess)
             {
                 combined = combined.Combine(result);

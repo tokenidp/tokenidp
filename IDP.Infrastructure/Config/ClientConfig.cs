@@ -36,11 +36,6 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
                 v => v.ToString(),
                 v => Enum.Parse<ClientTypes>(v));
 
-        builder.HasMany(a => a.ClientAudiences)
-            .WithOne(e => e.Client)
-            .HasForeignKey(ur => ur.ClientId)
-            .IsRequired();
-
         builder.HasMany(a => a.ClientGrantTypes)
             .WithOne(e => e.Client)
             .HasForeignKey(ur => ur.ClientId)

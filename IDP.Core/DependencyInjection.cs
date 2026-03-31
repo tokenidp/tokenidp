@@ -35,7 +35,6 @@ public static class DependencyInjection
         services.AddScoped<RevokeTokenUseCase>();
         services.AddScoped<IntrospectionUseCase>();
         services.AddScoped<TokenContextUseCase>();
-        services.AddScoped<TokenContextUseCase>();
         services.AddScoped<TenantUserMfaPolicy>();
         services.AddScoped<DeviceAuthorizationUseCase>();
         services.AddScoped<IDeviceAuthenticationUseCase, DeviceAuthenticationUseCase>();

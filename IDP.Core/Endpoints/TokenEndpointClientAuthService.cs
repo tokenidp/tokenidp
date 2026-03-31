@@ -77,13 +77,13 @@ internal sealed class TokenEndpointClientAuthService
         }
         catch (JsonException exception)
         {
-            _logger.LogError(exception, "Token request body could not be parsed.");
+            _logger.LogError("Token request body could not be parsed. Error={Error}", exception.Message);
 
             throw new TokenRequestValidationException("invalid_request", "Token request body is invalid.");
         }
         catch (NotSupportedException exception)
         {
-            _logger.LogError(exception, "Token request content type is not supported.");
+            _logger.LogError("Token request content type is not supported. Error={Error}", exception.Message);
 
             throw new TokenRequestValidationException("invalid_request", "Token request body is invalid.");
         }
@@ -143,7 +143,10 @@ internal sealed class TokenEndpointClientAuthService
         }
         catch (NotFoundException exception)
         {
-            _logger.LogError(exception, "Client authentication failed. ClientId={ClientId}", request.ClientId);
+            _logger.LogError(
+                "Client authentication failed. ClientId={ClientId}, Error={Error}",
+                request.ClientId,
+                exception.Message);
 
             throw new TokenRequestValidationException("invalid_client", "Client authentication failed.");
         }

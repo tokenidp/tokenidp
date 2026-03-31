@@ -21,6 +21,7 @@ internal class DefaultPermissions
 
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
         allPermissions.Add(tenantsView);
         allPermissions.Add(userManagement);
         allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 4, "/tokens", "fa-id-badge me-2"));
@@ -30,7 +31,9 @@ internal class DefaultPermissions
         //Actions
         int i = 11;
         foreach (var permission in allPermissions
-            .Where(p => p.PermissionName != "Dashboard" && p.PermissionName != "Activities"))
+            .Where(p => p.PermissionName != "Dashboard"
+                && p.PermissionName != "Activities"
+                && p.PermissionKey != "apiresources.view"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
             {
@@ -104,6 +107,29 @@ internal class DefaultPermissions
             ++i,
             "Tenant.Secret.Reveal",
             "Reveal Tenant Provider Secret"));
+
+        var apiResourcesPermission = allPermissions.FirstOrDefault(x => x.PermissionKey == "apiresources.view");
+        if (apiResourcesPermission is not null)
+        {
+            apiResourcesPermission.ChildPermissions ??= new List<CreateUpdatePermission>();
+            apiResourcesPermission.ChildPermissions.Add(CreateActionPermission(
+                tenantId,
+                ++i,
+                "apiresources.add",
+                "Create API Resources",
+                "/api-resources/new"));
+            apiResourcesPermission.ChildPermissions.Add(CreateActionPermission(
+                tenantId,
+                ++i,
+                "apiresources.edit",
+                "Modify API Resources",
+                "/api-resources/edit"));
+            apiResourcesPermission.ChildPermissions.Add(CreateActionPermission(
+                tenantId,
+                ++i,
+                "apiresources.delete",
+                "Delete API Resources"));
+        }
 
         return allPermissions;
     }

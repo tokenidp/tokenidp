@@ -1,4 +1,5 @@
 ﻿using IDP.Domain.AggregateRoots;
+using IDP.Domain.AggregateRoots.ApiResources;
 using IDP.Domain.AggregateRoots.Authorization;
 using IDP.Domain.AggregateRoots.Configurations;
 using IDP.Domain.AggregateRoots.Emails;
@@ -49,7 +50,9 @@ public partial class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<DeviceAuthorization> DeviceAuthorizations { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<ClientScope> ClientScopes { get; set; }
-    public DbSet<ClientAudience> ClientAudiences { get; set; }
+    public DbSet<ClientApiResource> ClientApiResources { get; set; }
+    public DbSet<ApiResource> ApiResources { get; set; }
+    public DbSet<ApiScope> ApiScopes { get; set; }
     public DbSet<ClientSecret> ClientSecrets { get; set; }
     public DbSet<ClientGrantType> ClientGrantTypes { get; set; }
     public DbSet<ClientAuthPolicy> ClientAuthPolicies { get; set; }
