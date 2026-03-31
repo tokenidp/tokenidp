@@ -31,6 +31,9 @@ import SettingsLayout from "./_components/settings/settingsLayout";
 import AddPermission from "./_components/permissions/addPermission";
 import PermissionsList from "./_components/permissions/permissionsList";
 import PermissionsLayout from "./_components/permissions/permissionsLayout";
+import ApiResourcesLayout from "./_components/apiResources/apiResourcesLayout";
+import ApiResourcesList from "./_components/apiResources/apiResourcesList";
+import AddEditApiResource from "./_components/apiResources/addEditApiResource";
 import { AuthCallback } from "tokenidp-react";
 import { LoginPage } from "./_components/LoginPage"; // simple UI, not OAuth logic
 
@@ -140,6 +143,32 @@ function App() {
                 element={
                   <PrivateRoute requiredAnyOf={["applications.edit"]}>
                     <ApplicationEdit />
+                  </PrivateRoute>
+                }
+              />
+            </Route>
+            <Route
+              path="/api-resources"
+              element={
+                <PrivateRoute requiredAnyOf={["apiresources.view"]}>
+                  <ApiResourcesLayout />
+                </PrivateRoute>
+              }
+            >
+              <Route index element={<ApiResourcesList />} />
+              <Route
+                path="new"
+                element={
+                  <PrivateRoute requiredAnyOf={["apiresources.add"]}>
+                    <AddEditApiResource mode="add" />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="edit/:id"
+                element={
+                  <PrivateRoute requiredAnyOf={["apiresources.edit"]}>
+                    <AddEditApiResource mode="edit" />
                   </PrivateRoute>
                 }
               />

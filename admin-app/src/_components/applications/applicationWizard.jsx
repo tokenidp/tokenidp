@@ -97,7 +97,9 @@ function ApplicationWizard({
   const [scopes, setScopes] = useState(
     Array.isArray(initialValues.scopes) ? initialValues.scopes : ["openid", "profile"]
   );
-  const [clientAudience, setClientAudience] = useState(initialValues.clientAudience || "");
+  const [selectedApiResources, setSelectedApiResources] = useState(
+    Array.isArray(initialValues.apiResources) ? initialValues.apiResources : []
+  );
   const [isActive, setIsActive] = useState(
     initialValues.isActive === undefined ? true : initialValues.isActive
   );
@@ -117,7 +119,9 @@ function ApplicationWizard({
     setScopes(
       Array.isArray(initialValues.scopes) ? initialValues.scopes : ["openid", "profile"]
     );
-    setClientAudience(initialValues.clientAudience || "");
+    setSelectedApiResources(
+      Array.isArray(initialValues.apiResources) ? initialValues.apiResources : []
+    );
   }, [initialValues, reset]);
 
   const appTypeOptions = useMemo(() => {
@@ -189,6 +193,25 @@ function ApplicationWizard({
     }
     return fallbackScopes;
   }, [lookups?.scopes]);
+
+  const apiResourceOptions = useMemo(() => {
+    return Array.isArray(lookups?.apiResources) ? lookups.apiResources : [];
+  }, [lookups?.apiResources]);
+
+  const scopeOwnerMap = useMemo(() => {
+    const map = new Map();
+    apiResourceOptions.forEach((apiResource) => {
+      const resourceName = String(apiResource?.name ?? apiResource?.Name ?? "");
+      const resourceScopes = apiResource?.scopes ?? apiResource?.Scopes ?? [];
+      resourceScopes.forEach((scope) => {
+        const scopeName = String(scope?.name ?? scope?.Name ?? "");
+        if (scopeName) {
+          map.set(scopeName, resourceName);
+        }
+      });
+    });
+    return map;
+  }, [apiResourceOptions]);
 
   const externalProviderOptions = useMemo(() => {
     const normalized = normalizeLookupOptions(lookups?.externalProviders);
@@ -417,10 +440,24 @@ function ApplicationWizard({
   };
 
   const toggleScope = (value) => {
+    const owner = scopeOwnerMap.get(value);
+    if (owner && !selectedApiResources.includes(owner)) {
+      return;
+    }
+
     setScopes((prev) =>
       prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
     );
   };
+
+  useEffect(() => {
+    setScopes((prev) =>
+      prev.filter((scope) => {
+        const owner = scopeOwnerMap.get(scope);
+        return !owner || selectedApiResources.includes(owner);
+      })
+    );
+  }, [scopeOwnerMap, selectedApiResources]);
 
   const clientIdValue = watch("clientId");
 
@@ -458,7 +495,7 @@ function ApplicationWizard({
       ...data,
       grantTypes,
       scopes,
-      audiences: data.clientAudience ? [data.clientAudience] : [],
+      apiResources: selectedApiResources,
       timeWindow: normalizedTimeWindow,
     });
   };
@@ -558,10 +595,11 @@ function ApplicationWizard({
         return (
           <ScopesStep
             scopeOptions={scopeOptions}
+            apiResourceOptions={apiResourceOptions}
             scopes={scopes}
             toggleScope={toggleScope}
-            clientAudience={clientAudience}
-            setClientAudience={setClientAudience}
+            selectedApiResources={selectedApiResources}
+            setSelectedApiResources={setSelectedApiResources}
             setValue={setValue}
             register={register}
             grantTypes={grantTypes}
@@ -585,7 +623,9 @@ function ApplicationWizard({
               grantTypes={grantTypes}
               grantOptions={availableGrantTypes}
               scopeOptions={scopeOptions}
+              apiResourceOptions={apiResourceOptions}
               scopes={scopes}
+              selectedApiResources={selectedApiResources}
               onEditStep={handleStepChange}
               stepIndexById={wizardSteps.reduce((acc, step, index) => {
               acc[step.id] = index;

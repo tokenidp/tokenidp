@@ -14,6 +14,7 @@ const initialState = {
   grantTypes: [],
   tokenTypes: [],
   scopes: [],
+  apiResources: [],
   externalProviders: [],
   roles: [],
 };
@@ -50,6 +51,7 @@ const reducer = (state, action) => {
         grantTypes: action.payload.grantTypes,
         tokenTypes: action.payload.tokenTypes,
         scopes: action.payload.scopes,
+        apiResources: action.payload.apiResources,
         externalProviders: action.payload.externalProviders,
         roles: action.payload.roles,
       };
@@ -120,6 +122,7 @@ export const ApplicationsProvider = ({ children }) => {
           grantTypes: result.grantTypes || result.GrantTypes || [],
           tokenTypes: result.tokenTypes || result.TokenTypes || [],
           scopes: result.clientScopes || result.ClientScopes || [],
+          apiResources: result.apiResources || result.ApiResources || [],
           externalProviders:
             result.externalProviders || result.ExternalProviders || [],
           roles: result.roles || result.Roles || [],

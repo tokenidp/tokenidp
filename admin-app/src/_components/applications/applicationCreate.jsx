@@ -24,7 +24,7 @@ const defaultValues = {
   enableITracking: false,
   grantTypes: [0],
   scopes: ["openid", "profile"],
-  clientAudience: "",
+  apiResources: [],
   authPolicy: {
     allowLocalLoginOverride: false,
     allowSelfRegistrationOverride: false,
@@ -85,8 +85,8 @@ function ApplicationCreate() {
       queueLimit: data.queueLimit === "" ? null : Number(data.queueLimit),
       enableITracking: !!data.enableITracking,
       scopes: data.scopes || [],
+      apiResources: data.apiResources || [],
       grantTypes: data.grantTypes || [],
-      audiences: data.audiences || [],
       clientSecret: data.clientSecret || null,
       clientSecretDescription: null,
       authPolicy: {

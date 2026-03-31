@@ -24,7 +24,7 @@ const emptyValues = {
   enableITracking: false,
   grantTypes: [0],
   scopes: ["openid", "profile"],
-  clientAudience: "",
+  apiResources: [],
   authPolicy: {
     allowLocalLoginOverride: false,
     allowSelfRegistrationOverride: false,
@@ -110,10 +110,12 @@ function ApplicationEdit() {
         enableITracking: data.enableITracking ?? data.EnableITracking ?? false,
         grantTypes: data.grantTypes ?? data.GrantTypes ?? [0],
         scopes: data.scopes ?? data.Scopes ?? ["openid"],
-        clientAudience:
-          data.clientAudience ??
-          data.ClientAudience ??
-          (data.audiences ?? data.Audiences ?? [""])[0],
+        apiResources:
+          data.apiResources ??
+          data.ApiResources ??
+          data.audiences ??
+          data.Audiences ??
+          [],
         authPolicy: {
           allowLocalLoginOverride:
             data.authPolicy?.allowLocalLoginOverride ??
@@ -222,8 +224,8 @@ function ApplicationEdit() {
       queueLimit: data.queueLimit === "" ? null : Number(data.queueLimit),
       enableITracking: !!data.enableITracking,
       scopes: data.scopes || [],
+      apiResources: data.apiResources || [],
       grantTypes: data.grantTypes || [],
-      audiences: data.audiences || [],
       clientSecret: data.clientSecret || null,
       clientSecretDescription: null,
       authPolicy: {

@@ -20,8 +20,10 @@ function ReviewStep({
   tokenTypeOptions,
   grantTypes,
   scopeOptions,
+  apiResourceOptions,
   grantOptions,
   scopes,
+  selectedApiResources,
   onEditStep,
   stepIndexById,
 }) {
@@ -41,12 +43,36 @@ function ReviewStep({
       raw: grant.key,
     }));
 
-  const scopeLabels = scopeOptions
-    .filter((scope) => scopes.includes(scope.value))
-    .map((scope) => ({
-      label: scopeLabelMap[scope.label] || scope.label,
-      raw: scope.value,
-    }));
+  const apiScopeLabelMap = Object.fromEntries(
+    (Array.isArray(apiResourceOptions) ? apiResourceOptions : []).flatMap((resource) =>
+      (resource?.scopes ?? resource?.Scopes ?? []).map((scope) => [
+        String(scope?.name ?? scope?.Name ?? ""),
+        String(scope?.displayName ?? scope?.DisplayName ?? scope?.name ?? scope?.Name ?? ""),
+      ])
+    )
+  );
+
+  const scopeLabels = scopes.map((scopeName) => {
+    const systemScope = scopeOptions.find((scope) => scope.value === scopeName);
+    if (systemScope) {
+      return {
+        label: scopeLabelMap[systemScope.label] || systemScope.label,
+        raw: scopeName,
+      };
+    }
+
+    return {
+      label: apiScopeLabelMap[scopeName] || scopeName,
+      raw: scopeName,
+    };
+  });
+
+  const apiResourceLabelMap = Object.fromEntries(
+    (Array.isArray(apiResourceOptions) ? apiResourceOptions : []).map((resource) => [
+      String(resource?.name ?? resource?.Name ?? ""),
+      String(resource?.displayName ?? resource?.DisplayName ?? resource?.name ?? resource?.Name ?? ""),
+    ])
+  );
 
   const redirectWarnings = useMemo(() => {
     const warnings = [];
@@ -234,7 +260,7 @@ function ReviewStep({
 
             <div className="review-section">
               <div className="review-header">
-                <div className="token-title">Scopes & Audience</div>
+                <div className="token-title">Scopes & Api Resources</div>
                 <button
                   type="button"
                   className="btn btn-link p-0"
@@ -258,8 +284,17 @@ function ReviewStep({
                   </div>
                 </div>
                 <div>
-                  <div className="text-muted small">Audience</div>
-                  <div>{values.clientAudience || "--"}</div>
+                  <div className="text-muted small">Assigned Api Resources</div>
+                  <div>
+                    {selectedApiResources?.length
+                      ? selectedApiResources.map((resourceName) => (
+                          <div key={resourceName}>
+                            {apiResourceLabelMap[resourceName] || resourceName}
+                            <span className="text-muted small ms-2">{resourceName}</span>
+                          </div>
+                        ))
+                      : "--"}
+                  </div>
                 </div>
               </div>
               {offlineAccessWarning && (
@@ -267,6 +302,9 @@ function ReviewStep({
                   {offlineAccessWarning}
                 </div>
               )}
+              <div className="alert alert-info mt-2 mb-0">
+                Access token audience is derived from the requested API scopes at runtime.
+              </div>
             </div>
 
             <div className="review-section">

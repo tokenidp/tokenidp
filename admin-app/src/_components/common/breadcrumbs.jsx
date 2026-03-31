@@ -20,6 +20,9 @@ const bcMap = {
   "/settings": "Settings",
   "/permissions": "Permissions",
   "/permissions/new": "Add Permission",
+  "/api-resources": "Api Resources",
+  "/api-resources/new": "Add Api Resource",
+  "/api-resources/edit": "Edit Api Resource",
   "/users/addrole": "Create Role",
   "/users/editrole": "Edit Role",
 };
