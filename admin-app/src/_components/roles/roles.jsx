@@ -7,6 +7,8 @@ import { useRoles } from "../../_hooks/useRoles";
 function Roles() {
   const navigate = useNavigate();
   const { state, loadRoles } = useRoles();
+  const showInitialLoading = !state.hasLoadedRoles;
+  const showRefreshingState = state.hasLoadedRoles && state.loadingRoles;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteRole, setPendingDeleteRole] = useState(null);
 
@@ -52,12 +54,17 @@ function Roles() {
       </div>
 
       <div className="row g-3 role-grid">
-        {state.loading && (
+        {showInitialLoading && (
           <div className="col-12">
             <div className="text-center text-muted py-4">Loading roles...</div>
           </div>
         )}
-        {!state.loading &&
+        {showRefreshingState && (
+          <div className="col-12">
+            <div className="text-muted small">Refreshing roles...</div>
+          </div>
+        )}
+        {!showInitialLoading &&
           state.items.map((role) => {
             const roleId = getField(role, "id", "Id");
             const roleName = getField(
@@ -111,7 +118,7 @@ function Roles() {
               </div>
             );
           })}
-        {!state.loading && state.items.length === 0 && (
+        {!showInitialLoading && state.items.length === 0 && (
           <div className="col-12">
             <div className="text-center text-muted py-4">No roles found.</div>
           </div>

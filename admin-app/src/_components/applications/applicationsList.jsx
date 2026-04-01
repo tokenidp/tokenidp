@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApplications } from "../../_hooks/useApplications";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -44,6 +44,7 @@ function ApplicationsList() {
   const { state, loadApplications, loadLookups, deleteApplication } =
     useApplications();
   const navigate = useNavigate();
+  const isFirstApplicationsLoad = useRef(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
@@ -57,6 +58,9 @@ function ApplicationsList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedApplications;
+  const showRefreshingState =
+    state.hasLoadedApplications && state.loadingApplications;
 
   useEffect(() => {
     loadLookups();
@@ -102,20 +106,28 @@ function ApplicationsList() {
   };
 
   useEffect(() => {
+    const hasShortSearch =
+      filters.search.trim().length > 0 && filters.search.trim().length < 3;
+
+    if (hasShortSearch) {
+      return () => {};
+    }
+
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(),
+    };
+
+    if (isFirstApplicationsLoad.current) {
+      isFirstApplicationsLoad.current = false;
+      loadApplications(request);
+      return () => {};
+    }
+
     const timeout = setTimeout(() => {
-      const hasShortSearch =
-        filters.search.trim().length > 0 && filters.search.trim().length < 3;
-
-      if (hasShortSearch) {
-        return;
-      }
-
-      loadApplications({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
+      loadApplications(request);
     }, 250);
 
     return () => clearTimeout(timeout);
@@ -279,120 +291,129 @@ function ApplicationsList() {
             </Link>
           </div>
         </div>
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading applications...</div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th className="table-checkbox">
-                    <input type="checkbox" />
-                  </th>
-                  <th>Client Name</th>
-                  <th>Client ID</th>
-                  <th>App Type</th>
-                  <th>Token Type</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.items.map((item) => (
-                  <tr key={getField(item, "id", "Id")}>
-                    <td className="table-checkbox">
-                      <input type="checkbox" />
-                    </td>
-                    <td>{getField(item, "clientName", "ClientName")}</td>
-                    <td className="text-muted">
-                      {getField(item, "clientId", "ClientId")}
-                    </td>
-                    <td>
-                      {getLookupLabel(
-                        state.appTypes,
-                        getField(item, "appType", "AppType"),
-                      )}
-                    </td>
-                    <td>
-                      {getLookupLabel(
-                        state.tokenTypes,
-                        getField(
-                          item,
-                          "tokenType",
-                          "TokenType",
-                          "accessTokenType",
-                          "AccessTokenType",
-                        ),
-                      )}
-                    </td>
-                    <td>
-                      <span
-                        className={`status-pill ${
-                          getField(item, "isActive", "IsActive")
-                            ? "status-pill-success"
-                            : "status-pill-off"
-                        }`}
-                      >
-                        {getField(item, "isActive", "IsActive")
-                          ? "Active"
-                          : "Disabled"}
-                      </span>
-                    </td>
-                    <td className="text-right table-actions">
-                      <button
-                        className="btn btn-link p-0 text-primary ButtonLink"
-                        type="button"
-                        onClick={() => {
-                          const id = getField(item, "id", "Id");
-                          const clientId = getField(
-                            item,
-                            "clientId",
-                            "ClientId",
-                          );
-                          if (!clientId) {
-                            return;
-                          }
-                          navigate(
-                            `edit/${encodeURIComponent(String(clientId))}`,
-                            {
-                              state: { id },
-                            },
-                          );
-                        }}
-                        title="Edit"
-                      >
-                        <i className="fa fa-pen"></i>
-                      </button>
-                      <button
-                        className="btn btn-link p-0 text-danger ButtonLink"
-                        type="button"
-                        onClick={() =>
-                          requestDelete(getField(item, "id", "Id"))
-                        }
-                        title="Delete"
-                      >
-                        <i className="fa fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {state.items.length === 0 && (
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing applications...
+              </div>
+            )}
+            <div className="table-responsive">
+              <table className="table table-hover align-middle table-striped table-bordered">
+                <thead>
                   <tr>
-                    <td colSpan="8" className="text-center text-muted py-4">
-                      No applications found.
-                    </td>
+                    <th className="table-checkbox">
+                      <input type="checkbox" />
+                    </th>
+                    <th>Client Name</th>
+                    <th>Client ID</th>
+                    <th>App Type</th>
+                    <th>Token Type</th>
+                    <th>Status</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.items.map((item) => (
+                    <tr key={getField(item, "id", "Id")}>
+                      <td className="table-checkbox">
+                        <input type="checkbox" />
+                      </td>
+                      <td>{getField(item, "clientName", "ClientName")}</td>
+                      <td className="text-muted">
+                        {getField(item, "clientId", "ClientId")}
+                      </td>
+                      <td>
+                        {getLookupLabel(
+                          state.appTypes,
+                          getField(item, "appType", "AppType"),
+                        )}
+                      </td>
+                      <td>
+                        {getLookupLabel(
+                          state.tokenTypes,
+                          getField(
+                            item,
+                            "tokenType",
+                            "TokenType",
+                            "accessTokenType",
+                            "AccessTokenType",
+                          ),
+                        )}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-pill ${
+                            getField(item, "isActive", "IsActive")
+                              ? "status-pill-success"
+                              : "status-pill-off"
+                          }`}
+                        >
+                          {getField(item, "isActive", "IsActive")
+                            ? "Active"
+                            : "Disabled"}
+                        </span>
+                      </td>
+                      <td className="text-right table-actions">
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
+                          onClick={() => {
+                            const id = getField(item, "id", "Id");
+                            const clientId = getField(
+                              item,
+                              "clientId",
+                              "ClientId",
+                            );
+                            if (!clientId) {
+                              return;
+                            }
+                            navigate(
+                              `edit/${encodeURIComponent(String(clientId))}`,
+                              {
+                                state: { id },
+                              },
+                            );
+                          }}
+                          title="Edit"
+                        >
+                          <i className="fa fa-pen"></i>
+                        </button>
+                        <button
+                          className="btn btn-link p-0 text-danger ButtonLink"
+                          type="button"
+                          onClick={() =>
+                            requestDelete(getField(item, "id", "Id"))
+                          }
+                          title="Delete"
+                        >
+                          <i className="fa fa-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {state.items.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="text-center text-muted py-4">
+                        No applications found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
       <ConfirmModal
         open={confirmOpen}

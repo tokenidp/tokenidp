@@ -85,6 +85,7 @@ const normalizeValueType = (value) => {
 function SettingsList() {
   const { state, loadSettings, bulkSave, deleteConfiguration } = useSettings();
   const { setSuccess } = useGlobalSuccess();
+  const isFirstSettingsLoad = React.useRef(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
@@ -97,6 +98,8 @@ function SettingsList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedSettings;
+  const showRefreshingState = state.hasLoadedSettings && state.loadingSettings;
 
   const buildSearchCriterias = () => {
     const criterias = [];
@@ -126,14 +129,20 @@ function SettingsList() {
     });
 
   useEffect(() => {
+    const hasShortSearch =
+      filters.search.trim().length > 0 && filters.search.trim().length < 3;
+
+    if (hasShortSearch) {
+      return () => {};
+    }
+
+    if (isFirstSettingsLoad.current) {
+      isFirstSettingsLoad.current = false;
+      reload();
+      return () => {};
+    }
+
     const timeout = setTimeout(() => {
-      const hasShortSearch =
-        filters.search.trim().length > 0 && filters.search.trim().length < 3;
-
-      if (hasShortSearch) {
-        return;
-      }
-
       reload();
     }, 250);
 
@@ -363,10 +372,16 @@ function SettingsList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading configurations...</div>
         ) : (
-          <div className="table-responsive">
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing configurations...
+              </div>
+            )}
+            <div className="table-responsive">
             <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
@@ -630,15 +645,18 @@ function SettingsList() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
 
       <ConfirmModal

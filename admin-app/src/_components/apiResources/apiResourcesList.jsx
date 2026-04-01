@@ -12,6 +12,9 @@ const getField = (item, ...keys) =>
 function ApiResourcesList() {
   const { state, loadApiResources, deleteApiResource } = useApiResources();
   const navigate = useNavigate();
+  const showInitialLoading = !state.hasLoadedApiResources;
+  const showRefreshingState =
+    state.hasLoadedApiResources && state.loadingApiResources;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
@@ -61,10 +64,16 @@ function ApiResourcesList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading ApiResources...</div>
         ) : (
-          <div className="table-responsive">
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing ApiResources...
+              </div>
+            )}
+            <div className="table-responsive">
             <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
@@ -130,6 +139,7 @@ function ApiResourcesList() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
@@ -6,18 +6,58 @@ import Pagination from "../common/pagination";
 import InfoModal from "../common/infoModal";
 import { useUsers } from "../../_hooks/useUsers";
 
+const defaultSearch = {
+  pageNumber: 1,
+  pageSize: 10,
+  sortColumn: "FullName",
+  sortOrder: "desc",
+  searchAll: false,
+};
+
+const buildSearchCriterias = (filters) => {
+  const criterias = [];
+  if (filters.search.trim()) {
+    criterias.push({
+      ColumnName: "Search",
+      Value: filters.search.trim(),
+      ColumnType: 1,
+    });
+  }
+  if (filters.email.trim()) {
+    criterias.push({
+      ColumnName: "Email",
+      Value: filters.email.trim(),
+      ColumnType: 1,
+    });
+  }
+  if (filters.phone.trim()) {
+    criterias.push({
+      ColumnName: "PhoneNumber",
+      Value: filters.phone.trim(),
+      ColumnType: 1,
+    });
+  }
+  if (filters.role) {
+    criterias.push({
+      ColumnName: "Roles",
+      Value: filters.role,
+      ColumnType: 1,
+    });
+  }
+  if (filters.status) {
+    criterias.push({
+      ColumnName: "Status",
+      Value: filters.status,
+      ColumnType: 1,
+    });
+  }
+  return criterias;
+};
+
 function Users() {
   const navigate = useNavigate();
   const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus } =
     useUsers();
-
-  const defaultSearch = {
-    pageNumber: 1,
-    pageSize: 10,
-    sortColumn: "FullName",
-    sortOrder: "desc",
-    searchAll: false,
-  };
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [filters, setFilters] = useState({
@@ -42,72 +82,44 @@ function Users() {
   });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
+  const isFirstUsersLoad = useRef(true);
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedUsers;
+  const showRefreshingState = state.hasLoadedUsers && state.loadingUsers;
 
   useEffect(() => {
     loadLookups();
   }, [loadLookups]);
 
-  const buildSearchCriterias = () => {
-    const criterias = [];
-    if (filters.search.trim()) {
-      criterias.push({
-        ColumnName: "Search",
-        Value: filters.search.trim(),
-        ColumnType: 1,
-      });
-    }
-    if (filters.email.trim()) {
-      criterias.push({
-        ColumnName: "Email",
-        Value: filters.email.trim(),
-        ColumnType: 1,
-      });
-    }
-    if (filters.phone.trim()) {
-      criterias.push({
-        ColumnName: "PhoneNumber",
-        Value: filters.phone.trim(),
-        ColumnType: 1,
-      });
-    }
-    if (filters.role) {
-      criterias.push({
-        ColumnName: "Roles",
-        Value: filters.role,
-        ColumnType: 1,
-      });
-    }
-    if (filters.status) {
-      criterias.push({
-        ColumnName: "Status",
-        Value: filters.status,
-        ColumnType: 1,
-      });
-    }
-    return criterias;
-  };
-
   useEffect(() => {
+    const hasShortTextFilter = ["email", "phone", "search"].some((key) => {
+      const value = filters[key].trim();
+      return value.length > 0 && value.length < 3;
+    });
+
+    if (hasShortTextFilter) {
+      return;
+    }
+
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(filters),
+    };
+
+    if (isFirstUsersLoad.current) {
+      isFirstUsersLoad.current = false;
+      loadUsers(request);
+      return;
+    }
+
     const timeout = setTimeout(() => {
-      const hasShortTextFilter = ["email", "phone", "search"].some((key) => {
-        const value = filters[key].trim();
-        return value.length > 0 && value.length < 3;
-      });
-
-      if (hasShortTextFilter) {
-        return;
-      }
-
-      loadUsers({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
+      loadUsers(request);
     }, 250);
+
     return () => clearTimeout(timeout);
   }, [loadUsers, pageNumber, pageSize, filters]);
 
@@ -238,7 +250,7 @@ function Users() {
       ...defaultSearch,
       pageNumber,
       pageSize,
-      SearchCriterias: buildSearchCriterias(),
+      SearchCriterias: buildSearchCriterias(filters),
     });
 
     setInfoContent({
@@ -385,127 +397,134 @@ function Users() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading users...</div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th className="table-checkbox">
-                    <input type="checkbox" />
-                  </th>
-                  <th>Name</th>
-                  <th className="col-email">Email</th>
-                  <th className="col-phone">Phone Number</th>
-                  <th className="col-roles">Roles</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.items.map((item) => (
-                  <tr key={getField(item, "id", "Id")}>
-                    <td className="table-checkbox">
-                      <input type="checkbox" />
-                    </td>
-                    <td>{getField(item, "fullName", "name", "Name")}</td>
-                    <td className="text-muted col-email">
-                      {getField(item, "email", "Email", "userName", "UserName")}
-                    </td>
-                    <td className="col-phone">
-                      {getField(item, "phoneNumber", "PhoneNumber")}
-                    </td>
-                    <td className="col-roles">
-                      {getField(item, "roles", "Roles")}
-                    </td>
-                    <td>
-                      <span
-                        className={`status-pill ${
-                          getStatusLabel(item) === "Active"
-                            ? "status-pill-success"
-                            : "status-pill-off"
-                        }`}
-                      >
-                        {getStatusLabel(item)}
-                      </span>
-                    </td>
-                    <td className="text-right table-actions">
-                      <button
-                        className="btn btn-link p-0 text-warning ButtonLink"
-                        type="button"
-                        onClick={() => openResetPassword(item)}
-                        title="Reset Password"
-                      >
-                        <i className="fa fa-key"></i>
-                      </button>
-                      <button
-                        className="btn btn-link p-0 text-primary ButtonLink"
-                        type="button"
-                        onClick={() => {
-                          const id = getField(item, "id", "Id");
-                          const userName = getField(
-                            item,
-                            "userName",
-                            "UserName",
-                          );
-                          if (!userName) {
-                            return;
-                          }
-                          navigate(
-                            `edit/${encodeURIComponent(String(userName))}`,
-                            {
-                              state: { id },
-                            },
-                          );
-                        }}
-                        title="Edit"
-                      >
-                        <i className="fa fa-pen"></i>
-                      </button>
-                      <button
-                        className={`btn btn-link p-0 ButtonLink ${
-                          getNextStatus(item) === "Inactive"
-                            ? "text-danger"
-                            : "text-success"
-                        }`}
-                        type="button"
-                        title={`Set ${getNextStatus(item)}`}
-                        disabled={
-                          statusUpdatingUserId ===
-                          Number(getField(item, "id", "Id"))
-                        }
-                        onClick={() => openStatusConfirm(item)}
-                      >
-                        <i
-                          className={`fa ${
-                            getNextStatus(item) === "Inactive"
-                              ? "fa-ban"
-                              : "fa-check"
-                          }`}
-                        ></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {state.items.length === 0 && (
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">Refreshing users...</div>
+            )}
+            <div className="table-responsive">
+              <table className="table table-hover align-middle table-striped table-bordered">
+                <thead>
                   <tr>
-                    <td colSpan="7" className="text-center text-muted py-4">
-                      No users found.
-                    </td>
+                    <th className="table-checkbox">
+                      <input type="checkbox" />
+                    </th>
+                    <th>Name</th>
+                    <th className="col-email">Email</th>
+                    <th className="col-phone">Phone Number</th>
+                    <th className="col-roles">Roles</th>
+                    <th>Status</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.items.map((item) => (
+                    <tr key={getField(item, "id", "Id")}>
+                      <td className="table-checkbox">
+                        <input type="checkbox" />
+                      </td>
+                      <td>{getField(item, "fullName", "name", "Name")}</td>
+                      <td className="text-muted col-email">
+                        {getField(item, "email", "Email", "userName", "UserName")}
+                      </td>
+                      <td className="col-phone">
+                        {getField(item, "phoneNumber", "PhoneNumber")}
+                      </td>
+                      <td className="col-roles">
+                        {getField(item, "roles", "Roles")}
+                      </td>
+                      <td>
+                        <span
+                          className={`status-pill ${
+                            getStatusLabel(item) === "Active"
+                              ? "status-pill-success"
+                              : "status-pill-off"
+                          }`}
+                        >
+                          {getStatusLabel(item)}
+                        </span>
+                      </td>
+                      <td className="text-right table-actions">
+                        <button
+                          className="btn btn-link p-0 text-warning ButtonLink"
+                          type="button"
+                          onClick={() => openResetPassword(item)}
+                          title="Reset Password"
+                        >
+                          <i className="fa fa-key"></i>
+                        </button>
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
+                          onClick={() => {
+                            const id = getField(item, "id", "Id");
+                            const userName = getField(
+                              item,
+                              "userName",
+                              "UserName",
+                            );
+                            if (!userName) {
+                              return;
+                            }
+                            navigate(
+                              `edit/${encodeURIComponent(String(userName))}`,
+                              {
+                                state: { id },
+                              },
+                            );
+                          }}
+                          title="Edit"
+                        >
+                          <i className="fa fa-pen"></i>
+                        </button>
+                        <button
+                          className={`btn btn-link p-0 ButtonLink ${
+                            getNextStatus(item) === "Inactive"
+                              ? "text-danger"
+                              : "text-success"
+                          }`}
+                          type="button"
+                          title={`Set ${getNextStatus(item)}`}
+                          disabled={
+                            statusUpdatingUserId ===
+                            Number(getField(item, "id", "Id"))
+                          }
+                          onClick={() => openStatusConfirm(item)}
+                        >
+                          <i
+                            className={`fa ${
+                              getNextStatus(item) === "Inactive"
+                                ? "fa-ban"
+                                : "fa-check"
+                            }`}
+                          ></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {state.items.length === 0 && (
+                    <tr>
+                      <td colSpan="7" className="text-center text-muted py-4">
+                        No users found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
 
       <InfoModal

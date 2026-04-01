@@ -6,6 +6,8 @@ const SettingsContext = createContext();
 const initialState = {
   items: [],
   totalCount: 0,
+  loadingSettings: false,
+  hasLoadedSettings: false,
   loading: false,
   saving: false,
   error: "",
@@ -25,16 +27,25 @@ const actions = {
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return { ...state, loadingSettings: true, loading: true, error: "" };
     case actions.LIST_SUCCESS:
       return {
         ...state,
+        loadingSettings: false,
+        hasLoadedSettings: true,
         loading: false,
+        error: "",
         items: action.payload.items,
         totalCount: action.payload.totalCount,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingSettings: false,
+        hasLoadedSettings: true,
+        loading: false,
+        error: action.payload,
+      };
     case actions.SAVE_START:
       return { ...state, saving: true, error: "", lastSaveResult: null };
     case actions.SAVE_SUCCESS:

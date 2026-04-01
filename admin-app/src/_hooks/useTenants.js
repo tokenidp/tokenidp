@@ -6,6 +6,9 @@ const TenantsContext = createContext();
 const initialState = {
   items: [],
   totalCount: 0,
+  loadingTenants: false,
+  loadingLookups: false,
+  hasLoadedTenants: false,
   loading: false,
   error: "",
   lastCreatedId: null,
@@ -18,8 +21,10 @@ const initialState = {
 const actions = {
   LIST_START: "LIST_START",
   LIST_SUCCESS: "LIST_SUCCESS",
+  LOOKUPS_START: "LOOKUPS_START",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  LOOKUPS_ERROR: "LOOKUPS_ERROR",
   CREATE_START: "CREATE_START",
   CREATE_SUCCESS: "CREATE_SUCCESS",
   CREATE_ERROR: "CREATE_ERROR",
@@ -30,25 +35,54 @@ const actions = {
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return {
+        ...state,
+        loadingTenants: true,
+        loading: true,
+        error: "",
+      };
     case actions.LIST_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingTenants: false,
+        hasLoadedTenants: true,
+        loading: state.loadingLookups,
+        error: "",
         items: action.payload.items,
         totalCount: action.payload.totalCount,
+      };
+    case actions.LOOKUPS_START:
+      return {
+        ...state,
+        loadingLookups: true,
+        loading: true,
+        error: "",
       };
     case actions.LOOKUPS_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingLookups: false,
+        loading: state.loadingTenants,
         statuses: action.payload.statuses,
         externalProviders: action.payload.externalProviders,
         authenticationModes: action.payload.authenticationModes,
         themes: action.payload.themes,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingTenants: false,
+        hasLoadedTenants: true,
+        loading: state.loadingLookups,
+        error: action.payload,
+      };
+    case actions.LOOKUPS_ERROR:
+      return {
+        ...state,
+        loadingLookups: false,
+        loading: state.loadingTenants,
+        error: action.payload,
+      };
     case actions.CREATE_START:
       return { ...state, loading: true, error: "", lastCreatedId: null };
     case actions.CREATE_SUCCESS:
@@ -98,7 +132,7 @@ export const TenantsProvider = ({ children }) => {
   );
 
   const loadLookups = useCallback(async () => {
-    dispatch({ type: actions.LIST_START });
+    dispatch({ type: actions.LOOKUPS_START });
     try {
       const response = await get("admin/tenant/tenantlookups");
       const result = normalizeResult(response) || {};
@@ -116,7 +150,7 @@ export const TenantsProvider = ({ children }) => {
       return result;
     } catch (error) {
       dispatch({
-        type: actions.LIST_ERROR,
+        type: actions.LOOKUPS_ERROR,
         payload: error?.message || "Failed to load tenant lookups.",
       });
       return null;

@@ -73,6 +73,7 @@ function TokensList() {
     revokeToken,
     expireToken,
   } = useTokens();
+  const isFirstTokensLoad = React.useRef(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [inspectOpen, setInspectOpen] = useState(false);
@@ -92,6 +93,8 @@ function TokensList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedTokens;
+  const showRefreshingState = state.hasLoadedTokens && state.loadingTokens;
 
   useEffect(() => {
     loadLookups();
@@ -139,15 +142,23 @@ function TokensList() {
       return () => {};
     }
 
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      sortColumn,
+      sortOrder,
+      searchCriterias: buildSearchCriterias(),
+    };
+
+    if (isFirstTokensLoad.current) {
+      isFirstTokensLoad.current = false;
+      loadTokens(request);
+      return () => {};
+    }
+
     const timeout = setTimeout(() => {
-      loadTokens({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        sortColumn,
-        sortOrder,
-        searchCriterias: buildSearchCriterias(),
-      });
+      loadTokens(request);
     }, 400);
 
     return () => clearTimeout(timeout);
@@ -395,7 +406,7 @@ function TokensList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="table-responsive">
             <table className="table table-hover align-middle table-striped">
               <thead>
@@ -414,7 +425,13 @@ function TokensList() {
             </table>
           </div>
         ) : (
-          <div className="table-responsive">
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing tokens...
+              </div>
+            )}
+            <div className="table-responsive">
             <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
@@ -561,15 +578,18 @@ function TokensList() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
 
       <ConfirmModal

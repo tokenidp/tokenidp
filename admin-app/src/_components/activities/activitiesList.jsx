@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Breadcrumbs from "../common/breadcrumbs";
 import Pagination from "../common/pagination";
 import { useActivities } from "../../_hooks/useActivities";
@@ -53,6 +53,7 @@ const formatLocalDateTime = (value) => {
 
 function ActivitiesList() {
   const { state, loadActivities, loadLookups } = useActivities();
+  const isFirstActivitiesLoad = useRef(true);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [filters, setFilters] = useState({
@@ -66,6 +67,9 @@ function ActivitiesList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedActivities;
+  const showRefreshingState =
+    state.hasLoadedActivities && state.loadingActivities;
 
   useEffect(() => {
     loadLookups();
@@ -127,13 +131,21 @@ function ActivitiesList() {
       return () => {};
     }
 
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      searchCriterias: buildSearchCriterias(),
+    };
+
+    if (isFirstActivitiesLoad.current) {
+      isFirstActivitiesLoad.current = false;
+      loadActivities(request);
+      return () => {};
+    }
+
     const timeout = setTimeout(() => {
-      loadActivities({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        searchCriterias: buildSearchCriterias(),
-      });
+      loadActivities(request);
     }, 400);
 
     return () => clearTimeout(timeout);
@@ -291,82 +303,91 @@ function ActivitiesList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading activities...</div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>Timestamp</th>
-                  <th>Event Type</th>
-                  <th>Actor</th>
-                  <th>Target</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.items.map((item) => {
-                  const timestamp = getField(item, "timestamp", "Timestamp");
-                  const eventType = getField(item, "eventType", "EventType");
-                  const actor = getField(item, "actor", "Actor");
-                  const target = getField(item, "target", "Target");
-                  const description = getField(
-                    item,
-                    "description",
-                    "Description",
-                  );
-                  const status = getField(item, "status", "Status");
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing activities...
+              </div>
+            )}
+            <div className="table-responsive">
+              <table className="table table-hover align-middle table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Event Type</th>
+                    <th>Actor</th>
+                    <th>Target</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {state.items.map((item) => {
+                    const timestamp = getField(item, "timestamp", "Timestamp");
+                    const eventType = getField(item, "eventType", "EventType");
+                    const actor = getField(item, "actor", "Actor");
+                    const target = getField(item, "target", "Target");
+                    const description = getField(
+                      item,
+                      "description",
+                      "Description",
+                    );
+                    const status = getField(item, "status", "Status");
 
-                  return (
-                    <tr key={`${timestamp}-${eventType}-${actor}`}>
-                      <td>
-                        {formatLocalDateTime(timestamp) || "2025-01-10 12:42"}
-                      </td>
-                      <td>
-                        <i
-                          className={`fa ${
-                            eventType === "Login"
-                              ? "fa-right-to-bracket"
-                              : eventType === "Token"
-                                ? "fa-key"
-                                : "fa-shield"
-                          } me-2 text-secondary`}
-                        ></i>
-                        {eventType || "Login"}
-                      </td>
-                      <td>{actor || "user@tenant.com"}</td>
-                      <td>{target || "Tenant A"}</td>
-                      <td className="text-muted">
-                        {description || "User login succeeded."}
-                      </td>
-                      <td>
-                        <span className={`status-pill ${statusBadge(status)}`}>
-                          {status || "Success"}
-                        </span>
+                    return (
+                      <tr key={`${timestamp}-${eventType}-${actor}`}>
+                        <td>
+                          {formatLocalDateTime(timestamp) || "2025-01-10 12:42"}
+                        </td>
+                        <td>
+                          <i
+                            className={`fa ${
+                              eventType === "Login"
+                                ? "fa-right-to-bracket"
+                                : eventType === "Token"
+                                  ? "fa-key"
+                                  : "fa-shield"
+                            } me-2 text-secondary`}
+                          ></i>
+                          {eventType || "Login"}
+                        </td>
+                        <td>{actor || "user@tenant.com"}</td>
+                        <td>{target || "Tenant A"}</td>
+                        <td className="text-muted">
+                          {description || "User login succeeded."}
+                        </td>
+                        <td>
+                          <span className={`status-pill ${statusBadge(status)}`}>
+                            {status || "Success"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {state.items.length === 0 && (
+                    <tr>
+                      <td colSpan="6" className="text-center text-muted py-4">
+                        No activities found.
                       </td>
                     </tr>
-                  );
-                })}
-                {state.items.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
-                      No activities found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
     </div>
   );

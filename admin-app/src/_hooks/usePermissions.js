@@ -8,6 +8,9 @@ const initialState = {
   parents: [],
   controlTypes: [],
   totalCount: 0,
+  loadingPermissions: false,
+  loadingLookups: false,
+  hasLoadedPermissions: false,
   loading: false,
   error: "",
 };
@@ -15,34 +18,70 @@ const initialState = {
 const actions = {
   LIST_START: "LIST_START",
   LIST_SUCCESS: "LIST_SUCCESS",
+  LOOKUPS_START: "LOOKUPS_START",
   PARENTS_SUCCESS: "PARENTS_SUCCESS",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  LOOKUPS_ERROR: "LOOKUPS_ERROR",
   CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return {
+        ...state,
+        loadingPermissions: true,
+        loading: true,
+        error: "",
+      };
     case actions.LIST_SUCCESS:
       return {
         ...state,
-        loading: false,
-        items: action.payload.items,
-        totalCount: action.payload.totalCount,
+        loadingPermissions: false,
+        hasLoadedPermissions: true,
+        loading: state.loadingLookups,
+        error: "",
+        items: Array.isArray(action.payload.items) ? action.payload.items : [],
+        totalCount: action.payload.totalCount ?? 0,
+      };
+    case actions.LOOKUPS_START:
+      return {
+        ...state,
+        loadingLookups: true,
+        loading: true,
+        error: "",
       };
     case actions.PARENTS_SUCCESS:
-      return { ...state, loading: false, parents: action.payload };
+      return {
+        ...state,
+        loadingLookups: false,
+        loading: state.loadingPermissions,
+        parents: action.payload,
+      };
     case actions.LOOKUPS_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingLookups: false,
+        loading: state.loadingPermissions,
         parents: action.payload.parents,
         controlTypes: action.payload.controlTypes,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingPermissions: false,
+        hasLoadedPermissions: true,
+        loading: state.loadingLookups,
+        error: action.payload,
+      };
+    case actions.LOOKUPS_ERROR:
+      return {
+        ...state,
+        loadingLookups: false,
+        loading: state.loadingPermissions,
+        error: action.payload,
+      };
     case actions.CLEAR_ERROR:
       return { ...state, error: "" };
     default:
@@ -101,7 +140,7 @@ export const PermissionsProvider = ({ children }) => {
   }, [get]);
 
   const loadParents = useCallback(async () => {
-    dispatch({ type: actions.LIST_START });
+    dispatch({ type: actions.LOOKUPS_START });
     try {
       const response = await get("admin/permission/lookups");
       const result = normalizeResult(response) || {};
@@ -116,7 +155,7 @@ export const PermissionsProvider = ({ children }) => {
       return result;
     } catch (error) {
       dispatch({
-        type: actions.LIST_ERROR,
+        type: actions.LOOKUPS_ERROR,
         payload: error?.message || "Failed to load permission lookups.",
       });
       return null;

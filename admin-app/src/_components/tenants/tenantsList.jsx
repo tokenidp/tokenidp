@@ -33,6 +33,7 @@ const getLookupLabel = (options, value) => {
 function TenantsList() {
   const navigate = useNavigate();
   const { state, loadTenants, loadLookups, deleteTenant } = useTenants();
+  const isFirstTenantsLoad = React.useRef(true);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [filters, setFilters] = useState({
@@ -44,6 +45,8 @@ function TenantsList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const showInitialLoading = !state.hasLoadedTenants;
+  const showRefreshingState = state.hasLoadedTenants && state.loadingTenants;
 
   useEffect(() => {
     loadLookups();
@@ -69,20 +72,28 @@ function TenantsList() {
   };
 
   useEffect(() => {
+    const hasShortSearch =
+      filters.search.trim().length > 0 && filters.search.trim().length < 3;
+
+    if (hasShortSearch) {
+      return () => {};
+    }
+
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(),
+    };
+
+    if (isFirstTenantsLoad.current) {
+      isFirstTenantsLoad.current = false;
+      loadTenants(request);
+      return () => {};
+    }
+
     const timeout = setTimeout(() => {
-      const hasShortSearch =
-        filters.search.trim().length > 0 && filters.search.trim().length < 3;
-
-      if (hasShortSearch) {
-        return;
-      }
-
-      loadTenants({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
+      loadTenants(request);
     }, 250);
 
     return () => clearTimeout(timeout);
@@ -215,10 +226,16 @@ function TenantsList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading tenants...</div>
         ) : (
-          <div className="table-responsive">
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing tenants...
+              </div>
+            )}
+            <div className="table-responsive">
             <table className="table table-hover align-middle table-striped table-bordered">
               <thead>
                 <tr>
@@ -320,15 +337,18 @@ function TenantsList() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
 
       <ConfirmModal

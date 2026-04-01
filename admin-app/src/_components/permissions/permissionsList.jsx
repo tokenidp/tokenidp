@@ -4,21 +4,57 @@ import Breadcrumbs from "../common/breadcrumbs";
 import Pagination from "../common/pagination";
 import { usePermissions } from "../../_hooks/usePermissions";
 
+const defaultSearch = {
+  pageNumber: 1,
+  pageSize: 10,
+  sortColumn: "Sequence",
+  sortOrder: "asc",
+  searchAll: false,
+};
+
+const buildSearchCriterias = (filters) => {
+  const criterias = [];
+  const nameValue = filters.name.trim() || filters.search.trim();
+  if (nameValue.length >= 3) {
+    criterias.push({
+      ColumnName: "PermissionName",
+      Value: nameValue,
+      ColumnType: 1,
+    });
+  }
+  const keyValue = filters.key.trim();
+  if (keyValue.length >= 3) {
+    criterias.push({
+      ColumnName: "PermissionKey",
+      Value: keyValue,
+      ColumnType: 1,
+    });
+  }
+  if (filters.controlType) {
+    criterias.push({
+      ColumnName: "ControlType",
+      Value: filters.controlType,
+      ColumnType: 1,
+    });
+  }
+  if (filters.status) {
+    criterias.push({
+      ColumnName: "Active",
+      Value: filters.status,
+      ColumnType: 1,
+    });
+  }
+  return criterias;
+};
+
 function PermissionsList() {
   const { state, loadPermissions } = usePermissions();
   const navigate = useNavigate();
-
-  const defaultSearch = {
-    pageNumber: 1,
-    pageSize: 10,
-    sortColumn: "Sequence",
-    sortOrder: "asc",
-    searchAll: false,
-  };
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const selectAllRef = useRef(null);
+  const isFirstPermissionsLoad = useRef(true);
   const [filters, setFilters] = useState({
     name: "",
     key: "",
@@ -29,50 +65,26 @@ function PermissionsList() {
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-
-  const buildSearchCriterias = () => {
-    const criterias = [];
-    const nameValue = filters.name.trim() || filters.search.trim();
-    if (nameValue.length >= 3) {
-      criterias.push({
-        ColumnName: "PermissionName",
-        Value: nameValue,
-        ColumnType: 1,
-      });
-    }
-    const keyValue = filters.key.trim();
-    if (keyValue.length >= 3) {
-      criterias.push({
-        ColumnName: "PermissionKey",
-        Value: keyValue,
-        ColumnType: 1,
-      });
-    }
-    if (filters.controlType) {
-      criterias.push({
-        ColumnName: "ControlType",
-        Value: filters.controlType,
-        ColumnType: 1,
-      });
-    }
-    if (filters.status) {
-      criterias.push({
-        ColumnName: "Active",
-        Value: filters.status,
-        ColumnType: 1,
-      });
-    }
-    return criterias;
-  };
+  const showInitialLoading = !state.hasLoadedPermissions;
+  const showRefreshingState =
+    state.hasLoadedPermissions && state.loadingPermissions;
 
   useEffect(() => {
+    const request = {
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(filters),
+    };
+
+    if (isFirstPermissionsLoad.current) {
+      isFirstPermissionsLoad.current = false;
+      loadPermissions(request);
+      return;
+    }
+
     const timeout = setTimeout(() => {
-      loadPermissions({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
+      loadPermissions(request);
     }, 250);
     return () => clearTimeout(timeout);
   }, [loadPermissions, pageNumber, pageSize, filters]);
@@ -214,135 +226,144 @@ function PermissionsList() {
           </div>
         </div>
 
-        {state.loading ? (
+        {showInitialLoading ? (
           <div className="text-center py-5">Loading permissions...</div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-hover align-middle table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th className="table-checkbox">
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={allSelected}
-                      disabled={displayedIds.length === 0}
-                      onChange={(event) => {
-                        const isChecked = event.target.checked;
-                        setSelectedIds((prev) => {
-                          const next = new Set(prev);
-                          displayedIds.forEach((id) => {
-                            if (isChecked) {
-                              next.add(id);
-                            } else {
-                              next.delete(id);
-                            }
-                          });
-                          return next;
-                        });
-                      }}
-                    />
-                  </th>
-                  <th>Name</th>
-                  <th>Key</th>
-                  <th>Control Type</th>
-                  <th>URL</th>
-                  <th>Sequence</th>
-                  <th>Status</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.items.map((item) => (
-                  <tr key={getField(item, "id", "Id")}>
-                    <td className="table-checkbox">
+          <div className="position-relative">
+            {showRefreshingState && (
+              <div className="px-3 pt-2 text-muted small">
+                Refreshing permissions...
+              </div>
+            )}
+            <div className="table-responsive">
+              <table className="table table-hover align-middle table-striped table-bordered">
+                <thead>
+                  <tr>
+                    <th className="table-checkbox">
                       <input
+                        ref={selectAllRef}
                         type="checkbox"
-                        checked={selectedIds.has(getField(item, "id", "Id"))}
+                        checked={allSelected}
+                        disabled={displayedIds.length === 0}
                         onChange={(event) => {
-                          const id = getField(item, "id", "Id");
-                          if (id === undefined || id === null) return;
                           const isChecked = event.target.checked;
                           setSelectedIds((prev) => {
                             const next = new Set(prev);
-                            if (isChecked) {
-                              next.add(id);
-                            } else {
-                              next.delete(id);
-                            }
+                            displayedIds.forEach((id) => {
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                            });
                             return next;
                           });
                         }}
                       />
-                    </td>
-                    <td>
-                      {getField(item, "permissionName", "PermissionName")}
-                    </td>
-                    <td className="text-muted">
-                      {getField(item, "permissionKey", "PermissionKey")}
-                    </td>
-                    <td>{getField(item, "controlType", "ControlType")}</td>
-                    <td className="text-muted">
-                      {getField(item, "url", "Url")}
-                    </td>
-                    <td>{getField(item, "sequence", "Sequence")}</td>
-                    <td>
-                      <span
-                        className={`status-pill ${
-                          getStatusLabel(item) === "Active"
-                            ? "status-pill-success"
-                            : "status-pill-off"
-                        }`}
-                      >
-                        {getStatusLabel(item)}
-                      </span>
-                    </td>
-                    <td className="text-right table-actions">
-                      <button
-                        className="btn btn-link p-0 text-primary ButtonLink"
-                        type="button"
-                        title="Edit"
-                        onClick={() => {
-                          const id = getField(item, "id", "Id");
-                          const permissionKey = getField(
-                            item,
-                            "permissionKey",
-                            "PermissionKey",
-                          );
-                          if (!permissionKey) {
-                            return;
-                          }
-                          navigate(
-                            `edit/${encodeURIComponent(String(permissionKey))}`,
-                            {
-                              state: { id },
-                            },
-                          );
-                        }}
-                      >
-                        <i className="fa fa-pen"></i>
-                      </button>
-                    </td>
+                    </th>
+                    <th>Name</th>
+                    <th>Key</th>
+                    <th>Control Type</th>
+                    <th>URL</th>
+                    <th>Sequence</th>
+                    <th>Status</th>
+                    <th className="text-right">Actions</th>
                   </tr>
-                ))}
-                {state.items.length === 0 && (
-                  <tr>
-                    <td colSpan="8" className="text-center text-muted py-4">
-                      No permissions found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.items.map((item) => (
+                    <tr key={getField(item, "id", "Id")}>
+                      <td className="table-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(getField(item, "id", "Id"))}
+                          onChange={(event) => {
+                            const id = getField(item, "id", "Id");
+                            if (id === undefined || id === null) return;
+                            const isChecked = event.target.checked;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                      </td>
+                      <td>
+                        {getField(item, "permissionName", "PermissionName")}
+                      </td>
+                      <td className="text-muted">
+                        {getField(item, "permissionKey", "PermissionKey")}
+                      </td>
+                      <td>{getField(item, "controlType", "ControlType")}</td>
+                      <td className="text-muted">
+                        {getField(item, "url", "Url")}
+                      </td>
+                      <td>{getField(item, "sequence", "Sequence")}</td>
+                      <td>
+                        <span
+                          className={`status-pill ${
+                            getStatusLabel(item) === "Active"
+                              ? "status-pill-success"
+                              : "status-pill-off"
+                          }`}
+                        >
+                          {getStatusLabel(item)}
+                        </span>
+                      </td>
+                      <td className="text-right table-actions">
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
+                          title="Edit"
+                          onClick={() => {
+                            const id = getField(item, "id", "Id");
+                            const permissionKey = getField(
+                              item,
+                              "permissionKey",
+                              "PermissionKey",
+                            );
+                            if (!permissionKey) {
+                              return;
+                            }
+                            navigate(
+                              `edit/${encodeURIComponent(String(permissionKey))}`,
+                              {
+                                state: { id },
+                              },
+                            );
+                          }}
+                        >
+                          <i className="fa fa-pen"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {state.items.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="text-center text-muted py-4">
+                        No permissions found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
-        <Pagination
-          pageNumber={pageNumber}
-          pageSize={pageSize}
-          totalCount={totalCount}
-          onPageChange={setPageNumber}
-        />
+        {!showInitialLoading && (
+          <Pagination
+            pageNumber={pageNumber}
+            pageSize={pageSize}
+            totalCount={totalCount}
+            onPageChange={setPageNumber}
+          />
+        )}
       </div>
     </div>
   );

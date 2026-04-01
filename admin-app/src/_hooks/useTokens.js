@@ -6,6 +6,9 @@ const TokensContext = createContext();
 const initialState = {
   items: [],
   totalCount: 0,
+  loadingTokens: false,
+  loadingLookups: false,
+  hasLoadedTokens: false,
   loading: false,
   error: "",
   tokenTypes: [],
@@ -17,32 +20,63 @@ const initialState = {
 const actions = {
   LIST_START: "LIST_START",
   LIST_SUCCESS: "LIST_SUCCESS",
+  LOOKUPS_START: "LOOKUPS_START",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  LOOKUPS_ERROR: "LOOKUPS_ERROR",
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return {
+        ...state,
+        loadingTokens: true,
+        loading: true,
+        error: "",
+      };
     case actions.LIST_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingTokens: false,
+        hasLoadedTokens: true,
+        loading: state.loadingLookups,
+        error: "",
         items: action.payload.items,
         totalCount: action.payload.totalCount,
+      };
+    case actions.LOOKUPS_START:
+      return {
+        ...state,
+        loadingLookups: true,
+        loading: true,
+        error: "",
       };
     case actions.LOOKUPS_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingLookups: false,
+        loading: state.loadingTokens,
         tokenTypes: action.payload.tokenTypes,
         statuses: action.payload.statuses,
         clients: action.payload.clients,
         users: action.payload.users,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingTokens: false,
+        hasLoadedTokens: true,
+        loading: state.loadingLookups,
+        error: action.payload,
+      };
+    case actions.LOOKUPS_ERROR:
+      return {
+        ...state,
+        loadingLookups: false,
+        loading: state.loadingTokens,
+        error: action.payload,
+      };
     default:
       return state;
   }
@@ -105,7 +139,7 @@ export const TokensProvider = ({ children }) => {
   );
 
   const loadLookups = useCallback(async () => {
-    dispatch({ type: actions.LIST_START });
+    dispatch({ type: actions.LOOKUPS_START });
     try {
       const response = await get("admin/token/lookups");
       const result = normalizeResult(response) || {};
@@ -121,7 +155,7 @@ export const TokensProvider = ({ children }) => {
       return result;
     } catch (error) {
       dispatch({
-        type: actions.LIST_ERROR,
+        type: actions.LOOKUPS_ERROR,
         payload: error?.message || "Failed to load token lookups.",
       });
       return null;

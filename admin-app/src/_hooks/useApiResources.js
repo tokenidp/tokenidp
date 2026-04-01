@@ -5,6 +5,8 @@ const ApiResourcesContext = createContext();
 
 const initialState = {
   items: [],
+  loadingApiResources: false,
+  hasLoadedApiResources: false,
   loading: false,
   error: "",
 };
@@ -20,13 +22,31 @@ const actions = {
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.REQUEST_START:
-      return { ...state, loading: true, error: "" };
+      return {
+        ...state,
+        loadingApiResources: true,
+        loading: true,
+        error: "",
+      };
     case actions.LIST_SUCCESS:
-      return { ...state, loading: false, items: action.payload, error: "" };
+      return {
+        ...state,
+        loadingApiResources: false,
+        hasLoadedApiResources: true,
+        loading: false,
+        items: action.payload,
+        error: "",
+      };
     case actions.REQUEST_SUCCESS:
-      return { ...state, loading: false, error: "" };
+      return { ...state, loadingApiResources: false, loading: false, error: "" };
     case actions.REQUEST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingApiResources: false,
+        hasLoadedApiResources: true,
+        loading: false,
+        error: action.payload,
+      };
     case actions.CLEAR_ERROR:
       return { ...state, error: "" };
     default:

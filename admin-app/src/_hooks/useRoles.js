@@ -6,6 +6,8 @@ const RolesContext = createContext();
 const initialState = {
   items: [],
   totalCount: 0,
+  loadingRoles: false,
+  hasLoadedRoles: false,
   loading: false,
   error: "",
 };
@@ -20,16 +22,25 @@ const actions = {
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return { ...state, loadingRoles: true, loading: true, error: "" };
     case actions.LIST_SUCCESS:
       return {
         ...state,
+        loadingRoles: false,
+        hasLoadedRoles: true,
         loading: false,
+        error: "",
         items: action.payload.items,
         totalCount: action.payload.totalCount,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingRoles: false,
+        hasLoadedRoles: true,
+        loading: false,
+        error: action.payload,
+      };
     case actions.CLEAR_ERROR:
       return { ...state, error: "" };
     default:

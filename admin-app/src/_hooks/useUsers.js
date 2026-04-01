@@ -10,6 +10,9 @@ const initialState = {
   statuses: [],
   addressTypes: [],
   totalCount: 0,
+  loadingUsers: false,
+  loadingLookups: false,
+  hasLoadedUsers: false,
   loading: false,
   error: "",
 };
@@ -17,32 +20,63 @@ const initialState = {
 const actions = {
   LIST_START: "LIST_START",
   LIST_SUCCESS: "LIST_SUCCESS",
+  LOOKUPS_START: "LOOKUPS_START",
   LOOKUPS_SUCCESS: "LOOKUPS_SUCCESS",
   LIST_ERROR: "LIST_ERROR",
+  LOOKUPS_ERROR: "LOOKUPS_ERROR",
   CLEAR_ERROR: "CLEAR_ERROR",
 };
 
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
-      return { ...state, loading: true, error: "" };
+      return {
+        ...state,
+        loadingUsers: true,
+        loading: true,
+        error: "",
+      };
     case actions.LIST_SUCCESS:
       return {
         ...state,
-        loading: false,
-        items: action.payload.items,
-        totalCount: action.payload.totalCount,
+        loadingUsers: false,
+        hasLoadedUsers: true,
+        loading: state.loadingLookups,
+        error: "",
+        items: Array.isArray(action.payload.items) ? action.payload.items : [],
+        totalCount: action.payload.totalCount ?? 0,
+      };
+    case actions.LOOKUPS_START:
+      return {
+        ...state,
+        loadingLookups: true,
+        loading: true,
+        error: "",
       };
     case actions.LOOKUPS_SUCCESS:
       return {
         ...state,
-        loading: false,
+        loadingLookups: false,
+        loading: state.loadingUsers,
         roles: action.payload.roles,
         statuses: action.payload.statuses,
         addressTypes: action.payload.addressTypes,
       };
     case actions.LIST_ERROR:
-      return { ...state, loading: false, error: action.payload };
+      return {
+        ...state,
+        loadingUsers: false,
+        hasLoadedUsers: true,
+        loading: state.loadingLookups,
+        error: action.payload,
+      };
+    case actions.LOOKUPS_ERROR:
+      return {
+        ...state,
+        loadingLookups: false,
+        loading: state.loadingUsers,
+        error: action.payload,
+      };
     case actions.CLEAR_ERROR:
       return { ...state, error: "" };
     default:
@@ -88,7 +122,7 @@ export const UsersProvider = ({ children }) => {
   );
 
   const loadLookups = useCallback(async () => {
-    dispatch({ type: actions.LIST_START });
+    dispatch({ type: actions.LOOKUPS_START });
     try {
       const response = await get("admin/user/userlookups");
       const result = normalizeResult(response) || {};
@@ -119,7 +153,7 @@ export const UsersProvider = ({ children }) => {
       return result;
     } catch (error) {
       dispatch({
-        type: actions.LIST_ERROR,
+        type: actions.LOOKUPS_ERROR,
         payload: error?.message || "Failed to load user lookups.",
       });
       return null;
