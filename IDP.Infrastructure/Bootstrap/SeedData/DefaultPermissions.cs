@@ -9,30 +9,33 @@ internal class DefaultPermissions
         List<CreateUpdatePermission> allPermissions = new();
 
         //NavLinks
-        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavLink", 8, "/users", "fa-users me-2");
-        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavLink", 9, "/roles", "fa-shield-alt me-2");
-        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavLink", 10, "/permissions", "fa-shield me-2");
-        var tenantsView = CreatePermission(tenantId, "tenants.view", "Tenant Management", "NavGroup", 3, "/tenants", "fa-building me-2");
+        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavGroup", 5, "/users", "fa-users me-2");
+        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavGroup", 6, "/roles", "fa-shield-alt me-2");
+        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavGroup", 7, "/permissions", "fa-shield me-2");
+        var tenantsView = CreatePermission(tenantId, "tenants.view", "Tenants", "NavGroup", 4, "/tenants", "fa-building me-2");
 
         //NavGroups
-        var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
-        userManagement.ChildPermissions = new();
-        userManagement.ChildPermissions.AddRange(usersView, rolesView, permissionsView);
+        //var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
+        //userManagement.ChildPermissions = new();
+        //userManagement.ChildPermissions.AddRange(usersView, rolesView, permissionsView);
 
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
         allPermissions.Add(tenantsView);
-        allPermissions.Add(userManagement);
-        allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 4, "/tokens", "fa-id-badge me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 6, "/activities", "fa-clipboard-list me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 7, "/settings", "fa-cog me-2"));
+        allPermissions.Add(usersView);
+        allPermissions.Add(rolesView);
+        allPermissions.Add(permissionsView);
+        //allPermissions.Add(userManagement);
+        allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 8, "/tokens", "fa-id-badge me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 9, "/activities", "fa-clipboard-list me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 10, "/settings", "fa-cog me-2"));
 
         //Actions
         int i = 11;
         foreach (var permission in allPermissions
-            .Where(p => p.PermissionName != "Dashboard"
-                && p.PermissionName != "Activities"
+            .Where(p => p.PermissionKey != "dashboard.view"
+                && p.PermissionKey != "activities.view"
                 && p.PermissionKey != "apiresources.view"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
@@ -64,6 +67,22 @@ internal class DefaultPermissions
                     var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"/{parent.ToLower()}/edit{singular.ToLower()}");
 
                     permission.ChildPermissions.AddRange(addPermission, editPermission);
+
+                    if (permission.PermissionName.Contains("Users"))
+                    {
+                        ++i;
+                        var resetPasswordPermission = CreateActionPermission(tenantId, i, "users.resetpassword", "Reset Users Password");
+
+                        permission.ChildPermissions.Add(resetPasswordPermission);
+                    }
+
+                    if (permission.PermissionName.Contains("Roles"))
+                    {
+                        ++i;
+                        var deletePermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.delete", $"Delete {parent}");
+
+                        permission.ChildPermissions.Add(deletePermission);
+                    }
                 }
             }
             else
@@ -81,31 +100,16 @@ internal class DefaultPermissions
                     var editPermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.edit", $"Modify {parent}", $"/{parent.ToLower()}/edit{singular.ToLower()}");
 
                     childPermission.ChildPermissions.AddRange(addPermission, editPermission);
-
-                    if (childPermission.PermissionName.Contains("Users"))
-                    {
-                        ++i;
-                        var resetPasswordPermission = CreateActionPermission(tenantId, i, "users.resetpassword", "Reset Users Password");
-
-                        childPermission.ChildPermissions.Add(resetPasswordPermission);
-                    }
-
-                    if (childPermission.PermissionName.Contains("Roles"))
-                    {
-                        ++i;
-                        var deletePermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.delete", $"Delete {parent}");
-
-                        childPermission.ChildPermissions.Add(deletePermission);
-                    }
                 }
             }
         }
 
         tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
+
         tenantsView.ChildPermissions.Add(CreateActionPermission(
             tenantId,
             ++i,
-            "Tenant.Secret.Reveal",
+            "tenant.secret.reveal",
             "Reveal Tenant Provider Secret"));
 
         var apiResourcesPermission = allPermissions.FirstOrDefault(x => x.PermissionKey == "apiresources.view");

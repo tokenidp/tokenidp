@@ -71,9 +71,13 @@ public class Role : AggregateRoot<int>, ITenant
         return Result.Success(id: Id);
     }
 
-    public Result AddPermission(int tenantPermissionId, string permissionKey, bool isAllowed)
+    public Result AddPermission(
+        int tenantPermissionId,
+        string permissionKey,
+        bool isAllowed,
+        bool bypassEditableCheck = false)
     {
-        var validation = ValidateEditable()
+        var validation = ValidateEditable(bypassEditableCheck)
             .Combine(ValidatePermissionKey(permissionKey));
 
         if (!validation.IsSuccess)
@@ -91,9 +95,12 @@ public class Role : AggregateRoot<int>, ITenant
         return Result.Success(id: Id);
     }
 
-    public Result UpdatePermission(string permissionKey, bool isAllowed)
+    public Result UpdatePermission(
+        string permissionKey,
+        bool isAllowed,
+        bool bypassEditableCheck = false)
     {
-        var validation = ValidateEditable()
+        var validation = ValidateEditable(bypassEditableCheck)
             .Combine(ValidatePermissionKey(permissionKey));
 
         if (!validation.IsSuccess)
@@ -114,9 +121,9 @@ public class Role : AggregateRoot<int>, ITenant
         return Result.Success(id: Id);
     }
 
-    public Result RemovePermission(string permissionKey)
+    public Result RemovePermission(string permissionKey, bool bypassEditableCheck = false)
     {
-        var validation = ValidateEditable()
+        var validation = ValidateEditable(bypassEditableCheck)
             .Combine(ValidatePermissionKey(permissionKey));
 
         if (!validation.IsSuccess)
@@ -136,8 +143,13 @@ public class Role : AggregateRoot<int>, ITenant
         return Result.Success(id: Id);
     }
 
-    private Result ValidateEditable()
+    private Result ValidateEditable(bool bypassEditableCheck = false)
     {
+        if (bypassEditableCheck)
+        {
+            return Result.Success(id: Id);
+        }
+
         if (IsDeleted)
         {
             return Result.Failure(

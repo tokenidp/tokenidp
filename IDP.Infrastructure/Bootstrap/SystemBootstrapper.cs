@@ -1,5 +1,6 @@
 ﻿using Admin.Core.Bootstrap;
 using Admin.Core.Configurations;
+using Admin.Core.Roles;
 using IDP.Domain.AggregateRoots.Permissions;
 using IDP.Foundation.Options;
 using IDP.Infrastructure.Bootstrap.SeedData;
@@ -55,6 +56,8 @@ internal class SystemBootstrapper : ISystemBootstrapper
             if (systemTenant == null)
                 return;
 
+            await EnsureAdminApiResourceAsync(db, systemTenant.Id, ct);
+
             await EnsureAdminClientAsync(db, systemTenant.Id, ct);
 
             var permissions = await EnsurePermissionsAsync(db, systemTenant.Id, ct);
@@ -105,9 +108,54 @@ internal class SystemBootstrapper : ISystemBootstrapper
         CancellationToken ct)
     {
         const string adminClientId = "idp-admin";
+        var defaultAdminClient = DefaultClients.GetDefaultClient(
+            _bootstrapOptions.RedirectUri,
+            _bootstrapOptions.LogoutRedirectUri);
 
-        if (await _clients.ExistsAsync(db, tenantId, adminClientId, ct))
+        var existing = await db.Clients
+            .Include(x => x.ClientScopes)
+            .Include(x => x.ClientApiResources)
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.ClientId == adminClientId, ct);
+
+        if (existing != null)
         {
+            var clientUpdated = false;
+
+            var existingScopes = existing.ClientScopes
+                .Select(x => x.Scope)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var updatedScopes = existing.ClientScopes.ToList();
+
+            foreach (var scopeName in defaultAdminClient.Scopes.Where(scope => !existingScopes.Contains(scope)))
+            {
+                updatedScopes.Add(CreateClientScope(scopeName));
+                clientUpdated = true;
+            }
+
+            if (clientUpdated)
+            {
+                existing.ReplaceScopes(updatedScopes);
+            }
+
+            var existingApiResources = existing.ClientApiResources
+                .Select(x => x.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var updatedApiResources = existing.ClientApiResources.ToList();
+
+            foreach (var apiResourceName in defaultAdminClient.ApiResources.Where(resource => !existingApiResources.Contains(resource)))
+            {
+                updatedApiResources.Add(CreateClientApiResource(apiResourceName));
+                clientUpdated = true;
+            }
+
+            if (clientUpdated)
+            {
+                existing.ReplaceApiResources(updatedApiResources);
+                await db.SaveChangesAsync(ct);
+                _logger.LogInfo("Admin client defaults updated.");
+                return;
+            }
+
             _logger.LogInfo("Admin client already exists.");
             return;
         }
@@ -115,11 +163,60 @@ internal class SystemBootstrapper : ISystemBootstrapper
         _logger.LogInfo("Creating Admin client...");
 
         await _clients.CreateAsync(db, tenantId, adminClientId,
-            DefaultClients.GetDefaultClient(_bootstrapOptions.RedirectUri,
-            _bootstrapOptions.LogoutRedirectUri),
+            defaultAdminClient,
             ct);
 
         _logger.LogInfo("Admin client created.");
+    }
+
+    private async Task EnsureAdminApiResourceAsync(IApplicationDbContext db,
+        int tenantId,
+        CancellationToken ct)
+    {
+        var defaultApiResource = DefaultApiResources.AdminApi;
+
+        var existing = await db.ApiResources
+            .Include(x => x.Scopes)
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Name == defaultApiResource.Name, ct);
+
+        if (existing == null)
+        {
+            _logger.LogInfo("Creating Admin API resource...");
+
+            var createdResource = CreateApiResource(tenantId, defaultApiResource);
+            createdResource.ReplaceScopes(defaultApiResource.Scopes
+                .Select(CreateApiScope)
+                .ToList());
+
+            db.ApiResources.Add(createdResource);
+            await db.SaveChangesAsync(ct);
+
+            _logger.LogInfo("Admin API resource created.");
+            return;
+        }
+
+        var existingScopeNames = existing.Scopes
+            .Select(x => x.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var missingScopes = defaultApiResource.Scopes
+            .Where(scope => !existingScopeNames.Contains(scope.Name))
+            .ToList();
+
+        if (missingScopes.Count == 0)
+        {
+            _logger.LogInfo("Admin API resource already exists.");
+            return;
+        }
+
+        var updatedScopes = existing.Scopes.ToList();
+        updatedScopes.AddRange(missingScopes.Select(CreateApiScope));
+        existing.ReplaceScopes(updatedScopes);
+
+        await db.SaveChangesAsync(ct);
+
+        _logger.LogInfo(
+            "Admin API resource updated with {ScopeCount} missing scope(s).",
+            missingScopes.Count);
     }
 
     private async Task<Role> EnsureDefaultRolesAsync(IApplicationDbContext db,
@@ -128,13 +225,31 @@ internal class SystemBootstrapper : ISystemBootstrapper
         CancellationToken ct)
     {
         const string defaultRoleName = "Administrator";
+        var defaultRole = DefaultRoles.CreateRole(permissions);
 
-        if (await _roles.ExistsAsync(db, tenantId, defaultRoleName, ct))
-            return default!;
+        var existingRole = await db.Roles
+            .Include(x => x.RolePermissions)
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.Name == defaultRoleName, ct);
+
+        if (existingRole != null)
+        {
+            var addedPermissions = await EnsureRolePermissionsAsync(db, existingRole, defaultRole.RolePermissions, ct);
+
+            if (addedPermissions > 0)
+            {
+                _logger.LogInfo(
+                    "Admin role already exists. Added {PermissionCount} missing permission(s).",
+                    addedPermissions);
+            }
+            else
+            {
+                _logger.LogInfo("Admin role already exists.");
+            }
+
+            return existingRole;
+        }
 
         _logger.LogInfo("Creating Admin role...");
-
-        var defaultRole = DefaultRoles.CreateRole(permissions);
 
         var role = await _roles.CreateAsync(db, tenantId, defaultRole, ct);
 
@@ -154,7 +269,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         if (existing != null)
         {
             _logger.LogInfo("Admin user already exists.");
-            return default!;
+            return existing;
         }
 
         var tempPassword = _bootstrapOptions.AdminTempPassword;
@@ -206,8 +321,6 @@ internal class SystemBootstrapper : ISystemBootstrapper
     {
         var permissions = DefaultPermissions.CreateDefaultPermissions(tenantId);
 
-        List<Permission> createdPermissions = new();
-
         foreach (var permission in permissions)
         {
             if (await _permissions.ExistsAsync(db, tenantId, permission.PermissionKey, ct))
@@ -215,13 +328,129 @@ internal class SystemBootstrapper : ISystemBootstrapper
 
             _logger.LogInfo("Creating permission...");
 
-            var createdPermission = await _permissions.CreateAsync(db, tenantId, permission, ct);
-
-            createdPermissions.Add(createdPermission);
+            await _permissions.CreateAsync(db, tenantId, permission, ct);
 
             _logger.LogInfo("Permission created.");
         }
 
-        return createdPermissions;
+        return await db.Permissions
+            .Where(x => x.TenantId == tenantId && x.ParentId == null)
+            .Include(x => x.Children)
+            .ThenInclude(x => x.Children)
+            .OrderBy(x => x.Sequence)
+            .ToListAsync(ct);
+    }
+
+    private static async Task<int> EnsureRolePermissionsAsync(
+        IApplicationDbContext db,
+        Role role,
+        IEnumerable<CreateUpdateRolePermission> permissions,
+        CancellationToken ct)
+    {
+        var existingKeys = role.RolePermissions
+            .Select(x => x.PermissionKey)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var addedPermissions = 0;
+
+        foreach (var permission in permissions)
+        {
+            if (existingKeys.Contains(permission.PermissionKey))
+            {
+                continue;
+            }
+
+            var result = role.AddPermission(
+                tenantPermissionId: permission.PermissionId,
+                permissionKey: permission.PermissionKey,
+                isAllowed: permission.IsAllowed,
+                bypassEditableCheck: true);
+
+            if (!result.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to provision role permission '{permission.PermissionKey}': {FormatErrors(result)}");
+            }
+
+            existingKeys.Add(permission.PermissionKey);
+            addedPermissions++;
+        }
+
+        if (addedPermissions > 0)
+        {
+            await db.SaveChangesAsync(ct);
+        }
+
+        return addedPermissions;
+    }
+
+    private static ApiResource CreateApiResource(
+        int tenantId,
+        DefaultApiResourceDefinition definition)
+    {
+        var result = ApiResource.Create(
+            tenantId,
+            definition.Name,
+            definition.DisplayName,
+            definition.Description,
+            definition.Enabled,
+            out var apiResource);
+
+        if (!result.IsSuccess || apiResource == null)
+        {
+            throw new InvalidOperationException(
+                $"Failed to create default ApiResource {definition.Name}: {FormatErrors(result)}");
+        }
+
+        return apiResource;
+    }
+
+    private static ApiScope CreateApiScope(DefaultApiScopeDefinition definition)
+    {
+        var result = ApiScope.Create(
+            definition.Name,
+            definition.DisplayName,
+            definition.Description,
+            definition.Enabled,
+            out var apiScope);
+
+        if (!result.IsSuccess || apiScope == null)
+        {
+            throw new InvalidOperationException(
+                $"Failed to create default ApiScope {definition.Name}: {FormatErrors(result)}");
+        }
+
+        return apiScope;
+    }
+
+    private static ClientScope CreateClientScope(string scopeName)
+    {
+        var result = ClientScope.Create(scopeName, out var clientScope);
+
+        if (!result.IsSuccess || clientScope == null)
+        {
+            throw new InvalidOperationException(
+                $"Failed to create default client scope {scopeName}: {FormatErrors(result)}");
+        }
+
+        return clientScope;
+    }
+
+    private static ClientApiResource CreateClientApiResource(string apiResourceName)
+    {
+        var result = ClientApiResource.Create(apiResourceName, true, out var clientApiResource);
+
+        if (!result.IsSuccess || clientApiResource == null)
+        {
+            throw new InvalidOperationException(
+                $"Failed to create default client api resource {apiResourceName}: {FormatErrors(result)}");
+        }
+
+        return clientApiResource;
+    }
+
+    private static string FormatErrors(Result result)
+    {
+        return string.Join("; ", result.Errors.Select(x => x.Message));
     }
 }

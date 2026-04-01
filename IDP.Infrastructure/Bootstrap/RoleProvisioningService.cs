@@ -22,11 +22,18 @@ internal class RoleProvisioningService : IRoleProvisioningService
 
         foreach (var permission in permissions)
         {
-            role.AddPermission(
+            var permissionResult = role.AddPermission(
                 tenantPermissionId: permission.PermissionId,
                 permissionKey: permission.PermissionKey,
-                isAllowed: permission.IsAllowed
+                isAllowed: permission.IsAllowed,
+                bypassEditableCheck: true
             );
+
+            if (!permissionResult.IsSuccess)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to provision role permission '{permission.PermissionKey}': {FormatErrors(permissionResult)}");
+            }
         }
 
         db.Roles.Add(role);
@@ -47,5 +54,10 @@ internal class RoleProvisioningService : IRoleProvisioningService
                     && t.Name == roleName, ct);
 
         return isExist;
+    }
+
+    private static string FormatErrors(Result result)
+    {
+        return string.Join("; ", result.Errors.Select(x => x.Message));
     }
 }

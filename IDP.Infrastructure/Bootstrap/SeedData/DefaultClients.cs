@@ -18,9 +18,9 @@ internal static class DefaultClients
 
             TwoFactorEnabled = true,
             TwoFactorCodeExpiry = 5,              // 5 minutes
-            AccessTokenLifetime = 30,              // 30 minutes
+            AccessTokenLifetime = 30,             // 30 minutes
             AuthorizationCodeLifetime = 5,        // 5 minutes
-            RefreshTokenExpiration = 24,       // 24 hours
+            RefreshTokenExpiration = 24,          // 24 hours
 
             PermitLimit = null,
             TimeWindow = null,
@@ -38,7 +38,9 @@ internal static class DefaultClients
                 "openid",
                 "profile",
                 "email",
-                "offline_access"
+                "offline_access",
+                DefaultApiResources.AdminReadScopeName,
+                DefaultApiResources.AdminWriteScopeName
             },
 
             ApiResources = new List<string>
