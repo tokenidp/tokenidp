@@ -264,13 +264,6 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
             Profile
           </button>
           <button className="user-dropdown-item" onClick={() => {
-            navigate('/settings');
-            setIsUserMenuOpen(false);
-          }}>
-            <i className="fa fa-cog"></i>
-            Settings
-          </button>
-          <button className="user-dropdown-item" onClick={() => {
             navigate('/help');
             setIsUserMenuOpen(false);
           }}>
