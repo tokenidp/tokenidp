@@ -1,9 +1,10 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import { useTenants } from "../../_hooks/useTenants";
+import { downloadCsv } from "../../_utils/csvExport";
 
 const defaultSearch = {
   pageNumber: 1,
@@ -34,8 +35,10 @@ function TenantsList() {
   const navigate = useNavigate();
   const { state, loadTenants, loadLookups, deleteTenant } = useTenants();
   const isFirstTenantsLoad = React.useRef(true);
+  const selectAllRef = React.useRef(null);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [filters, setFilters] = useState({
     status: "",
     search: "",
@@ -105,6 +108,40 @@ function TenantsList() {
     }
   }, [pageNumber, totalPages]);
 
+  const displayedIds = state.items
+    .map((item) => getField(item, "id", "Id"))
+    .filter((id) => id !== undefined && id !== null);
+  const allSelected =
+    displayedIds.length > 0 && displayedIds.every((id) => selectedIds.has(id));
+  const someSelected =
+    displayedIds.some((id) => selectedIds.has(id)) && !allSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  useEffect(() => {
+    const visibleIds = new Set(
+      state.items
+        .map((item) => getField(item, "id", "Id"))
+        .filter((id) => id !== undefined && id !== null),
+    );
+    setSelectedIds((prev) => {
+      let hasChanges = false;
+      const next = new Set();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) {
+          next.add(id);
+        } else {
+          hasChanges = true;
+        }
+      });
+      return hasChanges ? next : prev;
+    });
+  }, [state.items]);
+
   const requestDelete = (id) => {
     setPendingDeleteId(id);
     setConfirmOpen(true);
@@ -140,6 +177,44 @@ function TenantsList() {
     return (
       getLookupLabel(state.statuses, key) ||
       (key === "true" ? "Active" : "Inactive")
+    );
+  };
+
+  const handleExport = () => {
+    const rowsToExport = state.items.filter((item) => {
+      const id = getField(item, "id", "Id");
+      return selectedIds.size === 0 || selectedIds.has(id);
+    });
+
+    downloadCsv(
+      `tenants-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        {
+          header: "Tenant Name",
+          accessor: (item) => getField(item, "tenantName", "TenantName"),
+        },
+        {
+          header: "Tenant Code",
+          accessor: (item) => getField(item, "tenantCode", "TenantCode"),
+        },
+        {
+          header: "Email",
+          accessor: (item) => getField(item, "email", "Email"),
+        },
+        {
+          header: "Authentication Mode",
+          accessor: (item) =>
+            getLookupLabel(
+              state.authenticationModes,
+              getField(item, "authenticationMode", "AuthenticationMode"),
+            ),
+        },
+        {
+          header: "Status",
+          accessor: (item) => resolveStatus(item),
+        },
+      ],
+      rowsToExport,
     );
   };
 
@@ -216,7 +291,12 @@ function TenantsList() {
               />
             </div>
             <div className="btn-group">
-              <button className="btn btn-soft dropdown-toggle" type="button">
+              <button
+                className="btn btn-soft dropdown-toggle"
+                type="button"
+                disabled={state.items.length === 0}
+                onClick={handleExport}
+              >
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
@@ -240,7 +320,26 @@ function TenantsList() {
               <thead>
                 <tr>
                   <th className="table-checkbox">
-                    <input type="checkbox" />
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allSelected}
+                      disabled={displayedIds.length === 0}
+                      onChange={(event) => {
+                        const isChecked = event.target.checked;
+                        setSelectedIds((prev) => {
+                          const next = new Set(prev);
+                          displayedIds.forEach((id) => {
+                            if (isChecked) {
+                              next.add(id);
+                            } else {
+                              next.delete(id);
+                            }
+                          });
+                          return next;
+                        });
+                      }}
+                    />
                   </th>
                   <th>Tenant Name</th>
                   <th>Tenant Code</th>
@@ -260,7 +359,27 @@ function TenantsList() {
                   return (
                     <tr key={getField(item, "id", "Id")}>
                       <td className="table-checkbox">
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(getField(item, "id", "Id"))}
+                          onChange={(event) => {
+                            const id = getField(item, "id", "Id");
+                            if (id === undefined || id === null) {
+                              return;
+                            }
+
+                            const isChecked = event.target.checked;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
                       </td>
                       <td>{getField(item, "tenantName", "TenantName")}</td>
                       <td className="text-muted">

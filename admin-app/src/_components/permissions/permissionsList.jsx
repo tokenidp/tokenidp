@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
 import Pagination from "../common/pagination";
 import { usePermissions } from "../../_hooks/usePermissions";
+import { downloadCsv } from "../../_utils/csvExport";
 
 const defaultSearch = {
   pageNumber: 1,
@@ -117,6 +118,65 @@ function PermissionsList() {
     }
   }, [someSelected]);
 
+  useEffect(() => {
+    const visibleIds = new Set(
+      state.items
+        .map((item) => getField(item, "id", "Id"))
+        .filter((id) => id !== undefined && id !== null),
+    );
+    setSelectedIds((prev) => {
+      let hasChanges = false;
+      const next = new Set();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) {
+          next.add(id);
+        } else {
+          hasChanges = true;
+        }
+      });
+      return hasChanges ? next : prev;
+    });
+  }, [state.items]);
+
+  const handleExport = () => {
+    const rowsToExport = state.items.filter((item) => {
+      const id = getField(item, "id", "Id");
+      return selectedIds.size === 0 || selectedIds.has(id);
+    });
+
+    downloadCsv(
+      `permissions-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        {
+          header: "Name",
+          accessor: (item) =>
+            getField(item, "permissionName", "PermissionName"),
+        },
+        {
+          header: "Key",
+          accessor: (item) => getField(item, "permissionKey", "PermissionKey"),
+        },
+        {
+          header: "Control Type",
+          accessor: (item) => getField(item, "controlType", "ControlType"),
+        },
+        {
+          header: "URL",
+          accessor: (item) => getField(item, "url", "Url"),
+        },
+        {
+          header: "Sequence",
+          accessor: (item) => getField(item, "sequence", "Sequence"),
+        },
+        {
+          header: "Status",
+          accessor: (item) => getStatusLabel(item),
+        },
+      ],
+      rowsToExport,
+    );
+  };
+
   return (
     <div className="applications-page">
       <div className="page-header">
@@ -216,7 +276,12 @@ function PermissionsList() {
           </div>
           <div className="table-toolbar-actions">
             <div className="btn-group">
-              <button className="btn btn-soft dropdown-toggle" type="button">
+              <button
+                className="btn btn-soft dropdown-toggle"
+                type="button"
+                disabled={state.items.length === 0}
+                onClick={handleExport}
+              >
                 <i className="fa fa-download"></i> Export
               </button>
             </div>

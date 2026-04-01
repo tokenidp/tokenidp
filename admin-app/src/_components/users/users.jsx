@@ -5,6 +5,7 @@ import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import InfoModal from "../common/infoModal";
 import { useUsers } from "../../_hooks/useUsers";
+import { downloadCsv } from "../../_utils/csvExport";
 
 const defaultSearch = {
   pageNumber: 1,
@@ -67,6 +68,7 @@ function Users() {
     status: "",
     search: "",
   });
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const [resetPasswordSubmitting, setResetPasswordSubmitting] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const [pendingResetUser, setPendingResetUser] = useState({
@@ -83,6 +85,7 @@ function Users() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
   const isFirstUsersLoad = useRef(true);
+  const selectAllRef = useRef(null);
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -133,6 +136,57 @@ function Users() {
     keys.find((key) => item?.[key] !== undefined) !== undefined
       ? item[keys.find((key) => item?.[key] !== undefined)]
       : undefined;
+
+  const displayedIds = state.items
+    .map((item) => getField(item, "id", "Id"))
+    .filter((id) => id !== undefined && id !== null);
+  const allSelected =
+    displayedIds.length > 0 && displayedIds.every((id) => selectedIds.has(id));
+  const someSelected =
+    displayedIds.some((id) => selectedIds.has(id)) && !allSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  useEffect(() => {
+    const visibleIds = new Set(
+      state.items
+        .map((item) => getField(item, "id", "Id"))
+        .filter((id) => id !== undefined && id !== null),
+    );
+    setSelectedIds((prev) => {
+      let hasChanges = false;
+      const next = new Set();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) {
+          next.add(id);
+        } else {
+          hasChanges = true;
+        }
+      });
+      return hasChanges ? next : prev;
+    });
+  }, [state.items]);
+
+  const formatRoles = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((role) => {
+          if (typeof role === "string") {
+            return role;
+          }
+
+          return role?.name ?? role?.Name ?? role?.value ?? role?.Value ?? "";
+        })
+        .filter(Boolean)
+        .join(", ");
+    }
+
+    return String(value ?? "");
+  };
 
   const getStatusLabel = (item) => {
     const isActive = getField(item, "isActive", "IsActive");
@@ -258,6 +312,41 @@ function Users() {
       message: `User status changed to ${nextStatus}.`,
     });
     setInfoOpen(true);
+  };
+
+  const handleExport = () => {
+    const rowsToExport = state.items.filter((item) => {
+      const id = getField(item, "id", "Id");
+      return selectedIds.size === 0 || selectedIds.has(id);
+    });
+
+    downloadCsv(
+      `users-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        {
+          header: "Name",
+          accessor: (item) => getField(item, "fullName", "name", "Name"),
+        },
+        {
+          header: "Email",
+          accessor: (item) =>
+            getField(item, "email", "Email", "userName", "UserName"),
+        },
+        {
+          header: "Phone Number",
+          accessor: (item) => getField(item, "phoneNumber", "PhoneNumber"),
+        },
+        {
+          header: "Roles",
+          accessor: (item) => formatRoles(getField(item, "roles", "Roles")),
+        },
+        {
+          header: "Status",
+          accessor: (item) => getStatusLabel(item),
+        },
+      ],
+      rowsToExport,
+    );
   };
 
   return (
@@ -387,7 +476,12 @@ function Users() {
               />
             </div>
             <div className="btn-group">
-              <button className="btn btn-soft dropdown-toggle" type="button">
+              <button
+                className="btn btn-soft dropdown-toggle"
+                type="button"
+                disabled={state.items.length === 0}
+                onClick={handleExport}
+              >
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
@@ -409,7 +503,26 @@ function Users() {
                 <thead>
                   <tr>
                     <th className="table-checkbox">
-                      <input type="checkbox" />
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        checked={allSelected}
+                        disabled={displayedIds.length === 0}
+                        onChange={(event) => {
+                          const isChecked = event.target.checked;
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            displayedIds.forEach((id) => {
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                            });
+                            return next;
+                          });
+                        }}
+                      />
                     </th>
                     <th>Name</th>
                     <th className="col-email">Email</th>
@@ -423,7 +536,27 @@ function Users() {
                   {state.items.map((item) => (
                     <tr key={getField(item, "id", "Id")}>
                       <td className="table-checkbox">
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(getField(item, "id", "Id"))}
+                          onChange={(event) => {
+                            const id = getField(item, "id", "Id");
+                            if (id === undefined || id === null) {
+                              return;
+                            }
+
+                            const isChecked = event.target.checked;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
                       </td>
                       <td>{getField(item, "fullName", "name", "Name")}</td>
                       <td className="text-muted col-email">
@@ -433,7 +566,7 @@ function Users() {
                         {getField(item, "phoneNumber", "PhoneNumber")}
                       </td>
                       <td className="col-roles">
-                        {getField(item, "roles", "Roles")}
+                        {formatRoles(getField(item, "roles", "Roles"))}
                       </td>
                       <td>
                         <span

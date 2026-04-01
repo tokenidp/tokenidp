@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useApplications } from "../../_hooks/useApplications";
+import { downloadCsv } from "../../_utils/csvExport";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
@@ -45,6 +46,8 @@ function ApplicationsList() {
     useApplications();
   const navigate = useNavigate();
   const isFirstApplicationsLoad = useRef(true);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const selectAllRef = useRef(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
@@ -139,6 +142,40 @@ function ApplicationsList() {
     }
   }, [pageNumber, totalPages]);
 
+  const displayedIds = state.items
+    .map((item) => getField(item, "id", "Id"))
+    .filter((id) => id !== undefined && id !== null);
+  const allSelected =
+    displayedIds.length > 0 && displayedIds.every((id) => selectedIds.has(id));
+  const someSelected =
+    displayedIds.some((id) => selectedIds.has(id)) && !allSelected;
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected;
+    }
+  }, [someSelected]);
+
+  useEffect(() => {
+    const visibleIds = new Set(
+      state.items
+        .map((item) => getField(item, "id", "Id"))
+        .filter((id) => id !== undefined && id !== null),
+    );
+    setSelectedIds((prev) => {
+      let hasChanges = false;
+      const next = new Set();
+      prev.forEach((id) => {
+        if (visibleIds.has(id)) {
+          next.add(id);
+        } else {
+          hasChanges = true;
+        }
+      });
+      return hasChanges ? next : prev;
+    });
+  }, [state.items]);
+
   const requestDelete = (id) => {
     setPendingDeleteId(id);
     setConfirmOpen(true);
@@ -166,6 +203,52 @@ function ApplicationsList() {
         SearchCriterias: buildSearchCriterias(),
       });
     }
+  };
+
+  const handleExport = () => {
+    const rowsToExport = state.items.filter((item) => {
+      const id = getField(item, "id", "Id");
+      return selectedIds.size === 0 || selectedIds.has(id);
+    });
+
+    downloadCsv(
+      `applications-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        {
+          header: "Client Name",
+          accessor: (item) => getField(item, "clientName", "ClientName"),
+        },
+        {
+          header: "Client ID",
+          accessor: (item) => getField(item, "clientId", "ClientId"),
+        },
+        {
+          header: "App Type",
+          accessor: (item) =>
+            getLookupLabel(state.appTypes, getField(item, "appType", "AppType")),
+        },
+        {
+          header: "Token Type",
+          accessor: (item) =>
+            getLookupLabel(
+              state.tokenTypes,
+              getField(
+                item,
+                "tokenType",
+                "TokenType",
+                "accessTokenType",
+                "AccessTokenType",
+              ),
+            ),
+        },
+        {
+          header: "Status",
+          accessor: (item) =>
+            getField(item, "isActive", "IsActive") ? "Active" : "Disabled",
+        },
+      ],
+      rowsToExport,
+    );
   };
 
   return (
@@ -282,7 +365,12 @@ function ApplicationsList() {
               />
             </div>
             <div className="btn-group">
-              <button className="btn btn-soft dropdown-toggle" type="button">
+              <button
+                className="btn btn-soft dropdown-toggle"
+                type="button"
+                disabled={state.items.length === 0}
+                onClick={handleExport}
+              >
                 <i className="fa fa-download"></i> Export
               </button>
             </div>
@@ -305,7 +393,26 @@ function ApplicationsList() {
                 <thead>
                   <tr>
                     <th className="table-checkbox">
-                      <input type="checkbox" />
+                      <input
+                        ref={selectAllRef}
+                        type="checkbox"
+                        checked={allSelected}
+                        disabled={displayedIds.length === 0}
+                        onChange={(event) => {
+                          const isChecked = event.target.checked;
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            displayedIds.forEach((id) => {
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                            });
+                            return next;
+                          });
+                        }}
+                      />
                     </th>
                     <th>Client Name</th>
                     <th>Client ID</th>
@@ -319,7 +426,27 @@ function ApplicationsList() {
                   {state.items.map((item) => (
                     <tr key={getField(item, "id", "Id")}>
                       <td className="table-checkbox">
-                        <input type="checkbox" />
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(getField(item, "id", "Id"))}
+                          onChange={(event) => {
+                            const id = getField(item, "id", "Id");
+                            if (id === undefined || id === null) {
+                              return;
+                            }
+
+                            const isChecked = event.target.checked;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
                       </td>
                       <td>{getField(item, "clientName", "ClientName")}</td>
                       <td className="text-muted">
