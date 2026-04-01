@@ -428,7 +428,7 @@ function AddEditRole({ mode }) {
       <div className="card-surface form-surface">
         <div className="row g-3">
           <div className="col-12">
-            <div className="card">
+            <div className="card form-section-card">
               <div className="card-body">
                 <form onSubmit={handleSubmit(onSubmit)}>
                   <div className="row g-3">
@@ -505,7 +505,7 @@ function AddEditRole({ mode }) {
             </div>
           </div>
           <div className="col-12">
-            <div className="card">
+            <div className="card form-section-card">
               <div className="card-body">
                 <div className="d-flex justify-content-between align-items-center mb-3">
                   <h6 className="card-title mb-0">Assign Permissions</h6>

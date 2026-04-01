@@ -474,6 +474,10 @@ a {
 }
 
 /* ── Right Panel ────────────────────────────────────────────── */
+.provider-option-label {
+  margin-left: 6px;
+}
+
 .right-panel {
   flex: 1;
   display: flex;
@@ -572,6 +576,11 @@ a {
 .card-surface {
   border-radius: var(--radius-3xl);
   box-shadow: var(--shadow-xl);
+}
+
+.tenant-section-card,
+.form-section-card {
+  border-width: 2px !important;
 }
 
 .card-lite {

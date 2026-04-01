@@ -579,7 +579,7 @@ function AddEditTenant({ mode }) {
         <div className="card-surface form-surface">
           <div className="row g-3">
           <div className="col-12">
-            <div className="card">
+            <div className="card tenant-section-card">
               <div className="card-body">
                 <h6 className="card-title">Tenant Identity</h6>
                 <div className="row g-3">
@@ -665,7 +665,7 @@ function AddEditTenant({ mode }) {
           </div>
 
           <div className="col-12">
-            <div className="card">
+            <div className="card tenant-section-card">
               <div className="card-body">
                 <h6 className="card-title">Branding &amp; UI Customization</h6>
                 <div className="text-muted small mb-3">Tenant Login Experience</div>
@@ -735,7 +735,7 @@ function AddEditTenant({ mode }) {
           </div>
 
           <div className="col-12">
-            <div className="card tenant-security-card">
+            <div className="card tenant-section-card tenant-security-card">
               <div className="card-body">
                 <h6 className="card-title">Security Settings</h6>
                 <div className="row g-3 align-items-center">
@@ -851,7 +851,7 @@ function AddEditTenant({ mode }) {
 
           {SHOW_EXTERNAL_PROVIDERS_SECTION && (
             <div className="col-12">
-              <div className="card">
+              <div className="card tenant-section-card">
                 <div className="card-body">
                   <h6 className="card-title">External Providers</h6>
                   <div className="text-muted small mb-3">
@@ -899,7 +899,7 @@ function AddEditTenant({ mode }) {
                                 })}
                               />
                               <label
-                                className="form-check-label fw-semibold d-inline-flex align-items-center gap-2"
+                                className="form-check-label provider-option-label fw-semibold d-inline-flex align-items-center gap-2"
                                 htmlFor={`provider-${providerKey}`}
                               >
                                 <ProviderIcon label={providerOption.label} />

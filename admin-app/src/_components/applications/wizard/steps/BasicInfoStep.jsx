@@ -16,7 +16,7 @@ function BasicInfoStep({
   return (
     <div className="row g-4 justify-content-center">
       <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card">
+        <div className="card form-section-card">
           <div className="card-body">
             <h6 className="card-title">Basic Information</h6>
             <div className="mb-3">

@@ -75,7 +75,7 @@ function RedirectsStep({ register, errors, appType }) {
   return (
     <div className="row g-4 justify-content-center">
       <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card">
+        <div className="card form-section-card">
           <div className="card-body">
             <h6 className="card-title">Redirect &amp; Logout URLs</h6>
             <div className="wizard-info-banner" role="status">

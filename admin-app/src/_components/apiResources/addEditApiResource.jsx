@@ -131,7 +131,7 @@ function AddEditApiResource({ mode = "add" }) {
       </div>
 
       <div className="card-surface form-surface">
-        <div className="card mb-3">
+        <div className="card form-section-card mb-3">
           <div className="card-body">
             <h6 className="card-title">ApiResource Details</h6>
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -175,7 +175,7 @@ function AddEditApiResource({ mode = "add" }) {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card form-section-card">
           <div className="card-body">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h6 className="card-title mb-0">Scopes</h6>

@@ -452,7 +452,7 @@ function AddEditUser({ mode }) {
               <div className="tab-pane active">
                 <div className="row g-4">
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">Account Status</h6>
                         <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-3">
@@ -539,7 +539,7 @@ function AddEditUser({ mode }) {
                   </div>
 
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">Identity Information</h6>
                         <div className="row g-3">
@@ -689,7 +689,7 @@ function AddEditUser({ mode }) {
                   </div>
 
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">
                           Security &amp; Authentication Settings
@@ -770,7 +770,7 @@ function AddEditUser({ mode }) {
                   </div>
 
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">Roles *</h6>
                         <input
@@ -839,7 +839,7 @@ function AddEditUser({ mode }) {
               <div className="tab-pane active">
                 <div className="row g-4">
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">User Address</h6>
                         <div className="row g-3">
@@ -1023,7 +1023,7 @@ function AddEditUser({ mode }) {
               <div className="tab-pane active">
                 <div className="row g-4">
                   <div className="col-12">
-                    <div className="card">
+                    <div className="card form-section-card">
                       <div className="card-body">
                         <h6 className="card-title">Contact Information</h6>
                         <div className="row g-3">

@@ -43,7 +43,7 @@ function AuthStep({
   return (
     <div className="row g-4 justify-content-center">
       <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card">
+        <div className="card form-section-card">
           <div className="card-body">
             <h6 className="card-title">Authentication &amp; Grants</h6>
             <div className="wizard-info-banner" role="status">
@@ -366,7 +366,7 @@ function AuthStep({
                         {...register("externalProviders")}
                       />
                       <label
-                        className="form-check-label d-inline-flex align-items-center gap-2"
+                        className="form-check-label provider-option-label d-inline-flex align-items-center gap-2"
                         htmlFor={`client-provider-${option.value}`}
                       >
                         <ProviderIcon label={option.label} />

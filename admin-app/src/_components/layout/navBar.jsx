@@ -117,8 +117,9 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
           const iconClass = item.icon ? `fa ${item.icon}` : "fa fa-circle";
           const accordionId = `sidebar-item-${item.id}`;
 
-          const showDivider =
-            label && label.trim().toLowerCase() === "activities";
+          const normalizedLabel = label ? label.trim().toLowerCase() : "";
+          const showDividerBefore = normalizedLabel === "activities";
+          const showDividerAfter = normalizedLabel === "dashboard";
 
           if (controlType === "navgroup" && hasChildren) {
             const isGroupActive =
@@ -128,7 +129,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
             const isOpen = openGroup === accordionId || isGroupActive;
             return (
               <div className="accordion-item border-0 bg-transparent" key={item.id}>
-                {showDivider && <div className="sidebar-divider"></div>}
+                {showDividerBefore && <div className="sidebar-divider"></div>}
                 <h2 className="accordion-header" id={`${accordionId}-header`}>
                   <button
                     className={`accordion-button sidebar-accordion-button ${
@@ -181,6 +182,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
                     </ul>
                   </div>
                 </div>
+                {showDividerAfter && <div className="sidebar-divider"></div>}
               </div>
             );
           }
@@ -188,7 +190,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
           if (controlType === "navgroup" && !hasChildren && url) {
             return (
               <div key={item.id}>
-                {showDivider && <div className="sidebar-divider"></div>}
+                {showDividerBefore && <div className="sidebar-divider"></div>}
                 <NavLink
                   to={normalizedUrl}
                   className={() => `nav-link ${isPathActive(url) ? "active" : ""}`}
@@ -200,6 +202,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
                   <i className={iconClass}></i>
                   {label}
                 </NavLink>
+                {showDividerAfter && <div className="sidebar-divider"></div>}
               </div>
             );
           }
@@ -207,7 +210,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
           if (controlType === "navlink" && url) {
             return (
               <div key={item.id}>
-                {showDivider && <div className="sidebar-divider"></div>}
+                {showDividerBefore && <div className="sidebar-divider"></div>}
                 <NavLink
                   to={normalizedUrl}
                   className={() => `nav-link ${isPathActive(url) ? "active" : ""}`}
@@ -219,6 +222,7 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
                   <i className={iconClass}></i>
                   {label}
                 </NavLink>
+                {showDividerAfter && <div className="sidebar-divider"></div>}
               </div>
             );
           }

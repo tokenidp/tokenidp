@@ -139,7 +139,7 @@ function AddPermission({ mode = "add" }) {
       </div>
 
       <div className="card-surface form-surface">
-        <div className="card mb-3">
+        <div className="card form-section-card mb-3">
           <div className="card-body">
             <h6 className="card-title">Control Types</h6>
             <div className="row g-3">
@@ -177,7 +177,7 @@ function AddPermission({ mode = "add" }) {
             </div>
           </div>
         </div>
-        <div className="card">
+        <div className="card form-section-card">
           <div className="card-body">
             <h6 className="card-title">Permission Details</h6>
             <form onSubmit={handleSubmit(onSubmit)}>
