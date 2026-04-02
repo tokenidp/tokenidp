@@ -3,6 +3,7 @@ export const defaultAuthConfig = {
   clientId: "",
   redirectUri: "", // e.g. https://app.com/auth/callback
   postLoginRedirectUri: "/", // where to go after success
+  postLogoutRedirectUri: "/login", // where to go after logout
   scope: "openid profile offline_access",
   audience: "", // optional
   // endpoints (default paths)

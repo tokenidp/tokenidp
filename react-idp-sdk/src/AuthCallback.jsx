@@ -3,7 +3,28 @@ import { useAuth } from "./AuthProvider";
 import { useNavigate } from "react-router-dom";
 import "./styles/idp-default.css";
 
-export function AuthCallback({ redirectTo }) {
+function renderLogoContent(logo, logoAlt, fallback) {
+  if (!logo) {
+    return <div className="logo mb-3">{fallback}</div>;
+  }
+
+  if (typeof logo === "string") {
+    return (
+      <div className="mb-3">
+        <img src={logo} alt={logoAlt} width="250" />
+      </div>
+    );
+  }
+
+  return <div className="mb-3">{logo}</div>;
+}
+
+export function AuthCallback({
+  redirectTo,
+  logo = null,
+  logoAlt = "Application logo",
+  fallbackBadge = "ID",
+}) {
   const navigate = useNavigate();
   const auth = useAuth();
   const [error, setError] = useState(null);
@@ -11,7 +32,7 @@ export function AuthCallback({ redirectTo }) {
 
   useEffect(() => {
     const run = async () => {
-      if (ranRef.current) return; // hard stop for duplicates
+      if (ranRef.current) return;
       ranRef.current = true;
 
       const qs = new URLSearchParams(window.location.search);
@@ -46,14 +67,14 @@ export function AuthCallback({ redirectTo }) {
     };
 
     run();
-  }, [auth]);
+  }, [auth, navigate, redirectTo]);
 
   return (
     <div className="login-page">
       <section className="login-section-container">
         <div className="login-section redirect-card">
           <div className="col-12 p-4 text-center">
-            <div className="logo mb-3">✒️</div>
+            {renderLogoContent(logo, logoAlt, fallbackBadge)}
             <h1>Completing sign-in</h1>
             <p className="text-muted">
               {error ? error : "Please wait while we finish authentication."}

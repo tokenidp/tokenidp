@@ -82,7 +82,7 @@ Wrap App with Provider
 
 
 
-import { IdpAuthProvider } from "tokenidp-react";
+import { IdpAuthProvider, LoginPage } from "tokenidp-react";
 
 
 
@@ -98,6 +98,8 @@ import { IdpAuthProvider } from "tokenidp-react";
 
 &nbsp;       postLoginRedirectUri: "/dashboard",
 
+&nbsp;       postLogoutRedirectUri: "/login",
+
 &nbsp;       scope: process.env.REACT\_APP\_OAUTH\_SCOPE,
 
 &nbsp;       storage: "localStorage",
@@ -109,6 +111,32 @@ import { IdpAuthProvider } from "tokenidp-react";
 &nbsp;	<App />
 
 </IdpAuthProvider>
+
+
+
+Optional built-in login route
+
+
+
+<Route
+
+&nbsp; path="/login"
+
+&nbsp; element={
+
+&nbsp;&nbsp; <LoginPage
+
+&nbsp;&nbsp;&nbsp; title="Redirecting to TokenIDP..."
+
+&nbsp;&nbsp;&nbsp; subtitle="Please wait while we securely connect to Identity."
+
+&nbsp;&nbsp;&nbsp; signedOutTitle="You have been signed out"
+
+&nbsp;&nbsp; />
+
+&nbsp; }
+
+/>
 
 
 

@@ -34,8 +34,8 @@ import PermissionsLayout from "./_components/permissions/permissionsLayout";
 import ApiResourcesLayout from "./_components/apiResources/apiResourcesLayout";
 import ApiResourcesList from "./_components/apiResources/apiResourcesList";
 import AddEditApiResource from "./_components/apiResources/addEditApiResource";
-import { AuthCallback } from "tokenidp-react";
-import { LoginPage } from "./_components/LoginPage"; // simple UI, not OAuth logic
+import { AuthCallback, LoginPage } from "tokenidp-react";
+import logo from "./_assets/images/TokenIDP.svg";
 
 function App() {
   const getInitialTheme = () => {
@@ -63,11 +63,28 @@ function App() {
     setPageName(name);
   };
 
+  const loginPageElement = (
+    <LoginPage
+      logo={logo}
+      logoAlt="TokenIDP logo"
+      title="Redirecting to TokenIDP..."
+      subtitle="Please wait while we securely connect to Identity."
+      signedOutBadge="Signed out"
+      signedOutTitle="You have been signed out"
+      signedOutSubtitle="Start a new session when you are ready."
+      signInAgainLabel="Sign in again"
+    />
+  );
+
   return (
     <Router>
       <Routes>
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/auth/callback"
+          element={<AuthCallback logo={logo} logoAlt="TokenIDP logo" />}
+        />
+        <Route path="/login" element={loginPageElement} />
+        <Route path="/logout/callback" element={loginPageElement} />
         <Route path="/" element={<LandingLayout />} />
         <Route
           element={

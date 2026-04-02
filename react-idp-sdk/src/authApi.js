@@ -125,5 +125,27 @@ export function buildLogoutUrl(config) {
     url.searchParams.set("client_id", config.clientId);
   }
 
+  const postLogoutRedirectUri = resolvePostLogoutRedirectUri(config);
+  if (postLogoutRedirectUri) {
+    url.searchParams.set("post_logout_redirect_uri", postLogoutRedirectUri);
+  }
+
   return url.toString();
+}
+
+function resolvePostLogoutRedirectUri(config) {
+  const candidate = config?.postLogoutRedirectUri;
+  if (!candidate) {
+    return "";
+  }
+
+  if (typeof window !== "undefined" && window.location?.origin) {
+    return new URL(candidate, window.location.origin).toString();
+  }
+
+  if (config?.redirectUri) {
+    return new URL(candidate, config.redirectUri).toString();
+  }
+
+  return String(candidate);
 }
