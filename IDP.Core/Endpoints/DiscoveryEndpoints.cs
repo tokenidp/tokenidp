@@ -46,6 +46,8 @@ internal class DiscoveryEndpoints : IEndpointDefinition
             ["jwks_uri"] = jwksUri,
             ["authorization_endpoint"] = $"{issuer}/authorize",
             ["token_endpoint"] = $"{issuer}/token",
+            ["device_authorization_endpoint"] = $"{issuer}/device_authorization",
+            ["backchannel_authentication_endpoint"] = $"{issuer}/backchannel_authentication",
             ["introspect_endpoint"] = $"{issuer}/introspect",
             ["revoke_token_endpoint"] = $"{issuer}/revoke",
             ["userinfo_endpoint"] = $"{issuer}/userinfo",
