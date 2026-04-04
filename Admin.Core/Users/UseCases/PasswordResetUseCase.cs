@@ -101,11 +101,20 @@ internal sealed class PasswordResetUseCase
                 ApiError.Failure("user.id.invalid", "User Id should be greater than zero."));
         }
 
+        var tenantId = _currentUserService.TenantId;
+
         var user = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
+            .FirstOrDefaultAsync(
+                u => u.Id == request.UserId && u.TenantId == tenantId,
+                cancellationToken);
 
         if (user == null)
         {
+            _logger.LogWarning(
+                "Admin password reset denied for user {UserId} in tenant {TenantId}: user not found in current tenant.",
+                request.UserId,
+                tenantId);
+
             return ApiResult<string>.Failure(
                 ApiError.Failure("NotFound", "User not found."));
         }
