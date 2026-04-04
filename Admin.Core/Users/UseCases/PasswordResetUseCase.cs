@@ -1,6 +1,7 @@
 ﻿using Admin.Core.Common;
 using IDP.Domain.AggregateRoots.Emails;
 using IDP.Domain.AggregateRoots.Emails.ValueObjects;
+using IDP.Domain.AggregateRoots.Tokens;
 using IDP.Foundation.Abstractions.Stores;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Cryptography;
@@ -181,7 +182,7 @@ internal sealed class PasswordResetUseCase
         resetToken.MarkUsed();
 
         var tokens = await _dbContext.Tokens
-            .Where(t => t.UserId == user.Id && t.IsRevoked != true)
+            .Where(t => t.UserId == user.Id && t.TokenStatus != TokenStatus.Revoked)
             .ToListAsync(cancellationToken);
 
         var revokedByUserId = _currentUserService.UserId > 0

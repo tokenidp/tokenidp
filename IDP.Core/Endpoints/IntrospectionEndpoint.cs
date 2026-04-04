@@ -1,4 +1,6 @@
 ﻿using IDP.Core.UseCases;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace IDP.Core.Endpoints;
 
@@ -6,7 +8,11 @@ internal class IntrospectionEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/introspect");
+        var authGroup = app.MapGroup("/introspect")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            });
 
         authGroup.MapPost("", async (IntrospectionRequest request,
             IAppLogger<IntrospectionEndpoint> _logger,

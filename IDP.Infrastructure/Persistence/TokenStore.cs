@@ -27,7 +27,7 @@ internal class TokenStore : ITokenStore
     public async Task<Token?> GetToken(byte[] tokenHash)
     {
         var token = await _dbContext.Tokens.FirstOrDefaultAsync(s =>
-        !s.IsRevoked &&
+        !(s.TokenStatus == TokenStatus.Revoked) &&
         s.ExpiresAt > DateTime.UtcNow &&
         (
             (s.RefreshToken != null && s.RefreshToken.TokenHash == tokenHash) ||
@@ -40,7 +40,8 @@ internal class TokenStore : ITokenStore
     public async Task<Token?> GetRefreshToken(byte[] tokenHash)
     {
         var refreshToken = await _dbContext.Tokens
-            .FirstOrDefaultAsync(t => t.RefreshToken.TokenHash == tokenHash && t.IsRevoked != true);
+            .FirstOrDefaultAsync(t => t.RefreshToken.TokenHash == tokenHash 
+            && t.TokenStatus != TokenStatus.Revoked);
 
         return refreshToken;
     }

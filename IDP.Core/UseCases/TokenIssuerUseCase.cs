@@ -24,7 +24,10 @@ internal sealed class TokenIssuerUseCase
         _tokenSecretGenerator = tokenSecretGenerator;
     }
 
-    internal async Task<TokenResponse> IssueTokenAsync(TokenContext context)
+    internal async Task<TokenResponse> IssueTokenAsync(
+        TokenContext context,
+        Guid? parentRefreshTokenId = null,
+        Guid? refreshTokenId = null)
     {
         context.SetTokenDates();
 
@@ -43,7 +46,11 @@ internal sealed class TokenIssuerUseCase
 
                     if (!isClientCredentials)
                     {
-                        var refreshToken = await IssueRefreshToken(token, context);
+                        var refreshToken = await IssueRefreshToken(
+                            token,
+                            context,
+                            parentRefreshTokenId,
+                            refreshTokenId);
 
                         tokenResponse.AddRefreshToken(refreshToken);
                     }
@@ -64,7 +71,11 @@ internal sealed class TokenIssuerUseCase
 
                     if (!isClientCredentials)
                     {
-                        var refreshToken = await IssueRefreshToken(token, context);
+                        var refreshToken = await IssueRefreshToken(
+                            token,
+                            context,
+                            parentRefreshTokenId,
+                            refreshTokenId);
 
                         tokenResponse.AddRefreshToken(refreshToken);
                     }
@@ -84,11 +95,16 @@ internal sealed class TokenIssuerUseCase
         }
     }
 
-    private async Task<string?> IssueRefreshToken(Token token, TokenContext context)
+    private async Task<string?> IssueRefreshToken(
+        Token token,
+        TokenContext context,
+        Guid? parentRefreshTokenId,
+        Guid? refreshTokenId)
     {
         var scopes = ResolveScopes(context.Scopes);
 
-        var includeRefreshToken = scopes.Contains("offline_access");
+        var includeRefreshToken = context.GrantType == GrantTypes.refresh_token
+            || scopes.Contains("offline_access");
 
         string refreshToken = string.Empty;
 
@@ -105,8 +121,14 @@ internal sealed class TokenIssuerUseCase
 
         var hashToken = _tokenSecretGenerator.HashToken(newRefreshToken);
 
-        token.AddRefreshToken(context.RefreshExpiresAt, hashToken,
-            _currentUserService.IpAddress!, context.ClientName, context.UserName);
+        token.AddRefreshToken(
+            context.RefreshExpiresAt,
+            hashToken,
+            _currentUserService.IpAddress!,
+            context.ClientName,
+            context.UserName,
+            parentRefreshTokenId,
+            refreshTokenId);
 
         _logger.LogDebug("Created refresh token entity with expiry {Expiry}", context.RefreshExpiresAt);
 

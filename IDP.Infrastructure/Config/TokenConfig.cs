@@ -36,17 +36,16 @@ internal class TokenConfig : IEntityTypeConfiguration<Token>
         builder.Property(x => x.RevokeReason).HasMaxLength(250);
 
         builder.Property(x => x.CreatedAtUtc).IsRequired();
-        builder.Property(x => x.IsRevoked).IsRequired();
 
         // Hot path: token validity checks
-        builder.HasIndex(x => new { x.Id, x.IsRevoked, x.ExpiresAt })
+        builder.HasIndex(x => new { x.Id, x.TokenStatus, x.ExpiresAt })
             .HasDatabaseName("IX_Tokens_Introspection");
 
         //  Revoke by user/session
-        builder.HasIndex(x => new { x.TenantId, x.UserId, x.IsRevoked })
+        builder.HasIndex(x => new { x.TenantId, x.UserId, x.TokenStatus })
             .HasDatabaseName("IX_Tokens_Revoke_ByUser");
 
-        builder.HasIndex(x => new { x.TenantId, x.SessionId, x.IsRevoked })
+        builder.HasIndex(x => new { x.TenantId, x.SessionId, x.TokenStatus })
             .HasDatabaseName("IX_Tokens_Revoke_BySession");
 
         // Client monitoring

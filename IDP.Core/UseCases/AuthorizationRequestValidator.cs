@@ -25,14 +25,32 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 allowRedirect: false);
         }
 
-        if (string.IsNullOrWhiteSpace(request.RedirectUri))
+        var redirectUri = request.RedirectUri?.Trim();
+
+        if (string.IsNullOrWhiteSpace(redirectUri))
         {
             throw new AuthorizationRequestException(
                 "invalid_request",
                 "Missing redirect_uri.");
         }
 
-        if (!Uri.TryCreate(request.RedirectUri, UriKind.Absolute, out _))
+        if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out var parsedRedirectUri))
+        {
+            throw new AuthorizationRequestException(
+                "invalid_request",
+                "Invalid redirect_uri.");
+        }
+
+        if (!string.Equals(parsedRedirectUri.Scheme, 
+            Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
+            !parsedRedirectUri.IsLoopback)
+        {
+            throw new AuthorizationRequestException(
+                "invalid_request",
+                "redirect_uri must use HTTPS.");
+        }
+
+        if (!string.Equals(redirectUri, client.RedirectUri?.Trim(), StringComparison.Ordinal))
         {
             throw new AuthorizationRequestException(
                 "invalid_request",

@@ -30,7 +30,6 @@ public sealed class Token : AggregateRoot<Guid>
     public string? DeviceId { get; private set; }
     public string? UserAgent { get; private set; }
 
-    public bool IsRevoked { get; private set; }
     public DateTime? RevokedAt { get; private set; }
     public string? RevokedByIpAddress { get; private set; }
     public string? RevokeReason { get; private set; }
@@ -96,9 +95,11 @@ public sealed class Token : AggregateRoot<Guid>
         byte[] tokenHash,
         string ip,
         string clientName,
-        string userName)
+        string userName,
+        Guid? parentRefreshTokenId = null,
+        Guid? refreshTokenId = null)
     {
-        RefreshToken = RefreshToken.Create(Id, tokenHash, expiresAt);
+        RefreshToken = RefreshToken.Create(Id, tokenHash, expiresAt, parentRefreshTokenId, refreshTokenId);
 
         AddDomainEvent(
             new RefreshTokenIssuedEvent(Id,
@@ -108,6 +109,42 @@ public sealed class Token : AggregateRoot<Guid>
             TokenType,
             expiresAt,
             CreatedByIpAddress));
+    }
+
+    public void RotateRefreshToken(Guid newRefreshTokenId)
+    {
+        if (RefreshToken == null)
+        {
+            throw new InvalidOperationException("Refresh token is missing.");
+        }
+
+        var currentRefreshTokenId = RefreshToken.Id;
+
+        RefreshToken.Consume(newRefreshTokenId);
+
+        AddDomainEvent(
+            new TokenRefreshRotatedEvent(
+                currentRefreshTokenId,
+                newRefreshTokenId,
+                TenantId,
+                UserId ?? 0,
+                ClientId,
+                DateTime.UtcNow));
+    }
+
+    public void DetectRefreshTokenReuse()
+    {
+        if (RefreshToken == null)
+        {
+            throw new InvalidOperationException("Refresh token is missing.");
+        }
+
+        AddDomainEvent(
+            new TokenRefreshReuseDetectedEvent(
+                RefreshToken.Id,
+                TenantId,
+                UserId ?? 0,
+                ClientId));
     }
 
     public void Revoke(string reason, string revokeByIp, int userId)

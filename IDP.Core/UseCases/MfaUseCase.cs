@@ -81,7 +81,7 @@ internal sealed class MfaUseCase : IMfaUseCase
         var preAuthorization = await _preAuthorizationRepo
             .GetPreAuthorization(request.CorrelationId);
 
-        if (preAuthorization == null)
+        if (preAuthorization == null || request.Code != preAuthorization.MfaCode)
         {
             var message = $"Mfa code not found or expired for UserId: {request.UserId} and Code:{request.Code}";
             _logger.LogWarning(message);

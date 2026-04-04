@@ -1,4 +1,6 @@
 ﻿using IDP.Core.UseCases;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IDP.Core.Endpoints;
@@ -7,7 +9,11 @@ internal class RevokeEndpoint : IEndpointDefinition
 {
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        var authGroup = app.MapGroup("/revoke");
+        var authGroup = app.MapGroup("/revoke")
+            .RequireAuthorization(new AuthorizeAttribute
+            {
+                AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+            });
 
         authGroup.MapDelete("", static async (HttpContext httpContext,
             [FromBody] RevokeTokenRequest request,

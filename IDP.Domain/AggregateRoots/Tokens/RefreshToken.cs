@@ -15,16 +15,22 @@ public class RefreshToken : Entity<Guid>
 
     private RefreshToken() { }
 
-    private RefreshToken(Guid tokenId, byte[] hash, DateTime expiresAt, Guid? parentId)
+    private RefreshToken(Guid id, Guid tokenId, byte[] hash, DateTime expiresAt, Guid? parentId)
     {
+        Id = id;
         TokenId = tokenId;
         TokenHash = hash;
         ParentTokenId = parentId;
         ExpiresAt = expiresAt;
     }
 
-    public static RefreshToken Create(Guid tokenId, byte[] hash, DateTime expiresAt, Guid? parentId = null)
-        => new RefreshToken(tokenId, hash, expiresAt, parentId);
+    public static RefreshToken Create(
+        Guid tokenId,
+        byte[] hash,
+        DateTime expiresAt,
+        Guid? parentId = null,
+        Guid? refreshTokenId = null)
+        => new(refreshTokenId ?? Guid.NewGuid(), tokenId, hash, expiresAt, parentId);
 
     public bool IsConsumed => ConsumedAt.HasValue;
 
