@@ -5,6 +5,7 @@ public sealed record ExternalCallbackRequest(
     string CallbackUrl,
     string Code,
     string State,
-    string? CodeVerifier
+    string? CodeVerifier,
+    string? Nonce
 );
 

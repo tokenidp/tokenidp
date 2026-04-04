@@ -151,10 +151,11 @@ public sealed class ExternalAuthUseCase : IExternalAuthUseCase
                 session.CallbackUrl,
                 input.Code,
                 input.State,
-                session.CodeVerifier);
+                session.CodeVerifier,
+                session.Nonce);
 
             var tokens = await providerClient.ExchangeCodeAsync(callbackRequest, cancellationToken);
-            var identity = await providerClient.GetIdentityAsync(tokens, cancellationToken);
+            var identity = await providerClient.GetIdentityAsync(tokens, callbackRequest, cancellationToken);
 
             var user = await _externalIdentityLinkService.FindOrProvisionUserAsync(
                 session.TenantId,

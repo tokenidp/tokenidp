@@ -72,6 +72,18 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             return linkedUser;
         }
 
+        if (!string.IsNullOrWhiteSpace(identity.Email) && !identity.EmailVerified)
+        {
+            _logger.LogWarning(
+                "ExternalUserRejectedUnverifiedEmail: TenantId={TenantId}, ClientId={ClientId}, Provider={Provider}, ProviderUserId={ProviderUserId}",
+                tenantId,
+                clientId,
+                identity.Provider,
+                identity.ProviderUserId);
+
+            throw new InvalidOperationException("External provider email must be verified before account linking.");
+        }
+
         User? user = null;
 
         if (!string.IsNullOrWhiteSpace(identity.Email))

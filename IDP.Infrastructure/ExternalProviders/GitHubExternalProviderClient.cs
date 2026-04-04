@@ -73,6 +73,7 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
 
     public override async Task<ExternalIdentity> GetIdentityAsync(
         ExternalProviderTokens tokens,
+        ExternalCallbackRequest request,
         CancellationToken cancellationToken)
     {
         using var client = CreateClient(tokens.AccessToken);

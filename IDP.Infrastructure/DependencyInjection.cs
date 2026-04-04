@@ -91,6 +91,7 @@ public static class DependencyInjection
             configuration.GetSection(ExternalAuthOptions.SectionName));
 
         services.AddScoped<ExternalProviderConfigurationResolver>();
+        services.AddSingleton<OidcIdTokenValidator>();
 
         services.AddScoped<IExternalAuthSessionStore, ExternalAuthSessionStore>();
         services.AddScoped<IExternalIdentityLinkService, ExternalIdentityLinkService>();

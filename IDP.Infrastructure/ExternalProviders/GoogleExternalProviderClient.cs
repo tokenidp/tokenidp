@@ -8,14 +8,17 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
 {
     private static readonly Uri Authority = new("https://accounts.google.com");
     private const string Scope = "openid profile email";
+    private readonly OidcIdTokenValidator _idTokenValidator;
 
     public GoogleExternalProviderClient(
         IHttpClientFactory httpClientFactory,
         ExternalProviderConfigurationResolver configurationResolver,
         ITenantContextAccessor tenantContextAccessor,
-        ISecretProtector secretProtector)
+        ISecretProtector secretProtector,
+        OidcIdTokenValidator idTokenValidator)
         : base(httpClientFactory, configurationResolver, tenantContextAccessor, secretProtector)
     {
+        _idTokenValidator = idTokenValidator;
     }
 
     public override ExternalProviderTypes Provider => ExternalProviderTypes.Google;
@@ -80,35 +83,107 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
 
     public override async Task<ExternalIdentity> GetIdentityAsync(
         ExternalProviderTokens tokens,
+        ExternalCallbackRequest request,
         CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(tokens.IdToken))
+        {
+            throw new InvalidOperationException("Google did not return an id_token.");
+        }
+
+        var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
+        var validatedToken = await _idTokenValidator.ValidateGoogleAsync(
+            config.ClientId,
+            tokens.IdToken,
+            request.Nonce,
+            cancellationToken);
+
         using var client = CreateClient(tokens.AccessToken);
 
         using var response = await client.GetAsync("https://openidconnect.googleapis.com/v1/userinfo", cancellationToken);
 
         var userInfo = await ReadRequiredJsonAsync<GoogleUserInfoResponse>(response, cancellationToken);
 
-        var claims = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-        claims["sub"] = userInfo.Subject;
-
-        if (!string.IsNullOrWhiteSpace(userInfo.Email))
+        if (!string.Equals(userInfo.Subject, validatedToken.Subject, StringComparison.Ordinal))
         {
-            claims["email"] = userInfo.Email;
+            throw new InvalidOperationException("Google userinfo subject did not match the validated id_token.");
         }
 
-        if (!string.IsNullOrWhiteSpace(userInfo.Name))
+        if (!string.IsNullOrWhiteSpace(validatedToken.Email) &&
+            !string.IsNullOrWhiteSpace(userInfo.Email) &&
+            !string.Equals(validatedToken.Email, userInfo.Email, StringComparison.OrdinalIgnoreCase))
         {
-            claims["name"] = userInfo.Name;
+            throw new InvalidOperationException("Google userinfo email did not match the validated id_token.");
+        }
+
+        var email = validatedToken.Email ?? userInfo.Email;
+        var displayName = validatedToken.Name ?? userInfo.Name;
+        var emailVerified = ResolveEmailVerified(
+            email,
+            validatedToken.Email,
+            validatedToken.EmailVerified,
+            userInfo.Email,
+            userInfo.EmailVerified);
+
+        var claims = new Dictionary<string, string>(validatedToken.Claims, StringComparer.OrdinalIgnoreCase)
+        {
+            ["sub"] = validatedToken.Subject
+        };
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            claims["email"] = email;
+        }
+
+        if (!string.IsNullOrWhiteSpace(displayName))
+        {
+            claims["name"] = displayName;
         }
 
         return new ExternalIdentity(
             Provider,
-            userInfo.Subject,
-            userInfo.Email,
-            userInfo.Name,
-            userInfo.EmailVerified,
+            validatedToken.Subject,
+            email,
+            displayName,
+            emailVerified,
             claims);
+    }
+
+    private static bool ResolveEmailVerified(
+        string? resolvedEmail,
+        string? tokenEmail,
+        bool? tokenEmailVerified,
+        string? userInfoEmail,
+        bool? userInfoEmailVerified)
+    {
+        if (string.IsNullOrWhiteSpace(resolvedEmail))
+        {
+            return false;
+        }
+
+        var verified = false;
+
+        if (string.Equals(resolvedEmail, tokenEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            if (tokenEmailVerified is false)
+            {
+                return false;
+            }
+
+            verified |= tokenEmailVerified is true;
+        }
+
+        if (string.Equals(resolvedEmail, userInfoEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            if (userInfoEmailVerified is false)
+            {
+                return false;
+            }
+
+            verified |= userInfoEmailVerified is true;
+        }
+
+        return verified;
     }
 
     private static string Combine(Uri authority, string relativePath)
@@ -137,7 +212,7 @@ internal sealed class GoogleExternalProviderClient : ExternalProviderClientBase
         [JsonPropertyName("email")]
         public string? Email { get; set; }
         [JsonPropertyName("email_verified")]
-        public bool EmailVerified { get; set; }
+        public bool? EmailVerified { get; set; }
         [JsonPropertyName("name")]
         public string? Name { get; set; }
     }

@@ -34,6 +34,7 @@ internal abstract class ExternalProviderClientBase : IExternalProviderClient
 
     public abstract Task<ExternalIdentity> GetIdentityAsync(
         ExternalProviderTokens tokens,
+        ExternalCallbackRequest request,
         CancellationToken cancellationToken);
 
     protected async Task<ResolvedProviderConfiguration> ResolveConfigurationAsync(

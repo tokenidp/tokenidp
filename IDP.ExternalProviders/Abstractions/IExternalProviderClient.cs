@@ -15,5 +15,6 @@ public interface IExternalProviderClient
 
     Task<ExternalIdentity> GetIdentityAsync(
         ExternalProviderTokens tokens,
+        ExternalCallbackRequest request,
         CancellationToken cancellationToken);
 }
