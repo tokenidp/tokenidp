@@ -47,7 +47,6 @@ internal class DiscoveryEndpoints : IEndpointDefinition
             ["authorization_endpoint"] = $"{issuer}/authorize",
             ["token_endpoint"] = $"{issuer}/token",
             ["device_authorization_endpoint"] = $"{issuer}/device_authorization",
-            ["backchannel_authentication_endpoint"] = $"{issuer}/backchannel_authentication",
             ["introspect_endpoint"] = $"{issuer}/introspect",
             ["revoke_token_endpoint"] = $"{issuer}/revoke",
             ["userinfo_endpoint"] = $"{issuer}/userinfo",
@@ -55,7 +54,7 @@ internal class DiscoveryEndpoints : IEndpointDefinition
             ["subject_types_supported"] = new[] { "public" },
             ["id_token_signing_alg_values_supported"] = new[] { "RS256" },
             ["token_endpoint_auth_methods_supported"] = new[] { "client_secret_basic", "client_secret_post", "none" },
-            ["grant_types_supported"] = new[] { "authorization_code", "client_credentials", "refresh_token", "device_code", "ciba" },
+            ["grant_types_supported"] = SupportedTokenGrantTypes.Names,
             ["scopes_supported"] = new[] { "openid", "profile", "email", "phone", "offline_access" }
         };
     }

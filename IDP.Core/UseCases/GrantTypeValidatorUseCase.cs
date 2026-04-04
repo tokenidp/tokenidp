@@ -15,7 +15,7 @@ internal sealed class GrantTypeValidatorUseCase
         _clientStore = clientStore;
     }
 
-    public async Task<(bool, int)> ValidateGrantType(string grantType, string clientId)
+    public async Task<(GrantTypes, int)> ValidateGrantType(string grantType, string clientId)
     {
         _logger.LogInfo("Validate Grant type {GrantType} for client:{ClientId}", grantType, clientId);
 
@@ -28,18 +28,32 @@ internal sealed class GrantTypeValidatorUseCase
             throw new NotFoundException("Client grant types not found.");
         }
 
-        if (!Enum.IsDefined(typeof(GrantTypes), grantType))
+        if (!Enum.TryParse<GrantTypes>(grantType, ignoreCase: true, out var parsedGrantType)
+            || !Enum.IsDefined(typeof(GrantTypes), parsedGrantType))
         {
-            _logger.LogWarning("Grant type not found for Client: {ClientId}", clientId);
+            _logger.LogWarning("Grant type {GrantType} is unknown for Client: {ClientId}", grantType, clientId);
 
-            throw new NotFoundException("Grant type not found.");
+            throw new TokenRequestValidationException("unsupported_grant_type",
+                "The requested grant_type is not supported.");
         }
 
-        if (client.GrantTypes.Any(gt => gt.ToString() == grantType))
+        if (!SupportedTokenGrantTypes.IsSupported(parsedGrantType))
         {
-            return (true, client.TenantId);
+            _logger.LogWarning("Grant type {GrantType} is not supported by the server for Client: {ClientId}",
+                grantType, clientId);
+
+            throw new TokenRequestValidationException("unsupported_grant_type",
+                "The requested grant_type is not supported.");
         }
 
-        return (true, client.TenantId);
+        if (client.GrantTypes.Contains(parsedGrantType))
+        {
+            return (parsedGrantType, client.TenantId);
+        }
+
+        _logger.LogWarning("Grant type {GrantType} is not allowed for Client: {ClientId}", grantType, clientId);
+
+        throw new TokenRequestValidationException("unauthorized_client",
+            "The client is not allowed to use the requested grant_type.");
     }
 }

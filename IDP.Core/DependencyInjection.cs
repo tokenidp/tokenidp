@@ -96,7 +96,8 @@ public static class DependencyInjection
                 GrantTypes.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
                 GrantTypes.device_code => serviceProvider.GetRequiredService<DeviceFlowGrantHandler>(),
                 GrantTypes.password => serviceProvider.GetRequiredService<PasswordGrantHandler>(),
-                _ => serviceProvider.GetRequiredService<AuthorizationCodeGrantHandler>()
+                _ => throw new TokenRequestValidationException("unsupported_grant_type",
+                    $"Grant type '{key}' is not supported.")
             };
         });
     }
