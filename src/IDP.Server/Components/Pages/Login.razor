@@ -1,0 +1,374 @@
+﻿@using System.ComponentModel.DataAnnotations
+@using IDP.Core
+@using IDP.Core.Abstractions
+@using IDP.Core.Model
+@using IDP.Core.OAuth
+@using IDP.Domain.AggregateRoots.Authorization
+@using IDP.ExternalProviders.Abstractions
+@using IDP.Foundation.Abstractions
+@using IDP.Foundation.Abstractions.Stores
+@using IDP.Foundation.Exceptions
+@using IDP.Server.Middlewares
+@using IDP.Server.RESTClients
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Logging
+
+@page "/login"
+@rendermode InteractiveServer
+
+<PageTitle>Authorize</PageTitle>
+
+@inject LoadService LoadService
+@inject NavigationManager Navigation
+@inject IAuthorizationStore authorizationStore
+@inject IAuthorizationPageUiUseCase PageUiUseCase
+@inject AntiforgeryStateProvider AntiforgeryProvider
+@inject IJSRuntime JSRuntime
+@inject ILogger<Login> logger
+
+@if (!isRequestValid)
+{
+    <p style="color:red;">@requestErrorMessage</p>
+}
+else if (ui != null)
+{
+    @* <div class="logo">
+        @if (!string.IsNullOrWhiteSpace(ui.LogoUrl))
+        {
+            <img src="@ui.LogoUrl" alt="@ui.ProductName" style="height:42px;" />
+        }
+        else
+        {
+            <span>✒️</span>
+        }
+    </div> *@
+
+    <div class="card" data-theme="@ui.Theme" style="@GetAccentStyle(ui.AccentColor)">
+        <div class="logo">
+            <img src="/_content/IDP.Server/images/TokenIDP.svg" alt="tokeidp logo" width="250" />
+        </div>
+
+        <h1>Sign in to @ui.ProductName</h1>
+
+        <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
+        <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>
+
+        @if (ui.AllowLocalLogin)
+        {
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                <AntiforgeryToken />
+                <DataAnnotationsValidator />
+                <div class="field">
+                    <label for="username">Username</label>
+                    <InputText @bind-Value="loginModel.UserName" id="username" />
+                    <ValidationMessage For="@(() => loginModel.UserName)" />
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <InputText @bind-Value="loginModel.Password" id="password" type="password" />
+                    <ValidationMessage For="@(() => loginModel.Password)" />
+                </div>
+
+                <div class="options-row">
+                    @if (ui.AllowStaySignedIn)
+                    {
+                        <label><InputCheckbox @bind-Value="loginModel.RememberMe" /> Stay signed in</label>
+                    }
+
+                    <a href="#" @onclick="GoToForgotPassword">Forgot password?</a>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+            </EditForm>
+        }
+
+        @* EXTERNAL PROVIDERS *@
+        @if (ui.ExternalProviders.Any(x => x.Enabled))
+        {
+            <div class="divider">or</div>
+
+            @foreach (var p in ui.ExternalProviders.Where(x => x.Enabled))
+            {
+                if (p.DisplayName == "Google")
+                {
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
+                        <span class="btn-icon">
+                            <svg viewBox="0 0 533.5 544.3">
+                                <path fill="#4285f4"
+                                      d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.3H272v95.2h146.9c-6.3 34.1-25 63-53.4 82.3v68h86.4c50.5-46.5 81.6-115.1 81.6-195.2z" />
+                                <path fill="#34a853"
+                                      d="M272 544.3c72.6 0 133.6-24 178.1-65.2l-86.4-68c-24 16.2-54.6 25.8-91.7 25.8-70.5 0-130.2-47.6-151.6-111.3h-89.7v69.9c44.5 88.1 136 148.8 241.3 148.8z" />
+                                <path fill="#fbbc04"
+                                      d="M120.4 325.6c-10.2-30.4-10.2-63.2 0-93.6v-69.9h-89.7c-38.6 76.8-38.6 166.7 0 243.5l89.7-69.9z" />
+                                <path fill="#ea4335"
+                                      d="M272 107.7c39.5-.6 77.6 14.1 106.6 41.1l79.3-79.3C407.7 24.5 345.3-1.1 272 0 166.7 0 75.2 60.7 30.7 148.8l89.7 69.9C141.8 155.3 201.5 107.7 272 107.7z" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">Sign in with Google</span>
+                    </button>
+                }
+                if (p.DisplayName == "Microsoft")
+                {
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
+                        <span class="btn-icon">
+                            <svg viewBox="0 0 23 23">
+                                <rect fill="#f25022" x="1" y="1" width="10" height="10" />
+                                <rect fill="#7fba00" x="12" y="1" width="10" height="10" />
+                                <rect fill="#00a4ef" x="1" y="12" width="10" height="10" />
+                                <rect fill="#ffb900" x="12" y="12" width="10" height="10" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">Sign in with Microsoft</span>
+                    </button>
+                }
+                if (p.DisplayName == "GitHub")
+                {
+                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
+                        <span class="btn-icon">
+                            <svg viewBox="0 0 24 24">
+                                <path fill="#181717"
+                                      d="M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.43 7.86 10.96.57.1.78-.25.78-.55v-2.1c-3.2.7-3.87-1.54-3.87-1.54-.53-1.35-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.45.11-3.02 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 2.9-.39c.99 0 1.99.13 2.9.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.57.23 2.73.11 3.02.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.41.35.78 1.04.78 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">Continue with GitHub</span>
+                    </button>
+                }
+            }
+        }
+    </div>
+
+    @if (ui.AllowSignup)
+    {
+        <div class="footer">
+            <span>Don't have an account?</span> <a href="#" @onclick="GoToSignup">@ui.SignupText</a>
+        </div>
+    }
+}
+
+@code {
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string UserName { get; set; } = default!;
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = default!;
+
+        public bool RememberMe { get; set; }
+    }
+
+    private AuthorizationPageUi? ui;
+    private PreAuthorization? preAuthorization;
+
+    private bool isRequestValid = true;
+    private string requestErrorMessage = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private string SuccessMessage = string.Empty;
+
+    private string authorizationContextId = string.Empty;
+
+    private readonly LoginModel loginModel = new();
+    private Dictionary<string, string> QueryParams = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
+        var created = query.TryGetValue("created", out var createdValue) && createdValue == "1";
+        var verifyRequired = query.TryGetValue("verify", out var verifyValue) && verifyValue == "1";
+        var confirmed = query.TryGetValue("confirmed", out var confirmedValue) && confirmedValue == "1";
+
+        SuccessMessage = confirmed
+            ? "Your email has been confirmed. You can now sign in."
+            : created && verifyRequired
+                ? "Your account has been created. Check your email to confirm it before signing in."
+                : created
+                    ? "Your account has been created successfully. You can now sign in."
+                    : string.Empty;
+
+        if (string.IsNullOrWhiteSpace(authorizationContextId))
+        {
+            SetRequestError("invalid_request", "Missing authorization context id.");
+            return;
+        }
+
+        preAuthorization = await authorizationStore.GetPreAuthorization(authorizationContextId);
+
+        if (preAuthorization is null)
+        {
+            SetRequestError("invalid_request", "Authorization context is invalid or expired.");
+            return;
+        }
+
+        try
+        {
+            var request = new AuthorizationRequest
+            {
+                ClientId = preAuthorization.ClientId ?? string.Empty,
+                RedirectUri = preAuthorization.RedirectUri ?? string.Empty,
+                Scopes = preAuthorization.Scopes ?? string.Empty,
+                ResponseType = preAuthorization.GrantType ?? "code"
+            };
+
+            IReadOnlySet<string> scopeSet =
+            preAuthorization.Scopes!.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            ui = await PageUiUseCase.BuildAsync(
+                scopeSet,
+                preAuthorization.TenantId,
+                preAuthorization.ClientId_FK,
+                CancellationToken.None);
+        }
+        catch (AuthorizationRequestException ex)
+        {
+            SetRequestError(ex.Error, ex.ErrorDescription);
+        }
+        catch (Exception ex)
+        {
+            SetRequestError("server_error", ex.Message);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeJs();
+        }
+    }
+
+    private async Task InitializeJs()
+    {
+        await JSRuntime.InvokeVoidAsync("initializeLoginButton");
+    }
+
+    private async Task HandleLogin()
+    {
+        ErrorMessage = string.Empty;
+        SuccessMessage = string.Empty;
+
+        AuthorizationRequest request = new()
+        {
+            UserName = loginModel.UserName,
+            Password = loginModel.Password,
+            ClientId = preAuthorization?.ClientId!,
+            CodeChallenge = preAuthorization?.CodeChallenge!,
+            RedirectUri = preAuthorization?.RedirectUri!,
+            CodeChallengeMethod = preAuthorization?.CodeChallengeMethod!,
+            Scopes = preAuthorization?.Scopes!,
+            RememberMe = loginModel.RememberMe,
+            AuthorizationContextId = preAuthorization?.CorrelationId!,
+            TenantId = preAuthorization?.TenantId ?? 0
+        };
+
+        try
+        {
+            LoadService.ShowLoader();
+
+            var tokenRequest = AntiforgeryProvider.GetAntiforgeryToken();
+
+            var authCodeResponse = await JSRuntime.InvokeAsync<AuthResponseDto>(
+                "idpAuth.localLogin",
+                request,
+                tokenRequest?.Value);
+
+            if (authCodeResponse?.IsSuccess == false)
+            {
+                ErrorMessage = authCodeResponse.Error ?? "Invalid login.";
+                return;
+            }
+
+            if (authCodeResponse?.TwoFactorEnabled == true)
+            {
+                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&flow=authorize&redirect_uri={preAuthorization?.RedirectUri!}";
+                Navigation.NavigateTo(uri);
+                return;
+            }
+
+            Navigation.NavigateTo($"/authorize?ctx={preAuthorization?.CorrelationId}", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            LoadService.HideLoader();
+        }
+    }
+
+    private void GoToForgotPassword()
+    {
+        var url = QueryHelpers.AddQueryString("/forgot-password",
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ctx"] = authorizationContextId
+            });
+
+        Navigation.NavigateTo(url);
+    }
+
+    private void GoToSignup()
+    {
+        var url = QueryHelpers.AddQueryString(
+            ui?.SignupUrl ?? "/signup",
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["ctx"] = authorizationContextId
+            });
+
+        Navigation.NavigateTo(url);
+    }
+
+    private void LoginWithProvider(string providerKey)
+    {
+        var provider = providerKey.Trim();
+        var challengePath = $"/external/{Uri.EscapeDataString(provider)}/challenge";
+        var url = QueryHelpers.AddQueryString(
+            challengePath,
+            new Dictionary<string, string?> { ["ctx"] = authorizationContextId });
+
+        Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display:none;" : "";
+    private string GetSuccessDisplayStyle() => string.IsNullOrEmpty(SuccessMessage) ? "display:none;" : "";
+
+    private void SetRequestError(string error, string description, bool allowRedirect = true)
+    {
+        isRequestValid = false;
+        requestErrorMessage = description;
+
+        if (!allowRedirect) return;
+
+        if (!string.IsNullOrWhiteSpace(preAuthorization?.RedirectUri!) && Uri.TryCreate(preAuthorization?.RedirectUri!, UriKind.Absolute, out _))
+        {
+            var parameters = new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["error"] = error,
+                ["error_description"] = description
+            };
+
+            if (!string.IsNullOrWhiteSpace(preAuthorization?.State!))
+                parameters["state"] = preAuthorization?.State!;
+
+            Navigation.NavigateTo(BuildRedirectUri(preAuthorization?.RedirectUri!, parameters), true);
+        }
+    }
+
+    private static string BuildRedirectUri(string baseUri, IDictionary<string, string?> parameters)
+        => QueryHelpers.AddQueryString(baseUri, parameters);
+
+    private static string BuildAuthorizationContextId(IDictionary<string, string> queryParams)
+    {
+        var pairs = queryParams
+            .Where(x => !string.Equals(x.Key, "ctx", StringComparison.OrdinalIgnoreCase))
+            .Select(x => $"{Uri.EscapeDataString(x.Key)}={Uri.EscapeDataString(x.Value)}");
+
+        return string.Join("&", pairs);
+    }
+
+    private static string GetAccentStyle(string? accentHex)
+        => string.IsNullOrWhiteSpace(accentHex) ? "" : $"--accent:{accentHex};";
+}

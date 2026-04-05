@@ -1,0 +1,416 @@
+﻿/* =========================
+   Design Tokens (Themeable)
+   ========================= */
+:root {
+    --primary: #00A9FF;
+    --primary-hover: #0939a9;
+    --primary-focus: rgba(30, 58, 138, 0.35);
+    --secondary-bg: #ffffff;
+    --secondary-border: #e5e7eb;
+    --secondary-text: #111827;
+    --secondary-hover-bg: #fafafa;
+    --secondary-hover-border: #d1d5db;
+    --secondary-focus-ring: rgba(30, 58, 138, 0.25);
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b6b6b;
+    --bg1: #ffffff;
+    --bg2: #f1f4f9;
+    --focus-ring: rgba(30, 58, 138, 0.25);
+    --success-bg: #ecfdf5;
+    --success-text: #065f46;
+    --success-border: #a7f3d0;
+    --danger-bg: #f8d7da;
+    --danger-text: #721c24;
+    --danger-border: #f5c6cb;
+    --spinner: var(--primary);
+    --primary-color: var(--primary);
+    --success-color: #28a745;
+}
+
+/* =========================
+   Base Styles
+   ========================= */
+* {
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #eef3fb 0%, #f7f9fc 45%, #f1f4f9 100%);
+    display: flex;
+    font-family: "Manrope", "DM Sans", "Segoe UI", sans-serif;
+    color: #0f172a; /* kept as-is from your original */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* =========================
+   Logo / Card
+   ========================= */
+.logo {
+    width: 250px;
+    height: 48px;
+    margin: 0 auto 15px auto;
+}
+
+.card {
+    background: #fff;
+    width: 100%;
+    max-width: 380px;
+    padding: 28px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+    .card h1 {
+        margin: 0 0 20px;
+        text-align: center;
+        font-size: 22px;
+        font-weight: 625;
+    }
+
+/* =========================
+   Fields
+   ========================= */
+.field {
+    margin-bottom: 14px;
+}
+
+    .field label {
+        display: block;
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 6px;
+    }
+
+    .field input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+/* =========================
+   Options Row
+   ========================= */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    margin-bottom: 14px;
+}
+
+    .options-row a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+/* =========================
+   Alerts
+   ========================= */
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--success-bg);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+
+.alert-danger {
+    color: var(--danger-text);
+    background-color: var(--danger-bg);
+    border-color: var(--danger-border);
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* You had this in original CSS too */
+.alert-success {
+    color: var(--success-color);
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+/* =========================
+   Primary Button
+   ========================= */
+.btn-primary {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 11px;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer !important;
+    margin-bottom: 14px;
+    transition: box-shadow 0.15s ease, transform 0.12s ease, background-color 0.15s ease;
+}
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover); /* was hard-coded */
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.18);
+        transform: translateY(-1px);
+    }
+
+    /* Keyboard focus */
+    .btn-primary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--primary-focus); /* was hard-coded */
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    }
+
+/* =========================
+   Divider
+   ========================= */
+.divider {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 10px 0;
+}
+
+/* =========================
+   Secondary Button
+   ========================= */
+.btn-secondary {
+    position: relative;
+    width: 100%;
+    background: var(--secondary-bg);
+    border: 1px solid var(--secondary-border);
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer !important;
+    height: 42px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center; /* center text */
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, transform 0.12s ease, background-color 0.15s ease;
+}
+
+    .btn-secondary:hover {
+        border-color: var(--secondary-hover-border);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+        background-color: var(--secondary-hover-bg);
+    }
+
+    .btn-secondary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px var(--secondary-focus-ring);
+    }
+
+    .btn-secondary .btn-icon {
+        position: absolute;
+        left: 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-secondary .btn-text {
+        text-align: center;
+        pointer-events: none; /* optional, avoids selection quirks */
+    }
+
+    .btn-secondary svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+        flex-shrink: 0;
+    }
+
+/* =========================
+   Footer / Legal
+   ========================= */
+.footer {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+}
+
+    .footer a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+.legal {
+    margin-top: 40px;
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+}
+
+/* =========================
+   MFA Container
+   ========================= */
+.mfa-container {
+    max-width: 470px;
+    width: 100%;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    /* Center the container */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Code inputs */
+.code-input-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 2rem 0;
+}
+
+.code-input {
+    width: 40px;
+    height: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+    .code-input:focus {
+        border-color: var(--primary); /* was #007bff */
+        outline: none;
+        box-shadow: 0 0 0 2px var(--focus-ring); /* was rgba(0, 123, 255, 0.25) */
+    }
+
+    .code-input.invalid {
+        border-color: #dc3545;
+        animation: shake 0.5s;
+    }
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    20%, 60% {
+        transform: translateX(-5px);
+    }
+
+    40%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+/* Buttons inside MFA screen */
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+    .button-container .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: auto !important;
+        font-size: 1rem;
+    }
+
+    /* Original formatting kept (note: there was a line-break in your source) */
+    .button-container
+    .btn-secondary {
+        padding: 12px;
+        color: white; /* NOTE: kept as-is from your original */
+        border: none; /* NOTE: overrides btn-secondary border */
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 0.5rem;
+    }
+
+/* Validation / Messages */
+.validation-message {
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.resend-message {
+    margin-top: 1rem;
+    color: #28a745;
+    text-align: center;
+}
+
+.back-to-login {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.text-link {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* =========================
+   Loading Overlay
+   ========================= */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255,255,255,0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(3px);
+}
+
+.loading-spinner {
+    width: 70px;
+    height: 70px;
+    border: 6px solid #d0d7e4;
+    border-top-color: var(--spinner); /* was #2563eb */
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+    margin-top: 16px;
+    font-weight: 600;
+    color: var(--primary); /* was #1f3c88 */
+    letter-spacing: 0.5px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

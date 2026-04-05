@@ -1,0 +1,37 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData"
+                   DefaultLayout="@typeof(IDP.Server.Components.Layout.MainLayout)" />
+    </Found>
+    <NotFound>
+        <p>Page not found</p>
+    </NotFound>
+</Router>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("Component initialized.");
+    }
+}
+@* 
+@code {
+    private bool isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity.IsAuthenticated;
+
+        if (!isAuthenticated)
+        {
+            // Wait until the component is fully initialized
+            await Task.Delay(100);  // Small delay to avoid navigation during component setup
+            NavigationManager.NavigateTo("/login", true);
+        }
+    }
+} *@

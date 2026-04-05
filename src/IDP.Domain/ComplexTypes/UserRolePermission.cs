@@ -1,0 +1,22 @@
+﻿namespace IDP.Domain.ComplexTypes;
+
+[SuppressMessage("SonarLint", "S1144", Justification = "Rich domain model and private constructor for EF")]
+public class UserRolePermission
+{
+    public int Id { get; private set; }
+    public int? ParentId { get; private set; }
+    public int UserId { get; private set; }
+    public int Sequence { get; private set; }
+    public string Permissionkey { get; private set; }
+    public string PermissionName { get; private set; }
+    public bool IsAllowed { get; private set; }
+    public string? Icon { get; private set; }
+    public string? AccessUrl { get; private set; }
+    public string RoleName { get; private set; }
+    public string ControlType { get; private set; }
+
+    private UserRolePermission()
+    {
+
+    }
+}
