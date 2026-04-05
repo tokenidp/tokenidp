@@ -2,7 +2,6 @@
 using IDP.Foundation.Abstractions.Stores;
 using IDP.Infrastructure.Emails.Primitives;
 using IDP.Infrastructure.Persistence;
-using Microsoft.Data.SqlClient;
 
 namespace IDP.Infrastructure.Emails;
 
@@ -25,14 +24,11 @@ internal class EmailQueueStore : IEmailQueueStore
     {
         try
         {
-            await _db.Database.ExecuteSqlRawAsync(
-                EmailSql.CancelPendingByMessageKey,
-                new[]
-                {
-                    new SqlParameter("@tenantId", tenantId),
-                    new SqlParameter("@messageKey", messageKey),
-                    new SqlParameter("@reason", reason)
-                },
+            await EmailSql.CancelPendingByMessageKeyAsync(
+                _db,
+                tenantId,
+                messageKey,
+                reason,
                 ct);
         }
         catch (Exception ex)

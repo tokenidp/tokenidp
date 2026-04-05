@@ -2,7 +2,6 @@
 using IDP.Projection.Mappers;
 using IDP.Projection.Projectors;
 using IDP.Projection.Queries;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NLog;
@@ -18,7 +17,8 @@ internal sealed class TokenOutboxWorker : BackgroundService
     private const int BatchSize = 100;
     private static readonly TimeSpan LockDuration = TimeSpan.FromSeconds(30);
     private const int MaxRetries = 5;
-    private static readonly TimeSpan IdleDelay = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan InitialIdleDelay = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan MaxIdleDelay = TimeSpan.FromMinutes(1);
     private readonly TokenWorkerState _state;
 
     public TokenOutboxWorker(IServiceScopeFactory scopeFactory,
@@ -36,6 +36,8 @@ internal sealed class TokenOutboxWorker : BackgroundService
 
         _logger.LogInfo("TokenOutboxWorker started. WorkerId={WorkerId}", _workerId);
 
+        var idleDelay = InitialIdleDelay;
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var correlationId = Guid.NewGuid().ToString();
@@ -46,7 +48,10 @@ internal sealed class TokenOutboxWorker : BackgroundService
                 {
                     _state.Heartbeat();
 
-                    await ExecuteCycleAsync(stoppingToken);
+                    var claimedWork = await ExecuteCycleAsync(stoppingToken, idleDelay);
+                    idleDelay = claimedWork
+                        ? InitialIdleDelay
+                        : GetNextIdleDelay(idleDelay);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
@@ -62,17 +67,18 @@ internal sealed class TokenOutboxWorker : BackgroundService
         }
     }
 
-    private async Task ExecuteCycleAsync(CancellationToken ct)
+    private async Task<bool> ExecuteCycleAsync(CancellationToken ct, TimeSpan idleDelay)
     {
         var claimedIds = await ClaimBatchAsync(ct);
 
         if (claimedIds.Count == 0)
         {
-            await SafeDelay(IdleDelay, ct);
-            return;
+            await SafeDelay(idleDelay, ct);
+            return false;
         }
 
         await ProcessBatchAsync(claimedIds, ct);
+        return true;
     }
 
     private async Task<List<long>> ClaimBatchAsync(CancellationToken ct)
@@ -80,19 +86,13 @@ internal sealed class TokenOutboxWorker : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var now = DateTime.UtcNow;
-
-        var ids = await db.Database
-            .SqlQueryRaw<long>(
-                OutboxSql.ClaimBatch,
-                new SqlParameter("@consumer", OutboxConsumers.TokenReadModel),
-                new SqlParameter("@batchSize", BatchSize),
-                new SqlParameter("@lockSeconds", (int)LockDuration.TotalSeconds),
-                new SqlParameter("@workerId", _workerId)
-            )
-            .ToListAsync(ct);
-
-        return ids;
+        return await OutboxBatchClaimer.ClaimBatchAsync(
+            db,
+            OutboxConsumers.TokenReadModel,
+            BatchSize,
+            LockDuration,
+            _workerId,
+            ct);
     }
 
     private async Task ProcessBatchAsync(List<long> ids, CancellationToken ct)
@@ -133,6 +133,15 @@ internal sealed class TokenOutboxWorker : BackgroundService
     {
         var seconds = Math.Min(60, Math.Pow(2, retry));
         return TimeSpan.FromSeconds(seconds);
+    }
+
+    private static TimeSpan GetNextIdleDelay(TimeSpan currentDelay)
+    {
+        var nextSeconds = Math.Min(
+            MaxIdleDelay.TotalSeconds,
+            Math.Max(InitialIdleDelay.TotalSeconds, currentDelay.TotalSeconds * 2));
+
+        return TimeSpan.FromSeconds(nextSeconds);
     }
 
     private static async Task SafeDelay(TimeSpan delay, CancellationToken ct)

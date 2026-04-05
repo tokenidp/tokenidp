@@ -39,12 +39,12 @@ internal class SystemBootstrapper : ISystemBootstrapper
         _bootstrapOptions = options.Value;
     }
 
-    public async Task BootstrapAsync(CancellationToken ct, string connectionString)
+    public async Task BootstrapAsync(CancellationToken ct, string databaseProvider, string connectionString)
     {
         _logger.LogInfo("IDP Bootstrap started...");
 
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlServer(connectionString)
+            .UseApplicationDatabase(databaseProvider, connectionString)
             .Options;
 
         var systemUser = new SystemCurrentUserService();

@@ -122,6 +122,16 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
         ClearLock();
     }
 
+    public void Claim(string workerId, DateTime lockUntilUtc)
+    {
+        if (Status != EmailStatus.Pending)
+            throw new InvalidOperationException($"Email must be pending to claim. Current: {Status}");
+
+        Status = EmailStatus.Claimed;
+        LockedBy = workerId;
+        LockedUntilUtc = lockUntilUtc;
+    }
+
     public void MarkSent(string providerMessageId)
     {
         EnsureClaimed();

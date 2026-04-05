@@ -9,6 +9,7 @@ using IDP.Foundation.Security;
 using IDP.Infrastructure;
 using IDP.Projection;
 using IDP.Projection.HealthChecks;
+using IDP.Server.HealthChecks;
 using IDP.Server.Middlewares;
 using IDP.Server.Security;
 using Microsoft.AspNetCore.Authorization;
@@ -132,9 +133,7 @@ public static class ApplicationBuilderExtensions
             .AddCheck<TokenEndpointHealthCheck>("token")
             .AddCheck<TokenWorkerHealthCheck>("token_worker")
             .AddCheck<ActivityWorkerHealthCheck>("activity_worker")
-            .AddSqlServer(connectionString: builder.Configuration.GetConnectionString(connectionStringName)!,
-             name: "sql",
-             failureStatus: HealthStatus.Unhealthy);
+            .AddCheck<DatabaseHealthCheck>("database");
     }
 
     private static void ConfigureTokenOptions(

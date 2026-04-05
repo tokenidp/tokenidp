@@ -33,6 +33,17 @@ public class OutboxEventConsumer
         RetryCount = 0;
     }
 
+    public void Claim(string workerId, DateTime lockUntilUtc)
+    {
+        if (Status != OutboxStatus.Pending)
+            throw new InvalidOperationException(
+                $"Outbox event consumer must be pending to claim. Current: {Status}");
+
+        LockedBy = workerId;
+        LockedUntil = lockUntilUtc;
+        Status = OutboxStatus.Processing;
+    }
+
     public void MarkProcessed()
     {
         if (Status == OutboxStatus.Processed)

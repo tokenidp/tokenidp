@@ -38,8 +38,10 @@ public static class DependencyInjection
         string connectionStringName)
     {
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(
-                configuration.GetConnectionString(connectionStringName)));
+            DatabaseProviderResolver.Configure(
+                options,
+                configuration,
+                connectionStringName));
 
         services.AddScoped<IApplicationDbContext>(provider =>
             provider.GetRequiredService<ApplicationDbContext>());
@@ -152,9 +154,15 @@ public static class DependencyInjection
 
                 var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
-                var connectionString = configuration.GetConnectionString(connectionStringName);
+                var connectionString = DatabaseProviderResolver.GetConnectionString(
+                    configuration,
+                    connectionStringName);
+                var databaseProvider = DatabaseProviderResolver.ResolveProvider(configuration);
 
-                await bootstrapper.BootstrapAsync(CancellationToken.None, connectionString!);
+                await bootstrapper.BootstrapAsync(
+                    CancellationToken.None,
+                    databaseProvider,
+                    connectionString);
             }
         }
     }

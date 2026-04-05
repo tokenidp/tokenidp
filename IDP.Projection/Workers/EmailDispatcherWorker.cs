@@ -2,7 +2,6 @@
 using IDP.Infrastructure.Emails.Abstractions;
 using IDP.Infrastructure.Emails.Concrete;
 using IDP.Projection.Queries;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -16,7 +15,8 @@ public sealed class EmailDispatcherWorker : BackgroundService
 
     public int BatchSize { get; init; } = 50;
     public int LockSeconds { get; init; } = 60;
-    public TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan InitialPollInterval { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan MaxPollInterval { get; init; } = TimeSpan.FromMinutes(1);
 
     public EmailDispatcherWorker(IServiceScopeFactory scopeFactory,
         IAppLogger<EmailDispatcherWorker> logger)
@@ -31,6 +31,8 @@ public sealed class EmailDispatcherWorker : BackgroundService
 
         _logger.LogInfo("EmailDispatcherWorker started. WorkerId={WorkerId}", _workerId);
 
+        var pollInterval = InitialPollInterval;
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -39,10 +41,12 @@ public sealed class EmailDispatcherWorker : BackgroundService
 
                 if (claimedIds.Count == 0)
                 {
-                    await Task.Delay(PollInterval, stoppingToken);
+                    await Task.Delay(pollInterval, stoppingToken);
+                    pollInterval = GetNextPollInterval(pollInterval);
                     continue;
                 }
 
+                pollInterval = InitialPollInterval;
                 await ProcessClaimedAsync(claimedIds, stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -66,15 +70,12 @@ public sealed class EmailDispatcherWorker : BackgroundService
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var ids = await db.Database.SqlQueryRaw<long>(
-           EmailSql.ClaimBatch,
-           new SqlParameter("@batchSize", BatchSize),
-           new SqlParameter("@lockSeconds", LockSeconds),
-           new SqlParameter("@workerId", _workerId)
-       )
-       .ToListAsync(ct);
-
-        return ids;
+        return await EmailBatchClaimer.ClaimBatchAsync(
+            db,
+            BatchSize,
+            TimeSpan.FromSeconds(LockSeconds),
+            _workerId,
+            ct);
     }
 
     private async Task ProcessClaimedAsync(List<long> ids, CancellationToken ct)
@@ -178,5 +179,14 @@ public sealed class EmailDispatcherWorker : BackgroundService
                 await db.SaveChangesAsync(ct);
             }
         }
+    }
+
+    private TimeSpan GetNextPollInterval(TimeSpan currentInterval)
+    {
+        var nextSeconds = Math.Min(
+            MaxPollInterval.TotalSeconds,
+            Math.Max(InitialPollInterval.TotalSeconds, currentInterval.TotalSeconds * 2));
+
+        return TimeSpan.FromSeconds(nextSeconds);
     }
 }

@@ -128,7 +128,9 @@ public sealed class DashboardMetricsWorker : BackgroundService
         CancellationToken ct)
     {
         var checkpoint = await db.DashboardMetricsCheckpoints
-            .SingleOrDefaultAsync(c => c.MetricKey == metricKey, ct);
+            .SingleOrDefaultAsync(
+                c => c.TenantId == tenantId && c.MetricKey == metricKey,
+                ct);
 
         if (checkpoint == null)
         {

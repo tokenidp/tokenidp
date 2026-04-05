@@ -1,16 +1,28 @@
-﻿namespace IDP.Infrastructure.Emails.Primitives;
+using IDP.Domain.AggregateRoots.Emails;
+using IDP.Infrastructure.Persistence;
+
+namespace IDP.Infrastructure.Emails.Primitives;
 
 public static class EmailSql
 {
-    public const string CancelPendingByMessageKey = @"
-            UPDATE dbo.EmailMessages
-            SET
-                Status = 4, -- Cancelled
-                CancelledAtUtc = SYSUTCDATETIME(),
-                CancelReason = @reason
-            WHERE
-                TenantId = @tenantId
-                AND MessageKey = @messageKey
-                AND Status = 0; -- Pending only
-            ";
+    public static async Task CancelPendingByMessageKeyAsync(
+        ApplicationDbContext db,
+        int tenantId,
+        string messageKey,
+        string reason,
+        CancellationToken ct)
+    {
+        var pendingEmails = await db.EmailMessages
+            .Where(x => x.TenantId == tenantId
+                && x.MessageKey == messageKey
+                && x.Status == EmailStatus.Pending)
+            .ToListAsync(ct);
+
+        foreach (var pendingEmail in pendingEmails)
+        {
+            pendingEmail.Cancel(reason);
+        }
+
+        await db.SaveChangesAsync(ct);
+    }
 }
