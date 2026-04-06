@@ -14,6 +14,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Server", "TokenIDP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenIDP.Service", "TokenIDP.Service\TokenIDP.Service.csproj", "{838889C3-77A6-41BE-8A69-775B9642773D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenIDP.Tests", "TokenIDP.Tests\TokenIDP.Tests.csproj", "{CA867F06-7DC2-4BE1-84B5-691DF5770F00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,9 +48,16 @@ Global
 		{838889C3-77A6-41BE-8A69-775B9642773D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{838889C3-77A6-41BE-8A69-775B9642773D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{838889C3-77A6-41BE-8A69-775B9642773D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA867F06-7DC2-4BE1-84B5-691DF5770F00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA867F06-7DC2-4BE1-84B5-691DF5770F00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA867F06-7DC2-4BE1-84B5-691DF5770F00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA867F06-7DC2-4BE1-84B5-691DF5770F00}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CA867F06-7DC2-4BE1-84B5-691DF5770F00} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3AE97C49-E0DC-4226-AA48-709296044ACE}
