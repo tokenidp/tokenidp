@@ -1,7 +1,7 @@
 # TokenIDP
 
 <div align="center">
-  <img src="logo.png" alt="TokenIDP Logo" width="200">
+  <img src="TokenIDP.svg" alt="TokenIDP Logo" width="200">
   
   ## OAuth Identity Provider
   
