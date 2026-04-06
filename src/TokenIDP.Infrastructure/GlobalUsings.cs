@@ -1,0 +1,17 @@
+global using TokenIDP.Core.Admin;
+global using TokenIDP.Domain.AggregateRoots.ApiResources;
+global using TokenIDP.Domain.AggregateRoots.Clients;
+global using TokenIDP.Domain.AggregateRoots.Roles;
+global using TokenIDP.Domain.AggregateRoots.Tenants;
+global using TokenIDP.Domain.AggregateRoots.Users;
+global using TokenIDP.Domain.Base;
+global using TokenIDP.Domain.ComplexTypes;
+global using TokenIDP.Core.Foundation;
+global using TokenIDP.Core.Foundation.Abstractions;
+global using TokenIDP.Core.Foundation.Contracts;
+global using TokenIDP.Core.Foundation.Exceptions;
+global using TokenIDP.Core.Foundation.Extensions;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Metadata.Builders;
+global using System.Reflection;

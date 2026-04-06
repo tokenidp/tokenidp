@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="OAuth\Endpoints\LoginEndpoint.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="10.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TokenIDP.Domain\TokenIDP.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\TokenIDP.Infrastructure\ExternalProviders\Source\Abstractions\**\*.cs" Link="OAuth\ExternalProviders\Abstractions\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\TokenIDP.Infrastructure\ExternalProviders\Source\Model\**\*.cs" Link="OAuth\ExternalProviders\Model\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\TokenIDP.Infrastructure\ExternalProviders\Source\Security\**\*.cs" Link="OAuth\ExternalProviders\Security\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile Include="..\TokenIDP.Infrastructure\ExternalProviders\Source\ExternalAuthUseCase.cs" Link="OAuth\ExternalProviders\ExternalAuthUseCase.cs" />
+    <Compile Include="..\TokenIDP.Infrastructure\ExternalProviders\Source\ExternalAuthOptions.cs" Link="OAuth\Model\ExternalAuthOptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Abstractions\" />
+  </ItemGroup>
+
+</Project>

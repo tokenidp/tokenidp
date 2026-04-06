@@ -1,0 +1,34 @@
+using TokenIDP.Core.Admin.Dashboard;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+
+namespace TokenIDP.Core.Admin.Endpoints;
+
+internal class DashboardEndpoint : IEndpointDefinition
+{
+    public void RegisterEndpoints(IEndpointRouteBuilder app)
+    {
+        var authGroup = app.MapGroup("/admin/dashboard")
+             .RequireAuthorization(new AuthorizeAttribute
+             {
+                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
+             })
+             .AddEndpointFilter<EndpointValidationFilter>();
+
+        authGroup.MapGet("", async (DashboardQueryUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            var response = await useCase.GetDashboard(CancellationToken.None);
+
+            return EndpointResultMapper.ToOkOrError(response);
+
+        })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "dashboard.view"
+         })
+         .WithName("Dashboard")
+         .WithTags("Dashboard");
+    }
+}
+

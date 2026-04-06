@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Domain", "TokenIDP.Domain\TokenIDP.Domain.csproj", "{5017230B-7520-4E7D-A676-4FAFBBFF7367}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Core", "TokenIDP.Core\TokenIDP.Core.csproj", "{88842040-59C2-4BD5-896E-95C054965DF4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Infrastructure", "TokenIDP.Infrastructure\TokenIDP.Infrastructure.csproj", "{636FE711-D318-4627-9971-D9BD5FB462FA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Workers", "TokenIDP.Workers\TokenIDP.Workers.csproj", "{4FE74865-5C6B-4C86-9C5F-C82B25E35405}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Server", "TokenIDP.Server\TokenIDP.Server.csproj", "{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenIDP.Service", "TokenIDP.Service\TokenIDP.Service.csproj", "{838889C3-77A6-41BE-8A69-775B9642773D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5017230B-7520-4E7D-A676-4FAFBBFF7367}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5017230B-7520-4E7D-A676-4FAFBBFF7367}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5017230B-7520-4E7D-A676-4FAFBBFF7367}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5017230B-7520-4E7D-A676-4FAFBBFF7367}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88842040-59C2-4BD5-896E-95C054965DF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88842040-59C2-4BD5-896E-95C054965DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88842040-59C2-4BD5-896E-95C054965DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88842040-59C2-4BD5-896E-95C054965DF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{636FE711-D318-4627-9971-D9BD5FB462FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{636FE711-D318-4627-9971-D9BD5FB462FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{636FE711-D318-4627-9971-D9BD5FB462FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{636FE711-D318-4627-9971-D9BD5FB462FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4FE74865-5C6B-4C86-9C5F-C82B25E35405}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4FE74865-5C6B-4C86-9C5F-C82B25E35405}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4FE74865-5C6B-4C86-9C5F-C82B25E35405}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4FE74865-5C6B-4C86-9C5F-C82B25E35405}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{838889C3-77A6-41BE-8A69-775B9642773D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{838889C3-77A6-41BE-8A69-775B9642773D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{838889C3-77A6-41BE-8A69-775B9642773D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{838889C3-77A6-41BE-8A69-775B9642773D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3AE97C49-E0DC-4226-AA48-709296044ACE}
+	EndGlobalSection
+EndGlobal

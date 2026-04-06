@@ -1,0 +1,19 @@
+using TokenIDP.Core.OAuth.Model;
+
+namespace TokenIDP.Core.Foundation.Abstractions.Stores;
+
+public interface IClientStore
+{
+    Task<ClientValidationSnapshot> GetActiveByClientId(string clientId);
+
+    Task<ClientShortInfo> GetClientShortInfo(int clientId);
+
+    Task<ClientShortInfo> GetClientShortInfo(string clientId);
+
+    Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead, CancellationToken ct);
+
+    Task<IEnumerable<ClientExternalProviderSnapshot>> GetExternalProviders(int clientId);
+
+    Task<ClientAuthPolicy?> GetClientAuthPolicy(int clientId);
+}
+
