@@ -1,24 +1,24 @@
-using TokenIDP.Domain.AggregateRoots.Authorization;
+using System.Text.Json;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Domain.AggregateRoots.Emails.ValueObjects;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
-using System.Text.Json;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class MfaUseCase : IMfaUseCase
 {
-    private readonly IUserStore _identityStore;
-    private readonly IEmailQueueStore _emailQueueStore;
-    private readonly IAuthorizationStore _preAuthorizationRepo;
+    private readonly IUserRepository _identityStore;
+    private readonly IEmailQueueRepository _emailQueueStore;
+    private readonly IAuthorizationRepository _preAuthorizationRepo;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<MfaUseCase> _logger;
 
-    public MfaUseCase(IUserStore identityStore,
-        IAuthorizationStore preAuthorizationRepo,
+    public MfaUseCase(IUserRepository identityStore,
+        IAuthorizationRepository preAuthorizationRepo,
         IAppLogger<MfaUseCase> logger,
         ICurrentUserService currentUserService,
-        IEmailQueueStore emailQueueStore)
+        IEmailQueueRepository emailQueueStore)
     {
         _logger = logger;
         _preAuthorizationRepo = preAuthorizationRepo;
@@ -81,14 +81,17 @@ internal sealed class MfaUseCase : IMfaUseCase
         var preAuthorization = await _preAuthorizationRepo
             .GetPreAuthorization(request.CorrelationId);
 
-        if (preAuthorization == null || request.Code != preAuthorization.MfaCode)
+        if (preAuthorization == null ||
+            !preAuthorization.MatchesMfaChallenge(request.UserId, request.Code, DateTime.UtcNow))
         {
             var message = $"Mfa code not found or expired for UserId: {request.UserId} and Code:{request.Code}";
             _logger.LogWarning(message);
             return (default, AuthorizationResponse.Failure(message));
         }
 
-        var authResponse = AuthorizationResponse.Success(preAuthorization.UserId ?? 0, preAuthorization.CorrelationId, true);
+        var verifiedUserId = preAuthorization.UserId ?? 0;
+
+        var authResponse = AuthorizationResponse.Success(verifiedUserId, preAuthorization.CorrelationId, true);
 
         var authRequest = AuthorizationRequest.Create(preAuthorization.ClientId ?? string.Empty,
             preAuthorization.RedirectUri ?? string.Empty,
@@ -96,7 +99,10 @@ internal sealed class MfaUseCase : IMfaUseCase
             preAuthorization.CodeChallengeMethod ?? string.Empty,
             preAuthorization.Scopes ?? string.Empty);
 
-        var user = await _identityStore.GetUserById(request.UserId);
+        preAuthorization.SetTwoFactorVerified(verifiedUserId);
+        await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
+
+        var user = await _identityStore.GetUserById(verifiedUserId);
 
         user.MarkMfaValidated(_currentUserService.CorrelationId, _currentUserService.IpAddress);
 
@@ -121,15 +127,34 @@ internal sealed class MfaUseCase : IMfaUseCase
             return AuthorizationResponse.Failure(message);
         }
 
-        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
+        if (!preAuthorization.UserId.HasValue || preAuthorization.UserId.Value <= 0)
+        {
+            const string message = "Mfa user binding is invalid or expired.";
+            _logger.LogWarning(message);
+            return AuthorizationResponse.Failure(message);
+        }
 
-        preAuthorization.UpdateMfaCode(request.UserId, mfaCode, DateTime.UtcNow.AddMinutes(5));
+        if (request.UserId > 0 && request.UserId != preAuthorization.UserId.Value)
+        {
+            _logger.LogWarning(
+                "Mfa resend rejected due to user mismatch. CorrelationId: {CorrelationId}, RequestedUserId: {RequestedUserId}, BoundUserId: {BoundUserId}",
+                request.CorrelationId,
+                request.UserId,
+                preAuthorization.UserId.Value);
+
+            return AuthorizationResponse.Failure("Mfa request is invalid or expired.");
+        }
+
+        var mfaCode = MfaCodeGenerator.GenerateMfaCode();
+        var userId = preAuthorization.UserId.Value;
+
+        preAuthorization.UpdateMfaCode(userId, mfaCode, DateTime.UtcNow.AddMinutes(5));
 
         await _preAuthorizationRepo.UpdatePreAuthorization(preAuthorization);
 
-        _logger.LogInfo("Resend mfa code for user {UserId}", request.UserId);
+        _logger.LogInfo("Resend mfa code for user {UserId}", userId);
 
-        return await CompleteMfaProcess(request.UserId, mfaCode, request.CorrelationId);
+        return await CompleteMfaProcess(userId, mfaCode, request.CorrelationId);
     }
 
     private async Task<AuthorizationResponse> CompleteMfaProcess(int userId,
@@ -188,4 +213,5 @@ internal sealed class MfaUseCase : IMfaUseCase
         await _emailQueueStore.EnqueueAsync(emailMessage, CancellationToken.None);
     }
 }
+
 

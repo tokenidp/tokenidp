@@ -1,8 +1,8 @@
 namespace TokenIDP.Core.Admin.Tenants;
 
-internal class TenantSearchResult
+public class TenantSearchResult
 {
-    internal TenantSearchResult(int id,
+    public TenantSearchResult(int id,
         string tenantName,
         string tenantCode,
         string? email,
@@ -17,7 +17,7 @@ internal class TenantSearchResult
         IsActive = isActive ?? false;
     }
 
-    internal static Expression<Func<Tenant, TenantSearchResult>> Projection =>
+    public static Expression<Func<Tenant, TenantSearchResult>> Projection =>
        t => new TenantSearchResult(
            t.Id,
            t.TenantName,

@@ -1,5 +1,6 @@
 using TokenIDP.Domain.AggregateRoots.Authorization;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 

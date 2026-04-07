@@ -1,8 +1,8 @@
 namespace TokenIDP.Core.Admin.Clients;
 
-internal class ClientDetail
+public class ClientDetail
 {
-    internal static Expression<Func<Client, ClientDetail>> Projection =>
+    public static Expression<Func<Client, ClientDetail>> Projection =>
         client => new ClientDetail()
         {
             Id = client.Id,

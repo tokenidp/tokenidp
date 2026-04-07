@@ -1,19 +1,27 @@
-using TokenIDP.Core.Foundation.Abstractions;
+using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.Foundation.Security;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Server;
 
 internal class HttpCurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _baseUrl;
 
     public string? IpAddress { get; }
     public string? UserAgent { get; }
 
-    public HttpCurrentUserService(IHttpContextAccessor httpContextAccessor)
+    public HttpCurrentUserService(
+        IHttpContextAccessor httpContextAccessor,
+        IOptions<TokenOptions> tokenOptions)
     {
         _httpContextAccessor = httpContextAccessor;
+        _baseUrl = TokenOptionsResolver.ResolveIssuer(tokenOptions.Value);
 
         var ctx = _httpContextAccessor.HttpContext;
 
@@ -24,9 +32,11 @@ internal class HttpCurrentUserService : ICurrentUserService
         UserAgent = ctx?.Request.Headers["User-Agent"].ToString();
     }
 
-    public int UserId => Convert.ToInt32(_httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier));
+    public int UserId => TryGetIntClaim(ClaimTypes.NameIdentifier, JwtRegisteredClaimNames.Sub) ?? 0;
 
-    public int TenantId => Convert.ToInt32(_httpContextAccessor.HttpContext?.User?.FindFirstValue("uid"));
+    public int TenantId => TryGetIntClaim("uid") ?? 0;
+
+    public string ClientId => GetClaimValue("client_id") ?? string.Empty;
 
     public Guid CorrelationId
     {
@@ -42,19 +52,7 @@ internal class HttpCurrentUserService : ICurrentUserService
 
     public string UserName => _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.Name) ?? string.Empty;
 
-    public string BaseUrl
-    {
-        get
-        {
-            var request = _httpContextAccessor.HttpContext?.Request;
-            if (request is null)
-            {
-                throw new InvalidOperationException("BaseUrl is missing and no HTTP request is available to infer it.");
-            }
-
-            return $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}".TrimEnd('/');
-        }
-    }
+    public string BaseUrl => _baseUrl;
 
     public string Scopes
     {
@@ -73,6 +71,32 @@ internal class HttpCurrentUserService : ICurrentUserService
             return claims.Select(s => s.Value).ToArray();
         }
         return Array.Empty<string>();
+    }
+
+    private string? GetClaimValue(params string[] claimTypes)
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+
+        foreach (var claimType in claimTypes)
+        {
+            var value = user?.FindFirstValue(claimType);
+
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private int? TryGetIntClaim(params string[] claimTypes)
+    {
+        var value = GetClaimValue(claimTypes);
+
+        return int.TryParse(value, out var parsedValue)
+            ? parsedValue
+            : null;
     }
 }
 

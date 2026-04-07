@@ -1,4 +1,4 @@
-using TokenIDP.Infrastructure.Abstractions;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
 
 namespace TokenIDP.Workers.Mappers;
 

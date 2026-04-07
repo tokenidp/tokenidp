@@ -1,3 +1,5 @@
+using TokenIDP.Core.Abstractions;
+
 namespace TokenIDP.Core.OAuth;
 
 public sealed class TenantContextAccessor : ITenantContextAccessor

@@ -1,8 +1,8 @@
 namespace TokenIDP.Core.Admin.ApiResources;
 
-internal sealed class ApiResourceDetail
+public sealed class ApiResourceDetail
 {
-    internal static Expression<Func<ApiResource, ApiResourceDetail>> Projection =>
+    public static Expression<Func<ApiResource, ApiResourceDetail>> Projection =>
         apiResource => new ApiResourceDetail
         {
             Id = apiResource.Id,
@@ -31,7 +31,7 @@ internal sealed class ApiResourceDetail
     public List<ApiScopeDetail> Scopes { get; private set; } = new();
 }
 
-internal sealed class ApiScopeDetail
+public sealed class ApiScopeDetail
 {
     public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;

@@ -2,7 +2,7 @@ using TokenIDP.Domain.AggregateRoots.Permissions;
 
 namespace TokenIDP.Core.Admin.Permissions;
 
-internal class PermissionById
+public class PermissionById
 {
     public int Id { get; set; }
     public int? ParentId { get; set; }
@@ -17,7 +17,7 @@ internal class PermissionById
     public string ControlType { get; set; } = string.Empty;
     public string Active { get; set; } = string.Empty;
 
-    internal static Expression<Func<Permission, PermissionById>> Projection =>
+    public static Expression<Func<Permission, PermissionById>> Projection =>
         p => new PermissionById
         {
             Id = p.Id,

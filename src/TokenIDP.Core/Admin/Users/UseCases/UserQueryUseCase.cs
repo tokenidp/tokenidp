@@ -1,18 +1,20 @@
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
 internal class UserQueryUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IUserRepository _userRepository;
     private readonly IAppLogger<UserQueryUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
-    public UserQueryUseCase(IApplicationDbContext applicationDbContext,
+    public UserQueryUseCase(IUserRepository userRepository,
         IAppLogger<UserQueryUseCase> logger,
         ICurrentUserService currentUserService)
     {
-        _dbContext = applicationDbContext;
+        _userRepository = userRepository;
         _logger = logger;
         _currentUserService = currentUserService;
     }
@@ -23,13 +25,10 @@ internal class UserQueryUseCase
     {
         _logger.LogDebug("Fetching user {UserId}", userId);
 
-        var user = await _dbContext.Users
-            .AsNoTracking()
-            .Where(u =>
-                u.Id == userId &&
-                u.TenantId == _currentUserService.TenantId)
-            .Select(UserDetail.Projection)
-            .FirstOrDefaultAsync(cancellationToken);
+        var user = await _userRepository.GetUserDetailAsync(
+            _currentUserService.TenantId,
+            userId,
+            cancellationToken);
 
         if (user == null)
         {
@@ -48,34 +47,10 @@ internal class UserQueryUseCase
         _logger.LogDebug("Fetching users list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var query = _dbContext.UsersSearch
-           .AsNoTracking()
-           .Where(u => u.TenantId == _currentUserService.TenantId);
-
-        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
-
-        var searchCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase));
-
-        if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
-        {
-            var term = searchCriteria.Value.Trim().ToLowerInvariant();
-
-            query = query.Where(user =>
-                (user.FullName ?? string.Empty).ToLower().Contains(term) ||
-                (user.UserName ?? string.Empty).ToLower().Contains(term) ||
-                (user.Email ?? string.Empty).ToLower().Contains(term));
-        }
-
-        criterias = criterias
-            .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        var users = await query
-           .Select(UserSearchResult.Projection)
-           .ApplyFilter(criterias)
-           .ApplySort(request.SortColumn, request.SortOrder)
-           .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        var users = await _userRepository.SearchUsersAsync(
+            _currentUserService.TenantId,
+            request,
+            cancellationToken);
 
         _logger.LogDebug("Fetched {Count} users", users.TotalCount);
 

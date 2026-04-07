@@ -2,6 +2,7 @@ using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 

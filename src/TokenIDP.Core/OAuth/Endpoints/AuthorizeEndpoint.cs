@@ -1,8 +1,8 @@
 using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 
@@ -14,7 +14,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
             HttpContext httpContext,
             IAuthorizationRequestValidator authorizationValidator,
             IAuthorizationCodeUseCase authorizationCodeUseCase,
-            IAuthorizationStore authorizationStore) =>
+            IAuthorizationRepository authorizationStore) =>
         {
             var ctx = httpContext.Request.Query["ctx"].ToString();
 
@@ -39,7 +39,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         HttpContext httpContext,
         string ctx,
         IAuthorizationCodeUseCase authorizationCodeUseCase,
-        IAuthorizationStore authorizationStore)
+        IAuthorizationRepository authorizationStore)
     {
         var existing = await authorizationStore.GetPreAuthorization(ctx);
 
@@ -85,7 +85,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         HttpContext httpContext,
         IAuthorizationRequestValidator authorizationValidator,
         IAuthorizationCodeUseCase authorizationCodeUseCase,
-        IAuthorizationStore authorizationStore)
+        IAuthorizationRepository authorizationStore)
     {
         var query = httpContext.Request.Query;
 
@@ -188,7 +188,7 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         AuthorizationRequest authorizationRequest,
         string state,
         ClientShortInfo clientShortInfo,
-        IAuthorizationStore authorizationStore)
+        IAuthorizationRepository authorizationStore)
     {
         var correlationId = Guid.NewGuid().ToString("N");
 
@@ -213,3 +213,4 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         return Results.Redirect(loginUrl);
     }
 }
+

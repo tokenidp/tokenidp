@@ -1,3 +1,5 @@
+using TokenIDP.Core.Abstractions;
+
 namespace TokenIDP.Infrastructure.Persistence;
 
 internal class ApplicationEventDispatcher : IApplicationEventDispatcher

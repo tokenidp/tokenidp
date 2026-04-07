@@ -1,7 +1,8 @@
 using TokenIDP.Core.OAuth.Policies;
 using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
@@ -9,7 +10,7 @@ internal class DeviceAuthenticationUseCase : IDeviceAuthenticationUseCase
 {
     private readonly IAuthenticationService _identityService;
     private readonly IMfaUseCase _mfaUseCase;
-    private readonly IAuthorizationStore _authorizationStore;
+    private readonly IAuthorizationRepository _authorizationStore;
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly IAppLogger<DeviceAuthenticationUseCase> _logger;
 
@@ -17,7 +18,7 @@ internal class DeviceAuthenticationUseCase : IDeviceAuthenticationUseCase
         IMfaUseCase mfaUseCase,
         TenantUserMfaPolicy mfaPolicy,
         IAppLogger<DeviceAuthenticationUseCase> logger,
-        IAuthorizationStore authorizationStore)
+        IAuthorizationRepository authorizationStore)
     {
         _identityService = identityService;
         _mfaUseCase = mfaUseCase;
@@ -104,4 +105,5 @@ internal class DeviceAuthenticationUseCase : IDeviceAuthenticationUseCase
         return default;
     }
 }
+
 

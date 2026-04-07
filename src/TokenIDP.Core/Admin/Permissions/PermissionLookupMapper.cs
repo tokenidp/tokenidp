@@ -2,7 +2,7 @@ using TokenIDP.Domain.AggregateRoots.Permissions;
 
 namespace TokenIDP.Core.Admin.Permissions;
 
-internal static class PermissionLookupMapper
+public static class PermissionLookupMapper
 {
     public static List<LookupItem> MapControlTypes()
     {

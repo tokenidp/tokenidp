@@ -1,11 +1,13 @@
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Foundation;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Tenants.UseCases;
 
 internal sealed class TenantCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly ITenantRepository _tenantRepository;
     private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantCommandUseCase> _logger;
@@ -13,14 +15,14 @@ internal sealed class TenantCommandUseCase
     private readonly ISecretProtector _secretProtector;
 
     public TenantCommandUseCase(
-        IApplicationDbContext dbContext,
+        ITenantRepository tenantRepository,
         ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<TenantCommandUseCase> logger,
         ICodeSequenceGenerator codeGenerator,
         ISecretProtector secretProtector)
     {
-        _dbContext = dbContext;
+        _tenantRepository = tenantRepository;
         _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
@@ -41,9 +43,10 @@ internal sealed class TenantCommandUseCase
 
         var tenantName = request.TenantName?.Trim() ?? string.Empty;
 
-        var nameExists = await _dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(t => t.TenantName.ToLower() == tenantName.ToLower(), cancellationToken);
+        var nameExists = await _tenantRepository.TenantNameExistsAsync(
+            tenantName,
+            null,
+            cancellationToken);
 
         if (nameExists)
         {
@@ -117,8 +120,7 @@ internal sealed class TenantCommandUseCase
                 tenant.DisableExternalProvider(p.ProviderType);
         }
 
-        _dbContext.Tenants.Add(tenant);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _tenantRepository.AddAsync(tenant, cancellationToken);
         await InvalidateLookupCaches(tenant.Id);
 
         _logger.LogInfo("Tenant created with Id {TenantId}", tenant.Id);
@@ -136,11 +138,7 @@ internal sealed class TenantCommandUseCase
 
         _logger.LogDebug("Updating tenant {TenantId}", id);
 
-        var tenant = await _dbContext.Tenants
-            .Include(t => t.TenantUISetting)
-            .Include(t => t.TenantAuthSetting)
-            .Include(t => t.TenantExternalProviders)
-            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+        var tenant = await _tenantRepository.GetTenantAggregateAsync(id, cancellationToken);
 
         if (tenant == null)
         {
@@ -152,11 +150,10 @@ internal sealed class TenantCommandUseCase
 
         var tenantName = request.TenantName?.Trim() ?? string.Empty;
 
-        var nameExists = await _dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(t => t.Id != id &&
-                t.TenantName.ToLower() == tenantName.ToLower(),
-                cancellationToken);
+        var nameExists = await _tenantRepository.TenantNameExistsAsync(
+            tenantName,
+            id,
+            cancellationToken);
 
         if (nameExists)
         {
@@ -266,7 +263,7 @@ internal sealed class TenantCommandUseCase
                 return FailureFromResult(disableMissingResult);
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _tenantRepository.SaveChangesAsync(cancellationToken);
         await InvalidateLookupCaches(id);
 
         _logger.LogInfo("Tenant updated {TenantId}", id);
@@ -286,8 +283,7 @@ internal sealed class TenantCommandUseCase
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
         }
 
-        var tenant = await _dbContext.Tenants
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        var tenant = await _tenantRepository.GetTenantAggregateAsync(tenantId, cancellationToken);
 
         if (tenant == null)
         {
@@ -309,7 +305,7 @@ internal sealed class TenantCommandUseCase
                 deleteResult.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _tenantRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInfo("Tenant deleted {TenantId}", tenantId);
 
@@ -330,11 +326,7 @@ internal sealed class TenantCommandUseCase
 
     private async Task<bool> CheckTenantByKey(string key, CancellationToken cancellationToken)
     {
-        var keyExist = await _dbContext.Tenants
-            .AsNoTracking()
-            .AnyAsync(t => t.TenantKey.ToLower() == key.ToLower(), cancellationToken);
-
-        return keyExist;
+        return await _tenantRepository.TenantKeyExistsAsync(key, cancellationToken);
     }
 
     private static async Task<string> GenerateUniqueAsync(string tenantName,

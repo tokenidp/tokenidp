@@ -1,16 +1,18 @@
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using System.Security.Cryptography;
+using TokenIDP.Infrastructure.Persistence;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 
 internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
 {
-    private readonly IApplicationDbContext _dbContext;
-    private readonly IClientStore _clientStore;
-    private readonly IUserStore _userStore;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly IClientRepository _clientStore;
+    private readonly IUserRepository _userStore;
     private readonly ILookupNormalizer _normalizer;
     private readonly IAppLogger<ExternalIdentityLinkService> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
@@ -18,9 +20,9 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
     private readonly UserNormalizationService _userNormalizationService;
 
     public ExternalIdentityLinkService(
-        IApplicationDbContext dbContext,
-        IClientStore clientStore,
-        IUserStore userStore,
+        ApplicationDbContext dbContext,
+        IClientRepository clientStore,
+        IUserRepository userStore,
         ILookupNormalizer normalizer,
         IAppLogger<ExternalIdentityLinkService> logger,
         ICodeSequenceGenerator userCodeGenerator,
@@ -280,4 +282,6 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
         }
     }
 }
+
+
 

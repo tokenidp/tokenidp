@@ -1,26 +1,26 @@
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Domain.DomainEvents.Users;
-using TokenIDP.Core.Foundation.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Domain.AggregateRoots.Users.Enums;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
 internal sealed class AuthenticationService : IAuthenticationService
 {
-    private readonly IApplicationDbContext _applicationDbContext;
+    private readonly ApplicationDbContext _applicationDbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IApplicationEventDispatcher _applicationEventDispatcher;
     private readonly IAppLogger<AuthenticationService> _logger;
-    private readonly IUserStore _userStore;
+    private readonly IUserRepository _userStore;
     private readonly PasswordService _passwordService;
 
     public AuthenticationService(IAppLogger<AuthenticationService> logger,
-        IApplicationDbContext applicationDbContext,
+        ApplicationDbContext applicationDbContext,
         ICurrentUserService currentUserService,
         IApplicationEventDispatcher applicationEventDispatcher,
         PasswordService passwordService,
-        IUserStore userStore)
+        IUserRepository userStore)
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
@@ -115,4 +115,3 @@ internal sealed class AuthenticationService : IAuthenticationService
         }
     }
 }
-

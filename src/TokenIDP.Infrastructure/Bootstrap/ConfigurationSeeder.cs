@@ -1,12 +1,13 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Domain.AggregateRoots.Configurations;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
 internal class ConfigurationSeeder : IConfigurationSeeder
 {
-    public async Task CreateAsync(IApplicationDbContext db,
+    public async Task CreateAsync(ApplicationDbContext db,
         int tenantId,
         CreateUpdateConfiguration command,
         CancellationToken ct)
@@ -25,7 +26,7 @@ internal class ConfigurationSeeder : IConfigurationSeeder
         await db.SaveChangesAsync();
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+    public async Task<bool> ExistsAsync(ApplicationDbContext db,
         int tenantId,
         string configKey,
         string scope,
@@ -42,4 +43,5 @@ internal class ConfigurationSeeder : IConfigurationSeeder
         return isExist;
     }
 }
+
 

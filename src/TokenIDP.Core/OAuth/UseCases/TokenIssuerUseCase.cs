@@ -1,19 +1,20 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class TokenIssuerUseCase
 {
     private readonly IAppLogger<TokenIssuerUseCase> _logger;
-    private readonly ITokenStore _tokenStore;
+    private readonly ITokenRepository _tokenStore;
     private readonly ICurrentUserService _currentUserService;
     private readonly JwtTokenGenerator _tokenGenerator;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
 
     public TokenIssuerUseCase(JwtTokenGenerator tokenGenerator,
         IAppLogger<TokenIssuerUseCase> logger,
-        ITokenStore tokenStore,
+        ITokenRepository tokenStore,
         ICurrentUserService currentUserService,
         TokenSecretGenerator tokenSecretGenerator)
     {
@@ -217,3 +218,4 @@ internal sealed class TokenIssuerUseCase
             .ToHashSet(StringComparer.Ordinal);
     }
 }
+

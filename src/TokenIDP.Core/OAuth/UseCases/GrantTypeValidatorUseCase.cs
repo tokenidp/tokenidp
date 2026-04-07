@@ -1,15 +1,16 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class GrantTypeValidatorUseCase
 {
     private readonly IAppLogger<GrantTypeValidatorUseCase> _logger;
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
 
     public GrantTypeValidatorUseCase(IAppLogger<GrantTypeValidatorUseCase> logger,
-        IClientStore clientStore)
+        IClientRepository clientStore)
     {
         _logger = logger;
         _clientStore = clientStore;
@@ -57,4 +58,5 @@ internal sealed class GrantTypeValidatorUseCase
             "The client is not allowed to use the requested grant_type.");
     }
 }
+
 

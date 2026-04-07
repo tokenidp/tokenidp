@@ -2,7 +2,7 @@ using TokenIDP.Domain.AggregateRoots.Tokens;
 
 namespace TokenIDP.Core.Admin.Tokens;
 
-internal sealed class TokenListItem
+public sealed class TokenListItem
 {
     public Guid Id { get; private set; }
     public Guid TokenId { get; private set; }

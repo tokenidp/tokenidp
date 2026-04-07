@@ -1,16 +1,17 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class RevokeTokenUseCase
 {
-    private readonly ITokenStore _tokenStore;
+    private readonly ITokenRepository _tokenStore;
     private readonly IAppLogger<RevokeTokenUseCase> _logger;
     private ICurrentUserService _currentUserService;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
 
     public RevokeTokenUseCase(IAppLogger<RevokeTokenUseCase> logger,
-        ITokenStore tokenStore,
+        ITokenRepository tokenStore,
         ICurrentUserService currentUserService,
         TokenSecretGenerator tokenSecretGenerator)
     {
@@ -28,9 +29,20 @@ internal sealed class RevokeTokenUseCase
 
         if (token == null)
         {
-            _logger.LogError("Token not found.");
+            _logger.LogWarning("Token not found or already inactive during revocation.");
+            return;
+        }
 
-            throw new NotFoundException("Token not found.");
+        if (!IsCallerAuthorized(token))
+        {
+            _logger.LogWarning(
+                "Revocation denied for caller ClientId {CallerClientId}, TenantId {CallerTenantId} on token ClientId {TokenClientId}, TenantId {TokenTenantId}",
+                _currentUserService.ClientId,
+                _currentUserService.TenantId,
+                token.ClientId,
+                token.TenantId);
+
+            return;
         }
 
         _logger.LogDebug("Token found for {UserId} for token revocation", _currentUserService.UserId);
@@ -43,4 +55,27 @@ internal sealed class RevokeTokenUseCase
 
         _logger.LogInfo("Successfully revoked token for user {UserId}", _currentUserService.UserId);
     }
+
+    private bool IsCallerAuthorized(Token token)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserService.ClientId))
+        {
+            return false;
+        }
+
+        if (!string.Equals(_currentUserService.ClientId, token.ClientId, StringComparison.Ordinal) ||
+            _currentUserService.TenantId != token.TenantId)
+        {
+            return false;
+        }
+
+        if (_currentUserService.UserId <= 0)
+        {
+            return true;
+        }
+
+        return token.UserId.HasValue &&
+               token.UserId.Value == _currentUserService.UserId;
+    }
 }
+

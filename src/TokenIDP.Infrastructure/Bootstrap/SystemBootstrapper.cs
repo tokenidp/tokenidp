@@ -1,4 +1,4 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Roles;
 using TokenIDP.Domain.AggregateRoots.Permissions;
@@ -6,6 +6,7 @@ using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Infrastructure.Bootstrap.SeedData;
 using TokenIDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
@@ -79,7 +80,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         }
     }
 
-    private async Task<Tenant> EnsureSystemTenantAsync(IApplicationDbContext db,
+    private async Task<Tenant> EnsureSystemTenantAsync(ApplicationDbContext db,
         CancellationToken ct)
     {
         var defaultTenant = DefaultTenants.SystemTenant;
@@ -103,7 +104,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         return tenant;
     }
 
-    private async Task EnsureAdminClientAsync(IApplicationDbContext db,
+    private async Task EnsureAdminClientAsync(ApplicationDbContext db,
         int tenantId,
         CancellationToken ct)
     {
@@ -169,7 +170,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         _logger.LogInfo("Admin client created.");
     }
 
-    private async Task EnsureAdminApiResourceAsync(IApplicationDbContext db,
+    private async Task EnsureAdminApiResourceAsync(ApplicationDbContext db,
         int tenantId,
         CancellationToken ct)
     {
@@ -219,7 +220,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
             missingScopes.Count);
     }
 
-    private async Task<Role> EnsureDefaultRolesAsync(IApplicationDbContext db,
+    private async Task<Role> EnsureDefaultRolesAsync(ApplicationDbContext db,
         int tenantId,
         List<Permission> permissions,
         CancellationToken ct)
@@ -258,7 +259,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         return role;
     }
 
-    private async Task<User> EnsureDefaultAdminUserAsync(IApplicationDbContext db,
+    private async Task<User> EnsureDefaultAdminUserAsync(ApplicationDbContext db,
         int tenantId,
         int adminRoleId,
         CancellationToken ct)
@@ -291,7 +292,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         return created;
     }
 
-    private async Task EnsureConfigurationsAsync(IApplicationDbContext db,
+    private async Task EnsureConfigurationsAsync(ApplicationDbContext db,
         int tenantId,
         CancellationToken ct)
     {
@@ -315,7 +316,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         }
     }
 
-    private async Task<List<Permission>> EnsurePermissionsAsync(IApplicationDbContext db,
+    private async Task<List<Permission>> EnsurePermissionsAsync(ApplicationDbContext db,
         int tenantId,
         CancellationToken ct)
     {
@@ -342,7 +343,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
     }
 
     private static async Task<int> EnsureRolePermissionsAsync(
-        IApplicationDbContext db,
+        ApplicationDbContext db,
         Role role,
         IEnumerable<CreateUpdateRolePermission> permissions,
         CancellationToken ct)
@@ -454,4 +455,5 @@ internal class SystemBootstrapper : ISystemBootstrapper
         return string.Join("; ", result.Errors.Select(x => x.Message));
     }
 }
+
 

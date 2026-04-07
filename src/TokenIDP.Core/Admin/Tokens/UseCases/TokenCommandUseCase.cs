@@ -1,22 +1,20 @@
 using TokenIDP.Domain.AggregateRoots.Tokens;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Tokens.UseCases;
 
 internal sealed class TokenCommandUseCase
 {
-    private readonly ITokenStore _tokenStore;
+    private readonly ITokenRepository _tokenStore;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<TokenCommandUseCase> _logger;
 
     public TokenCommandUseCase(
-        IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
         IAppLogger<TokenCommandUseCase> logger,
-        ITokenStore tokenStore)
+        ITokenRepository tokenStore)
     {
-        _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
         _tokenStore = tokenStore;
@@ -28,12 +26,10 @@ internal sealed class TokenCommandUseCase
         string? reason,
         CancellationToken cancellationToken = default)
     {
-        var token = await _dbContext.Tokens
-            .Include(t => t.ReferenceToken)
-            .Include(t => t.RefreshToken)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.TokenStatus != TokenStatus.Revoked
-            && t.TenantId == _currentUserService.TenantId, cancellationToken);
+        var token = await _tokenStore.GetActiveTokenAsync(
+            tokenId,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (token == null)
         {
@@ -60,12 +56,10 @@ internal sealed class TokenCommandUseCase
         string ipAddress,
         CancellationToken cancellationToken = default)
     {
-        var token = await _dbContext.Tokens
-            .Include(t => t.ReferenceToken)
-            .Include(t => t.RefreshToken)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.TokenStatus != TokenStatus.Revoked
-            && t.TenantId == _currentUserService.TenantId, cancellationToken);
+        var token = await _tokenStore.GetActiveTokenAsync(
+            tokenId,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (token == null)
         {
@@ -76,12 +70,11 @@ internal sealed class TokenCommandUseCase
 
         token.Expire(_currentUserService.UserId);
 
-        _dbContext.Tokens.Update(token);
-
-        var result = await _dbContext.SaveChangesAsync(cancellationToken);
+        var result = await _tokenStore.SaveAsync(token, cancellationToken);
 
         _logger.LogInfo("Token expired {TokenId}", tokenId);
 
         return ApiResult<int>.Success(result);
     }
 }
+

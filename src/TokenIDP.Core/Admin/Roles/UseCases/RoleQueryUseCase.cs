@@ -1,19 +1,21 @@
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Roles.UseCases;
 
 internal class RoleQueryUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IRoleRepository _roleRepository;
     private readonly IAppLogger<RoleQueryUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
     public RoleQueryUseCase(IAppLogger<RoleQueryUseCase> logger,
-        IApplicationDbContext dbContext,
+        IRoleRepository roleRepository,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _roleRepository = roleRepository;
         _currentUserService = currentUserService;
     }
 
@@ -23,14 +25,10 @@ internal class RoleQueryUseCase
     {
         _logger.LogDebug("Fetching role {RoleId}", id);
 
-        var roleDto = await _dbContext.Roles
-            .AsNoTracking()
-            .Where(r =>
-                r.Id == id &&
-                r.TenantId == _currentUserService.TenantId &&
-                !r.IsDeleted)
-            .Select(RoleInfo.Projection)
-            .FirstOrDefaultAsync(cancellationToken);
+        var roleDto = await _roleRepository.GetRoleDetailAsync(
+            _currentUserService.TenantId,
+            id,
+            cancellationToken);
 
         if (roleDto is null)
         {
@@ -52,12 +50,10 @@ internal class RoleQueryUseCase
         _logger.LogDebug("Fetching roles list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var roles = await _dbContext.RolesSearch
-           .AsNoTracking()
-           .Select(RoleList.Projection)
-           .ApplyFilter(request.SearchCriterias)
-           .ApplySort(request.SortColumn, request.SortOrder)
-           .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        var roles = await _roleRepository.SearchRolesAsync(
+            _currentUserService.TenantId,
+            request,
+            cancellationToken);
 
         _logger.LogDebug("Fetched {Count} roles", roles.TotalCount);
 

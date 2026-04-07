@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Permissions;
 
-internal static class UserLookupMapper
+public static class UserLookupMapper
 {
     public static List<LookupItem> MapUserStatuses()
     {

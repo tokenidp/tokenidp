@@ -1,18 +1,19 @@
 using TokenIDP.Core.OAuth.UseCases;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.GrantHandlers;
 
 internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
 {
     private readonly IAppLogger<RefreshTokenGrantHandler> _logger;
-    private readonly ITokenStore _tokenStore;
+    private readonly ITokenRepository _tokenStore;
     private readonly TokenIssuerUseCase _tokenService;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
 
     public RefreshTokenGrantHandler(IAppLogger<RefreshTokenGrantHandler> logger,
-        ITokenStore tokenStore,
+        ITokenRepository tokenStore,
         TokenContextUseCase tokenContextUseCase,
         TokenIssuerUseCase tokenService,
         TokenSecretGenerator tokenSecretGenerator)
@@ -110,3 +111,4 @@ internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
         return token;
     }
 }
+

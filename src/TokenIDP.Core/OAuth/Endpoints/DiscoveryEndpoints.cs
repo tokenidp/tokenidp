@@ -1,11 +1,12 @@
-using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 
@@ -21,22 +22,22 @@ internal class DiscoveryEndpoints : IEndpointDefinition
 
     public void RegisterEndpoints(IEndpointRouteBuilder app)
     {
-        app.MapGet(DiscoveryPath, async (HttpContext http, IConfiguration configuration) =>
+        app.MapGet(DiscoveryPath, async (HttpContext http, IOptions<TokenOptions> tokenOptions) =>
         {
-            var metadata = BuildDiscoveryDocument(configuration, http);
+            var metadata = BuildDiscoveryDocument(tokenOptions.Value);
             await WriteJsonAsync(http, metadata);
         });
 
-        app.MapGet(JwksPath, async (HttpContext http, IConfiguration configuration, IHostEnvironment env) =>
+        app.MapGet(JwksPath, async (HttpContext http, IOptions<TokenOptions> tokenOptions, IHostEnvironment env) =>
         {
-            var jwks = BuildJwksAsync(configuration, env);
+            var jwks = BuildJwksAsync(tokenOptions.Value, env);
             await WriteJsonAsync(http, jwks);
         });
     }
 
-    private Dictionary<string, object?> BuildDiscoveryDocument(IConfiguration configuration, HttpContext http)
+    private Dictionary<string, object?> BuildDiscoveryDocument(TokenOptions tokenOptions)
     {
-        var issuer = ResolveIssuer(configuration, http);
+        var issuer = TokenOptionsResolver.ResolveIssuer(tokenOptions);
 
         var jwksUri = $"{issuer}{JwksPath}";
 
@@ -59,26 +60,8 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         };
     }
 
-    private string ResolveIssuer(IConfiguration configuration, HttpContext http)
+    private string BuildJwksAsync(TokenOptions settings, IHostEnvironment environment)
     {
-        var issuer = configuration["TokenOptions:Issuer"];
-
-        if (!string.IsNullOrWhiteSpace(issuer))
-        {
-            return issuer.TrimEnd('/');
-        }
-
-        var request = http.Request;
-
-        var baseUrl = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}";
-
-        return baseUrl.TrimEnd('/');
-    }
-
-    private string BuildJwksAsync(IConfiguration configuration, IHostEnvironment environment)
-    {
-        var settings = ReadTokenOptions(configuration);
-
         if (TokenSigningMaterialResolver.HasCertificateConfiguration(settings))
         {
             var cert = TokenSigningMaterialResolver.LoadCertificate(settings);
@@ -174,17 +157,5 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         await http.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));
     }
 
-    private static TokenOption ReadTokenOptions(IConfiguration configuration)
-    {
-        return new TokenOption
-        {
-            Key = configuration["TokenOptions:Key"],
-            KeyPath = configuration["TokenOptions:KeyPath"],
-            CertificateThumbprint = configuration["TokenOptions:CertificateThumbprint"],
-            CertificateSubjectName = configuration["TokenOptions:CertificateSubjectName"],
-            CertificateStoreName = configuration["TokenOptions:CertificateStoreName"],
-            CertificateStoreLocation = configuration["TokenOptions:CertificateStoreLocation"]
-        };
-    }
 }
 

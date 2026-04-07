@@ -1,13 +1,13 @@
 using TokenIDP.Core.Admin.Common;
 using System.ComponentModel.DataAnnotations;
+using FluentValidation;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
 public sealed class CreateAccountUseCase
 {
-    private static readonly EmailAddressAttribute EmailValidator = new();
-
-    private readonly IApplicationDbContext _dbContext;
     private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
     private readonly PasswordService _passwordService;
@@ -15,18 +15,24 @@ public sealed class CreateAccountUseCase
     private readonly ILookupNormalizer _normalizer;
     private readonly IAppLogger<CreateAccountUseCase> _logger;
     private readonly EmailConfirmationUseCase _emailConfirmationUseCase;
+    private readonly ITenantRepository _tenantRepository;
+    private readonly IClientRepository _clientRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IValidator<CreateAccountRequest> _validator;
 
     public CreateAccountUseCase(
-        IApplicationDbContext dbContext,
         ITenantContextAccessor tenantContextAccessor,
         ICodeSequenceGenerator userCodeGenerator,
         PasswordService passwordService,
         UserNormalizationService userNormalizationService,
         ILookupNormalizer normalizer,
         IAppLogger<CreateAccountUseCase> logger,
-        EmailConfirmationUseCase emailConfirmationUseCase)
+        EmailConfirmationUseCase emailConfirmationUseCase,
+        ITenantRepository tenantRepository,
+        IClientRepository clientRepository,
+        IUserRepository userRepository,
+        IValidator<CreateAccountRequest> validator)
     {
-        _dbContext = dbContext;
         _tenantContextAccessor = tenantContextAccessor;
         _userCodeGenerator = userCodeGenerator;
         _passwordService = passwordService;
@@ -34,6 +40,10 @@ public sealed class CreateAccountUseCase
         _normalizer = normalizer;
         _logger = logger;
         _emailConfirmationUseCase = emailConfirmationUseCase;
+        _tenantRepository = tenantRepository;
+        _clientRepository = clientRepository;
+        _userRepository = userRepository;
+        _validator = validator;
     }
 
     public async Task<CreateAccountResult> Execute(
@@ -59,22 +69,20 @@ public sealed class CreateAccountUseCase
                 "Client context is missing.");
         }
 
-        var firstName = request.FirstName?.Trim() ?? string.Empty;
-        var lastName = request.LastName?.Trim() ?? string.Empty;
-        var email = request.Email?.Trim() ?? string.Empty;
-        var userName = request.UserName?.Trim() ?? string.Empty;
-        var phoneNumber = request.PhoneNumber?.Trim() ?? string.Empty;
-        var password = request.Password ?? string.Empty;
-
-        var validationError = ValidateRequest(firstName, lastName, email, userName, phoneNumber, password);
+        var validationError = await ValidateRequestAsync(request, cancellationToken);
         if (validationError is not null)
         {
             return validationError;
         }
 
-        var tenantAuth = await _dbContext.TenantAuthSettings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.TenantId == tenantId, cancellationToken);
+        var firstName = request.FirstName.Trim();
+        var lastName = request.LastName.Trim();
+        var email = request.Email.Trim();
+        var userName = request.UserName.Trim();
+        var phoneNumber = request.PhoneNumber.Trim();
+        var password = request.Password;
+
+        var tenantAuth = await _tenantRepository.GetTenantAuthSettingAsync(tenantId, cancellationToken);
 
         if (tenantAuth is null)
         {
@@ -83,9 +91,7 @@ public sealed class CreateAccountUseCase
                 "Tenant authentication settings were not found.");
         }
 
-        var clientAuthPolicy = await _dbContext.ClientAuthPolicies
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ClientId == clientId, cancellationToken);
+        var clientAuthPolicy = await _clientRepository.GetClientAuthPolicy(clientId);
 
         if (clientAuthPolicy is null ||
             !tenantAuth.AllowSelfRegistration ||
@@ -106,12 +112,15 @@ public sealed class CreateAccountUseCase
         var normalizedEmail = _normalizer.NormalizeEmail(email);
         var normalizedUserName = _normalizer.NormalizeName(userName);
 
-        var emailExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(
-                x => x.TenantId == tenantId &&
-                     ((x.NormalizedEmail == normalizedEmail || x.Email == email)
-                     || (x.NormalizedUserName == normalizedUserName || x.UserName == userName)),
+        var emailExists = await _userRepository.EmailExistsAsync(
+                tenantId,
+                0,
+                normalizedEmail,
+                cancellationToken)
+            || await _userRepository.UserNameExistsAsync(
+                tenantId,
+                0,
+                normalizedUserName,
                 cancellationToken);
 
         if (emailExists)
@@ -152,8 +161,7 @@ public sealed class CreateAccountUseCase
 
         _passwordService.SetPassword(user, password);
 
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _userRepository.CreateUser(user, password);
 
         if (tenantAuth.RequireEmailVerification)
         {
@@ -175,52 +183,18 @@ public sealed class CreateAccountUseCase
         return CreateAccountResult.Success(user.Id, tenantAuth.RequireEmailVerification);
     }
 
-    private static CreateAccountResult? ValidateRequest(
-        string firstName,
-        string lastName,
-        string email,
-        string userName,
-        string phoneNumber,
-        string password)
+    private async Task<CreateAccountResult?> ValidateRequestAsync(
+        CreateAccountRequest request,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(firstName))
-        {
-            return CreateAccountResult.Failure("user.first_name.invalid", "First name is required.");
-        }
+        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
+        var firstError = validationResult.Errors.FirstOrDefault();
 
-        if (string.IsNullOrWhiteSpace(lastName))
+        if (firstError is not null)
         {
-            return CreateAccountResult.Failure("user.last_name.invalid", "Last name is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return CreateAccountResult.Failure("user.email.invalid", "Email is required.");
-        }
-
-        if (!EmailValidator.IsValid(email))
-        {
-            return CreateAccountResult.Failure("user.email.invalid", "Invalid email.");
-        }
-
-        if (string.IsNullOrWhiteSpace(userName))
-        {
-            return CreateAccountResult.Failure("user.username.invalid", "User name is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(phoneNumber))
-        {
-            return CreateAccountResult.Failure("user.phone.invalid", "Phone number is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            return CreateAccountResult.Failure("user.password.required", "Password is required.");
-        }
-
-        if (password.Length < 8)
-        {
-            return CreateAccountResult.Failure("user.password.invalid", "Password must be at least 8 characters.");
+            return CreateAccountResult.Failure(
+                firstError.ErrorCode ?? "signup.invalid",
+                firstError.ErrorMessage);
         }
 
         return null;

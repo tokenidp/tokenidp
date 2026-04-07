@@ -1,15 +1,16 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class IntrospectionUseCase
 {
     private readonly IAppLogger<IntrospectionUseCase> _logger;
-    private readonly ITokenStore _tokenStore;
+    private readonly ITokenRepository _tokenStore;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
     private readonly ICurrentUserService _currentUserService;
     public IntrospectionUseCase(IAppLogger<IntrospectionUseCase> logger,
-        ITokenStore tokenStore,
+        ITokenRepository tokenStore,
         TokenSecretGenerator tokenSecretGenerator,
         ICurrentUserService currentUserService)
     {
@@ -35,6 +36,18 @@ internal sealed class IntrospectionUseCase
             return IntrospectionResponse.Inactive();
         }
 
+        if (!IsCallerAuthorized(referenceToken))
+        {
+            _logger.LogWarning(
+                "Introspection denied for caller ClientId {CallerClientId}, TenantId {CallerTenantId} on token ClientId {TokenClientId}, TenantId {TokenTenantId}",
+                _currentUserService.ClientId,
+                _currentUserService.TenantId,
+                referenceToken.ClientId,
+                referenceToken.TenantId);
+
+            return IntrospectionResponse.Inactive();
+        }
+
         _logger.LogDebug("Valid token found for client {client}", referenceToken.ClientId);
 
         var roles = referenceToken.Roles ?? string.Empty;
@@ -50,5 +63,28 @@ internal sealed class IntrospectionUseCase
             _currentUserService.BaseUrl
             );
     }
+
+    private bool IsCallerAuthorized(Token token)
+    {
+        if (string.IsNullOrWhiteSpace(_currentUserService.ClientId))
+        {
+            return false;
+        }
+
+        if (!string.Equals(_currentUserService.ClientId, token.ClientId, StringComparison.Ordinal) ||
+            _currentUserService.TenantId != token.TenantId)
+        {
+            return false;
+        }
+
+        if (_currentUserService.UserId <= 0)
+        {
+            return true;
+        }
+
+        return token.UserId.HasValue &&
+               token.UserId.Value == _currentUserService.UserId;
+    }
 }
+
 

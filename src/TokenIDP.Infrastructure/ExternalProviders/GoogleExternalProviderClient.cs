@@ -1,6 +1,7 @@
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
 using TokenIDP.Core.OAuth.ExternalProviders.Security;
 using System.Text.Json.Serialization;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 

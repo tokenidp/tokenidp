@@ -1,31 +1,29 @@
 using TokenIDP.Core.Admin.Permissions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
 internal class UserPermissionsUseCase
 {
-    private readonly IUserStore _userStore;
+    private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IApplicationDbContext _dbContext;
     private readonly IAppLogger<UserPermissionsUseCase> _logger;
 
     public UserPermissionsUseCase(ICurrentUserService currentUserService,
-        IApplicationDbContext applicationDbContext,
         IAppLogger<UserPermissionsUseCase> logger,
-        IUserStore userStore)
+        IUserRepository userRepository)
     {
         _currentUserService = currentUserService;
-        _dbContext = applicationDbContext;
         _logger = logger;
-        _userStore = userStore;
+        _userRepository = userRepository;
     }
 
     public async Task<ApiResult<UserPermission>> GetUserPermissions()
     {
         _logger.LogDebug("Fetching user info for: {UserId}", _currentUserService.UserId);
 
-        var user = await _userStore.GetUserById(_currentUserService.UserId);
+        var user = await _userRepository.GetUserById(_currentUserService.UserId);
 
         if (user == null)
         {
@@ -36,21 +34,9 @@ internal class UserPermissionsUseCase
         _logger.LogDebug("Found user {UserName} (Tenant: {TenantId})",
             user.UserName ?? string.Empty, user.TenantId);
 
-        var permissions = await _dbContext.UserRolePermissions
-            .Where(c => c.UserId == _currentUserService.UserId)
-            .Select(c => new PermissionInfo(
-                c.Id,
-                c.ParentId,
-                c.UserId,
-                c.Sequence,
-                c.PermissionName,
-                c.IsAllowed ? "true" : "false",
-                c.Permissionkey,
-                c.Icon,
-                c.AccessUrl,
-                c.RoleName,
-                c.ControlType))
-            .ToListAsync();
+        var permissions = await _userRepository.GetUserPermissionsAsync(
+            _currentUserService.UserId,
+            CancellationToken.None);
 
         if (!permissions.IsSafe())
         {
@@ -72,4 +58,5 @@ internal class UserPermissionsUseCase
         return ApiResult<UserPermission>.Success(userInfo);
     }
 }
+
 

@@ -1,12 +1,24 @@
+using TokenIDP.Core.Abstractions.Repositories;
+
 namespace TokenIDP.Core.Admin.Clients;
 
 internal sealed class ClientCommandValidator
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApiResourceRepository _apiResourceRepository;
+    private readonly IClientRepository _clientRepository;
+    private readonly IRoleRepository _roleRepository;
+    private readonly ITenantRepository _tenantRepository;
 
-    public ClientCommandValidator(IApplicationDbContext dbContext)
+    public ClientCommandValidator(
+        IClientRepository clientRepository,
+        IApiResourceRepository apiResourceRepository,
+        ITenantRepository tenantRepository,
+        IRoleRepository roleRepository)
     {
-        _dbContext = dbContext;
+        _clientRepository = clientRepository;
+        _apiResourceRepository = apiResourceRepository;
+        _tenantRepository = tenantRepository;
+        _roleRepository = roleRepository;
     }
 
     public async Task<Result> ValidateNewClientIdUniqueAsync(
@@ -14,12 +26,10 @@ internal sealed class ClientCommandValidator
         string clientId,
         CancellationToken cancellationToken)
     {
-        var exists = await _dbContext.Clients
-            .AsNoTracking()
-            .AnyAsync(c =>
-                c.TenantId == tenantId &&
-                c.ClientId.ToLower() == clientId.ToLower(),
-                cancellationToken);
+        var exists = await _clientRepository.ClientIdExistsAsync(
+            tenantId,
+            clientId,
+            cancellationToken);
 
         return exists
             ? Result.Failure("client.id.duplicate", "Client Id already exists.")
@@ -68,22 +78,11 @@ internal sealed class ClientCommandValidator
             .Where(scope => !StandardScopes.Supported.Contains(scope))
             .ToArray();
 
-        var relevantResources = await _dbContext.ApiResources
-            .AsNoTracking()
-            .Where(resource =>
-                resource.TenantId == tenantId &&
-                resource.Enabled &&
-                (requestedApiResources.Contains(resource.Name) ||
-                 resource.Scopes.Any(scope => scope.Enabled && apiScopeNames.Contains(scope.Name))))
-            .Select(resource => new
-            {
-                resource.Name,
-                ScopeNames = resource.Scopes
-                    .Where(scope => scope.Enabled)
-                    .Select(scope => scope.Name)
-                    .ToList()
-            })
-            .ToListAsync(cancellationToken);
+        var relevantResources = await _apiResourceRepository.GetEnabledApiResourcesAsync(
+            tenantId,
+            requestedApiResources,
+            apiScopeNames,
+            cancellationToken);
 
         var availableResourceNames = relevantResources
             .Select(resource => resource.Name)
@@ -142,13 +141,9 @@ internal sealed class ClientCommandValidator
             return Result.Success(0);
         }
 
-        var tenantProviderIds = await _dbContext.TenantExternalProviders
-            .AsNoTracking()
-            .Where(provider => provider.TenantId == tenantId)
-            .Select(provider => provider.Id)
-            .ToListAsync(cancellationToken);
-
-        var tenantProviderIdSet = tenantProviderIds.ToHashSet();
+        var tenantProviderIdSet = await _tenantRepository.GetTenantExternalProviderIdsAsync(
+            tenantId,
+            cancellationToken);
         var invalidProviderIds = selectedProviderIds
             .Where(providerId => !tenantProviderIdSet.Contains(providerId))
             .ToArray();
@@ -178,15 +173,12 @@ internal sealed class ClientCommandValidator
             return Result.Success(0);
         }
 
-        var role = await _dbContext.Roles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r =>
-                    r.Id == defaultRoleId.Value &&
-                    r.TenantId == tenantId &&
-                    !r.IsDeleted,
-                cancellationToken);
+        var role = await _roleRepository.GetRoleAssignmentValidationAsync(
+            tenantId,
+            defaultRoleId.Value,
+            cancellationToken);
 
-        if (role is null)
+        if (role is null || !role.Exists)
         {
             return Result.Failure(
                 "client.auth_policy.default_role.invalid",

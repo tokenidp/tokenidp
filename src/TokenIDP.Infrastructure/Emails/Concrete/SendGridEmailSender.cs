@@ -3,6 +3,7 @@ using TokenIDP.Infrastructure.Emails.Abstractions;
 using TokenIDP.Infrastructure.Emails.Primitives;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.Emails.Concrete;
 

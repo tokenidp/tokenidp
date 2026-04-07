@@ -1,12 +1,12 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.Policies;
 
 internal sealed class TenantUserMfaPolicy
 {
-    private readonly ITenantStore _tenantStore;
+    private readonly ITenantRepository _tenantStore;
 
-    public TenantUserMfaPolicy(ITenantStore tenantStore)
+    public TenantUserMfaPolicy(ITenantRepository tenantStore)
     {
         _tenantStore = tenantStore;
     }
@@ -19,5 +19,6 @@ internal sealed class TenantUserMfaPolicy
         return tenantEnabled && context.User.TwoFactorEnabled;
     }
 }
+
 
 

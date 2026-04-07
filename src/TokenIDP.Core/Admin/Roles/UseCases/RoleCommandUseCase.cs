@@ -1,17 +1,20 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
+
 namespace TokenIDP.Core.Admin.Roles.UseCases;
 
 internal class RoleCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IRoleRepository _roleRepository;
     private readonly IAppLogger<RoleCommandUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
     public RoleCommandUseCase(IAppLogger<RoleCommandUseCase> logger,
-        IApplicationDbContext dbContext,
+        IRoleRepository roleRepository,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _roleRepository = roleRepository;
         _currentUserService = currentUserService;
     }
 
@@ -48,12 +51,11 @@ internal class RoleCommandUseCase
         }
 
         var roleNameLower = roleName.ToLowerInvariant();
-        var roleExists = await _dbContext.Roles
-            .AnyAsync(
-                r => r.TenantId == _currentUserService.TenantId &&
-                     !r.IsDeleted &&
-                     r.Name.ToLower() == roleNameLower,
-                cancellationToken);
+        var roleExists = await _roleRepository.RoleNameExistsAsync(
+            _currentUserService.TenantId,
+            roleName,
+            null,
+            cancellationToken);
 
         if (roleExists)
         {
@@ -85,9 +87,7 @@ internal class RoleCommandUseCase
             }
         }
 
-        _dbContext.Roles.Add(role);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _roleRepository.AddAsync(role, cancellationToken);
 
         _logger.LogDebug("Role created successfully with Id {RoleId} in tenant {TenantId}",
             role.Id, _currentUserService.TenantId);
@@ -103,13 +103,10 @@ internal class RoleCommandUseCase
         _logger.LogDebug("Updating role with Id {RoleId} in tenant {TenantId}",
             id, _currentUserService.TenantId);
 
-        var role = await _dbContext.Roles
-            .Include(r => r.RolePermissions)
-            .FirstOrDefaultAsync(
-                r => r.Id == id &&
-                     r.TenantId == _currentUserService.TenantId &&
-                     !r.IsDeleted,
-                cancellationToken);
+        var role = await _roleRepository.GetRoleAggregateAsync(
+            id,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (role is null)
         {
@@ -154,13 +151,11 @@ internal class RoleCommandUseCase
         }
 
         var roleNameLower = roleName.ToLowerInvariant();
-        var roleExists = await _dbContext.Roles
-            .AnyAsync(
-                r => r.TenantId == _currentUserService.TenantId &&
-                     !r.IsDeleted &&
-                     r.Id != role.Id &&
-                     r.Name.ToLower() == roleNameLower,
-                cancellationToken);
+        var roleExists = await _roleRepository.RoleNameExistsAsync(
+            _currentUserService.TenantId,
+            roleName,
+            role.Id,
+            cancellationToken);
 
         if (roleExists)
         {
@@ -211,7 +206,7 @@ internal class RoleCommandUseCase
             }
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _roleRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogDebug("Role updated successfully with Id {RoleId} in tenant {TenantId}",
             role.Id, _currentUserService.TenantId);
@@ -224,8 +219,10 @@ internal class RoleCommandUseCase
         _logger.LogDebug("Deleting role with Id {RoleId} in tenant {TenantId}",
             roleId, _currentUserService.TenantId);
 
-        var role = await _dbContext.Roles
-            .FirstOrDefaultAsync(r => r.Id == roleId, CancellationToken.None);
+        var role = await _roleRepository.GetRoleAggregateAsync(
+            roleId,
+            _currentUserService.TenantId,
+            CancellationToken.None);
 
         if (role is null)
         {
@@ -245,7 +242,7 @@ internal class RoleCommandUseCase
                    deleteResult.Errors.Select(e => ApiError.Failure($"{e.Code}: {e.Message}")).ToList());
         }
 
-        await _dbContext.SaveChangesAsync();
+        await _roleRepository.SaveChangesAsync(CancellationToken.None);
 
         _logger.LogDebug("Role deleted successfully with Id {RoleId} in tenant {TenantId}",
             role.Id, _currentUserService.TenantId);

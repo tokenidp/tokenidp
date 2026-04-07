@@ -1,21 +1,23 @@
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Tenants.UseCases;
 
 internal sealed class TenantQueryUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantQueryUseCase> _logger;
     private readonly ISecretProtector _secretProtector;
 
     public TenantQueryUseCase(
-        IApplicationDbContext dbContext,
+        ITenantRepository tenantRepository,
         ICurrentUserService currentUserService,
         IAppLogger<TenantQueryUseCase> logger,
         ISecretProtector secretProtector)
     {
-        _dbContext = dbContext;
+        _tenantRepository = tenantRepository;
         _currentUserService = currentUserService;
         _logger = logger;
         _secretProtector = secretProtector;
@@ -33,11 +35,7 @@ internal sealed class TenantQueryUseCase
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
         }
 
-        var tenant = await _dbContext.Tenants
-            .AsNoTracking()
-            .Where(t => t.Id == tenantId)
-            .Select(TenantDetail.Projection)
-            .FirstOrDefaultAsync(cancellationToken);
+        var tenant = await _tenantRepository.GetTenantDetailAsync(tenantId, cancellationToken);
 
         if (tenant == null)
         {
@@ -60,10 +58,7 @@ internal sealed class TenantQueryUseCase
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
         }
 
-        var tenant = await _dbContext.Tenants
-            .AsNoTracking()
-            .Include(t => t.TenantExternalProviders)
-            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        var tenant = await _tenantRepository.GetTenantWithProvidersAsync(tenantId, cancellationToken);
 
         if (tenant is null)
         {
@@ -108,63 +103,10 @@ internal sealed class TenantQueryUseCase
         _logger.LogDebug("Fetching tenants list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var query = _dbContext.Tenants.AsNoTracking();
-        if (_currentUserService.TenantId > 0)
-        {
-            query = query.Where(t => t.Id == _currentUserService.TenantId);
-        }
-
-        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
-        var searchCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
-        {
-            var term = searchCriteria.Value.Trim().ToLowerInvariant();
-            query = query.Where(tenant =>
-                (tenant.TenantName ?? string.Empty).ToLower().Contains(term) ||
-                (tenant.TenantCode ?? string.Empty).ToLower().Contains(term) ||
-                (tenant.Email ?? string.Empty).ToLower().Contains(term));
-        }
-
-        criterias = criterias
-            .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        var statusCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "IsActive", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(c.ColumnName, "Status", StringComparison.OrdinalIgnoreCase));
-        if (statusCriteria != null)
-        {
-            criterias = criterias
-                .Where(c =>
-                    !string.Equals(c.ColumnName, "IsActive", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(c.ColumnName, "Status", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            var raw = statusCriteria.Value?.Trim();
-            if (!string.IsNullOrWhiteSpace(raw))
-            {
-                if (bool.TryParse(raw, out var isActive))
-                {
-                    query = query.Where(tenant => tenant.IsActive == isActive);
-                }
-                else if (string.Equals(raw, "Active", StringComparison.OrdinalIgnoreCase))
-                {
-                    query = query.Where(tenant => tenant.IsActive == true);
-                }
-                else if (string.Equals(raw, "Inactive", StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(raw, "Disabled", StringComparison.OrdinalIgnoreCase))
-                {
-                    query = query.Where(tenant => tenant.IsActive == false);
-                }
-            }
-        }
-
-        var tenants = await query
-            .ApplyFilter(criterias)
-            .ApplySort(request.SortColumn, request.SortOrder)
-            .Select(TenantSearchResult.Projection)
-            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        var tenants = await _tenantRepository.SearchTenantsAsync(
+            _currentUserService.TenantId > 0 ? _currentUserService.TenantId : null,
+            request,
+            cancellationToken);
 
         _logger.LogDebug("Fetched {Count} tenants", tenants.TotalCount);
 

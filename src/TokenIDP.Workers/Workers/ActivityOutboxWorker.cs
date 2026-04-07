@@ -5,6 +5,7 @@ using TokenIDP.Workers.Queries;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NLog;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Workers.Workers;
 

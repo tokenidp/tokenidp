@@ -1,8 +1,8 @@
 namespace TokenIDP.Core.Admin.Roles;
 
-internal class RoleInfo
+public class RoleInfo
 {
-    internal static Expression<Func<Role, RoleInfo>> Projection =>
+    public static Expression<Func<Role, RoleInfo>> Projection =>
         r => new RoleInfo
         {
             Id = r.Id,

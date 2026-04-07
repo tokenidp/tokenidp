@@ -2,7 +2,7 @@ using TokenIDP.Domain.AggregateRoots.Configurations;
 
 namespace TokenIDP.Core.Admin.Configurations;
 
-internal interface ITenantConfigurationRepository
+public interface ITenantConfigurationRepository
 {
     IQueryable<Configuration> Query();
     Task<Configuration?> GetByIdAsync(int tenantId, int id, CancellationToken cancellationToken = default);

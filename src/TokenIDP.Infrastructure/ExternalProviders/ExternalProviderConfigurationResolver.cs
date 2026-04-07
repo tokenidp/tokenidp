@@ -1,13 +1,16 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Infrastructure.Persistence;
+
 namespace TokenIDP.Infrastructure.ExternalProviders;
 
 public sealed class ExternalProviderConfigurationResolver
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly ApplicationDbContext _dbContext;
     private readonly ICache _cache;
     private readonly IAppLogger<ExternalProviderConfigurationResolver> _logger;
 
     public ExternalProviderConfigurationResolver(
-        IApplicationDbContext dbContext,
+        ApplicationDbContext dbContext,
         ICache cache,
         IAppLogger<ExternalProviderConfigurationResolver> logger)
     {
@@ -64,3 +67,4 @@ public sealed class ExternalProviderConfigurationResolver
         return provider;
     }
 }
+

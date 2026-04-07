@@ -1,15 +1,15 @@
 using TokenIDP.Domain.AggregateRoots.Configurations;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Infrastructure.Emails.Primitives;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Infrastructure.Emails.Concrete;
 
 public sealed class EmailConfigurationProvider
 {
-    private readonly IConfigurationStore _configService;
+    private readonly IConfigurationRepository _configService;
     private IEnumerable<ConfigurationShortInfo>? _settings;
 
-    public EmailConfigurationProvider(IConfigurationStore configService)
+    public EmailConfigurationProvider(IConfigurationRepository configService)
     {
         _configService = configService;
 
@@ -147,3 +147,4 @@ public sealed class EmailConfigurationProvider
         }
     }
 }
+

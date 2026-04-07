@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Common;
 
-internal static class QueryableExtensions
+public static class QueryableExtensions
 {
     public static IQueryable<T> ApplySort<T>(
         this IQueryable<T> query,

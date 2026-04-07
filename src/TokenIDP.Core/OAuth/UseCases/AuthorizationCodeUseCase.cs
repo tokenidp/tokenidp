@@ -1,16 +1,17 @@
 using TokenIDP.Core.OAuth.Policies;
 using TokenIDP.Domain.AggregateRoots.Authorization;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
 {
     private readonly IAuthenticationService _identityService;
-    private readonly IAuthorizationStore _authorizationStore;
+    private readonly IAuthorizationRepository _authorizationStore;
     private readonly IMfaUseCase _mfaUseCase;
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
     private readonly TenantUserMfaPolicy _mfaPolicy;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly IAppLogger<AuthorizationCodeUseCase> _logger;
@@ -19,10 +20,10 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
     internal AuthorizationCodeUseCase(IAuthenticationService identityService,
         IAppLogger<AuthorizationCodeUseCase> appLogger,
         IMfaUseCase mfaUseCase,
-        IAuthorizationStore authorizationStore,
+        IAuthorizationRepository authorizationStore,
         TokenContextUseCase tokenContextUseCase,
         TenantUserMfaPolicy mfaPolicy,
-        IClientStore clientStore,
+        IClientRepository clientStore,
         IUserSignInService userSignInService)
     {
         _identityService = identityService;
@@ -83,6 +84,19 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
                 tokenRequest.ClientId, authorizationCode.UserId);
 
             throw new UnauthorizedAccessException("Invalid code verifier.");
+        }
+
+        if (!string.Equals(
+                tokenRequest.RedirectUri?.Trim(),
+                authorizationCode.RedirectUri,
+                StringComparison.Ordinal))
+        {
+            _logger.LogWarning(
+                "Invalid redirect_uri for ClientId: {ClientId}, UserId: {UserId}",
+                tokenRequest.ClientId,
+                authorizationCode.UserId);
+
+            throw new TokenRequestValidationException("invalid_grant", "Invalid redirect_uri.");
         }
 
         var validationResult = await _clientStore.GetClientShortInfo(tokenRequest.ClientId);
@@ -150,3 +164,4 @@ internal sealed class AuthorizationCodeUseCase : IAuthorizationCodeUseCase
         return authorizationCode;
     }
 }
+

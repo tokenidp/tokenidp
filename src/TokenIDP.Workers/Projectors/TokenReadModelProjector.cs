@@ -1,16 +1,17 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Workers.Projectors;
 
 internal sealed class TokenReadModelProjector
 {
     private readonly ApplicationDbContext _db;
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
     private IAppLogger<TokenReadModelProjector> _appLogger;
 
     public TokenReadModelProjector(ApplicationDbContext db,
         IAppLogger<TokenReadModelProjector> appLogger,
-        IClientStore clientStore)
+        IClientRepository clientStore)
     {
         _db = db;
         _appLogger = appLogger;
@@ -135,4 +136,5 @@ internal sealed class TokenReadModelProjector
             $"Unsupported event type {evt.GetType().Name}")
     };
 }
+
 

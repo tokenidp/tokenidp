@@ -1,19 +1,21 @@
 using TokenIDP.Domain.AggregateRoots.Permissions;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Permissions.UseCases;
 
 internal class PermissionCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IPermissionRepository _permissionRepository;
     private readonly IAppLogger<PermissionCommandUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
     public PermissionCommandUseCase(IAppLogger<PermissionCommandUseCase> logger,
-        IApplicationDbContext dbContext,
+        IPermissionRepository permissionRepository,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _permissionRepository = permissionRepository;
         _currentUserService = currentUserService;
     }
 
@@ -42,8 +44,9 @@ internal class PermissionCommandUseCase
                     ApiError.Failure($"{e.Code}: {e.Message}")).ToList());
         }
 
-        var hasDuplicate = await _dbContext.Permissions
-            .AnyAsync(p => p.PermissionKey.ToUpper() == normalizedKey, cancellationToken);
+        var hasDuplicate = await _permissionRepository.PermissionKeyExistsAsync(
+            normalizedKey,
+            cancellationToken);
 
         if (hasDuplicate)
         {
@@ -51,10 +54,7 @@ internal class PermissionCommandUseCase
                 ApiError.Failure("permission.key.duplicate", "Permission key already exists."));
         }
 
-        var currentSequence = await _dbContext.Permissions
-            .MaxAsync(x => (int?)x.Sequence, cancellationToken) ?? 0;
-
-        var nextSequence = currentSequence + 1;
+        var nextSequence = await _permissionRepository.GetNextPermissionSequenceAsync(cancellationToken);
 
         var permission = new Permission(
             tenantId: _currentUserService.TenantId,
@@ -72,8 +72,7 @@ internal class PermissionCommandUseCase
             isActive: true
         );
 
-        _dbContext.Permissions.Add(permission);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _permissionRepository.AddAsync(permission, cancellationToken);
 
         _logger.LogDebug(
             "Permission created and linked to tenant {TenantId} with Id {PermissionId}",
@@ -90,8 +89,7 @@ internal class PermissionCommandUseCase
     {
         _logger.LogDebug("Updating permission {PermissionId}", permissionId);
 
-        var permission = await _dbContext.Permissions
-            .FirstOrDefaultAsync(p => p.Id == permissionId, cancellationToken);
+        var permission = await _permissionRepository.GetByIdAsync(permissionId, cancellationToken);
 
         if (permission is null)
         {
@@ -131,7 +129,7 @@ internal class PermissionCommandUseCase
                   updateResult.Errors.Select(e => ApiError.Failure($"{e.Code}: {e.Message}")).ToList());
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _permissionRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogDebug("Permission updated successfully {PermissionId}", permission.Id);
 

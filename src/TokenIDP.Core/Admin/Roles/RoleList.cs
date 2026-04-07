@@ -1,14 +1,14 @@
 namespace TokenIDP.Core.Admin.Roles;
 
-internal class RoleList
+public class RoleList
 {
-    internal static Expression<Func<RoleSearch, RoleList>> Projection =>
+    public static Expression<Func<RoleSearch, RoleList>> Projection =>
          t => new RoleList
          {
              Id = t.Id,
              RoleName = t.RoleName,
              Active = t.Active,
-             UpdateBy = t.UpdatedBy,
+             UpdateBy = (t.FirstName ?? string.Empty) + " " + (t.LastName ?? string.Empty),
          };
 
     public int Id { get; set; }

@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Tokens;
 
-internal sealed class TokenLookups
+public sealed class TokenLookups
 {
     public List<LookupItem> TokenTypes { get; init; } = new();
     public List<LookupItem> Statuses { get; init; } = new();

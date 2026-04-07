@@ -1,3 +1,4 @@
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Core.Admin.Activities.UseCases;

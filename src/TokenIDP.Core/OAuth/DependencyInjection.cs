@@ -2,12 +2,14 @@ using TokenIDP.Core.OAuth.Endpoints;
 using TokenIDP.Core.OAuth.GrantHandlers;
 using TokenIDP.Core.OAuth.Policies;
 using TokenIDP.Core.OAuth.UseCases;
+using TokenIDP.Core.Foundation.Validation;
 using TokenIDP.Domain.AggregateRoots.Clients;
 using TokenIDP.Core.OAuth.ExternalProviders;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth;
 
@@ -16,6 +18,8 @@ public static class DependencyInjection
     public static void AddIDPServices(this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddAssemblyValidators(typeof(DependencyInjection).Assembly);
+
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<TokenSecretGenerator>();
 
@@ -50,10 +54,10 @@ public static class DependencyInjection
                 sp.GetRequiredService<IAuthenticationService>(),
                 sp.GetRequiredService<IAppLogger<AuthorizationCodeUseCase>>(),
                 sp.GetRequiredService<IMfaUseCase>(),
-                sp.GetRequiredService<IAuthorizationStore>(),
+                sp.GetRequiredService<IAuthorizationRepository>(),
                 sp.GetRequiredService<TokenContextUseCase>(),
                 sp.GetRequiredService<TenantUserMfaPolicy>(),
-                sp.GetRequiredService<IClientStore>(),
+                sp.GetRequiredService<IClientRepository>(),
                 sp.GetRequiredService<IUserSignInService>()));
 
         services.AddScoped<IAuthorizationRequestValidator, AuthorizationRequestValidator>();
@@ -65,11 +69,11 @@ public static class DependencyInjection
         services.AddScoped<TenantUserMfaPolicy>();
 
         services.AddScoped<IMfaUseCase>(sp =>
-            new MfaUseCase(sp.GetRequiredService<IUserStore>(),
-                sp.GetRequiredService<IAuthorizationStore>(),
+            new MfaUseCase(sp.GetRequiredService<IUserRepository>(),
+                sp.GetRequiredService<IAuthorizationRepository>(),
                 sp.GetRequiredService<IAppLogger<MfaUseCase>>(),
                 sp.GetRequiredService<ICurrentUserService>(),
-                sp.GetRequiredService<IEmailQueueStore>()));
+                sp.GetRequiredService<IEmailQueueRepository>()));
     }
 
     private static void AddGrantHandlers(IServiceCollection services)
@@ -102,4 +106,5 @@ public static class DependencyInjection
         });
     }
 }
+
 

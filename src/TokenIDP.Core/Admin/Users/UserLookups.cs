@@ -1,7 +1,7 @@
 
 namespace TokenIDP.Core.Admin.Users;
 
-internal class UserLookups
+public class UserLookups
 {
     public IEnumerable<LookupItem> Roles { get; set; }
 

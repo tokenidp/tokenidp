@@ -1,17 +1,17 @@
-using TokenIDP.Core.Foundation.Options;
+using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 using System.Security.Cryptography.X509Certificates;
 
 namespace TokenIDP.Core.Foundation.Security;
 
 public static class TokenSigningMaterialResolver
 {
-    public static bool HasCertificateConfiguration(TokenOption settings)
+    public static bool HasCertificateConfiguration(TokenOptions settings)
     {
         return !string.IsNullOrWhiteSpace(settings.CertificateThumbprint) ||
                !string.IsNullOrWhiteSpace(settings.CertificateSubjectName);
     }
 
-    public static string ResolveKeyMaterial(TokenOption settings)
+    public static string ResolveKeyMaterial(TokenOptions settings)
     {
         if (!string.IsNullOrWhiteSpace(settings.KeyPath))
         {
@@ -31,7 +31,7 @@ public static class TokenSigningMaterialResolver
         throw new InvalidOperationException("Token signing key is missing.");
     }
 
-    public static X509Certificate2 LoadCertificate(TokenOption settings, bool requirePrivateKey = false)
+    public static X509Certificate2 LoadCertificate(TokenOptions settings, bool requirePrivateKey = false)
     {
         var storeName = Enum.TryParse(settings.CertificateStoreName, true, out StoreName parsedStore)
             ? parsedStore

@@ -1,12 +1,12 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidator
 {
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
 
-    public AuthorizationRequestValidator(IClientStore clientStore)
+    public AuthorizationRequestValidator(IClientRepository clientStore)
     {
         _clientStore = clientStore;
     }
@@ -142,5 +142,6 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
         return client;
     }
 }
+
 
 

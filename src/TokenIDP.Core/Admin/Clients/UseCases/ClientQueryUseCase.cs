@@ -1,19 +1,21 @@
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Clients.UseCases;
 
 internal sealed class ClientQueryUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IClientRepository _clientRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ClientQueryUseCase> _logger;
 
     public ClientQueryUseCase(
-        IApplicationDbContext dbContext,
+        IClientRepository clientRepository,
         ICurrentUserService currentUserService,
         IAppLogger<ClientQueryUseCase> logger)
     {
-        _dbContext = dbContext;
+        _clientRepository = clientRepository;
         _currentUserService = currentUserService;
         _logger = logger;
     }
@@ -24,12 +26,10 @@ internal sealed class ClientQueryUseCase
     {
         _logger.LogDebug("Fetching client {ClientId}", clientId);
 
-        var client = await _dbContext.Clients
-            .AsNoTracking()
-            .Where(c => c.Id == clientId
-                && c.TenantId == _currentUserService.TenantId)
-            .Select(ClientDetail.Projection)
-            .FirstOrDefaultAsync(cancellationToken);
+        var client = await _clientRepository.GetClientDetailAsync(
+            _currentUserService.TenantId,
+            clientId,
+            cancellationToken);
 
         if (client == null)
         {
@@ -48,44 +48,10 @@ internal sealed class ClientQueryUseCase
         _logger.LogDebug("Fetching clients list. Page {PageNumber} Size {PageSize}",
             request.PageNumber, request.PageSize);
 
-        var query = _dbContext.Clients
-            .AsNoTracking()
-            .Where(c => c.TenantId == _currentUserService.TenantId);
-
-        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
-        var searchCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
-        {
-            var term = searchCriteria.Value.Trim().ToLowerInvariant();
-            query = query.Where(client =>
-                (client.ClientName ?? string.Empty).ToLower().Contains(term) ||
-                (client.ClientId ?? string.Empty).ToLower().Contains(term));
-        }
-
-        criterias = criterias
-            .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        var statusCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "IsActive", StringComparison.OrdinalIgnoreCase));
-        if (statusCriteria != null)
-        {
-            criterias = criterias
-                .Where(c => !string.Equals(c.ColumnName, "IsActive", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (bool.TryParse(statusCriteria.Value, out var isActive))
-            {
-                query = query.Where(client => client.IsActive == isActive);
-            }
-        }
-
-        var clients = await query
-            .Select(ClientDetail.Projection)
-            .ApplyFilter(criterias)
-            .ApplySort(request.SortColumn, request.SortOrder)
-            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        var clients = await _clientRepository.SearchClientsAsync(
+            _currentUserService.TenantId,
+            request,
+            cancellationToken);
 
         _logger.LogDebug("Fetched {Count} clients", clients.TotalCount);
 

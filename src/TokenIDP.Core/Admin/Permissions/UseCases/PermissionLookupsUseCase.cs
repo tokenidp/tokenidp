@@ -1,22 +1,24 @@
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Domain.AggregateRoots.Permissions;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Permissions.UseCases;
 
 internal sealed class PermissionLookupsUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IPermissionRepository _permissionRepository;
     private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<PermissionLookupsUseCase> _logger;
 
     public PermissionLookupsUseCase(
-        IApplicationDbContext dbContext,
+        IPermissionRepository permissionRepository,
         ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<PermissionLookupsUseCase> logger)
     {
-        _dbContext = dbContext;
+        _permissionRepository = permissionRepository;
         _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
@@ -31,27 +33,7 @@ internal sealed class PermissionLookupsUseCase
 
         var lookups = await _cache.GetOrCreateAsync(
             cacheKey,
-            async () =>
-            {
-                var parentMenus = await _dbContext.Permissions
-                    .AsNoTracking()
-                    .Where(p => p.IsActive != false
-                    && (p.ControlType == ControlTypes.NavGroup
-                        || p.ControlType == ControlTypes.NavLink))
-                    .OrderBy(p => p.Sequence)
-                    .Select(p => new LookupItem
-                    {
-                        Key = p.Id.ToString(),
-                        Value = p.PermissionName
-                    })
-                    .ToListAsync(cancellationToken);
-
-                return new PermissionLookups
-                {
-                    ParentMenus = parentMenus,
-                    ControlTypes = PermissionLookupMapper.MapControlTypes()
-                };
-            },
+            () => _permissionRepository.GetPermissionLookupsAsync(_currentUserService.TenantId, cancellationToken),
             TimeSpan.FromMinutes(10));
 
         _logger.LogDebug("Permission lookups fetched for tenant {TenantId}", _currentUserService.TenantId);

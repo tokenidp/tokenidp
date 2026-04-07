@@ -1,8 +1,8 @@
 namespace TokenIDP.Core.Admin.Users;
 
-internal class UserSearchResult
+public class UserSearchResult
 {
-    internal static Expression<Func<UserSearch, UserSearchResult>> Projection =>
+    public static Expression<Func<UserSearch, UserSearchResult>> Projection =>
         user => new UserSearchResult()
         {
             Id = user.Id,

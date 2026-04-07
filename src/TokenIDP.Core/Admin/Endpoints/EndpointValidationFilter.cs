@@ -1,4 +1,8 @@
+using FluentValidation;
+using FluentValidation.Results;
 using System.ComponentModel.DataAnnotations;
+using System.Collections;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Core.Admin.Endpoints;
 
@@ -17,7 +21,10 @@ internal sealed class EndpointValidationFilter : IEndpointFilter
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var errors = ValidateArguments(context.Arguments);
+        var errors = await ValidateArgumentsAsync(
+            context.Arguments,
+            context.HttpContext.RequestServices,
+            context.HttpContext.RequestAborted);
 
         if (errors.Count > 0)
         {
@@ -31,7 +38,10 @@ internal sealed class EndpointValidationFilter : IEndpointFilter
         return await next(context);
     }
 
-    private static Dictionary<string, string> ValidateArguments(IList<object?> arguments)
+    private static async Task<Dictionary<string, string>> ValidateArgumentsAsync(
+        IList<object?> arguments,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken)
     {
         Dictionary<string, string> errors = new(StringComparer.OrdinalIgnoreCase);
 
@@ -42,26 +52,84 @@ internal sealed class EndpointValidationFilter : IEndpointFilter
                 continue;
             }
 
-            var validationResults = new List<ValidationResult>();
-            var validationContext = new ValidationContext(argument);
+            var usedFluentValidation = await AddFluentValidationErrorsAsync(
+                argument,
+                serviceProvider,
+                cancellationToken,
+                errors);
 
-            if (!Validator.TryValidateObject(argument, validationContext, validationResults, true))
+            if (!usedFluentValidation)
             {
-                foreach (var validationResult in validationResults)
-                {
-                    var members = validationResult.MemberNames?.Any() == true
-                        ? validationResult.MemberNames
-                        : new[] { argument.GetType().Name };
-
-                    foreach (var member in members)
-                    {
-                        AddError(errors, member, validationResult.ErrorMessage);
-                    }
-                }
+                AddDataAnnotationsErrors(argument, errors);
             }
         }
 
         return errors;
+    }
+
+    private static async Task<bool> AddFluentValidationErrorsAsync(
+        object argument,
+        IServiceProvider serviceProvider,
+        CancellationToken cancellationToken,
+        Dictionary<string, string> errors)
+    {
+        var validatorType = typeof(IValidator<>).MakeGenericType(argument.GetType());
+        var enumerableType = typeof(IEnumerable<>).MakeGenericType(validatorType);
+
+        if (serviceProvider.GetService(enumerableType) is not IEnumerable validators)
+        {
+            return false;
+        }
+
+        var validationContextType = typeof(ValidationContext<>).MakeGenericType(argument.GetType());
+        var validationContext = Activator.CreateInstance(validationContextType, argument) as IValidationContext
+            ?? throw new InvalidOperationException($"Unable to create validation context for {argument.GetType().Name}.");
+
+        var usedValidators = false;
+
+        foreach (var validator in validators)
+        {
+            if (validator is not IValidator fluentValidator)
+            {
+                continue;
+            }
+
+            usedValidators = true;
+
+            var result = await fluentValidator.ValidateAsync(validationContext, cancellationToken);
+
+            foreach (var failure in result.Errors)
+            {
+                AddError(errors, failure.PropertyName, failure.ErrorMessage);
+            }
+        }
+
+        return usedValidators;
+    }
+
+    private static void AddDataAnnotationsErrors(
+        object argument,
+        Dictionary<string, string> errors)
+    {
+        var validationResults = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+        var validationContext = new ValidationContext(argument);
+
+        if (Validator.TryValidateObject(argument, validationContext, validationResults, true))
+        {
+            return;
+        }
+
+        foreach (var validationResult in validationResults)
+        {
+            var members = validationResult.MemberNames?.Any() == true
+                ? validationResult.MemberNames
+                : [argument.GetType().Name];
+
+            foreach (var member in members)
+            {
+                AddError(errors, member, validationResult.ErrorMessage);
+            }
+        }
     }
 
     private static bool ShouldSkipValidation(object argument)

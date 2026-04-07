@@ -1,3 +1,5 @@
+using TokenIDP.Core.Abstractions;
+
 namespace TokenIDP.Infrastructure;
 
 internal class NullAppLogger<T> : IAppLogger<T> where T : class

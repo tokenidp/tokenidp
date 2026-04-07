@@ -1,11 +1,8 @@
-using TokenIDP.Core.Admin.Bootstrap;
 using TokenIDP.Core.OAuth.Model;
 using TokenIDP.Core.OAuth;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
-using TokenIDP.Infrastructure.Abstractions;
 using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Infrastructure.Emails;
 using TokenIDP.Infrastructure.Emails.Abstractions;
@@ -19,6 +16,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Queries;
+using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
+using TokenIDP.Core.Admin.Configurations;
 
 namespace TokenIDP.Infrastructure;
 
@@ -30,7 +32,7 @@ public static class DependencyInjection
     {
         AddPersistence(services, configuration, connectionStringName);
         AddOutboxServices(services);
-        AddStores(services);
+        AddRepositories(services);
         AddExternalProviders(services, configuration);
         AddEmailServices(services);
         AddBootstrapServices(services, configuration);
@@ -45,9 +47,6 @@ public static class DependencyInjection
                 options,
                 configuration,
                 connectionStringName));
-
-        services.AddScoped<IApplicationDbContext>(provider =>
-            provider.GetRequiredService<ApplicationDbContext>());
 
         services.AddMemoryCache();
         services.AddCors();
@@ -81,18 +80,23 @@ public static class DependencyInjection
         services.AddScoped<IOutboxConsumerRouter, OutboxConsumerRouter>();
     }
 
-    private static void AddStores(IServiceCollection services)
+    private static void AddRepositories(IServiceCollection services)
     {
-        services.AddScoped<IAuthorizationStore, AuthorizationStore>();
-        services.AddScoped<IClientStore, ClientStore>();
+        services.AddScoped<IAuthorizationRepository, AuthorizationRepository>();
+        services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
-        services.AddScoped<IRoleStore, RoleStore>();
-        services.AddScoped<IConfigurationStore, ConfigurationStore>();
-        services.AddScoped<ITenantStore, TenantStore>();
-        services.AddScoped<ITokenStore, TokenStore>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IConfigurationRepository, ConfigurationRepository>();
+        services.AddScoped<ITenantRepository, TenantRepository>();
+        services.AddScoped<ITokenRepository, TokenRepository>();
         services.AddScoped<IApplicationEventDispatcher, ApplicationEventDispatcher>();
         services.AddScoped<ICodeSequenceGenerator, CodeSequenceGenerator>();
-        services.AddScoped<IUserStore, UserStore>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IApiResourceRepository, ApiResourceRepository>();
+        services.AddScoped<IActivityReadService, ActivityReadService>();
+        services.AddScoped<IDashboardReadService, DashboardReadService>();
+        services.AddScoped<ITenantConfigurationRepository, TenantConfigurationRepository>();
     }
 
     private static void AddExternalProviders(IServiceCollection services,
@@ -122,7 +126,7 @@ public static class DependencyInjection
         services.AddScoped<SendGridEmailSender>();
         services.AddScoped<EmailProviderFactory>();
         services.AddScoped<EmailConfigurationProvider>();
-        services.AddScoped<IEmailQueueStore, EmailQueueStore>();
+        services.AddScoped<IEmailQueueRepository, EmailQueueRepository>();
         services.AddScoped<IRetrySchedule, ExponentialRetrySchedule>();
         services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 
@@ -178,4 +182,5 @@ public static class DependencyInjection
         }
     }
 }
+
 

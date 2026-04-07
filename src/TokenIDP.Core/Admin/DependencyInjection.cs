@@ -12,6 +12,7 @@ using TokenIDP.Core.Admin.Tenants.UseCases;
 using TokenIDP.Core.Admin.Tokens.UseCases;
 using TokenIDP.Core.Admin.Users;
 using TokenIDP.Core.Admin.Users.UseCases;
+using TokenIDP.Core.Foundation.Validation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,8 @@ public static class DependencyInjection
     public static void AddAdminServices(this IServiceCollection services,
          IConfiguration configuration)
     {
+        services.AddAssemblyValidators(typeof(DependencyInjection).Assembly);
+
         services.AddScoped<ApiResourceCommandUseCase>();
         services.AddScoped<ApiResourceQueryUseCase>();
 
@@ -49,7 +52,6 @@ public static class DependencyInjection
         services.AddScoped<TenantCommandUseCase>();
         services.AddScoped<TenantLookupsUseCase>();
 
-        services.AddScoped<ITenantConfigurationRepository, TenantConfigurationRepository>();
         services.AddScoped<ConfigurationsQueryUseCase>();
         services.AddScoped<ConfigurationQueryByIdUseCase>();
         services.AddScoped<ConfigurationQueryByKeyUseCase>();

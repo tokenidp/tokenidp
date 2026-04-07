@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Permissions;
 
-internal class PermissionInfo
+public class PermissionInfo
 {
     public int Id { get; private set; }
     public int? ParentId { get; private set; }

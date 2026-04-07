@@ -1,10 +1,11 @@
 using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Domain.AggregateRoots.Emails.ValueObjects;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
@@ -13,21 +14,24 @@ public sealed class EmailConfirmationUseCase
     private const int DefaultExpiryHours = 24;
     private const string InvalidOrExpiredTokenMessage = "Invalid or expired confirmation token.";
 
-    private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<EmailConfirmationUseCase> _logger;
-    private readonly IEmailQueueStore _emailQueueStore;
+    private readonly IEmailQueueRepository _emailQueueRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ITenantRepository _tenantRepository;
 
     public EmailConfirmationUseCase(
-        IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
         IAppLogger<EmailConfirmationUseCase> logger,
-        IEmailQueueStore emailQueueStore)
+        IEmailQueueRepository emailQueueRepository,
+        IUserRepository userRepository,
+        ITenantRepository tenantRepository)
     {
-        _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
-        _emailQueueStore = emailQueueStore;
+        _emailQueueRepository = emailQueueRepository;
+        _userRepository = userRepository;
+        _tenantRepository = tenantRepository;
     }
 
     public async Task InitiateEmailConfirmation(
@@ -39,8 +43,7 @@ public sealed class EmailConfirmationUseCase
             throw new ArgumentException("UserId must be greater than zero.", nameof(request.UserId));
         }
 
-        var user = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
+        var user = await _userRepository.GetUserById(request.UserId);
 
         if (user is null)
         {
@@ -64,8 +67,7 @@ public sealed class EmailConfirmationUseCase
             expiresAt: tokenData.ExpiresAtUtc);
 
         confirmationToken.SetCreated(0);
-        _dbContext.EmailConfirmationTokens.Add(confirmationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _userRepository.CreateEmailConfirmationAsync(confirmationToken, cancellationToken);
 
         await EnqueueConfirmationEmail(
             user,
@@ -94,12 +96,10 @@ public sealed class EmailConfirmationUseCase
         var tokenHash = ComputeSha256(request.RawToken.Trim());
         var nowUtc = DateTime.UtcNow;
 
-        var confirmationToken = await _dbContext.EmailConfirmationTokens
-            .FirstOrDefaultAsync(t =>
-                    t.TokenHash == tokenHash &&
-                    !t.IsUsed &&
-                    t.ExpiresAt > nowUtc,
-                cancellationToken);
+        var confirmationToken = await _userRepository.GetValidEmailConfirmationTokenAsync(
+            tokenHash,
+            nowUtc,
+            cancellationToken);
 
         if (confirmationToken is null)
         {
@@ -107,10 +107,10 @@ public sealed class EmailConfirmationUseCase
                 ApiError.Failure("email.confirmation.invalid", InvalidOrExpiredTokenMessage));
         }
 
-        var user = await _dbContext.Users
-            .FirstOrDefaultAsync(
-                u => u.Id == confirmationToken.UserId && u.TenantId == confirmationToken.TenantId,
-                cancellationToken);
+        var user = await _userRepository.GetByTenantAsync(
+            confirmationToken.UserId,
+            confirmationToken.TenantId,
+            cancellationToken);
 
         if (user is null)
         {
@@ -124,7 +124,7 @@ public sealed class EmailConfirmationUseCase
         }
 
         confirmationToken.MarkUsed();
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _userRepository.UpdateUser(user);
 
         _logger.LogInfo(
             "Email confirmed for user {UserId} in tenant {TenantId}",
@@ -155,9 +155,7 @@ public sealed class EmailConfirmationUseCase
         int expiryHours,
         CancellationToken cancellationToken)
     {
-        var tenant = await _dbContext.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == user.TenantId, cancellationToken);
+        var tenant = await _tenantRepository.GetSummaryAsync(user.TenantId, cancellationToken);
 
         var tenantName = tenant?.TenantDisplayName ?? tenant?.TenantName ?? "Tenant";
         var confirmLink = QueryHelpers.AddQueryString(
@@ -179,7 +177,7 @@ public sealed class EmailConfirmationUseCase
             correlationId: _currentUserService.CorrelationId,
             tags: "email-confirmation");
 
-        await _emailQueueStore.EnqueueAsync(message, cancellationToken);
+        await _emailQueueRepository.EnqueueAsync(message, cancellationToken);
     }
 
     private static Dictionary<string, string?> BuildQuery(string rawToken, string authorizationContextId)
@@ -197,4 +195,5 @@ public sealed class EmailConfirmationUseCase
         return query;
     }
 }
+
 

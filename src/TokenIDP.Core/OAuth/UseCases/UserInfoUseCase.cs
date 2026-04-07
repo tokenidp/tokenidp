@@ -1,19 +1,20 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class UserInfoUseCase
 {
     private readonly ICurrentUserService _currentUserService;
-    private readonly IUserStore _identityStore;
+    private readonly IUserRepository _identityStore;
     private readonly IAppLogger<UserInfoUseCase> _logger;
 
     private IReadOnlySet<string> _supportedScopes;
 
     public UserInfoUseCase(IAppLogger<UserInfoUseCase> logger,
         ICurrentUserService currentUserService,
-        IUserStore identityStore)
+        IUserRepository identityStore)
     {
         _supportedScopes = StandardScopes.Supported;
 
@@ -134,4 +135,5 @@ internal sealed class UserInfoUseCase
         }
     }
 }
+
 

@@ -1,12 +1,13 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Permissions;
 using TokenIDP.Domain.AggregateRoots.Permissions;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
 internal class PermissionSeeder : IPermissionSeeder
 {
-    public async Task<Permission> CreateAsync(IApplicationDbContext db,
+    public async Task<Permission> CreateAsync(ApplicationDbContext db,
         int tenantId,
         CreateUpdatePermission command,
         CancellationToken ct)
@@ -72,7 +73,7 @@ internal class PermissionSeeder : IPermissionSeeder
         return permission;
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+    public async Task<bool> ExistsAsync(ApplicationDbContext db,
         int tenantId,
         string permissionKey,
         CancellationToken ct)
@@ -84,4 +85,5 @@ internal class PermissionSeeder : IPermissionSeeder
         return isExist;
     }
 }
+
 

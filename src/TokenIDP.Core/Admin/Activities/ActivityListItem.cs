@@ -2,7 +2,7 @@ using TokenIDP.Domain.ReadModels;
 
 namespace TokenIDP.Core.Admin.Activities;
 
-internal sealed class ActivityListItem
+public sealed class ActivityListItem
 {
     public long Id { get; private set; }
     public DateTime Timestamp { get; private set; }
@@ -17,7 +17,7 @@ internal sealed class ActivityListItem
     public string Status { get; private set; } = string.Empty;
 
     public static Expression<Func<Activity, ActivityListItem>> Projection =>
-        activity => new ActivityListItem
+        static activity => new ActivityListItem
         {
             Id = activity.Id,
             Timestamp = activity.CreatedAtUtc,
@@ -29,7 +29,7 @@ internal sealed class ActivityListItem
                 ? activity.ActorDisplayName
                 : activity.ActorType.ToString(),
             TargetType = activity.TargetType != null ? activity.TargetType.ToString() : null,
-            Target = activity.TargetDescription ?? activity.TargetId ?? (activity.TargetType != null ? activity.TargetType.ToString() : string.Empty),
+            Target = activity.TargetDescription ?? activity.TargetId ?? activity.TargetType.ToString() ?? string.Empty,
             Description = activity.Description,
             Status = activity.Status
         };

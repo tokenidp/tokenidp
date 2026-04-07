@@ -1,22 +1,21 @@
 using TokenIDP.Core.Admin.Permissions;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
 internal sealed class UserLookupsUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
-    private readonly ICache _cache;
+    private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<UserLookupsUseCase> _logger;
 
     public UserLookupsUseCase(
-        IApplicationDbContext dbContext,
-        ICache cache,
+        IUserRepository userRepository,
         ICurrentUserService currentUserService,
         IAppLogger<UserLookupsUseCase> logger)
     {
-        _dbContext = dbContext;
-        _cache = cache;
+        _userRepository = userRepository;
         _currentUserService = currentUserService;
         _logger = logger;
     }
@@ -25,22 +24,9 @@ internal sealed class UserLookupsUseCase
     {
         _logger.LogDebug("Fetching user lookups for tenant {TenantId}", _currentUserService.TenantId);
 
-        var roles = await _dbContext.Roles
-            .AsNoTracking()
-            .Where(r => r.TenantId == _currentUserService.TenantId)
-            .Select(r => new LookupItem()
-            {
-                Key = r.Id.ToString(),
-                Value = r.Name ?? string.Empty
-            })
-           .ToListAsync(cancellationToken);
-
-        var userLookups = new UserLookups
-        {
-            Roles = roles,
-            UserStatuses = UserLookupMapper.MapUserStatuses(),
-            AddressTypes = UserLookupMapper.MapAddressTypes()
-        };
+        var userLookups = await _userRepository.GetUserLookupsAsync(
+            _currentUserService.TenantId,
+            cancellationToken);
 
         _logger.LogDebug("User lookups fetched for tenant {TenantId}", _currentUserService.TenantId);
         return ApiResult<UserLookups>.Success(userLookups);

@@ -1,6 +1,7 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Users;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
@@ -13,7 +14,7 @@ internal class UserProvisioningService : IUserProvisioningService
         _passwordService = passwordService;
     }
 
-    public async Task<User> CreateAsync(IApplicationDbContext db,
+    public async Task<User> CreateAsync(ApplicationDbContext db,
         int tenantId,
         UserDetail command,
         CancellationToken ct)
@@ -46,7 +47,7 @@ internal class UserProvisioningService : IUserProvisioningService
         return user!;
     }
 
-    public async Task<User?> ExistsAsync(IApplicationDbContext db,
+    public async Task<User?> ExistsAsync(ApplicationDbContext db,
         int tenantId,
         string userName,
         CancellationToken ct)
@@ -58,3 +59,4 @@ internal class UserProvisioningService : IUserProvisioningService
         return existingUser;
     }
 }
+

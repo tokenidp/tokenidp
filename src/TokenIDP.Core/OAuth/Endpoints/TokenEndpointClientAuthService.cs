@@ -1,17 +1,18 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using System.Text;
 using System.Text.Json;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 
 internal sealed class TokenEndpointClientAuthService
 {
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
     private readonly IAppLogger<TokenEndpointClientAuthService> _logger;
 
     public TokenEndpointClientAuthService(
-        IClientStore clientStore,
+        IClientRepository clientStore,
         IAppLogger<TokenEndpointClientAuthService> logger)
     {
         _clientStore = clientStore;
@@ -327,3 +328,4 @@ internal static class TokenEndpointAuthenticationMethods
     public const string ClientSecretPost = "client_secret_post";
     public const string None = "none";
 }
+

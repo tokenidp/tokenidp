@@ -1,4 +1,3 @@
-using TokenIDP.Infrastructure.Abstractions;
 using TokenIDP.Workers.HealthChecks.States;
 using TokenIDP.Workers.Mappers;
 using TokenIDP.Workers.Projectors;
@@ -6,6 +5,7 @@ using TokenIDP.Workers.Workers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TokenIDP.Workers;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
 
 namespace TokenIDP.Workers;
 

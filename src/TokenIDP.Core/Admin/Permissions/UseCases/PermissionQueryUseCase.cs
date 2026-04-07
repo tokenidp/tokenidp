@@ -1,21 +1,23 @@
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Domain.AggregateRoots.Permissions;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Permissions.UseCases;
 
 internal class PermissionQueryUseCase
 {
 
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IPermissionRepository _permissionRepository;
     private readonly IAppLogger<PermissionQueryUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
     public PermissionQueryUseCase(IAppLogger<PermissionQueryUseCase> logger,
-        IApplicationDbContext dbContext,
+        IPermissionRepository permissionRepository,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
-        _dbContext = dbContext;
+        _permissionRepository = permissionRepository;
         _currentUserService = currentUserService;
     }
 
@@ -23,13 +25,7 @@ internal class PermissionQueryUseCase
     {
         _logger.LogDebug("Fetching permissions list");
 
-        var permissions = await _dbContext.Permissions
-            .AsNoTracking()
-            .Where(p => p.IsActive != false)
-            .OrderBy(p => p.Sequence)
-            .ThenBy(p => p.PermissionKey)
-            .Select(PermissionList.Projection)
-            .ToListAsync();
+        var permissions = (await _permissionRepository.GetActivePermissionsAsync(CancellationToken.None)).ToList();
 
         _logger.LogDebug("Fetched {Count} roles", permissions.Count);
 
@@ -40,45 +36,9 @@ internal class PermissionQueryUseCase
     {
         _logger.LogDebug("Fetching permissions list");
 
-        var query = _dbContext.Permissions.AsNoTracking();
-        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
-
-        var controlTypeCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "ControlType", StringComparison.OrdinalIgnoreCase));
-
-        if (controlTypeCriteria != null &&
-            Enum.TryParse<ControlTypes>(controlTypeCriteria.Value, true, out var controlType))
-        {
-            query = query.Where(p => p.ControlType == controlType);
-        }
-
-        var activeCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "Active", StringComparison.OrdinalIgnoreCase));
-
-        if (activeCriteria != null)
-        {
-            var raw = activeCriteria.Value?.Trim();
-            if (string.Equals(raw, "Active", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(p => p.IsActive);
-            }
-            else if (string.Equals(raw, "Inactive", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(p => !p.IsActive);
-            }
-        }
-
-        criterias = criterias
-            .Where(c =>
-                !string.Equals(c.ColumnName, "ControlType", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(c.ColumnName, "Active", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        var permissions = await query
-            .Select(PermissionList.Projection)
-            .ApplyFilter(criterias)
-            .ApplySort(request.SortColumn, request.SortOrder)
-            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        var permissions = await _permissionRepository.SearchPermissionsAsync(
+            request,
+            CancellationToken.None);
 
         _logger.LogDebug("Fetched {Count} roles", permissions.TotalCount);
 
@@ -89,11 +49,9 @@ internal class PermissionQueryUseCase
     {
         _logger.LogDebug("Fetching permission {PermissionId}", permissionId);
 
-        var permission = await _dbContext.Permissions
-            .AsNoTracking()
-            .Where(p => p.Id == permissionId)
-            .Select(PermissionById.Projection)
-            .FirstOrDefaultAsync(CancellationToken.None);
+        var permission = await _permissionRepository.GetPermissionDetailAsync(
+            permissionId,
+            CancellationToken.None);
 
         if (permission is null)
         {

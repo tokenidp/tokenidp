@@ -1,17 +1,20 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
+
 namespace TokenIDP.Core.Admin.ApiResources.UseCases;
 
 internal sealed class ApiResourceCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IApiResourceRepository _apiResourceRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ApiResourceCommandUseCase> _logger;
 
     public ApiResourceCommandUseCase(
-        IApplicationDbContext dbContext,
+        IApiResourceRepository apiResourceRepository,
         ICurrentUserService currentUserService,
         IAppLogger<ApiResourceCommandUseCase> logger)
     {
-        _dbContext = dbContext;
+        _apiResourceRepository = apiResourceRepository;
         _currentUserService = currentUserService;
         _logger = logger;
     }
@@ -22,12 +25,11 @@ internal sealed class ApiResourceCommandUseCase
     {
         var tenantId = _currentUserService.TenantId;
 
-        var duplicateName = await _dbContext.ApiResources
-            .AsNoTracking()
-            .AnyAsync(x =>
-                x.TenantId == tenantId &&
-                x.Name.ToLower() == request.Name.Trim().ToLower(),
-                cancellationToken);
+        var duplicateName = await _apiResourceRepository.ApiResourceNameExistsAsync(
+            tenantId,
+            request.Name,
+            null,
+            cancellationToken);
 
         if (duplicateName)
         {
@@ -61,8 +63,7 @@ internal sealed class ApiResourceCommandUseCase
         }
 
         apiResource.ReplaceScopes(scopes);
-        _dbContext.ApiResources.Add(apiResource);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _apiResourceRepository.AddAsync(apiResource, cancellationToken);
 
         return ApiResult<Guid>.Success(apiResource.Id);
     }
@@ -74,9 +75,7 @@ internal sealed class ApiResourceCommandUseCase
     {
         var tenantId = _currentUserService.TenantId;
 
-        var apiResource = await _dbContext.ApiResources
-            .Include(x => x.Scopes)
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId, cancellationToken);
+        var apiResource = await _apiResourceRepository.GetAggregateAsync(id, tenantId, cancellationToken);
 
         if (apiResource == null)
         {
@@ -84,13 +83,11 @@ internal sealed class ApiResourceCommandUseCase
                 ApiError.Failure("api_resource.not_found", $"ApiResource not found for Id {id}"));
         }
 
-        var duplicateName = await _dbContext.ApiResources
-            .AsNoTracking()
-            .AnyAsync(x =>
-                x.Id != id &&
-                x.TenantId == tenantId &&
-                x.Name.ToLower() == request.Name.Trim().ToLower(),
-                cancellationToken);
+        var duplicateName = await _apiResourceRepository.ApiResourceNameExistsAsync(
+            tenantId,
+            request.Name,
+            id,
+            cancellationToken);
 
         if (duplicateName)
         {
@@ -117,19 +114,17 @@ internal sealed class ApiResourceCommandUseCase
 
         if (removedScopes.Length > 0)
         {
-            var assignedScope = await (
-                from clientScope in _dbContext.ClientScopes.AsNoTracking()
-                join client in _dbContext.Clients.AsNoTracking() on clientScope.ClientId equals client.Id
-                where client.TenantId == tenantId && removedScopes.Contains(clientScope.Scope)
-                select clientScope.Scope
-            ).FirstOrDefaultAsync(cancellationToken);
+            var assignedScope = await _apiResourceRepository.HasAssignedClientScopeAsync(
+                tenantId,
+                removedScopes,
+                cancellationToken);
 
-            if (!string.IsNullOrWhiteSpace(assignedScope))
+            if (assignedScope)
             {
                 return ApiResult<Guid>.Failure(
                     ApiError.Failure(
                         "api_scope.delete.blocked",
-                        $"Cannot delete scope {assignedScope} because it is assigned to one or more clients."));
+                        "Cannot delete one or more scopes because they are assigned to one or more clients."));
             }
         }
 
@@ -147,20 +142,15 @@ internal sealed class ApiResourceCommandUseCase
 
         if (!string.Equals(oldName, apiResource.Name, StringComparison.Ordinal))
         {
-            var clientAssignments = await (
-                from clientApiResource in _dbContext.ClientApiResources
-                join client in _dbContext.Clients on clientApiResource.ClientId equals client.Id
-                where client.TenantId == tenantId && clientApiResource.Name == oldName
-                select clientApiResource
-            ).ToListAsync(cancellationToken);
-
-            foreach (var assignment in clientAssignments)
-            {
-                assignment.Rename(apiResource.Name);
-            }
+            await _apiResourceRepository.RenameClientApiResourceAssignmentsAsync(
+                tenantId,
+                oldName,
+                apiResource.Name,
+                cancellationToken);
         }
 
-        foreach (var requestedScope in request.Scopes.Where(x => x.Id.HasValue && existingScopes.ContainsKey(x.Id.Value)))
+        foreach (var requestedScope in request.Scopes
+            .Where(x => x.Id.HasValue && existingScopes.ContainsKey(x.Id.Value)))
         {
             var existingScope = existingScopes[requestedScope.Id!.Value];
             var previousName = existingScope.Name;
@@ -177,17 +167,11 @@ internal sealed class ApiResourceCommandUseCase
 
             if (!string.Equals(previousName, existingScope.Name, StringComparison.Ordinal))
             {
-                var assignedScopes = await (
-                    from clientScope in _dbContext.ClientScopes
-                    join client in _dbContext.Clients on clientScope.ClientId equals client.Id
-                    where client.TenantId == tenantId && clientScope.Scope == previousName
-                    select clientScope
-                ).ToListAsync(cancellationToken);
-
-                foreach (var clientScope in assignedScopes)
-                {
-                    clientScope.Rename(existingScope.Name);
-                }
+                await _apiResourceRepository.RenameClientScopeAssignmentsAsync(
+                    tenantId,
+                    previousName,
+                    existingScope.Name,
+                    cancellationToken);
             }
         }
 
@@ -218,7 +202,7 @@ internal sealed class ApiResourceCommandUseCase
         }
 
         apiResource.ReplaceScopes(replacementScopes);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _apiResourceRepository.SaveChangesAsync(cancellationToken);
 
         return ApiResult<Guid>.Success(apiResource.Id);
     }
@@ -227,9 +211,7 @@ internal sealed class ApiResourceCommandUseCase
     {
         var tenantId = _currentUserService.TenantId;
 
-        var apiResource = await _dbContext.ApiResources
-            .Include(x => x.Scopes)
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId, cancellationToken);
+        var apiResource = await _apiResourceRepository.GetAggregateAsync(id, tenantId, cancellationToken);
 
         if (apiResource == null)
         {
@@ -245,12 +227,10 @@ internal sealed class ApiResourceCommandUseCase
                     "Cannot delete ApiResource if it has assigned scopes or clients"));
         }
 
-        var hasAssignedClients = await (
-            from clientApiResource in _dbContext.ClientApiResources.AsNoTracking()
-            join client in _dbContext.Clients.AsNoTracking() on clientApiResource.ClientId equals client.Id
-            where client.TenantId == tenantId && clientApiResource.Name == apiResource.Name
-            select clientApiResource.Id
-        ).AnyAsync(cancellationToken);
+        var hasAssignedClients = await _apiResourceRepository.HasAssignedClientsAsync(
+            tenantId,
+            apiResource.Name,
+            cancellationToken);
 
         if (hasAssignedClients)
         {
@@ -260,8 +240,7 @@ internal sealed class ApiResourceCommandUseCase
                     "Cannot delete ApiResource if it has assigned scopes or clients"));
         }
 
-        _dbContext.ApiResources.Remove(apiResource);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _apiResourceRepository.DeleteAsync(apiResource, cancellationToken);
 
         return ApiResult<Guid>.Success(id);
     }

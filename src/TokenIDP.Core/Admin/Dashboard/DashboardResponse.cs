@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Dashboard;
 
-internal class DashboardResponse
+public class DashboardResponse
 {
     public int AccessTokenIssued { get; set; }
     public int RefreshTokenIssued { get; set; }

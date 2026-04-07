@@ -2,7 +2,7 @@ namespace TokenIDP.Core.Admin.Tenants;
 
 public sealed class TenantDetail
 {
-    internal static Expression<Func<Tenant, TenantDetail>> Projection =>
+    public static Expression<Func<Tenant, TenantDetail>> Projection =>
         t => new TenantDetail
         {
             Id = t.Id,

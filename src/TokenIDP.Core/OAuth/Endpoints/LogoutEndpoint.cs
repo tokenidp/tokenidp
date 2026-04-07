@@ -1,6 +1,7 @@
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using Microsoft.AspNetCore.WebUtilities;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 
@@ -11,7 +12,7 @@ public class LogoutEndpoint : IEndpointDefinition
         app.MapGet("/logout", async (HttpContext context,
             IAppLogger<LoginEndpoint> logger,
             IUserSignInService userSignInService,
-            IClientStore clientStore) =>
+            IClientRepository clientStore) =>
         {
             logger.LogDebug("Logout requested");
 
@@ -79,3 +80,4 @@ public class LogoutEndpoint : IEndpointDefinition
         return QueryHelpers.AddQueryString(redirectUri, "logged_out", "1");
     }
 }
+

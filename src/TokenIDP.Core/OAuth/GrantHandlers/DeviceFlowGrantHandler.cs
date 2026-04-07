@@ -1,19 +1,20 @@
 using TokenIDP.Core.OAuth.UseCases;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.GrantHandlers;
 
 internal class DeviceFlowGrantHandler : ITokenGrantHandler
 {
-    private readonly IAuthorizationStore _authorizationStore;
+    private readonly IAuthorizationRepository _authorizationStore;
     private readonly IAuthenticationService _authenticateService;
-    private readonly IUserStore _userStore;
+    private readonly IUserRepository _userStore;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly TokenIssuerUseCase _tokenService;
 
-    public DeviceFlowGrantHandler(IUserStore userStore,
-        IAuthorizationStore authorizationStore,
+    public DeviceFlowGrantHandler(IUserRepository userStore,
+        IAuthorizationRepository authorizationStore,
         TokenContextUseCase tokenContextUseCase,
         IAuthenticationService authenticateService,
         TokenIssuerUseCase tokenService)
@@ -53,3 +54,4 @@ internal class DeviceFlowGrantHandler : ITokenGrantHandler
         return token;
     }
 }
+

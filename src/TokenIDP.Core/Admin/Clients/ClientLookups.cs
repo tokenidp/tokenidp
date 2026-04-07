@@ -1,6 +1,6 @@
 namespace TokenIDP.Core.Admin.Clients;
 
-internal sealed class ClientLookups
+public sealed class ClientLookups
 {
     public List<LookupItem> AppTypes { get; init; } = new();
     public List<LookupItem> GrantTypes { get; init; } = new();

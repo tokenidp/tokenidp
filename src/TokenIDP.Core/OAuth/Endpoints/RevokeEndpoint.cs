@@ -2,6 +2,7 @@ using TokenIDP.Core.OAuth.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 

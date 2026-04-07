@@ -1,3 +1,4 @@
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.AggregateRoots;
 using TokenIDP.Domain.AggregateRoots.ApiResources;
 using TokenIDP.Domain.AggregateRoots.Authorization;
@@ -7,11 +8,11 @@ using TokenIDP.Domain.AggregateRoots.Outbox;
 using TokenIDP.Domain.AggregateRoots.Permissions;
 using TokenIDP.Domain.AggregateRoots.Tokens;
 using TokenIDP.Domain.ReadModels;
-using TokenIDP.Infrastructure.Abstractions;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
-public partial class ApplicationDbContext : DbContext, IApplicationDbContext
+public partial class ApplicationDbContext : DbContext
 {
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
@@ -179,3 +180,4 @@ public partial class ApplicationDbContext
     public void ClearDomainEvents()
         => _domainEvents.Clear();
 }
+

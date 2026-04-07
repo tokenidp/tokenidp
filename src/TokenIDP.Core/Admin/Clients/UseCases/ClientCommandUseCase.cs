@@ -1,19 +1,22 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
+
 namespace TokenIDP.Core.Admin.Clients.UseCases;
 
 internal sealed class ClientCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
+    private readonly IClientRepository _clientRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly ClientCommandValidator _validator;
     private readonly IAppLogger<ClientCommandUseCase> _logger;
 
     public ClientCommandUseCase(
-        IApplicationDbContext dbContext,
+        IClientRepository clientRepository,
         ICurrentUserService currentUserService,
         ClientCommandValidator validator,
         IAppLogger<ClientCommandUseCase> logger)
     {
-        _dbContext = dbContext;
+        _clientRepository = clientRepository;
         _currentUserService = currentUserService;
         _validator = validator;
         _logger = logger;
@@ -69,8 +72,7 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(applyChangesResult);
         }
 
-        _dbContext.Clients.Add(client);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _clientRepository.AddAsync(client, cancellationToken);
 
         _logger.LogInfo("Client created with Id {ClientId}", client.Id);
 
@@ -87,15 +89,7 @@ internal sealed class ClientCommandUseCase
 
         _logger.LogDebug("Updating client {ClientId}", id);
 
-        var client = await _dbContext.Clients
-            .Include(c => c.ClientScopes)
-            .Include(c => c.ClientGrantTypes)
-            .Include(c => c.ClientApiResources)
-            .Include(c => c.ClientAuthPolicy)
-            .Include(c => c.ClientExternalProviders)
-            .FirstOrDefaultAsync(c => c.Id == id
-                && c.TenantId == tenantId,
-                cancellationToken);
+        var client = await _clientRepository.GetClientAggregateAsync(id, tenantId, cancellationToken);
 
         if (client == null)
         {
@@ -132,7 +126,7 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(applyChangesResult);
         }
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _clientRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInfo("Client updated {ClientId}", id);
 
@@ -145,9 +139,10 @@ internal sealed class ClientCommandUseCase
     {
         _logger.LogDebug("Deleting client {ClientId}", clientId);
 
-        var client = await _dbContext.Clients
-            .FirstOrDefaultAsync(c => c.Id == clientId
-                && c.TenantId == _currentUserService.TenantId, cancellationToken);
+        var client = await _clientRepository.GetClientAggregateAsync(
+            clientId,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (client == null)
         {
@@ -156,8 +151,7 @@ internal sealed class ClientCommandUseCase
                 "Client not found for the Id {0}".FormatString(clientId)));
         }
 
-        _dbContext.Clients.Remove(client);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _clientRepository.DeleteAsync(client, cancellationToken);
 
         _logger.LogInfo("Client deleted {ClientId}", clientId);
 

@@ -1,19 +1,20 @@
 using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal sealed class DeviceAuthorizationUseCase
 {
-    private readonly IAuthorizationStore _authorizationStore;
+    private readonly IAuthorizationRepository _authorizationStore;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAuthorizationRequestValidator _authorizationRequestValidator;
     private readonly IAppLogger<DeviceAuthorizationUseCase> _logger;
 
     public DeviceAuthorizationUseCase(
         ICurrentUserService currentUserService,
-        IAuthorizationStore authorizationStore,
+        IAuthorizationRepository authorizationStore,
         IAppLogger<DeviceAuthorizationUseCase> logger,
         IAuthorizationRequestValidator authorizationRequestValidator)
     {
@@ -100,3 +101,4 @@ internal sealed class DeviceAuthorizationUseCase
         }
     }
 }
+

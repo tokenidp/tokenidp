@@ -1,18 +1,19 @@
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 internal class TokenContextUseCase
 {
-    private readonly IUserStore _identityStore;
-    private readonly IRoleStore _roleService;
+    private readonly IUserRepository _identityStore;
+    private readonly IRoleRepository _roleService;
     private readonly IAppLogger<TokenContextUseCase> _logger;
-    private readonly IClientStore _clientStore;
+    private readonly IClientRepository _clientStore;
 
-    public TokenContextUseCase(IRoleStore roleService,
-        IClientStore clientStore,
+    public TokenContextUseCase(IRoleRepository roleService,
+        IClientRepository clientStore,
         IAppLogger<TokenContextUseCase> logger,
-        IUserStore identityStore)
+        IUserRepository identityStore)
     {
         _roleService = roleService;
         _clientStore = clientStore;
@@ -149,3 +150,4 @@ internal class TokenContextUseCase
         return (requestedScopes, audiences.ToArray());
     }
 }
+

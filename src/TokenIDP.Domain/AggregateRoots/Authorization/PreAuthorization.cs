@@ -64,13 +64,30 @@ public class PreAuthorization : AggregateRoot<int>
         string mfaCode,
         DateTime expiry)
     {
+        UserId = userId;
         MfaCode = mfaCode;
         Expiry = expiry;
+        Is2FAVerified = false;
     }
 
-    public void UpdateTwoFactorEnableFlag(bool enabled)
+    public bool MatchesMfaChallenge(int userId, string code, DateTime nowUtc)
     {
-        Is2FAVerified = enabled;
+        return UserId == userId &&
+               !Is2FAVerified.GetValueOrDefault() &&
+               Expiry > nowUtc &&
+               !string.IsNullOrWhiteSpace(MfaCode) &&
+               string.Equals(MfaCode, code, StringComparison.Ordinal);
+    }
+
+    public void SetTwoFactorVerified(int userId)
+    {
+        if (UserId != userId)
+        {
+            throw new InvalidOperationException("MFA verification user mismatch.");
+        }
+
+        Is2FAVerified = true;
+        MfaCode = null;
     }
 }
 

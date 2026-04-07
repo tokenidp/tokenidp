@@ -1,15 +1,15 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
 public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
 {
-    private readonly ITenantStore _tenantStore;
-    private readonly IClientStore _clientStore;
+    private readonly ITenantRepository _tenantStore;
+    private readonly IClientRepository _clientStore;
 
-    public AuthorizationPageUiUseCase(ITenantStore tenantStore,
-        IClientStore clientStore)
+    public AuthorizationPageUiUseCase(ITenantRepository tenantStore,
+        IClientRepository clientStore)
     {
         _tenantStore = tenantStore;
         _clientStore = clientStore;
@@ -57,4 +57,5 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
         return authorizationPageUi;
     }
 }
+
 

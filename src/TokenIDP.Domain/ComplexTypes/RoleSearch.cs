@@ -4,10 +4,11 @@ namespace TokenIDP.Domain.ComplexTypes;
 public partial class RoleSearch
 {
     public int Id { get; private set; }
-    public string RoleName { get; private set; }
-    public string Active { get; private set; }
-    public string FirstName { get; private set; }
-    public string LastName { get; private set; }
+    public int TenantId { get; private set; }
+    public string RoleName { get; private set; } = string.Empty;
+    public string Active { get; private set; } = string.Empty;
+    public string FirstName { get; private set; } = string.Empty;
+    public string LastName { get; private set; } = string.Empty;
 
     private RoleSearch()
     {

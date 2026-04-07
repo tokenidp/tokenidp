@@ -1,10 +1,8 @@
 using TokenIDP.Core.Foundation.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using TokenIDP.Core.Foundation.Security;
@@ -14,9 +12,13 @@ namespace TokenIDP.Server.ApplicationSetup;
 internal static class AuthenticationDI
 {
     internal static void AddAuthentication(this IServiceCollection services,
-        IConfiguration configuration,
+        TokenOptions tokenOptions,
         IHostEnvironment environment)
     {
+        var signingKey = ResolveSigningKey(tokenOptions, environment);
+        var issuer = TokenOptionsResolver.ResolveIssuer(tokenOptions);
+        var audience = TokenOptionsResolver.ResolveAudience(tokenOptions);
+
         services
             .AddAuthentication(options =>
             {
@@ -27,47 +29,16 @@ internal static class AuthenticationDI
             {
                 options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.SaveToken = false;
-
-                options.Events = new JwtBearerEvents
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    OnMessageReceived = context =>
-                    {
-                        var services = context.HttpContext.RequestServices;
-
-                        var tokenOptions = services
-                            .GetRequiredService<IOptions<TokenOption>>().Value;
-
-                        var httpContextAccessor = services
-                            .GetRequiredService<IHttpContextAccessor>();
-
-                        var signingKey = ResolveSigningKey(tokenOptions, environment);
-                        var audience = ResolveAudience(tokenOptions, configuration);
-
-                        context.Options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = signingKey,
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidAudience = audience,
-                            ClockSkew = TimeSpan.Zero,
-                            IssuerValidator = (issuer, token, parameters) =>
-                            {
-                                var expected = ResolveIssuer(tokenOptions, httpContextAccessor);
-
-                                if (!string.Equals(issuer, expected, StringComparison.OrdinalIgnoreCase))
-                                {
-                                    throw new SecurityTokenInvalidIssuerException(
-                                        $"Issuer '{issuer}' is invalid. Expected '{expected}'.");
-                                }
-
-                                return issuer;
-                            }
-                        };
-
-                        return Task.CompletedTask;
-                    }
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = signingKey,
+                    ValidateIssuer = true,
+                    ValidIssuer = issuer,
+                    ValidateAudience = true,
+                    ValidAudience = audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
                 };
             })
             .AddCookie("idp_session", options =>
@@ -87,7 +58,7 @@ internal static class AuthenticationDI
 
         //services.AddHttpClient("IDPClient", (serviceProvider, client) =>
         //{
-        //    var tokenOptions = serviceProvider.GetRequiredService<IOptions<TokenOption>>().Value;
+        //    var tokenOptions = serviceProvider.GetRequiredService<IOptions<TokenOptions>>().Value;
         //    var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         //    var issuer = ResolveIssuer(tokenOptions, httpContextAccessor);
         //    client.BaseAddress = new Uri(issuer);
@@ -100,7 +71,7 @@ internal static class AuthenticationDI
         });
     }
 
-    private static SecurityKey ResolveSigningKey(TokenOption settings, IHostEnvironment environment)
+    private static SecurityKey ResolveSigningKey(TokenOptions settings, IHostEnvironment environment)
     {
         if (TokenSigningMaterialResolver.HasCertificateConfiguration(settings))
         {
@@ -140,39 +111,4 @@ internal static class AuthenticationDI
         }
     }
 
-    private static string ResolveIssuer(TokenOption settings, IHttpContextAccessor httpContextAccessor)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.Issuer))
-        {
-            return settings.Issuer.TrimEnd('/');
-        }
-
-        var request = httpContextAccessor.HttpContext?.Request;
-
-        if (request is null)
-        {
-            throw new InvalidOperationException("Token issuer is missing and no HTTP request is available to infer it.");
-        }
-
-        var baseUrl = $"{request.Scheme}://{request.Host.ToUriComponent()}{request.PathBase}";
-
-        return baseUrl.TrimEnd('/');
-    }
-
-    private static string ResolveAudience(TokenOption settings, IConfiguration configuration)
-    {
-        if (!string.IsNullOrWhiteSpace(settings.Audience))
-        {
-            return settings.Audience;
-        }
-
-        var configuredAudience = configuration["TokenOptions:Audience"];
-
-        if (!string.IsNullOrWhiteSpace(configuredAudience))
-        {
-            return configuredAudience;
-        }
-
-        throw new InvalidOperationException("Token audience is required.");
-    }
 }

@@ -1,11 +1,12 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Roles;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
 internal class RoleProvisioningService : IRoleProvisioningService
 {
-    public async Task<Role> CreateAsync(IApplicationDbContext db,
+    public async Task<Role> CreateAsync(ApplicationDbContext db,
         int tenantId,
         CreateUpdateRole command,
         CancellationToken ct)
@@ -43,7 +44,7 @@ internal class RoleProvisioningService : IRoleProvisioningService
         return role;
     }
 
-    public async Task<bool> ExistsAsync(IApplicationDbContext db,
+    public async Task<bool> ExistsAsync(ApplicationDbContext db,
         int tenantId,
         string roleName,
         CancellationToken ct)
@@ -61,3 +62,4 @@ internal class RoleProvisioningService : IRoleProvisioningService
         return string.Join("; ", result.Errors.Select(x => x.Message));
     }
 }
+

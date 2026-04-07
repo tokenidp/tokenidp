@@ -1,22 +1,20 @@
-using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 
 namespace TokenIDP.Core.OAuth.Security;
 
 internal sealed class JwtTokenGenerator
 {
-    private readonly TokenOption _settings;
+    private readonly TokenOptions _settings;
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
     private readonly SecurityKey _signingKey;
     private readonly SigningCredentials _signingCredentials;
-    private readonly ICurrentUserService _currentUserService;
-
-    public JwtTokenGenerator(IOptions<TokenOption> settings,
-        ICurrentUserService currentUserService)
+    public JwtTokenGenerator(IOptions<TokenOptions> settings)
     {
         _settings = settings.Value;
 
@@ -30,9 +28,7 @@ internal sealed class JwtTokenGenerator
             var keyMaterial = TokenSigningMaterialResolver.ResolveKeyMaterial(_settings);
             _signingKey = CreateSigningKey(keyMaterial);
         }
-
         _signingCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.RsaSha256);
-        _currentUserService = currentUserService;
     }
 
     /// <summary>
@@ -63,6 +59,7 @@ internal sealed class JwtTokenGenerator
             new(JwtRegisteredClaimNames.Sub, userId == null ? clientId : userId.Value.ToString()),
             new(JwtRegisteredClaimNames.Jti, tokenId),
             new("uid", tenantId),
+            new("client_id", clientId),
         };
 
         if (scopes != null)
@@ -164,7 +161,7 @@ internal sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = _currentUserService.BaseUrl,
+            Issuer = TokenOptionsResolver.ResolveIssuer(_settings),
             Audience = audiences[0],
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
@@ -184,7 +181,7 @@ internal sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = _currentUserService.BaseUrl,
+            Issuer = TokenOptionsResolver.ResolveIssuer(_settings),
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
             NotBefore = now,

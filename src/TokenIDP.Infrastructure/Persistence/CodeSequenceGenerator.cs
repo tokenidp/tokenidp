@@ -1,14 +1,15 @@
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.AggregateRoots;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
 internal class CodeSequenceGenerator : ICodeSequenceGenerator
 {
-    private readonly IApplicationDbContext _db;
+    private readonly ApplicationDbContext _db;
     private const string UserSequenceKey = "User";
     private const string TenantSequenceKey = "Tenant";
 
-    public CodeSequenceGenerator(IApplicationDbContext db)
+    public CodeSequenceGenerator(ApplicationDbContext db)
     {
         _db = db;
     }
@@ -66,3 +67,4 @@ internal class CodeSequenceGenerator : ICodeSequenceGenerator
             .SingleAsync(ct);
     }
 }
+

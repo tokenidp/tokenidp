@@ -2,7 +2,7 @@ namespace TokenIDP.Core.Admin.Users;
 
 public class UserDetail
 {
-    internal static Expression<Func<User, UserDetail>> Projection =>
+    public static Expression<Func<User, UserDetail>> Projection =>
     user => new UserDetail()
     {
         Id = user.Id,

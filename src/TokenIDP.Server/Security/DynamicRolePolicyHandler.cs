@@ -1,7 +1,7 @@
-using TokenIDP.Core.Foundation.Abstractions;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Server.Security;
 
@@ -9,11 +9,11 @@ public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequi
 {
     private readonly IAuthorizationPolicyProvider _policyProvider;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IRoleStore _roleStore;
+    private readonly IRoleRepository _roleStore;
 
     public DynamicRolePolicyHandler(IAuthorizationPolicyProvider policyProvider,
         ICurrentUserService currentUserService,
-        IRoleStore roleStore)
+        IRoleRepository roleStore)
     {
         _policyProvider = policyProvider;
         _currentUserService = currentUserService;
@@ -103,4 +103,5 @@ public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequi
         return result.Value;
     }
 }
+
 

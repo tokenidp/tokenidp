@@ -1,5 +1,4 @@
 using TokenIDP.Core.Foundation;
-using TokenIDP.Core.Foundation.Abstractions;
 using TokenIDP.Core.Foundation.Contracts;
 using TokenIDP.Core.Foundation.Extensions;
 using Microsoft.AspNetCore.Http;
@@ -7,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Server.Middlewares;
 

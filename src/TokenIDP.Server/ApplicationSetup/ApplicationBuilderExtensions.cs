@@ -3,7 +3,6 @@ using TokenIDP.Core.Admin.Endpoints;
 using HealthChecks.UI.Client;
 using TokenIDP.Core.OAuth;
 using TokenIDP.Core.OAuth.Endpoints;
-using TokenIDP.Core.Foundation.Abstractions;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
 using TokenIDP.Infrastructure;
@@ -17,7 +16,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Server.ApplicationSetup;
 
@@ -33,42 +34,20 @@ public static class ApplicationBuilderExtensions
         this WebApplicationBuilder builder,
         string connectionStringName,
         string audience,
-        Action<TokenOption>? configureToken)
+        Action<TokenOptions>? configureToken)
     {
         if (string.IsNullOrWhiteSpace(audience))
         {
             throw new ArgumentException("Token audience is required.", nameof(audience));
         }
 
-        ConfigureTokenOptions(builder.Services, builder.Configuration, options =>
-        {
-            options.Audience = audience;
+        var tokenOptions = ResolveTokenOptions(
+            builder.Configuration,
+            builder.Environment,
+            audience,
+            configureToken);
 
-            if (builder.Environment.IsDevelopment())
-            {
-                if (string.IsNullOrWhiteSpace(options.Key) &&
-                    string.IsNullOrWhiteSpace(options.KeyPath) &&
-                    string.IsNullOrWhiteSpace(options.CertificateThumbprint) &&
-                    string.IsNullOrWhiteSpace(options.CertificateSubjectName))
-                {
-                    options.Key = TokenKeyDefault.DevelopmentKey;
-                }
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(options.CertificateThumbprint) &&
-                string.IsNullOrWhiteSpace(options.CertificateSubjectName))
-            {
-                throw new InvalidOperationException(
-                    "Token signing certificate is required in production. " +
-                    "Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
-            }
-
-            if (string.Equals(options.Key, TokenKeyDefault.DevelopmentKey, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException("Development signing key cannot be used in production.");
-            }
-        });
+        builder.Services.AddSingleton<IOptions<TokenOptions>>(Options.Create(tokenOptions));
 
         builder.Services.AddHttpContextAccessor();
 
@@ -82,7 +61,7 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddInfrastructureServices(builder.Configuration, connectionStringName);
 
-        builder.Services.AddAuthentication(builder.Configuration, builder.Environment);
+        builder.Services.AddAuthentication(tokenOptions, builder.Environment);
 
 
         builder.Services.ConfigureHttpJsonOptions(options =>
@@ -131,26 +110,47 @@ public static class ApplicationBuilderExtensions
             .AddCheck<DatabaseHealthCheck>("database");
     }
 
-    private static void ConfigureTokenOptions(
-        IServiceCollection services,
+    private static TokenOptions ResolveTokenOptions(
         IConfiguration configuration,
-        Action<TokenOption>? configureToken)
+        IHostEnvironment environment,
+        string audience,
+        Action<TokenOptions>? configureToken)
     {
-        var tokenSection = configuration.GetSection("TokenOptions");
+        var tokenOptions = configuration
+            .GetSection("TokenOptions")
+            .Get<TokenOptions>() ?? new TokenOptions();
 
-        if (tokenSection.Exists())
+        tokenOptions.Audience = audience;
+        configureToken?.Invoke(tokenOptions);
+
+        if (environment.IsDevelopment())
         {
-            services.Configure<TokenOption>(tokenSection);
+            if (string.IsNullOrWhiteSpace(tokenOptions.Key) &&
+                string.IsNullOrWhiteSpace(tokenOptions.KeyPath) &&
+                string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) &&
+                string.IsNullOrWhiteSpace(tokenOptions.CertificateSubjectName))
+            {
+                tokenOptions.Key = TokenKeyDefault.DevelopmentKey;
+            }
         }
-        else
+        else if (string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) &&
+                 string.IsNullOrWhiteSpace(tokenOptions.CertificateSubjectName))
         {
-            services.AddOptions<TokenOption>();
+            throw new InvalidOperationException(
+                "Token signing certificate is required in production. " +
+                "Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
         }
 
-        if (configureToken is not null)
+        if (string.Equals(tokenOptions.Key, TokenKeyDefault.DevelopmentKey, StringComparison.Ordinal) &&
+            environment.IsProduction())
         {
-            services.PostConfigure(configureToken);
+            throw new InvalidOperationException("Development signing key cannot be used in production.");
         }
+
+        _ = TokenOptionsResolver.ResolveIssuer(tokenOptions);
+        _ = TokenOptionsResolver.ResolveAudience(tokenOptions);
+
+        return tokenOptions;
     }
 }
 

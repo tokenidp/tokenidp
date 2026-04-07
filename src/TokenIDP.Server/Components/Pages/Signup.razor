@@ -2,25 +2,25 @@
 @rendermode InteractiveServer
 
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@using TokenIDP.Core.Abstractions
+@using TokenIDP.Core.Abstractions.Repositories
 @using TokenIDP.Core.Admin.Users.UseCases
+@using TokenIDP.Core.Foundation.Exceptions
 @using TokenIDP.Core.OAuth
 @using TokenIDP.Core.OAuth.Abstractions
 @using TokenIDP.Core.OAuth.Model
 @using TokenIDP.Domain.AggregateRoots.Authorization
-@using TokenIDP.Core.Foundation.Abstractions
-@using TokenIDP.Core.Foundation.Abstractions.Stores
-@using TokenIDP.Core.Foundation.Exceptions
 @using TokenIDP.Server
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components.Web
-@using Microsoft.AspNetCore.WebUtilities
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 <PageTitle>Create Account</PageTitle>
 
 @inject LoadService LoadService
 @inject NavigationManager Navigation
-@inject IAuthorizationStore authorizationStore
+@inject IAuthorizationRepository authorizationStore
 @inject IAuthorizationPageUiUseCase PageUiUseCase
 @inject ITenantContextAccessor TenantContext
 @inject CreateAccountUseCase CreateAccountUseCase
@@ -271,3 +271,4 @@ else if (ui != null)
         return $"{accentStyle}max-width:460px;";
     }
 }
+

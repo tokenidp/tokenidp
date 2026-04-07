@@ -1,11 +1,12 @@
-using TokenIDP.Core.Admin.Bootstrap;
+using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Tenants;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
 internal class TenantProvisioningService : ITenantProvisioningService
 {
-    public async Task<Tenant> CreateSystemTenantAsync(IApplicationDbContext db,
+    public async Task<Tenant> CreateSystemTenantAsync(ApplicationDbContext db,
         CreateUpdateTenant command,
         CancellationToken ct)
     {
@@ -47,7 +48,7 @@ internal class TenantProvisioningService : ITenantProvisioningService
         return tenant!;
     }
 
-    public async Task<Tenant?> ExistsAsync(IApplicationDbContext db,
+    public async Task<Tenant?> ExistsAsync(ApplicationDbContext db,
         string tenantCode,
         CancellationToken ct)
     {
@@ -58,3 +59,4 @@ internal class TenantProvisioningService : ITenantProvisioningService
         return existingTenant;
     }
 }
+

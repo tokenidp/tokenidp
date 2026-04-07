@@ -1,4 +1,6 @@
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.Clients.UseCases;
 
@@ -7,18 +9,18 @@ internal sealed class ClientLookupsUseCase
     private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<ClientLookupsUseCase> _logger;
-    private readonly IApplicationDbContext _appDbContext;
+    private readonly IClientRepository _clientRepository;
 
     public ClientLookupsUseCase(
         ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<ClientLookupsUseCase> logger,
-        IApplicationDbContext appDbContext)
+        IClientRepository clientRepository)
     {
         _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
-        _appDbContext = appDbContext;
+        _clientRepository = clientRepository;
     }
 
     public async Task<ApiResult<ClientLookups>> GetClientLookups(CancellationToken cancellationToken)
@@ -31,18 +33,9 @@ internal sealed class ClientLookupsUseCase
             cacheKey,
             async () =>
             {
-                return new ClientLookups
-                {
-                    AppTypes = ClientLookupMapper.MapAppTypes(),
-                    TokenTypes = ClientLookupMapper.MapTokenTypes(),
-                    ClientScopes = ClientLookupMapper.MapClientScopes(),
-                    ApiResources = await ClientLookupMapper
-                        .MapApiResources(_currentUserService.TenantId, _appDbContext, cancellationToken),
-                    GrantTypes = ClientLookupMapper.MapGrantTypes(),
-                    ExternalProviders = await ClientLookupMapper
-                        .MapExternalProviders(_currentUserService.TenantId, _appDbContext),
-                    Roles = await ClientLookupMapper.MapRoles(_currentUserService.TenantId, _appDbContext)
-                };
+                return await _clientRepository.GetClientLookupsAsync(
+                    _currentUserService.TenantId,
+                    cancellationToken);
             }, TimeSpan.FromMinutes(15));
 
         _logger.LogDebug("Client lookups fetched for tenant {TenantId}", _currentUserService.TenantId);

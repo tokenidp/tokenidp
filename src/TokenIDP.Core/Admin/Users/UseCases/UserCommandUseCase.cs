@@ -1,41 +1,45 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
-using TokenIDP.Core.Foundation.Abstractions.Stores;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 
 internal class UserCommandUseCase
 {
-    private readonly IApplicationDbContext _dbContext;
     private readonly ICurrentUserService _currentUserService;
-    private readonly IUserStore _userStore;
+    private readonly IUserRepository _userRepository;
     private readonly IAppLogger<UserCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
     private readonly UserNormalizationService _userNormalizationService;
     private readonly ILookupNormalizer _normalizer;
 
     public UserCommandUseCase(
-        IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
         IAppLogger<UserCommandUseCase> logger,
         ICodeSequenceGenerator userCodeGenerator,
         UserNormalizationService userNormalizationService,
         ILookupNormalizer normalizer,
-        IUserStore userStore)
+        IUserRepository userRepository)
     {
-        _dbContext = dbContext;
         _currentUserService = currentUserService;
         _logger = logger;
         _userCodeGenerator = userCodeGenerator;
         _userNormalizationService = userNormalizationService;
         _normalizer = normalizer;
-        _userStore = userStore;
+        _userRepository = userRepository;
     }
 
     public async Task<ApiResult<int>> CreateUser(
         UserDetail request,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Creating user {UserName} for tenant {TenantId}", request.UserName, request.TenantId);
+        ArgumentNullException.ThrowIfNull(request);
+
+        var userName = request.UserName?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? string.Empty;
+        var phone = request.Phone?.Trim() ?? string.Empty;
+
+        _logger.LogDebug("Creating user {UserName} for tenant {TenantId}", userName, _currentUserService.TenantId);
 
         if (string.IsNullOrWhiteSpace(request.Password))
         {
@@ -43,44 +47,23 @@ internal class UserCommandUseCase
                 ApiError.Failure("user.password.required", "Password is required."));
         }
 
-        var userName = request.UserName.Trim();
-        var email = request.Email?.Trim() ?? string.Empty;
-        var normalizedUserName = _normalizer.NormalizeName(userName);
-        var normalizedEmail = _normalizer.NormalizeEmail(email);
-
-        var userNameExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(
-                u => u.TenantId == _currentUserService.TenantId &&
-                     (u.NormalizedUserName == normalizedUserName || u.UserName == userName),
-                cancellationToken);
-
-        if (userNameExists)
+        var uniquenessFailure = await EnsureUniqueUserAsync(
+            userId: 0,
+            userName,
+            email,
+            cancellationToken);
+        if (uniquenessFailure is not null)
         {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("user.username.duplicate", "User name already exists."));
-        }
-
-        var emailExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(
-                u => u.TenantId == _currentUserService.TenantId &&
-                     (u.NormalizedEmail == normalizedEmail || u.Email == email),
-                cancellationToken);
-
-        if (emailExists)
-        {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("user.email.duplicate", "Email already exists."));
+            return uniquenessFailure;
         }
 
         var createResult = User.Create(
             _currentUserService.TenantId,
             request.FirstName,
             request.LastName,
-            request.UserName,
-            request.Email,
-            request.Phone!,
+            userName,
+            email,
+            phone,
             _currentUserService.UserId,
             request.Roles,
             out var user);
@@ -91,42 +74,26 @@ internal class UserCommandUseCase
         }
 
         _userNormalizationService.Normalize(user);
-
-        if (!string.IsNullOrWhiteSpace(request.Status) &&
-            Enum.TryParse<UserStatus>(request.Status, true, out var parsedStatus))
-        {
-            user.UpdateStatus(parsedStatus);
-        }
+        ApplyUserState(user, request);
 
         var nextValue = await _userCodeGenerator
             .NextUserCodeAsync(_currentUserService.TenantId, cancellationToken);
 
         user.GenerateUserCode(nextValue);
 
-        user.ApplyIdentityFlags(
-            request.LockoutEnabled,
-            request.TwoFactorEnabled,
-            request.EmailConfirmed,
-            request.PhoneNumberConfirmed,
-            request.AccessFailedCount,
-            request.LockoutEnd);
-
-        var addressResult = BuildAddresses(request.Addresses, out var addresses);
-        if (!addressResult.IsSuccess)
+        var collectionResult = BuildUserCollections(
+            request,
+            out var addresses,
+            out var contacts);
+        if (!collectionResult.IsSuccess)
         {
-            return FailureFromResult(addressResult);
-        }
-
-        var contactResult = BuildContacts(request.Contacts, out var contacts);
-        if (!contactResult.IsSuccess)
-        {
-            return FailureFromResult(contactResult);
+            return FailureFromResult(collectionResult);
         }
 
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
 
-        await _userStore.CreateUser(user, request.Password);
+        await _userRepository.CreateUser(user, request.Password);
 
         _logger.LogInfo("User created with Id {UserId}", user.Id);
 
@@ -138,9 +105,14 @@ internal class UserCommandUseCase
         UserDetail request,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         _logger.LogDebug("Updating user {UserId}", id);
 
-        var user = await _userStore.GetUserAggregateAsync(id, cancellationToken);
+        var user = await _userRepository.GetUserAggregateAsync(
+            id,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (user == null)
         {
@@ -149,34 +121,33 @@ internal class UserCommandUseCase
                 "User not found for the Id {0}".FormatString(id)));
         }
 
-        if (!string.Equals(user.UserName, request.UserName, StringComparison.OrdinalIgnoreCase))
+        var userName = request.UserName?.Trim() ?? string.Empty;
+        var email = request.Email?.Trim() ?? string.Empty;
+        var phone = request.Phone?.Trim() ?? string.Empty;
+
+        if (!string.Equals(user.UserName, userName, StringComparison.OrdinalIgnoreCase))
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure("user.username.immutable", "User name cannot be changed."));
         }
 
-        var email = request.Email.Trim();
-        var normalizedEmail = _normalizer.NormalizeEmail(email);
-        var emailExists = await _dbContext.Users
-            .AsNoTracking()
-            .AnyAsync(
-                u => u.TenantId == _currentUserService.TenantId &&
-                     u.Id != id &&
-                     (u.NormalizedEmail == normalizedEmail || u.Email == email),
-                cancellationToken);
-
-        if (emailExists)
+        var uniquenessFailure = await EnsureUniqueUserAsync(
+            userId: id,
+            userName,
+            email,
+            cancellationToken,
+            checkUserName: false);
+        if (uniquenessFailure is not null)
         {
-            return ApiResult<int>.Failure(
-                ApiError.Failure("user.email.duplicate", "Email already exists."));
+            return uniquenessFailure;
         }
 
         var updateResult = user.UpdateProfile(
             request.FirstName,
             request.LastName,
-            user.UserName ?? request.UserName,
-            request.Email,
-            request.Phone,
+            user.UserName ?? userName,
+            email,
+            phone,
             request.Roles);
 
         if (!updateResult.IsSuccess)
@@ -186,35 +157,20 @@ internal class UserCommandUseCase
 
         _userNormalizationService.Normalize(user);
 
-        var addressResult = BuildAddresses(request.Addresses, out var addresses);
-        if (!addressResult.IsSuccess)
+        var collectionResult = BuildUserCollections(
+            request,
+            out var addresses,
+            out var contacts);
+        if (!collectionResult.IsSuccess)
         {
-            return FailureFromResult(addressResult);
-        }
-
-        var contactResult = BuildContacts(request.Contacts, out var contacts);
-        if (!contactResult.IsSuccess)
-        {
-            return FailureFromResult(contactResult);
+            return FailureFromResult(collectionResult);
         }
 
         user.ReplaceAddresses(addresses);
         user.ReplaceContacts(contacts);
-        user.ApplyIdentityFlags(
-            request.LockoutEnabled,
-            request.TwoFactorEnabled,
-            request.EmailConfirmed,
-            request.PhoneNumberConfirmed,
-            request.AccessFailedCount,
-            request.LockoutEnd);
+        ApplyUserState(user, request);
 
-        if (!string.IsNullOrWhiteSpace(request.Status) &&
-            Enum.TryParse<UserStatus>(request.Status, true, out var parsedStatus))
-        {
-            user.UpdateStatus(parsedStatus);
-        }
-
-        await _userStore.UpdateUser(user);
+        await _userRepository.UpdateUser(user);
 
         _logger.LogInfo("User updated {UserId}", id);
 
@@ -228,7 +184,10 @@ internal class UserCommandUseCase
     {
         _logger.LogDebug("Updating user status for {UserId}", id);
 
-        var user = await _userStore.GetUserById(id);
+        var user = await _userRepository.GetUserAggregateAsync(
+            id,
+            _currentUserService.TenantId,
+            cancellationToken);
 
         if (user == null)
         {
@@ -240,11 +199,68 @@ internal class UserCommandUseCase
 
         user.UpdateStatus(request.Status);
 
-        await _userStore.UpdateUser(user);
+        await _userRepository.UpdateUser(user);
 
         _logger.LogInfo("User status updated {UserId}", id);
 
         return ApiResult<int>.Success(user.Id);
+    }
+
+    private async Task<ApiResult<int>?> EnsureUniqueUserAsync(
+        int userId,
+        string userName,
+        string email,
+        CancellationToken cancellationToken,
+        bool checkUserName = true)
+    {
+        if (checkUserName)
+        {
+            var normalizedUserName = _normalizer.NormalizeName(userName);
+            var userNameExists = await _userRepository.UserNameExistsAsync(
+                _currentUserService.TenantId,
+                userId,
+                normalizedUserName,
+                cancellationToken);
+
+            if (userNameExists)
+            {
+                return ApiResult<int>.Failure(
+                    ApiError.Failure("user.username.duplicate", "User name already exists."));
+            }
+        }
+
+        var normalizedEmail = _normalizer.NormalizeEmail(email);
+        var emailExists = await _userRepository.EmailExistsAsync(
+            _currentUserService.TenantId,
+            userId,
+            normalizedEmail,
+            cancellationToken);
+
+        return emailExists
+            ? ApiResult<int>.Failure(
+                ApiError.Failure("user.email.duplicate", "Email already exists."))
+            : null;
+    }
+
+    private static void ApplyUserState(User user, UserDetail request)
+    {
+        user.ApplyIdentityFlags(
+            request.LockoutEnabled,
+            request.TwoFactorEnabled,
+            request.EmailConfirmed,
+            request.PhoneNumberConfirmed,
+            request.AccessFailedCount,
+            request.LockoutEnd);
+
+        if (string.IsNullOrWhiteSpace(request.Status))
+        {
+            return;
+        }
+
+        if (Enum.TryParse<UserStatus>(request.Status, true, out var parsedStatus))
+        {
+            user.UpdateStatus(parsedStatus);
+        }
     }
 
     private static ApiResult<int> FailureFromResult(Result result)
@@ -253,19 +269,30 @@ internal class UserCommandUseCase
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
     }
 
+    private static Result BuildUserCollections(
+        UserDetail request,
+        out List<UserAddress> addresses,
+        out List<UserContact> contacts)
+    {
+        var addressResult = BuildAddresses(request.Addresses, out addresses);
+        var contactResult = BuildContacts(request.Contacts, out contacts);
+
+        if (addressResult.IsSuccess)
+        {
+            return contactResult;
+        }
+
+        return addressResult.Combine(contactResult);
+    }
+
     private static Result BuildAddresses(
         IEnumerable<UserAddressDetail> addresses,
         out List<UserAddress> mapped)
     {
         mapped = new List<UserAddress>();
 
-        if (addresses == null)
-        {
-            return Result.Success(0);
-        }
-
         var combined = Result.Success(0);
-        foreach (var address in addresses)
+        foreach (var address in addresses ?? Enumerable.Empty<UserAddressDetail>())
         {
             var createResult = UserAddress.Create(
                 address.AddressType,
@@ -299,13 +326,8 @@ internal class UserCommandUseCase
     {
         mapped = new List<UserContact>();
 
-        if (contacts == null)
-        {
-            return Result.Success(0);
-        }
-
         var combined = Result.Success(0);
-        foreach (var contact in contacts)
+        foreach (var contact in contacts ?? Enumerable.Empty<UserContactDetail>())
         {
             var createResult = UserContact.Create(
                 contact.ContactType,
@@ -336,3 +358,4 @@ internal class UserCommandUseCase
         return combined;
     }
 }
+
