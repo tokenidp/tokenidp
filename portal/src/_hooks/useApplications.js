@@ -36,6 +36,70 @@ const actions = {
   CLEAR_ERROR: "CLEAR_ERROR",
 };
 
+const normalizeScope = (scope) => ({
+  id: scope?.id ?? scope?.Id ?? null,
+  name: String(scope?.name ?? scope?.Name ?? ""),
+  displayName: String(
+    scope?.displayName ?? scope?.DisplayName ?? scope?.name ?? scope?.Name ?? ""
+  ),
+  description: scope?.description ?? scope?.Description ?? null,
+  enabled: scope?.enabled ?? scope?.Enabled ?? true,
+});
+
+const normalizeApiResource = (resource) => ({
+  id: resource?.id ?? resource?.Id ?? resource?.name ?? resource?.Name ?? null,
+  name: String(resource?.name ?? resource?.Name ?? ""),
+  displayName: String(
+    resource?.displayName ??
+      resource?.DisplayName ??
+      resource?.name ??
+      resource?.Name ??
+      ""
+  ),
+  description: resource?.description ?? resource?.Description ?? null,
+  enabled: resource?.enabled ?? resource?.Enabled ?? true,
+  scopes: Array.isArray(resource?.scopes ?? resource?.Scopes)
+    ? (resource?.scopes ?? resource?.Scopes)
+        .map(normalizeScope)
+        .filter((scope) => scope.name)
+    : [],
+});
+
+const mergeApiResources = (...collections) => {
+  const merged = new Map();
+
+  collections.forEach((collection) => {
+    if (!Array.isArray(collection)) {
+      return;
+    }
+
+    collection
+      .map(normalizeApiResource)
+      .filter((resource) => resource.name)
+      .forEach((resource) => {
+        const key = resource.name.toLowerCase();
+        const existing = merged.get(key);
+
+        if (!existing) {
+          merged.set(key, resource);
+          return;
+        }
+
+        merged.set(key, {
+          ...existing,
+          ...resource,
+          id: resource.id ?? existing.id,
+          displayName: resource.displayName || existing.displayName,
+          description: resource.description ?? existing.description,
+          enabled: resource.enabled,
+          scopes: resource.scopes.length ? resource.scopes : existing.scopes,
+        });
+      });
+  });
+
+  return Array.from(merged.values()).filter((resource) => resource.enabled !== false);
+};
+
 const reducer = (state, action) => {
   switch (action.type) {
     case actions.LIST_START:
@@ -146,8 +210,12 @@ export const ApplicationsProvider = ({ children }) => {
   const loadLookups = useCallback(async () => {
     dispatch({ type: actions.LOOKUPS_START });
     try {
-      const response = await get("admin/client/clientlookups");
+      const [response, apiResourcesResponse] = await Promise.all([
+        get("admin/client/clientlookups"),
+        get("apiresources").catch(() => null),
+      ]);
       const result = normalizeResult(response) || {};
+      const apiResourcesResult = normalizeResult(apiResourcesResponse) || [];
       dispatch({
         type: actions.LOOKUPS_SUCCESS,
         payload: {
@@ -156,7 +224,10 @@ export const ApplicationsProvider = ({ children }) => {
           grantTypes: result.grantTypes || result.GrantTypes || [],
           tokenTypes: result.tokenTypes || result.TokenTypes || [],
           scopes: result.clientScopes || result.ClientScopes || [],
-          apiResources: result.apiResources || result.ApiResources || [],
+          apiResources: mergeApiResources(
+            result.apiResources || result.ApiResources || [],
+            Array.isArray(apiResourcesResult) ? apiResourcesResult : []
+          ),
           externalProviders:
             result.externalProviders || result.ExternalProviders || [],
           roles: result.roles || result.Roles || [],

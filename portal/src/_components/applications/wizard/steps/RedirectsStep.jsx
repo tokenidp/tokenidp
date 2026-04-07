@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { GrantTypeId } from "../wizardState";
 
 const parseLines = (value) =>
   String(value || "")
@@ -6,10 +7,10 @@ const parseLines = (value) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
-const validateUriLines = (value) => {
+const validateUriLines = (value, isRequired) => {
   const lines = parseLines(value);
   if (!lines.length) {
-    return "Redirect URI is required.";
+    return isRequired ? "Redirect URI is required." : true;
   }
   for (const line of lines) {
     if (line.includes("*")) {
@@ -64,28 +65,35 @@ const validateLogoutLines = (value) => {
   return true;
 };
 
-function RedirectsStep({ register, errors, appType }) {
+function RedirectsStep({ register, errors, appType, grantTypes }) {
+  const requiresRedirectUri = useMemo(
+    () => grantTypes.includes(GrantTypeId.AuthorizationCode),
+    [grantTypes],
+  );
+
   const redirectHint = useMemo(() => {
-    if (appType === "4") {
+    if (!requiresRedirectUri || appType === "4") {
       return "This application type does not use redirect-based flows. Redirect URIs are not required.";
     }
     return "Redirect URIs are required for authorization code flow.";
-  }, [appType]);
+  }, [appType, requiresRedirectUri]);
 
   return (
     <div className="row g-4 justify-content-center">
-      <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card form-section-card">
-          <div className="card-body">
-            <h6 className="card-title">Redirect &amp; Logout URLs</h6>
-            <div className="wizard-info-banner" role="status">
-              Redirect URIs must exactly match the URLs used by your application.
-              Do not use wildcards or broad domains in production.
-              Incorrect configuration can lead to token leakage.
-            </div>
+      <div className="col-12 col-xl-10">
+        <div className="wizard-step-shell">
+          <h6 className="wizard-step-title">Redirect &amp; Logout URLs</h6>
+          <div className="wizard-info-banner" role="status">
+            Redirect URIs must exactly match the URLs used by your application.
+            Do not use wildcards or broad domains in production.
+            Incorrect configuration can lead to token leakage.
+          </div>
 
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Redirect URIs *</label>
+          <div className="row g-3">
+            <div className="col-12 col-lg-6">
+              <label className="form-label fw-semibold">
+                Redirect URIs {requiresRedirectUri ? "*" : ""}
+              </label>
               <div className="input-group">
                 <span className="input-group-text">
                   <i className="fa fa-link"></i>
@@ -96,19 +104,24 @@ function RedirectsStep({ register, errors, appType }) {
                   placeholder={
                     "https://app.example.com/callback\nhttp://localhost:3000/callback"
                   }
-                  {...register("redirectUri", { validate: validateUriLines })}
+                  {...register("redirectUri", {
+                    validate: (value) => validateUriLines(value, requiresRedirectUri),
+                  })}
                 ></textarea>
               </div>
               {errors.redirectUri && (
                 <div className="error-msg">{errors.redirectUri.message}</div>
               )}
               <div className="form-text">
-                Add one URI per line. Required for authorization code flows.
+                Add one URI per line.{" "}
+                {requiresRedirectUri
+                  ? "Required for authorization code flows."
+                  : "Optional when authorization code flow is not enabled."}
               </div>
               <div className="form-text text-muted">{redirectHint}</div>
             </div>
 
-            <div className="mb-0">
+            <div className="col-12 col-lg-6">
               <label className="form-label fw-semibold">Logout Redirect URIs</label>
               <div className="input-group">
                 <span className="input-group-text">

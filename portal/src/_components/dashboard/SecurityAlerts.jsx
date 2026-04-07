@@ -2,7 +2,7 @@ import React from "react";
 
 function SecurityAlerts({ alerts }) {
   return (
-    <div className="card-lite h-100">
+    <div className="card-lite h-100 dashboard-security-alerts-card">
       <div className="card-header d-flex justify-content-between align-items-center">
         <div>
           <h6 className="mb-0">Security Alerts</h6>

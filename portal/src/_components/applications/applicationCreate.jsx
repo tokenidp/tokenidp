@@ -125,16 +125,14 @@ function ApplicationCreate() {
         </div>
       </div>
 
-      <div className="card-surface">
-        <ApplicationWizard
-          initialValues={defaultValues}
-          onSubmit={handleSubmit}
-          onCancel={() => navigate("/applications")}
-          submitting={state.loading}
-          lookups={state}
-          mode="add"
-        />
-      </div>
+      <ApplicationWizard
+        initialValues={defaultValues}
+        onSubmit={handleSubmit}
+        onCancel={() => navigate("/applications")}
+        submitting={state.loading}
+        lookups={state}
+        mode="add"
+      />
     </div>
   );
 }

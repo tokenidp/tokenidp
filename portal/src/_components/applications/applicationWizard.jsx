@@ -26,8 +26,8 @@ import ReviewStep from "./wizard/steps/ReviewStep";
 const stepFields = {
   [WizardStep.BasicInfo]: ["clientName", "appType"],
   [WizardStep.Auth]: [],
-  [WizardStep.Redirects]: ["redirectUri"],
-  [WizardStep.Tokens]: [
+  [WizardStep.EndpointsTokens]: [
+    "redirectUri",
     "tokenType",
     "accessTokenLifetime",
     "authorizationCodeLifetime",
@@ -570,16 +570,15 @@ function ApplicationWizard({
             setValue={setValue}
           />
         );
-      case WizardStep.Redirects:
+      case WizardStep.EndpointsTokens:
         return (
-          <RedirectsStep
-            register={register}
-            errors={errors}
-            appType={appType}
-          />
-        );
-      case WizardStep.Tokens:
-        return (
+          <>
+            <RedirectsStep
+              register={register}
+              errors={errors}
+              appType={appType}
+              grantTypes={grantTypes}
+            />
             <TokensStep
               register={register}
               errors={errors}
@@ -590,6 +589,7 @@ function ApplicationWizard({
               clearErrors={clearErrors}
               grantTypes={grantTypes}
             />
+          </>
         );
       case WizardStep.Scopes:
         return (
@@ -645,15 +645,19 @@ function ApplicationWizard({
           onStepChange={handleStepChange}
         />
         {currentStep.id === WizardStep.BasicInfo && (
-          <div className="wizard-info-banner" role="status">
-            Next steps configure authentication, redirect URLs, token settings, and
-            permissions. Incorrect configuration may affect security.
+          <div className="row g-4 justify-content-center">
+            <div className="col-12 col-xl-10">
+              <div className="wizard-info-banner" role="status">
+                Next steps configure authentication, redirect URLs, token settings, and
+                permissions. Incorrect configuration may affect security.
+              </div>
+            </div>
           </div>
         )}
         <form onSubmit={handleSubmit(submitForm)}>
           {mode === "add" && (
             <div className="row g-4 justify-content-center">
-              <div className="col-12 col-lg-8 col-xl-7">
+              <div className="col-12 col-xl-10">
                 <div className="wizard-status wizard-status-aligned mb-1">
                   <span
                     className="status-pill status-pill-warning"

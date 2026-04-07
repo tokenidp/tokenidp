@@ -15,11 +15,11 @@ function BasicInfoStep({
 }) {
   return (
     <div className="row g-4 justify-content-center">
-      <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card form-section-card">
-          <div className="card-body">
-            <h6 className="card-title">Basic Information</h6>
-            <div className="mb-3">
+      <div className="col-12 col-xl-10">
+        <div className="wizard-step-shell">
+          <h6 className="wizard-step-title">Basic Information</h6>
+          <div className="row g-3">
+            <div className="col-12 col-lg-6">
               <label className="form-label fw-semibold">Client Name *</label>
               <div className="input-group">
                 <span className="input-group-text">
@@ -41,37 +41,37 @@ function BasicInfoStep({
                 <div className="error-msg">Client name is required.</div>
               )}
             </div>
-            <div className="mb-3">
+            <div className="col-12 col-lg-6">
               <label className="form-label fw-semibold">Client ID</label>
               <input type="hidden" value={clientIdValue || ""} {...register("clientId")} />
-              <div className="token-field">
-                <span className="token-icon" aria-hidden="true">
+              <div className="input-group">
+                <span className="input-group-text" aria-hidden="true">
                   <i className="fa fa-fingerprint"></i>
                 </span>
-                <div
-                  className="token-value"
-                  role="textbox"
-                  aria-readonly="true"
+                <input
+                  className="form-control"
+                  type="text"
+                  value={clientIdValue || "Client ID will be generated after saving."}
+                  readOnly
                   aria-label="Client ID"
-                >
-                  {clientIdValue || "Client ID will be generated after saving."}
-                </div>
+                />
                 <button
-                  className="btn btn-outline-secondary btn-sm"
+                  className="btn btn-outline-secondary"
                   type="button"
                   onClick={onCopyClientId}
                   disabled={!clientIdValue}
+                  aria-label="Copy client ID"
                 >
-                  Copy
+                  <i className="fa fa-copy" aria-hidden="true"></i>
                 </button>
               </div>
               <div className="form-text">Use this identifier in OAuth flows.</div>
             </div>
-            <div className="mb-3">
+            <div className="col-12">
               <label className="form-label fw-semibold">Application Type *</label>
               <div className="row g-3">
                 {appTypeOptions.map((option) => (
-                  <div className="col-12" key={option.value}>
+                  <div className="col-12 col-lg-6" key={option.value}>
                     <div
                       className={`option-card d-flex align-items-center gap-3 ${
                         appType === option.value ? "option-card-active" : ""
@@ -122,7 +122,7 @@ function BasicInfoStep({
                 <div className="error-msg">App type is required.</div>
               )}
             </div>
-            <div className="mb-0">
+            <div className="col-12">
               <label className="form-label fw-semibold">Description</label>
               <div className="input-group">
                 <span className="input-group-text">
@@ -136,17 +136,19 @@ function BasicInfoStep({
                 ></textarea>
               </div>
             </div>
-            <div className="form-check form-switch app-switch mt-3 basic-info-active">
-              <input
-                className="form-check-input app-switch-input"
-                type="checkbox"
-                checked={isActive}
-                onChange={(event) => {
-                  setIsActive(event.target.checked);
-                  setValue("isActive", event.target.checked);
-                }}
-              />
-              <label className="form-check-label">Active</label>
+            <div className="col-12">
+              <div className="form-check form-switch app-switch mt-1 basic-info-active">
+                <input
+                  className="form-check-input app-switch-input"
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(event) => {
+                    setIsActive(event.target.checked);
+                    setValue("isActive", event.target.checked);
+                  }}
+                />
+                <label className="form-check-label">Active</label>
+              </div>
             </div>
           </div>
         </div>

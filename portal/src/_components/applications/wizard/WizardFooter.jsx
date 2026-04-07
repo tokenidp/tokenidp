@@ -12,7 +12,7 @@ function WizardFooter({
 }) {
   return (
     <div className="row g-4 justify-content-center mt-1">
-      <div className="col-12 col-lg-8 col-xl-7">
+      <div className="col-12 col-xl-10">
         <div className="d-flex flex-column flex-sm-row justify-content-between align-items-stretch align-items-sm-center gap-2">
           <div className="d-flex flex-wrap gap-2">
             {onCancel && (

@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import DashboardHeader from "./DashboardHeader";
 import KpiRow from "./KpiRow";
 import AuthenticationActivity from "./AuthenticationActivity";
-import TokenUsage from "./TokenUsage";
 import TopClientsVolume from "./TopClientsVolume";
 import SecurityAlerts from "./SecurityAlerts";
 import useApiClient from "../../_hooks/useApiClient";
@@ -21,12 +20,13 @@ const statusToBadge = (status) => {
 };
 
 const normalizeDashboard = (value) => {
-  if (!value) return null;
-    return {
-      accessTokenIssued: value.accessTokenIssued ?? value.AccessTokenIssued ?? 0,
-      refreshTokenIssued: value.refreshTokenIssued ?? value.RefreshTokenIssued ?? 0,
-    tokenIssuanceByGrantType:
-      value.tokenIssuanceByGrantType ?? value.TokenIssuanceByGrantType ?? 0,
+  if (!value) {
+    return null;
+  }
+
+  return {
+    accessTokenIssued: value.accessTokenIssued ?? value.AccessTokenIssued ?? 0,
+    refreshTokenIssued: value.refreshTokenIssued ?? value.RefreshTokenIssued ?? 0,
     totalLoginAttempts: value.totalLoginAttempts ?? value.TotalLoginAttempts ?? 0,
     successfulLogins: value.successfulLogins ?? value.SuccessfulLogins ?? 0,
     failedLogins: value.failedLogins ?? value.FailedLogins ?? 0,
@@ -36,17 +36,15 @@ const normalizeDashboard = (value) => {
       value.multipleFailedLogin ?? value.MultipleFailedLogin ?? 0,
     suspiciousActivity:
       value.suspiciousActivity ?? value.SuspiciousActivity ?? 0,
-    tokensLast24h: value.tokensLast24h ?? value.TokensLast24h ?? [],
     authLast24h: value.authLast24h ?? value.AuthLast24h ?? [],
     topClients: value.topClients ?? value.TopClients ?? [],
-    authSummary: value.authSummary ?? value.AuthSummary ?? [],
-      failedLoginSpikes: value.failedLoginSpikes ?? value.FailedLoginSpikes ?? [],
-      expiringClientCount:
-        value.expiringClientCount ?? value.ExpiringClientCount ?? 0,
-      tokenVolumeSpike: value.tokenVolumeSpike ?? value.TokenVolumeSpike ?? null,
-      lastUpdated: value.lastUpdated ?? value.LastUpdated ?? null,
-    };
+    failedLoginSpikes: value.failedLoginSpikes ?? value.FailedLoginSpikes ?? [],
+    expiringClientCount:
+      value.expiringClientCount ?? value.ExpiringClientCount ?? 0,
+    tokenVolumeSpike: value.tokenVolumeSpike ?? value.TokenVolumeSpike ?? null,
+    lastUpdated: value.lastUpdated ?? value.LastUpdated ?? null,
   };
+};
 
 const toRelativeLabel = (utcValue) => {
   if (!utcValue) return "";
@@ -75,19 +73,16 @@ function Dashboard() {
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError("");
+
     try {
       const [dashboardResponse, healthResponse] = await Promise.all([
         get("admin/dashboard"),
         get("health"),
       ]);
       const dashboardResult =
-        dashboardResponse?.data?.value || dashboardResponse?.data;
-      const healthResult = healthResponse?.data || null;
-      console.log("DashboardResponse", dashboardResult);
-      console.log("HealthResponse", healthResult);
-      console.log("tokensLast24h", dashboardResult?.tokensLast24h || dashboardResult?.TokensLast24h || []);
-      console.log("authLast24h", dashboardResult?.authLast24h || dashboardResult?.AuthLast24h || []);
-      setDashboard(dashboardResult || null);
+        dashboardResponse?.data?.value ?? dashboardResponse?.data ?? null;
+      const healthResult = healthResponse?.data ?? null;
+      setDashboard(dashboardResult);
       setHealth(healthResult);
     } catch (err) {
       setError(err?.message || "Unable to load dashboard.");
@@ -99,41 +94,59 @@ function Dashboard() {
   }, [get]);
 
   useEffect(() => {
-    if (didLoadRef.current) return;
+    if (didLoadRef.current) {
+      return;
+    }
+
     didLoadRef.current = true;
     loadDashboard();
   }, [loadDashboard]);
 
   const normalizedDashboard = useMemo(
     () => normalizeDashboard(dashboard),
-    [dashboard]
+    [dashboard],
   );
 
   const viewModel = useMemo(() => {
     const healthEntries = health?.entries || {};
+    const emptyDashboard = normalizedDashboard || {
+      accessTokenIssued: 0,
+      refreshTokenIssued: 0,
+      totalLoginAttempts: 0,
+      successfulLogins: 0,
+      failedLogins: 0,
+      mfaChallenge: 0,
+      accountLockout: 0,
+      multipleFailedLogin: 0,
+      suspiciousActivity: 0,
+      authLast24h: [],
+      topClients: [],
+      failedLoginSpikes: [],
+      expiringClientCount: 0,
+      tokenVolumeSpike: null,
+      lastUpdated: null,
+    };
 
-    const healthKpis = [
+    const kpis = [
       {
         title: "IDP Service Status",
         value: health?.status || (loading ? "Loading" : "Unknown"),
-        badge: "success",
+        badge: statusToBadge(health?.status || "healthy"),
         caption: "Overall system health",
       },
       {
         title: "Authorization Endpoint",
-        value: healthEntries?.authorization?.status || (loading ? "Loading" : "Unknown"),
-        badge: loading
-          ? "success"
-          : String(healthEntries?.authorization?.status || "")
-              .toLowerCase() === "healthy"
-          ? "success"
-          : "warning",
-        caption: healthEntries?.authorization?.description || "Authorization reachability",
+        value:
+          healthEntries?.authorization?.status || (loading ? "Loading" : "Unknown"),
+        badge: statusToBadge(healthEntries?.authorization?.status),
+        caption:
+          healthEntries?.authorization?.description ||
+          "Authorization reachability",
       },
       {
         title: "Token Endpoint Status",
         value: healthEntries?.token?.status || (loading ? "Loading" : "Unknown"),
-        badge: "success",
+        badge: statusToBadge(healthEntries?.token?.status),
         caption: healthEntries?.token?.description || "Token reachability",
       },
       {
@@ -150,76 +163,32 @@ function Dashboard() {
       },
     ];
 
-    if (!normalizedDashboard) {
-      return {
-        kpis: healthKpis,
-        tokenStats: [],
-        authStats: [],
-        topClients: [],
-        alerts: error
-          ? [
-              {
-                title: "Dashboard data unavailable",
-                detail: "Unable to load dashboard metrics. Please retry.",
-                level: "warning",
-              },
-            ]
-          : [],
-      };
-    }
-
-    const kpis = healthKpis;
-
-    // Wave/area chart data sources: tokensLast24h, authLast24h
-    const tokenStats = [
-      { label: "Access tokens issued (24h)", value: formatNumber(normalizedDashboard.accessTokenIssued) },
-      { label: "Refresh tokens issued (24h)", value: formatNumber(normalizedDashboard.refreshTokenIssued) },
-      {
-        label: "Auth code grant share",
-        value: `${formatNumber(normalizedDashboard.tokenIssuanceByGrantType)}%`,
-      },
-    ];
-
-    const authStats = [
-      { label: "Total login attempts", value: formatNumber(normalizedDashboard.totalLoginAttempts) },
-      { label: "Successful logins", value: formatNumber(normalizedDashboard.successfulLogins) },
-      { label: "Failed logins", value: formatNumber(normalizedDashboard.failedLogins) },
-      { label: "MFA challenges", value: formatNumber(normalizedDashboard.mfaChallenge) },
-      { label: "Account lockouts", value: formatNumber(normalizedDashboard.accountLockout) },
-    ];
-
-    const lastUpdatedLabel = toRelativeLabel(normalizedDashboard.lastUpdated);
-
-    // Top clients table: topClients
-    const topClients = (normalizedDashboard.topClients || []).map((client) => ({
+    const topClients = (emptyDashboard.topClients || []).map((client) => ({
       clientId: client.clientId,
       name: client.clientName,
       grant: client.grantType,
       tokens: formatNumber(client.tokens),
     }));
 
-    // Security widgets: multipleFailedLogin, failedLoginSpikes
-    const spikeSummary = (normalizedDashboard.failedLoginSpikes || [])
-      .slice(0, 3)
-      .map((spike) => `${spike.dimension}: ${formatNumber(spike.value)}`)
-      .join(", ");
-
     const alerts = [
       {
         title: "Multiple failed login attempts",
-        detail: `${formatNumber(normalizedDashboard.multipleFailedLogin)} failures in the last 15 minutes.`,
-        level: normalizedDashboard.multipleFailedLogin > 0 ? "danger" : "secondary",
+        detail: `${formatNumber(
+          emptyDashboard.multipleFailedLogin,
+        )} failures in the last 15 minutes.`,
+        level: emptyDashboard.multipleFailedLogin > 0 ? "danger" : "secondary",
       },
       {
         title: "Expiring client secrets",
-        detail: `${formatNumber(normalizedDashboard.expiringClientCount)} confidential clients expire within 7 days.`,
-        level: normalizedDashboard.expiringClientCount > 0 ? "warning" : "secondary",
+        detail: `${formatNumber(
+          emptyDashboard.expiringClientCount,
+        )} confidential clients expire within 7 days.`,
+        level: emptyDashboard.expiringClientCount > 0 ? "warning" : "secondary",
       },
     ];
 
-    const spike = normalizedDashboard.tokenVolumeSpike;
-    const spikeDimension =
-      spike?.dimension ?? spike?.Dimension ?? "Unknown client";
+    const spike = emptyDashboard.tokenVolumeSpike;
+    const spikeDimension = spike?.dimension ?? spike?.Dimension ?? "Unknown client";
     const spikeValue = spike?.value ?? spike?.Value ?? 0;
 
     alerts.push({
@@ -227,23 +196,72 @@ function Dashboard() {
       detail:
         spikeValue > 0
           ? `${spikeDimension} has an unusual token volume spike: ${formatNumber(
-              spikeValue
+              spikeValue,
             )} tokens in the current hour.`
           : `${formatNumber(
-              normalizedDashboard.suspiciousActivity
+              emptyDashboard.suspiciousActivity,
             )} suspicious events detected.`,
       level:
-        spikeValue > 0 || normalizedDashboard.suspiciousActivity > 0
+        spikeValue > 0 || emptyDashboard.suspiciousActivity > 0
           ? "danger"
           : "secondary",
     });
 
-    return { kpis, tokenStats, authStats, topClients, alerts, lastUpdatedLabel };
-  }, [normalizedDashboard, error, health, loading]);
+    if (error) {
+      alerts.unshift({
+        title: "Dashboard data unavailable",
+        detail: "Unable to load dashboard metrics. Please retry.",
+        level: "warning",
+      });
+    }
+
+    return {
+      kpis,
+      lastUpdatedLabel: toRelativeLabel(emptyDashboard.lastUpdated),
+      authSeries: emptyDashboard.authLast24h,
+      alerts,
+      topClients,
+      metricCards: [
+        {
+          label: "Access tokens issued (24h)",
+          value: formatNumber(emptyDashboard.accessTokenIssued),
+        },
+        {
+          label: "Refresh tokens issued (24h)",
+          value: formatNumber(emptyDashboard.refreshTokenIssued),
+        },
+        {
+          label: "Total login attempts",
+          value: formatNumber(emptyDashboard.totalLoginAttempts),
+        },
+        {
+          label: "Successful logins",
+          value: formatNumber(emptyDashboard.successfulLogins),
+        },
+        {
+          label: "Failed logins",
+          value: formatNumber(emptyDashboard.failedLogins),
+        },
+        {
+          label: "MFA challenges",
+          value: formatNumber(emptyDashboard.mfaChallenge),
+        },
+        {
+          label: "Account lockouts",
+          value: formatNumber(emptyDashboard.accountLockout),
+        },
+      ],
+      totals: {
+        successfulLogins: emptyDashboard.successfulLogins,
+        failedLogins: emptyDashboard.failedLogins,
+      },
+    };
+  }, [normalizedDashboard, health, loading, error]);
 
   return (
     <>
       <DashboardHeader lastUpdatedLabel={viewModel.lastUpdatedLabel} />
+
       <KpiRow kpis={viewModel.kpis} />
 
       <div className="row g-3 my-2">
@@ -252,18 +270,37 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="row g-3 my-2">
-        <div className="col-12 col-lg-6">
-          <TokenUsage
-            tokenStats={viewModel.tokenStats}
-            series={normalizedDashboard?.tokensLast24h || []}
+      <div className="dashboard-auth-layout my-3">
+        <div className="dashboard-auth-main">
+          <AuthenticationActivity
+            series={viewModel.authSeries}
+            totals={viewModel.totals}
           />
         </div>
-        <div className="col-12 col-lg-6">
-          <AuthenticationActivity
-            authStats={viewModel.authStats}
-            series={normalizedDashboard?.authLast24h || []}
-          />
+
+        <div className="dashboard-summary-panel">
+          <div className="card-lite h-100 dashboard-summary-card">
+            <div className="card-header">
+              <div>
+                <h6 className="mb-0">Authentication Summary</h6>
+                <div className="text-muted small">
+                  Token issuance and login counters from the last 24 hours
+                </div>
+              </div>
+            </div>
+            <div className="card-body">
+              <div className="dashboard-summary-grid">
+                {viewModel.metricCards.map((metric) => (
+                  <div key={metric.label} className="dashboard-summary-metric">
+                    <div className="dashboard-summary-label">{metric.label}</div>
+                    <div className="dashboard-summary-value">
+                      {loading && !normalizedDashboard ? "--" : metric.value}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -272,7 +309,6 @@ function Dashboard() {
           <TopClientsVolume topClients={viewModel.topClients} />
         </div>
       </div>
-
     </>
   );
 }

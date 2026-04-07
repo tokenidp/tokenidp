@@ -42,18 +42,17 @@ function AuthStep({
 
   return (
     <div className="row g-4 justify-content-center">
-      <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card form-section-card">
-          <div className="card-body">
-            <h6 className="card-title">Authentication &amp; Grants</h6>
-            <div className="wizard-info-banner" role="status">
-              Grant and authentication settings directly impact application security.
-              Incorrect configuration may expose sensitive resources.
-            </div>
+      <div className="col-12 col-xl-10">
+        <div className="wizard-step-shell">
+          <h6 className="wizard-step-title">Authentication &amp; Grants</h6>
+          <div className="wizard-info-banner" role="status">
+            Grant and authentication settings directly impact application security.
+            Incorrect configuration may expose sensitive resources.
+          </div>
 
-            <div className="auth-field">
-              <label className="form-label fw-semibold">OAuth Grants</label>
-              <div className="row g-2">
+          <div className="auth-field">
+            <label className="form-label fw-semibold">OAuth Grants</label>
+            <div className="row g-2">
                 {grantOptions.map((grant) => {
                   const isRefreshToken = grant.id === GrantTypeId.RefreshToken;
                   const disabledByAppType = !allowedGrants.has(grant.id);
@@ -73,7 +72,7 @@ function AuthStep({
                               : "Not supported for this application type."
                       : null;
                   return (
-                    <div className="col-12" key={grant.id}>
+                    <div className="col-12 col-lg-6" key={grant.id}>
                       <div
                         className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
                           grantTypes.includes(grant.id) ? "option-card-active" : ""
@@ -102,107 +101,111 @@ function AuthStep({
                     </div>
                   );
                 })}
-              </div>
-              <div className="form-text">
-                Grant types are prefiltered based on app type selection.
-              </div>
-              {isWebClient && (
-                <div className="form-text text-muted">
-                  CIBA is currently under development and is not yet available for use.
-                </div>
-              )}
-              {isDeviceIot && (
-                <div className="form-text text-muted">
-                  Device and IoT clients sign in with the Device Authorization flow, where users
-                  complete verification on a separate activation screen.
-                </div>
-              )}
-              {isPublicClient && !isDeviceIot && (
-                <div className="form-text text-muted">
-                  SPA clients must use PKCE with Authorization Code flow. Mobile and Desktop
-                  clients may also use Password flow when explicitly allowed.
-                </div>
-              )}
-              {hasInsecureGrant && (
-                <div className="alert alert-warning mt-3 mb-0">
-                  The selected grant type is not recommended for this app type.
-                </div>
-              )}
-              {grantError && (
-                <div className="alert alert-danger mt-3 mb-0" role="alert">
-                  {grantError}
-                </div>
-              )}
             </div>
-
-            <div className="auth-divider"></div>
-
-            <div className={`auth-field ${secretLocked ? "is-locked" : ""}`}>
-              <label className="form-label fw-semibold">Client Secret</label>
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className={`fa ${secretLocked ? "fa-lock" : "fa-key"}`}></i>
-                </span>
-                <input
-                  className="form-control"
-                  type={showSecret ? "text" : "password"}
-                  {...register("clientSecret")}
-                  readOnly
-                  disabled={secretLocked}
-                  aria-label="Client secret"
-                />
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={() => setShowSecret((prev) => !prev)}
-                  disabled={secretLocked}
-                  aria-label={showSecret ? "Hide client secret" : "Show client secret"}
-                >
-                  <i className={`fa ${showSecret ? "fa-eye-slash" : "fa-eye"}`}></i>
-                </button>
-                <button
-                  className="btn btn-outline-secondary"
-                  type="button"
-                  onClick={onRegenerateSecret}
-                  disabled={secretLocked}
-                  aria-label="Regenerate client secret"
-                >
-                  Regenerate
-                </button>
+            <div className="form-text">
+              Grant types are prefiltered based on app type selection.
+            </div>
+            {isWebClient && (
+              <div className="form-text text-muted">
+                CIBA is currently under development and is not yet available for use.
               </div>
-              {secretLocked && (
-                <div className="auth-helper text-muted">
-                  <i className="fa fa-lock me-1" aria-hidden="true"></i>
-                  This application type (SPA/Mobile/Desktop) cannot securely store secrets.
-                  Client secrets and expiry are disabled for public clients.
-                  <div className="auth-hint">
-                    To enable client secrets, select WebApp or Backend application type.
+            )}
+            {isDeviceIot && (
+              <div className="form-text text-muted">
+                Device and IoT clients sign in with the Device Authorization flow, where users
+                complete verification on a separate activation screen.
+              </div>
+            )}
+            {isPublicClient && !isDeviceIot && (
+              <div className="form-text text-muted">
+                SPA clients must use PKCE with Authorization Code flow. Mobile and Desktop
+                clients may also use Password flow when explicitly allowed.
+              </div>
+            )}
+            {hasInsecureGrant && (
+              <div className="alert alert-warning mt-3 mb-0">
+                The selected grant type is not recommended for this app type.
+              </div>
+            )}
+            {grantError && (
+              <div className="alert alert-danger mt-3 mb-0" role="alert">
+                {grantError}
+              </div>
+            )}
+          </div>
+
+          <div className="auth-divider"></div>
+
+          <div className="row g-3">
+            <div className="col-12 col-lg-6">
+              <div className={`auth-field auth-field-inline ${secretLocked ? "is-locked" : ""}`}>
+                <label className="form-label fw-semibold">Client Secret</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className={`fa ${secretLocked ? "fa-lock" : "fa-key"}`}></i>
+                  </span>
+                  <input
+                    className="form-control"
+                    type={showSecret ? "text" : "password"}
+                    {...register("clientSecret")}
+                    readOnly
+                    disabled={secretLocked}
+                    aria-label="Client secret"
+                  />
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={() => setShowSecret((prev) => !prev)}
+                    disabled={secretLocked}
+                    aria-label={showSecret ? "Hide client secret" : "Show client secret"}
+                  >
+                    <i className={`fa ${showSecret ? "fa-eye-slash" : "fa-eye"}`}></i>
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary"
+                    type="button"
+                    onClick={onRegenerateSecret}
+                    disabled={secretLocked}
+                    aria-label="Regenerate client secret"
+                  >
+                    Regenerate
+                  </button>
+                </div>
+                {secretLocked && (
+                  <div className="auth-helper text-muted">
+                    <i className="fa fa-lock me-1" aria-hidden="true"></i>
+                    This application type cannot securely store secrets.
+                    <div className="auth-hint">
+                      To enable client secrets, select WebApp or Backend.
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className={`auth-field ${secretLocked ? "is-locked" : ""}`}>
-              <label className="form-label fw-semibold">Client Secret Expiry</label>
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className={`fa ${secretLocked ? "fa-lock" : "fa-calendar"}`}></i>
-                </span>
-                <input
-                  className="form-control"
-                  type="date"
-                  disabled={secretLocked}
-                  {...register("clientSecretExpiry")}
-                  aria-label="Client secret expiry"
-                />
+                )}
               </div>
             </div>
+            <div className="col-12 col-lg-6">
+              <div className={`auth-field auth-field-inline ${secretLocked ? "is-locked" : ""}`}>
+                <label className="form-label fw-semibold">Client Secret Expiry</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className={`fa ${secretLocked ? "fa-lock" : "fa-calendar"}`}></i>
+                  </span>
+                  <input
+                    className="form-control"
+                    type="date"
+                    disabled={secretLocked}
+                    {...register("clientSecretExpiry")}
+                    aria-label="Client secret expiry"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <div className="auth-divider"></div>
+          <div className="auth-divider"></div>
 
-            <div className="auth-field">
-              <label className="form-label fw-semibold">Authentication Policy</label>
-              <div className="row g-2">
+          <div className="auth-field">
+            <label className="form-label fw-semibold">Authentication Policy</label>
+            <div className="row g-2">
                 <div className="col-12 col-md-6">
                   <div className="form-check">
                     <input
@@ -348,40 +351,39 @@ function AuthStep({
                     </div>
                   )}
                 </div>
-              </div>
             </div>
+          </div>
 
-            <div className="auth-field">
-              <label className="form-label fw-semibold">External Providers</label>
-              <div className="row g-3">
-                {externalProviderOptions.map((option) => (
-                  <div className="col-12 col-sm-6" key={option.value}>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        value={option.value}
-                        id={`client-provider-${option.value}`}
-                        disabled={!showExternalProviders}
-                        {...register("externalProviders")}
-                      />
-                      <label
-                        className="form-check-label provider-option-label d-inline-flex align-items-center gap-2"
-                        htmlFor={`client-provider-${option.value}`}
-                      >
-                        <ProviderIcon label={option.label} />
-                        <span>{option.label}</span>
-                      </label>
-                    </div>
+          <div className="auth-field mb-0">
+            <label className="form-label fw-semibold">External Providers</label>
+            <div className="row g-3">
+              {externalProviderOptions.map((option) => (
+                <div className="col-12 col-sm-6" key={option.value}>
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      value={option.value}
+                      id={`client-provider-${option.value}`}
+                      disabled={!showExternalProviders}
+                      {...register("externalProviders")}
+                    />
+                    <label
+                      className="form-check-label provider-option-label d-inline-flex align-items-center gap-2"
+                      htmlFor={`client-provider-${option.value}`}
+                    >
+                      <ProviderIcon label={option.label} />
+                      <span>{option.label}</span>
+                    </label>
                   </div>
-                ))}
-              </div>
-              {!externalProviderOptions.length && (
-                <div className="form-text text-muted">
-                  No tenant external providers configured.
                 </div>
-              )}
+              ))}
             </div>
+            {!externalProviderOptions.length && (
+              <div className="form-text text-muted">
+                No tenant external providers configured.
+              </div>
+            )}
           </div>
         </div>
       </div>

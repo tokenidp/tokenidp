@@ -6,7 +6,7 @@ function DashboardHeader({ lastUpdatedLabel }) {
       <div>
         <h5 className="mb-0">IDP Security Dashboard</h5>
         <div className="text-muted small">
-          Monitor platform health, authentication, and authorization posture.
+          Monitor authentication activity, token issuance, and sign-in outcomes.
         </div>
       </div>
       <div className="text-muted small">

@@ -118,12 +118,11 @@ function ReviewStep({
 
   return (
     <div className="row g-4 justify-content-center">
-      <div className="col-12 col-lg-8 col-xl-7">
-        <div className="card form-section-card">
-          <div className="card-body">
-            <h6 className="card-title">Review Summary</h6>
+      <div className="col-12 col-xl-10">
+        <div className="wizard-step-shell">
+          <h6 className="wizard-step-title">Review Summary</h6>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Basic Information</div>
                 <button
@@ -152,15 +151,15 @@ function ReviewStep({
                   <div>{values.description || "--"}</div>
                 </div>
               </div>
-            </div>
+          </div>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Redirect & Logout URLs</div>
                 <button
                   type="button"
                   className="btn btn-link p-0"
-                  onClick={() => handleEdit("redirects")}
+                  onClick={() => handleEdit("endpointsTokens")}
                 >
                   Edit
                 </button>
@@ -180,9 +179,9 @@ function ReviewStep({
                   {warning}
                 </div>
               ))}
-            </div>
+          </div>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Authentication & Grants</div>
                 <button
@@ -208,15 +207,15 @@ function ReviewStep({
                   </div>
                 </div>
               </div>
-            </div>
+          </div>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Token Settings</div>
                 <button
                   type="button"
                   className="btn btn-link p-0"
-                  onClick={() => handleEdit("tokens")}
+                  onClick={() => handleEdit("endpointsTokens")}
                 >
                   Edit
                 </button>
@@ -256,9 +255,9 @@ function ReviewStep({
                   {refreshTokenWarning}
                 </div>
               )}
-            </div>
+          </div>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Scopes & Api Resources</div>
                 <button
@@ -305,9 +304,9 @@ function ReviewStep({
               <div className="alert alert-info mt-2 mb-0">
                 Access token audience is derived from the requested API scopes at runtime.
               </div>
-            </div>
+          </div>
 
-            <div className="review-section">
+          <div className="review-section">
               <div className="review-header">
                 <div className="token-title">Rate Limits & Tracking</div>
                 <button
@@ -334,9 +333,9 @@ function ReviewStep({
                   <div>{values.enableITracking ? "Enabled" : "Disabled"}</div>
                 </div>
               </div>
-            </div>
+          </div>
 
-            <div className="review-section mb-0">
+          <div className="review-section mb-0">
               <div className="review-header">
                 <div className="token-title">Status</div>
                 <button
@@ -353,20 +352,19 @@ function ReviewStep({
                   <div className="form-text">{statusHelp}</div>
                 </div>
               </div>
-            </div>
+          </div>
 
-            <div className="form-check mt-4">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                id="reviewConfirm"
-                checked={confirmed}
-                onChange={(event) => setConfirmed(event.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="reviewConfirm">
-                I have reviewed redirect URIs, grants, and scopes for security.
-              </label>
-            </div>
+          <div className="form-check mt-4">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              id="reviewConfirm"
+              checked={confirmed}
+              onChange={(event) => setConfirmed(event.target.checked)}
+            />
+            <label className="form-check-label" htmlFor="reviewConfirm">
+              I have reviewed redirect URIs, grants, and scopes for security.
+            </label>
           </div>
         </div>
       </div>
