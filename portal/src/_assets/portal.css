@@ -12,6 +12,7 @@
   --primary-alpha-12: rgba(var(--primary-rgb), 0.12);
   --primary-alpha-25: rgba(var(--primary-rgb), 0.25);
   --success: #15803d;
+  --success-rgb: 21, 128, 61;
   --danger: #dc3545;
 
   /* Shadows (tokenized — was scattered rgba(15,23,42,*) literals) */
@@ -1507,6 +1508,24 @@ table td i {
   gap: 10px;
 }
 
+.scopes-api-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 240px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.scopes-api-sidebar,
+.scopes-api-detail {
+  min-width: 0;
+}
+
+.scopes-resource-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .scopes-resource-card {
   width: 100%;
   border: 1px solid rgba(var(--muted-rgb), 0.18);
@@ -1521,10 +1540,19 @@ table td i {
     background-color 0.18s ease;
 }
 
+.scopes-resource-card-interactive {
+  cursor: pointer;
+}
+
 .scopes-resource-card:hover {
   border-color: rgba(var(--primary-rgb), 0.32);
   box-shadow: 0 10px 22px rgba(var(--shadow-color), 0.08);
   transform: translateY(-1px);
+}
+
+.scopes-resource-card.is-focused {
+  border-color: rgba(var(--primary-rgb), 0.42);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.08);
 }
 
 .scopes-resource-card.is-selected {
@@ -1574,6 +1602,37 @@ table td i {
 
 .scopes-resource-badge.is-selected {
   background: rgba(var(--success-rgb), 0.14);
+  color: var(--success);
+}
+
+.scopes-resource-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 3px 9px;
+  border: 1px solid rgba(var(--muted-rgb), 0.18);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.scopes-resource-toggle:hover {
+  border-color: rgba(var(--primary-rgb), 0.32);
+  color: var(--primary);
+}
+
+.scopes-resource-toggle.is-selected {
+  border-color: rgba(var(--success-rgb), 0.24);
+  background: rgba(var(--success-rgb), 0.08);
   color: var(--success);
 }
 
@@ -1643,6 +1702,30 @@ table td i {
   color: var(--muted);
   padding: 16px;
   font-size: 13px;
+}
+
+.scopes-api-detail {
+  border: 1px solid rgba(var(--muted-rgb), 0.18);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #ffffff 0%, rgba(var(--primary-rgb), 0.02) 100%);
+  padding: 14px 16px;
+}
+
+.scopes-api-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.scopes-api-detail-note {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 12px;
 }
 
 /* ── Review Section ─────────────────────────────────────────── */
@@ -2190,6 +2273,10 @@ table td i {
 }
 
 @media (max-width: 992px) {
+  .scopes-api-layout {
+    grid-template-columns: 1fr;
+  }
+
   .scopes-resource-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }

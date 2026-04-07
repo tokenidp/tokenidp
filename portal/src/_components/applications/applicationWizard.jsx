@@ -442,7 +442,12 @@ function ApplicationWizard({
   const toggleScope = (value) => {
     const owner = scopeOwnerMap.get(value);
     if (owner && !selectedApiResources.includes(owner)) {
-      return;
+      const nextApiResources = [...selectedApiResources, owner];
+      setSelectedApiResources(nextApiResources);
+      setValue("apiResources", nextApiResources, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
 
     setScopes((prev) =>

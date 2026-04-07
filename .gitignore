@@ -363,8 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 
 
-/portal/admin-app/node_modules/
-/portal/react-idp-sdk/node_modules/
-/portal/react-idp-sdk/dist/
-/portal/admin-app/build/
-/portal/react-idp-sdk/tokenidp-react-*
+/portal/node_modules/
+/portal/sdks/react-idp-sdk/node_modules/
+/portal/sdks/react-idp-sdk/dist/
+/portal/build/
+/portal/sdks/react-idp-sdk/tokenidp-react-*

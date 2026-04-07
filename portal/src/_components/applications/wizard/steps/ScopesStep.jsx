@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { GrantTypeId } from "../wizardState";
 
 function ScopesStep({
@@ -56,9 +56,62 @@ function ScopesStep({
     [apiResourceOptions],
   );
 
+  const apiScopeNameSet = useMemo(
+    () =>
+      new Set(
+        normalizedApiResources.flatMap((resource) =>
+          resource.scopes
+            .map((scope) => scope.name)
+            .filter(Boolean),
+        ),
+      ),
+    [normalizedApiResources],
+  );
+
+  const systemScopeOptions = useMemo(
+    () =>
+      (Array.isArray(scopeOptions) ? scopeOptions : []).filter(
+        (scope) => !apiScopeNameSet.has(String(scope?.value ?? "")),
+      ),
+    [apiScopeNameSet, scopeOptions],
+  );
+
   const selectedResourceSet = useMemo(
     () => new Set(selectedApiResources),
     [selectedApiResources],
+  );
+
+  const [activeApiResourceName, setActiveApiResourceName] = useState("");
+
+  useEffect(() => {
+    if (normalizedApiResources.length === 0) {
+      if (activeApiResourceName) {
+        setActiveApiResourceName("");
+      }
+      return;
+    }
+
+    const hasActiveResource = normalizedApiResources.some(
+      (resource) => resource.name === activeApiResourceName,
+    );
+    if (hasActiveResource) {
+      return;
+    }
+
+    const nextActiveResourceName =
+      normalizedApiResources.find((resource) => selectedResourceSet.has(resource.name))
+        ?.name ?? normalizedApiResources[0].name;
+
+    if (nextActiveResourceName !== activeApiResourceName) {
+      setActiveApiResourceName(nextActiveResourceName);
+    }
+  }, [activeApiResourceName, normalizedApiResources, selectedResourceSet]);
+
+  const activeApiResource = useMemo(
+    () =>
+      normalizedApiResources.find((resource) => resource.name === activeApiResourceName) ??
+      null,
+    [activeApiResourceName, normalizedApiResources],
   );
 
   const isSystemScopeDisabled = (scope) => {
@@ -94,6 +147,7 @@ function ScopesStep({
       ? selectedApiResources.filter((value) => value !== resourceName)
       : [...selectedApiResources, resourceName];
 
+    setActiveApiResourceName(resourceName);
     handleApiResourceSelection(values);
   };
 
@@ -109,8 +163,60 @@ function ScopesStep({
           </div>
 
           <div className="token-section">
+            <label className="form-label fw-semibold mb-3">System Scopes</label>
+            {systemScopeOptions.length === 0 ? (
+              <div className="scopes-resource-empty">
+                No system scopes are available.
+              </div>
+            ) : (
+              <div className="row g-3">
+                <div className="col-12">
+                  <div className="row g-2">
+                    {systemScopeOptions.map((scope) => {
+                      const disabled = isSystemScopeDisabled(scope.value);
+                      const reason = getScopeReason(scope.value);
+
+                      return (
+                        <div className="col-12 col-md-6" key={scope.value}>
+                          <div
+                            className={`option-card d-flex align-items-start gap-3 h-100 ${
+                              scopes.includes(scope.value) ? "option-card-active" : ""
+                            } ${disabled ? "is-locked" : ""}`}
+                          >
+                            <input
+                              className="form-check-input mt-1"
+                              type="checkbox"
+                              id={`scope-${scope.value}`}
+                              checked={scopes.includes(scope.value)}
+                              onChange={() => toggleScope(scope.value)}
+                              disabled={disabled}
+                              aria-label={`${scope.label} scope`}
+                            />
+                            <label
+                              className="form-check-label w-100"
+                              htmlFor={`scope-${scope.value}`}
+                            >
+                              <div className="token-title">{scope.label}</div>
+                              <div className="token-helper">
+                                {scopeDescriptions[scope.value] || "System scope."}
+                              </div>
+                              {disabled && reason && (
+                                <div className="grant-reason">{reason}</div>
+                              )}
+                            </label>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="token-section mb-0">
             <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-              <label className="form-label fw-semibold mb-0">Assigned API Resources</label>
+              <label className="form-label fw-semibold mb-0">Api Resources</label>
               <div className="scopes-resource-count">
                 {selectedApiResources.length} selected
               </div>
@@ -121,50 +227,158 @@ function ScopesStep({
               </div>
             ) : (
               <>
-                <div className="scopes-resource-grid" aria-label="Assigned API Resources">
-                  {normalizedApiResources.map((resource) => {
-                    const assigned = selectedResourceSet.has(resource.name);
-                    const resourceLabel = resource.displayName || resource.name;
+                <div className="scopes-api-layout">
+                  <div className="scopes-api-sidebar">
+                    <div className="scopes-resource-stack" aria-label="Api Resources">
+                      {normalizedApiResources.map((resource) => {
+                        const assigned = selectedResourceSet.has(resource.name);
+                        const isActive = resource.name === activeApiResourceName;
+                        const resourceLabel = resource.displayName || resource.name;
 
-                    return (
-                      <button
-                        key={resource.id}
-                        type="button"
-                        className={`scopes-resource-card ${assigned ? "is-selected" : ""}`}
-                        onClick={() => handleApiResourceToggle(resource.name)}
-                        aria-pressed={assigned}
-                      >
-                        <div className="scopes-resource-card-top">
-                          <div className="scopes-resource-icon" aria-hidden="true">
-                            <i className="fa fa-database" />
+                        return (
+                          <div
+                            key={resource.id}
+                            className={`scopes-resource-card scopes-resource-card-interactive ${
+                              assigned ? "is-selected" : ""
+                            } ${isActive ? "is-focused" : ""}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setActiveApiResourceName(resource.name)}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setActiveApiResourceName(resource.name);
+                              }
+                            }}
+                            aria-current={isActive ? "true" : undefined}
+                            aria-label={`View ${resourceLabel} scopes`}
+                          >
+                            <div className="scopes-resource-card-top">
+                              <div className="scopes-resource-icon" aria-hidden="true">
+                                <i className="fa fa-database" />
+                              </div>
+                              <button
+                                type="button"
+                                className={`scopes-resource-toggle ${
+                                  assigned ? "is-selected" : ""
+                                }`}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleApiResourceToggle(resource.name);
+                                }}
+                                aria-pressed={assigned}
+                              >
+                                {assigned ? "Assigned" : "Assign"}
+                              </button>
+                            </div>
+                            <div className="scopes-resource-title">{resourceLabel}</div>
+                            <div className="scopes-resource-key">{resource.name}</div>
+                            <div className="scopes-resource-meta">
+                              <span>
+                                <i className="fa fa-key" /> {resource.scopes.length} scopes
+                              </span>
+                              <span>
+                                <i
+                                  className={`fa ${
+                                    isActive
+                                      ? "fa-arrow-right"
+                                      : assigned
+                                        ? "fa-check-circle"
+                                        : "fa-circle"
+                                  }`}
+                                />{" "}
+                                {isActive
+                                  ? "Viewing"
+                                  : assigned
+                                    ? "Included"
+                                    : "Select to view"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="scopes-api-detail">
+                    {activeApiResource ? (
+                      <>
+                        <div className="scopes-api-detail-header">
+                          <div>
+                            <div className="token-title">
+                              {activeApiResource.displayName || activeApiResource.name}
+                            </div>
+                            <div className="token-helper">{activeApiResource.name}</div>
                           </div>
                           <span
                             className={`scopes-resource-badge ${
-                              assigned ? "is-selected" : ""
+                              selectedResourceSet.has(activeApiResource.name)
+                                ? "is-selected"
+                                : ""
                             }`}
                           >
-                            {assigned ? "Assigned" : "Available"}
+                            {selectedResourceSet.has(activeApiResource.name)
+                              ? "Assigned"
+                              : "Not assigned"}
                           </span>
                         </div>
-                        <div className="scopes-resource-title">{resourceLabel}</div>
-                        <div className="scopes-resource-key">{resource.name}</div>
-                        <div className="scopes-resource-meta">
-                          <span>
-                            <i className="fa fa-key" /> {resource.scopes.length} scopes
-                          </span>
-                          <span>
-                            <i
-                              className={`fa ${assigned ? "fa-check-circle" : "fa-plus-circle"}`}
-                            />{" "}
-                            {assigned ? "Included" : "Click to assign"}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })}
+
+                        {!selectedResourceSet.has(activeApiResource.name) && (
+                          <div className="scopes-api-detail-note">
+                            Selecting a scope will assign this API resource to the client.
+                          </div>
+                        )}
+
+                        {activeApiResource.scopes.length === 0 ? (
+                          <div className="scopes-resource-empty mb-0">
+                            No scopes configured for this API resource.
+                          </div>
+                        ) : (
+                          <div className="row g-2">
+                            {activeApiResource.scopes.map((scope) => {
+                              const checked = scopes.includes(scope.name);
+
+                              return (
+                                <div className="col-12 col-md-6" key={scope.id}>
+                                <div
+                                  className={`option-card d-flex align-items-start gap-3 h-100 ${
+                                    checked ? "option-card-active" : ""
+                                    }`}
+                                >
+                                    <input
+                                      className="form-check-input mt-1"
+                                      type="checkbox"
+                                      id={`api-scope-${scope.id}`}
+                                      checked={checked}
+                                      onChange={() => toggleScope(scope.name)}
+                                      aria-label={`${scope.displayName} scope`}
+                                    />
+                                    <label
+                                      className="form-check-label w-100"
+                                      htmlFor={`api-scope-${scope.id}`}
+                                    >
+                                      <div className="token-title">
+                                        {scope.displayName}
+                                      </div>
+                                      <div className="token-helper">{scope.name}</div>
+                                    </label>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="scopes-resource-empty mb-0">
+                        Select an API resource to review its scopes.
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="form-text mt-2">
-                  Select one or more API resources the client can call.
+
+                <div className="form-text mt-3">
+                  Assign one or more API resources the client can call.
                 </div>
                 <div className="scopes-resource-selected-list">
                   {selectedApiResources.length > 0 ? (
@@ -181,102 +395,6 @@ function ScopesStep({
                 </div>
               </>
             )}
-          </div>
-
-          <div className="token-section mb-0">
-            <label className="form-label fw-semibold">Scopes Available</label>
-            <div className="row g-3">
-              <div className="col-12">
-                <div className="token-title mb-2">System</div>
-                <div className="row g-2">
-                  {scopeOptions.map((scope) => {
-                    const disabled = isSystemScopeDisabled(scope.value);
-                    const reason = getScopeReason(scope.value);
-
-                    return (
-                      <div className="col-12 col-md-6" key={scope.value}>
-                        <div
-                          className={`option-card d-flex align-items-start gap-3 h-100 ${
-                            scopes.includes(scope.value) ? "option-card-active" : ""
-                          } ${disabled ? "is-locked" : ""}`}
-                        >
-                          <input
-                            className="form-check-input mt-1"
-                            type="checkbox"
-                            id={`scope-${scope.value}`}
-                            checked={scopes.includes(scope.value)}
-                            onChange={() => toggleScope(scope.value)}
-                            disabled={disabled}
-                            aria-label={`${scope.label} scope`}
-                          />
-                          <label
-                            className="form-check-label w-100"
-                            htmlFor={`scope-${scope.value}`}
-                          >
-                            <div className="token-title">{scope.label}</div>
-                            <div className="token-helper">
-                              {scopeDescriptions[scope.value] || "System scope."}
-                            </div>
-                            {disabled && reason && (
-                              <div className="grant-reason">{reason}</div>
-                            )}
-                          </label>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {normalizedApiResources.map((resource) => {
-                const assigned = selectedResourceSet.has(resource.name);
-
-                return (
-                  <div className="col-12" key={resource.id}>
-                    <div className="token-title mb-2">
-                      From {resource.name}
-                      {!assigned ? " (not assigned)" : ""}
-                    </div>
-                    {resource.scopes.length === 0 ? (
-                      <div className="text-muted small mb-2">No scopes configured.</div>
-                    ) : (
-                      <div className="row g-2">
-                        {resource.scopes.map((scope) => {
-                          const checked = scopes.includes(scope.name);
-
-                          return (
-                            <div className="col-12 col-md-6" key={scope.id}>
-                              <div
-                                className={`option-card d-flex align-items-start gap-3 h-100 ${
-                                  checked ? "option-card-active" : ""
-                                } ${assigned ? "" : "is-locked"}`}
-                              >
-                                <input
-                                  className="form-check-input mt-1"
-                                  type="checkbox"
-                                  id={`api-scope-${scope.id}`}
-                                  checked={checked}
-                                  onChange={() => toggleScope(scope.name)}
-                                  disabled={!assigned}
-                                  aria-label={`${scope.displayName} scope`}
-                                />
-                                <label
-                                  className="form-check-label w-100"
-                                  htmlFor={`api-scope-${scope.id}`}
-                                >
-                                  <div className="token-title">{scope.displayName}</div>
-                                  <div className="token-helper">{scope.name}</div>
-                                </label>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
