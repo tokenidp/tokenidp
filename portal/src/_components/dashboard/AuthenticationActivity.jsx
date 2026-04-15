@@ -13,11 +13,16 @@ const formatCompactNumber = (value) => {
   return String(Math.round(numericValue));
 };
 
+const formatNumber = (value) => {
+  const numericValue = Number(value) || 0;
+  return new Intl.NumberFormat().format(numericValue);
+};
+
 const formatHourLabel = (timestamp) =>
   new Intl.DateTimeFormat([], {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
   }).format(new Date(timestamp));
 
 const getTimestamp = (point) => {
@@ -92,7 +97,9 @@ const buildSeriesFromRows = (rows, totals) => {
     return [];
   }
 
-  const hasInlineCounts = rows.some((row) => row.success !== null || row.failed !== null);
+  const hasInlineCounts = rows.some(
+    (row) => row.success !== null || row.failed !== null,
+  );
   if (hasInlineCounts) {
     return rows.map((row) => ({
       timestamp: row.timestamp,
@@ -118,15 +125,16 @@ const buildSeriesFromRows = (rows, totals) => {
     const statusName = row.statusName;
     const numericValue = row.value ?? 0;
 
-    if (statusName.includes("fail") || statusName.includes("error") || statusName.includes("deny")) {
+    if (
+      statusName.includes("fail") ||
+      statusName.includes("error") ||
+      statusName.includes("deny")
+    ) {
       entry.failed += numericValue;
       return;
     }
 
-    if (
-      statusName.includes("success") ||
-      statusName.includes("pass")
-    ) {
+    if (statusName.includes("success") || statusName.includes("pass")) {
       entry.success += numericValue;
       return;
     }
@@ -138,7 +146,9 @@ const buildSeriesFromRows = (rows, totals) => {
     (a, b) => (a.timestamp ?? 0) - (b.timestamp ?? 0),
   );
 
-  const hasExplicitSplit = groupedRows.some((row) => row.success > 0 || row.failed > 0);
+  const hasExplicitSplit = groupedRows.some(
+    (row) => row.success > 0 || row.failed > 0,
+  );
   if (hasExplicitSplit) {
     return groupedRows.map((row) => ({
       timestamp: row.timestamp,
@@ -160,17 +170,12 @@ const buildSeriesFromRows = (rows, totals) => {
   }));
 };
 
-const buildFallbackSeries = (totals) => {
+const buildFallbackSeries = () => {
   const now = Date.now();
-  const successTotal = Number(totals?.successfulLogins) || 0;
-  const failedTotal = Number(totals?.failedLogins) || 0;
-  const successSeed = [0.42, 0.58, 0.76, 0.62, 0.83, 0.71];
-  const failedSeed = [0.2, 0.28, 0.22, 0.35, 0.25, 0.31];
-
   return Array.from({ length: FALLBACK_POINT_COUNT }, (_, index) => ({
     timestamp: now - (FALLBACK_POINT_COUNT - 1 - index) * 4 * 60 * 60 * 1000,
-    success: Math.max(0, Math.round((successTotal || 24) * successSeed[index] / 6)),
-    failed: Math.max(0, Math.round((failedTotal || 6) * failedSeed[index] / 2)),
+    success: 0,
+    failed: 0,
   }));
 };
 
@@ -194,7 +199,13 @@ const normalizeActivitySeries = (series, totals) => {
         failed: inlineCounts.failed,
       };
     })
-    .filter((row) => row.timestamp !== null || row.success !== null || row.failed !== null || row.value > 0);
+    .filter(
+      (row) =>
+        row.timestamp !== null ||
+        row.success !== null ||
+        row.failed !== null ||
+        row.value > 0,
+    );
 
   const builtSeries = buildSeriesFromRows(rows, totals);
   const normalized = builtSeries
@@ -206,7 +217,7 @@ const normalizeActivitySeries = (series, totals) => {
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  return normalized.length ? normalized : buildFallbackSeries(totals);
+  return normalized.length ? normalized : buildFallbackSeries();
 };
 
 const createLinePath = (points) => {
@@ -249,6 +260,14 @@ function AuthenticationActivity({ series, totals }) {
     [series, totals],
   );
 
+  const summaryStats = useMemo(() => {
+    const successful = Number(totals?.successfulLogins) || 0;
+    const failed = Number(totals?.failedLogins) || 0;
+    const total = successful + failed;
+    const rate = total > 0 ? ((successful / total) * 100).toFixed(2) : "0.00";
+    return { successful, failed, total, rate };
+  }, [totals]);
+
   const chart = useMemo(() => {
     const innerWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
     const innerHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
@@ -256,41 +275,43 @@ function AuthenticationActivity({ series, totals }) {
     const minTimestamp = Math.min(...timestamps);
     const maxTimestamp = Math.max(...timestamps);
     const totalRange = Math.max(maxTimestamp - minTimestamp, 1);
+
     const maxValue = Math.max(
-      5,
-      ...normalizedSeries.flatMap((point) => [point.success, point.failed]),
+      500,
+      ...normalizedSeries.map((point) => point.success + point.failed),
     );
-    const yMax = Math.ceil(maxValue / 5) * 5;
+    // Round up to nearest 500 for clean y-axis ticks
+    const yMax = Math.ceil(maxValue / 500) * 500;
 
     const toX = (timestamp) =>
-      CHART_MARGIN.left + ((timestamp - minTimestamp) / totalRange) * innerWidth;
+      CHART_MARGIN.left +
+      ((timestamp - minTimestamp) / totalRange) * innerWidth;
     const toY = (value) =>
       CHART_MARGIN.top + innerHeight - (value / yMax) * innerHeight;
 
-    const successPoints = normalizedSeries.map((point) => ({
+    // Single combined total line
+    const totalPoints = normalizedSeries.map((point) => ({
       x: toX(point.timestamp),
-      y: toY(point.success),
-      value: point.success,
+      y: toY(point.success + point.failed),
+      value: point.success + point.failed,
       timestamp: point.timestamp,
     }));
 
-    const failedPoints = normalizedSeries.map((point) => ({
-      x: toX(point.timestamp),
-      y: toY(point.failed),
-      value: point.failed,
-      timestamp: point.timestamp,
-    }));
-
-    const yTicks = Array.from({ length: 5 }, (_, index) => {
-      const value = Math.round((yMax / 4) * (4 - index));
+    // Y ticks: evenly spaced from 0 to yMax (5 ticks including 0)
+    const tickCount = 5;
+    const yTicks = Array.from({ length: tickCount }, (_, index) => {
+      const value = Math.round(
+        (yMax / (tickCount - 1)) * (tickCount - 1 - index),
+      );
       return {
         value,
         y: toY(value),
       };
     });
 
-    const xTicks = Array.from({ length: 6 }, (_, index) => {
-      const timestamp = minTimestamp + (totalRange / 5) * index;
+    // X ticks: 7 labels across the 24-hour range
+    const xTicks = Array.from({ length: 7 }, (_, index) => {
+      const timestamp = minTimestamp + (totalRange / 6) * index;
       return {
         label: formatHourLabel(timestamp),
         x: toX(timestamp),
@@ -298,34 +319,63 @@ function AuthenticationActivity({ series, totals }) {
     });
 
     return {
-      successLinePath: createLinePath(successPoints),
-      failedLinePath: createLinePath(failedPoints),
-      successAreaPath: createAreaPath(successPoints, CHART_MARGIN.top + innerHeight),
-      failedAreaPath: createAreaPath(failedPoints, CHART_MARGIN.top + innerHeight),
+      totalLinePath: createLinePath(totalPoints),
+      totalAreaPath: createAreaPath(
+        totalPoints,
+        CHART_MARGIN.top + innerHeight,
+      ),
       yTicks,
       xTicks,
-      successPoints,
-      failedPoints,
+      totalPoints,
     };
   }, [normalizedSeries]);
 
   return (
     <div className="card-lite h-100 dashboard-auth-card">
       <div className="card-header dashboard-auth-header">
-        <div>
-          <h6 className="mb-0">Authentication Activity</h6>
-          <div className="text-muted small">
-            Successful and failed logins across the last 24 hours
+        <div className="dashboard-auth-header-left">
+          <div className="dashboard-auth-title-row">
+            <span className="dashboard-auth-icon">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+            </span>
+            <div>
+              <h6 className="mb-0">
+                Authentication Activity
+                <span className="dashboard-auth-period"> (Last 24 Hours)</span>
+              </h6>
+              <div className="dashboard-auth-sub text-muted small">
+                Success Rate: {summaryStats.rate}%{" "}
+                <span className="dashboard-auth-sub-divider">•</span> Total:{" "}
+                {formatNumber(summaryStats.total)} attempts
+              </div>
+            </div>
           </div>
         </div>
-        <div className="dashboard-auth-legend">
-          <span className="dashboard-auth-legend-item">
-            <span className="dashboard-auth-legend-swatch is-success"></span>
-            Successful logins
+        <div className="dashboard-auth-stats">
+          <span className="dashboard-auth-stat">
+            <span className="dashboard-auth-stat-dot is-success" />
+            Successful{" "}
+            <strong className="dashboard-auth-stat-value">
+              {formatNumber(summaryStats.successful)}
+            </strong>
           </span>
-          <span className="dashboard-auth-legend-item">
-            <span className="dashboard-auth-legend-swatch is-failed"></span>
-            Failed logins
+          <span className="dashboard-auth-stat">
+            <span className="dashboard-auth-stat-dot is-failed" />
+            Failed{" "}
+            <strong className="dashboard-auth-stat-value">
+              {formatNumber(summaryStats.failed)}
+            </strong>
           </span>
         </div>
       </div>
@@ -340,13 +390,9 @@ function AuthenticationActivity({ series, totals }) {
             aria-label="Authentication activity chart"
           >
             <defs>
-              <linearGradient id="auth-success-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#22c55e" stopOpacity="0.02" />
-              </linearGradient>
-              <linearGradient id="auth-failed-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.18" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.02" />
+              <linearGradient id="auth-total-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.22" />
+                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.03" />
               </linearGradient>
             </defs>
 
@@ -382,29 +428,16 @@ function AuthenticationActivity({ series, totals }) {
               </text>
             ))}
 
-            {chart.successAreaPath && (
-              <path d={chart.successAreaPath} fill="url(#auth-success-fill)" />
-            )}
-            {chart.failedAreaPath && (
-              <path d={chart.failedAreaPath} fill="url(#auth-failed-fill)" />
+            {chart.totalAreaPath && (
+              <path d={chart.totalAreaPath} fill="url(#auth-total-fill)" />
             )}
 
-            {chart.successLinePath && (
+            {chart.totalLinePath && (
               <path
-                d={chart.successLinePath}
+                d={chart.totalLinePath}
                 fill="none"
-                stroke="#16a34a"
-                strokeWidth="4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
-            {chart.failedLinePath && (
-              <path
-                d={chart.failedLinePath}
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="4"
+                stroke="#3b82f6"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />

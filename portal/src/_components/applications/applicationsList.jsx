@@ -174,7 +174,9 @@ function ApplicationsList() {
 
   useEffect(() => {
     const visibleIds = new Set(
-      state.items.map((item) => getItemId(item)).filter((id) => id !== undefined && id !== null),
+      state.items
+        .map((item) => getItemId(item))
+        .filter((id) => id !== undefined && id !== null),
     );
     setSelectedIds((prev) => {
       let hasChanges = false;
@@ -242,11 +244,13 @@ function ApplicationsList() {
         },
         {
           header: "Token Type",
-          accessor: (item) => getLookupLabel(state.tokenTypes, getTokenType(item)),
+          accessor: (item) =>
+            getLookupLabel(state.tokenTypes, getTokenType(item)),
         },
         {
           header: "Status",
-          accessor: (item) => (isApplicationActive(item) ? "Active" : "Disabled"),
+          accessor: (item) =>
+            isApplicationActive(item) ? "Active" : "Disabled",
         },
       ],
       rowsToExport,
@@ -265,7 +269,11 @@ function ApplicationsList() {
         <div className="filters-panel">
           <div className="filters-header-row">
             <div className="filters-header">Filters</div>
-            <div className="view-toggle" role="group" aria-label="Application view">
+            <div
+              className="view-toggle"
+              role="group"
+              aria-label="Application view"
+            >
               <button
                 type="button"
                 className={`view-toggle-button ${
@@ -475,8 +483,12 @@ function ApplicationsList() {
                         </td>
                         <td>{getClientName(item)}</td>
                         <td className="text-muted">{getClientId(item)}</td>
-                        <td>{getLookupLabel(state.appTypes, getAppType(item))}</td>
-                        <td>{getLookupLabel(state.tokenTypes, getTokenType(item))}</td>
+                        <td>
+                          {getLookupLabel(state.appTypes, getAppType(item))}
+                        </td>
+                        <td>
+                          {getLookupLabel(state.tokenTypes, getTokenType(item))}
+                        </td>
                         <td>
                           <span
                             className={`status-pill ${
@@ -542,60 +554,64 @@ function ApplicationsList() {
 
                   return (
                     <div key={id} className="application-grid-card">
-                      <div className="application-grid-card-image-wrap">
-                        <img
-                          src={defaultApplicationImage}
-                          alt="Application"
-                          className="application-grid-card-image"
-                        />
-                        <label className="application-grid-card-checkbox">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            checked={selectedIds.has(id)}
-                            onChange={(event) => {
-                              if (id === undefined || id === null) {
-                                return;
-                              }
+                      <label className="application-grid-card-checkbox">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={selectedIds.has(id)}
+                          onChange={(event) => {
+                            if (id === undefined || id === null) {
+                              return;
+                            }
 
-                              const isChecked = event.target.checked;
-                              setSelectedIds((prev) => {
-                                const next = new Set(prev);
-                                if (isChecked) {
-                                  next.add(id);
-                                } else {
-                                  next.delete(id);
-                                }
-                                return next;
-                              });
-                            }}
+                            const isChecked = event.target.checked;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (isChecked) {
+                                next.add(id);
+                              } else {
+                                next.delete(id);
+                              }
+                              return next;
+                            });
+                          }}
+                        />
+                      </label>
+                      <div className="application-grid-card-header">
+                        <div className="application-grid-card-avatar-wrap">
+                          <img
+                            src={defaultApplicationImage}
+                            alt="Application"
+                            className="application-grid-card-avatar"
                           />
-                        </label>
-                      </div>
-                      <div className="application-grid-card-body">
-                        <div className="application-grid-card-top">
-                          <div>
+                        </div>
+                        <div className="application-grid-card-header-info">
+                          <div className="application-grid-card-title-row">
                             <h6 className="application-grid-card-title">
                               {getClientName(item)}
                             </h6>
-                            <div className="application-grid-card-id">
-                              {clientId}
-                            </div>
+                            <span
+                              className={`status-pill ${
+                                isApplicationActive(item)
+                                  ? "status-pill-success"
+                                  : "status-pill-off"
+                              }`}
+                            >
+                              {isApplicationActive(item)
+                                ? "Active"
+                                : "Disabled"}
+                            </span>
                           </div>
-                          <span
-                            className={`status-pill ${
-                              isApplicationActive(item)
-                                ? "status-pill-success"
-                                : "status-pill-off"
-                            }`}
-                          >
-                            {isApplicationActive(item) ? "Active" : "Disabled"}
-                          </span>
+                        </div>
+                      </div>
+                      <div className="application-grid-card-body">
+                        <div className="application-grid-card-id">
+                          <i className="fa fa-key pe-2 " aria-hidden="true"></i>
+                          {clientId}
                         </div>
                         <div className="application-grid-card-meta">
                           <div className="application-grid-card-meta-item">
                             <span className="application-grid-card-meta-label">
-                              <i className="fa fa-globe" aria-hidden="true"></i>
                               App Type:
                             </span>
                             <span className="application-grid-card-meta-value">
@@ -604,15 +620,17 @@ function ApplicationsList() {
                           </div>
                           <div className="application-grid-card-meta-item">
                             <span className="application-grid-card-meta-label">
-                              <i className="fa fa-key" aria-hidden="true"></i>
                               Token Type:
                             </span>
                             <span className="application-grid-card-meta-value">
-                              {getLookupLabel(state.tokenTypes, getTokenType(item))}
+                              {getLookupLabel(
+                                state.tokenTypes,
+                                getTokenType(item),
+                              )}
                             </span>
                           </div>
                         </div>
-                        <div className="application-grid-card-actions">
+                        <div className="application-grid-card-actions application-grid-footer">
                           <button
                             className="btn btn-link p-0 text-primary ButtonLink"
                             type="button"
