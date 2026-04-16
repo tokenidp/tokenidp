@@ -48,8 +48,8 @@ public class UserContact : Entity<int>
     public static Result Create(
         string contactType,
         string? relationship,
-        string email,
-        string phoneNumber,
+        string? email,
+        string? phoneNumber,
         string? addressLine1,
         string? addressLine2,
         string? city,
@@ -70,8 +70,8 @@ public class UserContact : Entity<int>
         contact = new UserContact(
             contactType.Trim(),
             relationship?.Trim(),
-            email.Trim(),
-            phoneNumber.Trim(),
+            email?.Trim() ?? string.Empty,
+            phoneNumber?.Trim() ?? string.Empty,
             addressLine1?.Trim(),
             addressLine2?.Trim(),
             city?.Trim(),
