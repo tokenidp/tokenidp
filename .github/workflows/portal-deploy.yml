@@ -27,6 +27,8 @@ jobs:
         working-directory: portal
 
       - name: Build React frontend
+        env:
+          CI: "false"
         run: npm run build
         working-directory: portal
 
