@@ -1,11 +1,74 @@
-import React from "react";
-import ProviderIcon from "../../../common/providerIcon";
+import React, { useMemo } from "react";
 import { GrantTypeId } from "../wizardState";
+
+const parseLines = (value) =>
+  String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+const validateUriLines = (value, isRequired) => {
+  const lines = parseLines(value);
+  if (!lines.length) {
+    return isRequired ? "Redirect URI is required." : true;
+  }
+  for (const line of lines) {
+    if (line.includes("*")) {
+      return "Wildcards are not allowed in redirect URIs";
+    }
+    if (line.includes("#")) {
+      return "Fragments are not allowed in redirect URIs";
+    }
+    if (line.startsWith("?")) {
+      return "Invalid URI format";
+    }
+    let parsed;
+    try {
+      parsed = new URL(line);
+    } catch (error) {
+      return "Invalid URI format";
+    }
+    const isLocalhost = parsed.hostname === "localhost";
+    if (!isLocalhost && parsed.protocol !== "https:") {
+      return "Only HTTPS is allowed (except http://localhost for development)";
+    }
+  }
+  return true;
+};
+
+const validateLogoutLines = (value) => {
+  const lines = parseLines(value);
+  if (!lines.length) {
+    return true;
+  }
+  for (const line of lines) {
+    if (line.includes("*")) {
+      return "Wildcards are not allowed in redirect URIs";
+    }
+    if (line.includes("#")) {
+      return "Fragments are not allowed in redirect URIs";
+    }
+    if (line.startsWith("?")) {
+      return "Invalid URI format";
+    }
+    let parsed;
+    try {
+      parsed = new URL(line);
+    } catch (error) {
+      return "Invalid URI format";
+    }
+    const isLocalhost = parsed.hostname === "localhost";
+    if (!isLocalhost && parsed.protocol !== "https:") {
+      return "Only HTTPS is allowed (except http://localhost for development)";
+    }
+  }
+  return true;
+};
 
 function AuthStep({
   register,
-  watch,
-  setValue,
+  errors,
+  appType,
   isPublicClient,
   showSecret,
   setShowSecret,
@@ -18,89 +81,80 @@ function AuthStep({
   grantError,
   isDeviceIot,
   isWebClient,
-  externalProviderOptions,
-  externalRoleOptions = [],
 }) {
   const hasAuthorizationGrant =
     grantTypes.includes(GrantTypeId.AuthorizationCode) ||
     grantTypes.includes(GrantTypeId.Password);
   const secretLocked = isPublicClient || isDeviceIot;
-  const showExternalProviders = watch("authPolicy.showExternalProviders");
 
-  const autoCreateUsersValue = watch("authPolicy.autoCreateUsers");
-  const isAutoCreateUsersEnabled =
-    autoCreateUsersValue === undefined ? true : !!autoCreateUsersValue;
+  const requiresRedirectUri = useMemo(
+    () => grantTypes.includes(GrantTypeId.AuthorizationCode),
+    [grantTypes],
+  );
 
-  const defaultRoleValue = watch("authPolicy.defaultRoleId");
-  const parsedDefaultRoleId =
-    defaultRoleValue === "" || defaultRoleValue === null || defaultRoleValue === undefined
-      ? null
-      : Number(defaultRoleValue);
-  const hasDefaultRole =
-    parsedDefaultRoleId !== null && Number.isFinite(parsedDefaultRoleId) && parsedDefaultRoleId > 0;
-  const showRoleSelectionWarning = isAutoCreateUsersEnabled && !hasDefaultRole;
+  const redirectHint = useMemo(() => {
+    if (!requiresRedirectUri || appType === "4") {
+      return "This application type does not use redirect-based flows. Redirect URIs are not required.";
+    }
+    return "Redirect URIs are required for authorization code flow.";
+  }, [appType, requiresRedirectUri]);
 
   return (
     <div className="row g-4 justify-content-center">
       <div className="col-12 col-xl-10">
         <div className="wizard-step-shell">
-          <h6 className="wizard-step-title">Authentication &amp; Grants</h6>
+          <h6 className="wizard-step-title">Authentication</h6>
           <div className="wizard-info-banner" role="status">
-            Grant and authentication settings directly impact application security.
-            Incorrect configuration may expose sensitive resources.
+            Grant selection, client secret handling, and redirect URI configuration
+            directly affect client security and sign-in behavior.
           </div>
 
           <div className="auth-field">
             <label className="form-label fw-semibold">OAuth Grants</label>
             <div className="row g-2">
-                {grantOptions.map((grant) => {
-                  const isRefreshToken = grant.id === GrantTypeId.RefreshToken;
-                  const disabledByAppType = !allowedGrants.has(grant.id);
-                  const disabledByDependency = isRefreshToken && !hasAuthorizationGrant;
-                  const disabled = disabledByAppType || disabledByDependency;
-                  const reason = disabledByDependency
-                    ? "Enable Authorization Code or Password to use refresh_token."
-                    : disabledByAppType
-                      ? grant.id === GrantTypeId.ClientCredentials
-                        ? "Available only for Backend (machine-to-machine) applications."
-                        : grant.id === GrantTypeId.DeviceCode
-                          ? "Available for Mobile, Desktop, and Device/IOT applications."
-                          : grant.id === GrantTypeId.Ciba
-                            ? "Available only for Web applications."
-                            : grant.id === GrantTypeId.Password
-                              ? "Available for Mobile, Desktop, Web, and Backend applications."
-                              : "Not supported for this application type."
-                      : null;
-                  return (
-                    <div className="col-12 col-lg-6" key={grant.id}>
-                      <div
-                        className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
-                          grantTypes.includes(grant.id) ? "option-card-active" : ""
-                        } ${disabled ? "is-locked" : ""}`}
-                      >
-                        <input
-                          className="form-check-input mt-1"
-                          type="checkbox"
-                          id={`grant-${grant.id}`}
-                          checked={grantTypes.includes(grant.id)}
-                          onChange={() => toggleGrant(grant.id)}
-                          disabled={disabled}
-                          aria-label={`${grant.value} grant`}
-                        />
-                        <label
-                          className="form-check-label w-100"
-                          htmlFor={`grant-${grant.id}`}
-                        >
-                          <div className="grant-title">{grant.value}</div>
-                          <div className="grant-sublabel">{grant.key}</div>
-                          {disabled && reason && (
-                            <div className="grant-reason">{reason}</div>
-                          )}
-                        </label>
-                      </div>
+              {grantOptions.map((grant) => {
+                const isRefreshToken = grant.id === GrantTypeId.RefreshToken;
+                const disabledByAppType = !allowedGrants.has(grant.id);
+                const disabledByDependency = isRefreshToken && !hasAuthorizationGrant;
+                const disabled = disabledByAppType || disabledByDependency;
+                const reason = disabledByDependency
+                  ? "Enable Authorization Code or Password to use refresh_token."
+                  : disabledByAppType
+                    ? grant.id === GrantTypeId.ClientCredentials
+                      ? "Available only for Backend (machine-to-machine) applications."
+                      : grant.id === GrantTypeId.DeviceCode
+                        ? "Available for Mobile, Desktop, and Device/IOT applications."
+                        : grant.id === GrantTypeId.Ciba
+                          ? "Available only for Web applications."
+                          : grant.id === GrantTypeId.Password
+                            ? "Available for Mobile, Desktop, Web, and Backend applications."
+                            : "Not supported for this application type."
+                    : null;
+                return (
+                  <div className="col-12 col-lg-6" key={grant.id}>
+                    <div
+                      className={`option-card auth-grant-card d-flex align-items-start gap-2 ${
+                        grantTypes.includes(grant.id) ? "option-card-active" : ""
+                      } ${disabled ? "is-locked" : ""}`}
+                    >
+                      <input
+                        className="form-check-input mt-1"
+                        type="checkbox"
+                        id={`grant-${grant.id}`}
+                        checked={grantTypes.includes(grant.id)}
+                        onChange={() => toggleGrant(grant.id)}
+                        disabled={disabled}
+                        aria-label={`${grant.value} grant`}
+                      />
+                      <label className="form-check-label w-100" htmlFor={`grant-${grant.id}`}>
+                        <div className="grant-title">{grant.value}</div>
+                        <div className="grant-sublabel">{grant.key}</div>
+                        {disabled && reason && <div className="grant-reason">{reason}</div>}
+                      </label>
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
             <div className="form-text">
               Grant types are prefiltered based on app type selection.
@@ -203,187 +257,56 @@ function AuthStep({
 
           <div className="auth-divider"></div>
 
-          <div className="auth-field">
-            <label className="form-label fw-semibold">Authentication Policy</label>
-            <div className="row g-2">
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="allow-local-login-override"
-                      {...register("authPolicy.allowLocalLoginOverride")}
-                    />
-                    <label className="form-check-label" htmlFor="allow-local-login-override">
-                      Allow Local Login Override
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="allow-self-registration-override"
-                      {...register("authPolicy.allowSelfRegistrationOverride")}
-                    />
-                    <label className="form-check-label" htmlFor="allow-self-registration-override">
-                      Allow Self Registration Override
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="mfa-policy-override"
-                      {...register("authPolicy.mfaPolicyOverride")}
-                    />
-                    <label className="form-check-label" htmlFor="mfa-policy-override">
-                      Enforce MFA Override
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="show-stay-signed-in"
-                      {...register("authPolicy.showStaySignedIn")}
-                    />
-                    <label className="form-check-label" htmlFor="show-stay-signed-in">
-                      Show Stay Signed In
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="show-create-account-link"
-                      {...register("authPolicy.showCreateAccountLink")}
-                    />
-                    <label className="form-check-label" htmlFor="show-create-account-link">
-                      Show Create Account Link
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="show-external-providers"
-                      {...register("authPolicy.showExternalProviders")}
-                    />
-                    <label className="form-check-label" htmlFor="show-external-providers">
-                      Show External Providers
-                    </label>
-                  </div>
-                </div>
-                <div className="col-12">
-                  <div className="auth-divider my-2"></div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="client-auto-create-users"
-                      checked={isAutoCreateUsersEnabled}
-                      onChange={(event) => {
-                        setValue("authPolicy.autoCreateUsers", event.target.checked, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-
-                        if (!event.target.checked) {
-                          setValue("authPolicy.defaultRoleId", "", {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                        }
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor="client-auto-create-users">
-                      Auto Create Users
-                    </label>
-                  </div>
-                  <div className="form-text text-muted">
-                    Applies to new-user provisioning flows such as external login and
-                    self-registration.
-                  </div>
-                </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label" htmlFor="client-default-role">
-                    Default Role For New Users
-                  </label>
-                  <select
-                    className="form-select"
-                    id="client-default-role"
-                    value={hasDefaultRole ? String(parsedDefaultRoleId) : ""}
-                    disabled={!isAutoCreateUsersEnabled || !externalRoleOptions.length}
-                    onChange={(event) =>
-                      setValue("authPolicy.defaultRoleId", event.target.value || "", {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    <option value="">Select default role</option>
-                    {externalRoleOptions.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
-                  {!externalRoleOptions.length && (
-                    <div className="form-text text-muted">
-                      No new-user-assignable roles are available.
-                    </div>
-                  )}
-                  {showRoleSelectionWarning && (
-                    <div className="form-text text-danger">
-                      Default role is required when auto-create users is enabled.
-                    </div>
-                  )}
-                </div>
-            </div>
-          </div>
-
-          <div className="auth-field mb-0">
-            <label className="form-label fw-semibold">External Providers</label>
-            <div className="row g-3">
-              {externalProviderOptions.map((option) => (
-                <div className="col-12 col-sm-6" key={option.value}>
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      value={option.value}
-                      id={`client-provider-${option.value}`}
-                      disabled={!showExternalProviders}
-                      {...register("externalProviders")}
-                    />
-                    <label
-                      className="form-check-label provider-option-label d-inline-flex align-items-center gap-2"
-                      htmlFor={`client-provider-${option.value}`}
-                    >
-                      <ProviderIcon label={option.label} />
-                      <span>{option.label}</span>
-                    </label>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {!externalProviderOptions.length && (
-              <div className="form-text text-muted">
-                No tenant external providers configured.
+          <div className="row g-3">
+            <div className="col-12 col-lg-6">
+              <label className="form-label fw-semibold">
+                Redirect URIs {requiresRedirectUri ? "*" : ""}
+              </label>
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="fa fa-link"></i>
+                </span>
+                <textarea
+                  className={`form-control${errors.redirectUri ? " is-invalid" : ""}`}
+                  rows="4"
+                  placeholder={
+                    "https://app.example.com/callback\nhttp://localhost:3000/callback"
+                  }
+                  {...register("redirectUri", {
+                    validate: (value) => validateUriLines(value, requiresRedirectUri),
+                  })}
+                ></textarea>
               </div>
-            )}
+              {errors.redirectUri && <div className="error-msg">{errors.redirectUri.message}</div>}
+              <div className="form-text">
+                Add one URI per line.{" "}
+                {requiresRedirectUri
+                  ? "Required for authorization code flows."
+                  : "Optional when authorization code flow is not enabled."}
+              </div>
+              <div className="form-text text-muted">{redirectHint}</div>
+            </div>
+
+            <div className="col-12 col-lg-6">
+              <label className="form-label fw-semibold">Logout Redirect URIs</label>
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="fa fa-sign-out-alt"></i>
+                </span>
+                <textarea
+                  className={`form-control${errors.logoutRedirectUri ? " is-invalid" : ""}`}
+                  rows="4"
+                  placeholder={"https://app.example.com/logout\nhttp://localhost:3000/logout"}
+                  {...register("logoutRedirectUri", { validate: validateLogoutLines })}
+                ></textarea>
+              </div>
+              {errors.logoutRedirectUri && (
+                <div className="error-msg">{errors.logoutRedirectUri.message}</div>
+              )}
+              <div className="form-text">
+                Optional. Used after user signs out to redirect back to your application.
+              </div>
+            </div>
           </div>
         </div>
       </div>

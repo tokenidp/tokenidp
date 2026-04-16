@@ -17,23 +17,21 @@ import {
 } from "./wizard/wizardState";
 import BasicInfoStep from "./wizard/steps/BasicInfoStep";
 import AuthStep from "./wizard/steps/AuthStep";
-import RedirectsStep from "./wizard/steps/RedirectsStep";
-import TokensStep from "./wizard/steps/TokensStep";
+import ConfigurationsStep from "./wizard/steps/ConfigurationsStep";
 import ScopesStep from "./wizard/steps/ScopesStep";
 import ProtectionStep from "./wizard/steps/ProtectionStep";
 import ReviewStep from "./wizard/steps/ReviewStep";
 
 const stepFields = {
   [WizardStep.BasicInfo]: ["clientName", "appType"],
-  [WizardStep.Auth]: [],
-  [WizardStep.EndpointsTokens]: [
-    "redirectUri",
+  [WizardStep.Auth]: ["redirectUri"],
+  [WizardStep.Scopes]: [],
+  [WizardStep.Configurations]: [
     "tokenType",
     "accessTokenLifetime",
     "authorizationCodeLifetime",
     "refreshTokenExpiration",
   ],
-  [WizardStep.Scopes]: [],
   [WizardStep.Protection]: ["timeWindow"],
   [WizardStep.Review]: [],
 };
@@ -555,46 +553,23 @@ function ApplicationWizard({
         );
       case WizardStep.Auth:
         return (
-          <AuthStep
-            register={register}
-            isPublicClient={isPublicClient}
-            isDeviceIot={isDeviceIot}
-            isWebClient={isWeb}
-            showSecret={showSecret}
-            setShowSecret={setShowSecret}
-            onRegenerateSecret={regenerateSecret}
-            grantTypes={grantTypes}
-            toggleGrant={toggleGrant}
-            grantOptions={authGrantOptions}
-            allowedGrants={allowedGrants}
-            hasInsecureGrant={hasInsecureGrant}
-            grantError={grantError}
-            externalProviderOptions={externalProviderOptions}
-            externalRoleOptions={externalAssignableRoleOptions}
-            watch={watch}
-            setValue={setValue}
-          />
-        );
-      case WizardStep.EndpointsTokens:
-        return (
-          <>
-            <RedirectsStep
+            <AuthStep
               register={register}
               errors={errors}
               appType={appType}
-              grantTypes={grantTypes}
+              isPublicClient={isPublicClient}
+              isDeviceIot={isDeviceIot}
+              isWebClient={isWeb}
+              showSecret={showSecret}
+              setShowSecret={setShowSecret}
+            onRegenerateSecret={regenerateSecret}
+            grantTypes={grantTypes}
+              toggleGrant={toggleGrant}
+              grantOptions={authGrantOptions}
+              allowedGrants={allowedGrants}
+              hasInsecureGrant={hasInsecureGrant}
+              grantError={grantError}
             />
-            <TokensStep
-              register={register}
-              errors={errors}
-              tokenType={tokenType}
-              setTokenType={setTokenType}
-              tokenTypeOptions={tokenTypeOptions}
-              setValue={setValue}
-              clearErrors={clearErrors}
-              grantTypes={grantTypes}
-            />
-          </>
         );
       case WizardStep.Scopes:
         return (
@@ -609,6 +584,22 @@ function ApplicationWizard({
             register={register}
             grantTypes={grantTypes}
           />
+        );
+      case WizardStep.Configurations:
+        return (
+          <ConfigurationsStep
+              register={register}
+              watch={watch}
+              setValue={setValue}
+              errors={errors}
+              tokenType={tokenType}
+              setTokenType={setTokenType}
+              tokenTypeOptions={tokenTypeOptions}
+              clearErrors={clearErrors}
+              grantTypes={grantTypes}
+              externalProviderOptions={externalProviderOptions}
+              externalRoleOptions={externalAssignableRoleOptions}
+            />
         );
       case WizardStep.Protection:
         return (
@@ -629,6 +620,8 @@ function ApplicationWizard({
               grantOptions={availableGrantTypes}
               scopeOptions={scopeOptions}
               apiResourceOptions={apiResourceOptions}
+              externalProviderOptions={externalProviderOptions}
+              externalRoleOptions={externalAssignableRoleOptions}
               scopes={scopes}
               selectedApiResources={selectedApiResources}
               onEditStep={handleStepChange}

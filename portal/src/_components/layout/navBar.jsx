@@ -258,149 +258,151 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
           width={150}
         />
       </div>
-      <div className="accordion" id="sidebarAccordion">
-        {items.map((item) => {
-          const controlType = (item.controlType || "").toLowerCase();
-          const hasChildren =
-            Array.isArray(item.childrens) && item.childrens.length > 0;
-          const url = item.url;
-          const normalizedUrl = normalizeUrl(url);
-          const label = item.permissionName || "Menu";
-          const iconName = getSidebarIconName(item);
-          const accordionId = `sidebar-item-${item.id}`;
+      <div className="sidebar-scroll">
+        <div className="accordion" id="sidebarAccordion">
+          {items.map((item) => {
+            const controlType = (item.controlType || "").toLowerCase();
+            const hasChildren =
+              Array.isArray(item.childrens) && item.childrens.length > 0;
+            const url = item.url;
+            const normalizedUrl = normalizeUrl(url);
+            const label = item.permissionName || "Menu";
+            const iconName = getSidebarIconName(item);
+            const accordionId = `sidebar-item-${item.id}`;
 
-          const normalizedLabel = label ? label.trim().toLowerCase() : "";
-          const showDividerBefore = normalizedLabel === "activities";
-          const showDividerAfter = normalizedLabel === "dashboard";
+            const normalizedLabel = label ? label.trim().toLowerCase() : "";
+            const showDividerBefore = normalizedLabel === "activities";
+            const showDividerAfter = normalizedLabel === "dashboard";
 
-          if (controlType === "navgroup" && hasChildren) {
-            const isGroupActive =
-              (Array.isArray(item.childrens) &&
-                item.childrens.some((child) => isPathActive(child.url))) ||
-              isPathActive(url);
-            const isOpen = openGroup === accordionId || isGroupActive;
-            return (
-              <div
-                className="accordion-item border-0 bg-transparent"
-                key={item.id}
-              >
-                {showDividerBefore && <div className="sidebar-divider"></div>}
-                <h2 className="accordion-header" id={`${accordionId}-header`}>
-                  <button
-                    className={`accordion-button sidebar-accordion-button ${
-                      isOpen ? "" : "collapsed"
-                    } ${isGroupActive ? "active" : ""}`}
-                    type="button"
-                    aria-expanded={isOpen}
-                    aria-controls={`${accordionId}-collapse`}
+            if (controlType === "navgroup" && hasChildren) {
+              const isGroupActive =
+                (Array.isArray(item.childrens) &&
+                  item.childrens.some((child) => isPathActive(child.url))) ||
+                isPathActive(url);
+              const isOpen = openGroup === accordionId || isGroupActive;
+              return (
+                <div
+                  className="accordion-item border-0 bg-transparent"
+                  key={item.id}
+                >
+                  {showDividerBefore && <div className="sidebar-divider"></div>}
+                  <h2 className="accordion-header" id={`${accordionId}-header`}>
+                    <button
+                      className={`accordion-button sidebar-accordion-button ${
+                        isOpen ? "" : "collapsed"
+                      } ${isGroupActive ? "active" : ""}`}
+                      type="button"
+                      aria-expanded={isOpen}
+                      aria-controls={`${accordionId}-collapse`}
+                      onClick={() => {
+                        setOpenGroup((prev) =>
+                          prev === accordionId ? null : accordionId,
+                        );
+                        onClick?.(item.id, label);
+                      }}
+                    >
+                      <SidebarIcon name={iconName} />
+                      {label}
+                      <span className="sidebar-chevron">
+                        <i
+                          className={`fa fa-angle-${isOpen ? "down" : "right"}`}
+                        ></i>
+                      </span>
+                    </button>
+                  </h2>
+                  <div
+                    id={`${accordionId}-collapse`}
+                    className={`accordion-collapse collapse ${isOpen ? "show" : ""}`}
+                    aria-labelledby={`${accordionId}-header`}
+                  >
+                    <div className="accordion-body p-0">
+                      <ul className="nav flex-column sidebar-subnav ps-4 mt-3">
+                        {item.childrens
+                          .filter((child) => {
+                            const childType = (
+                              child.controlType || ""
+                            ).toLowerCase();
+                            return childType === "navlink" && !!child.url;
+                          })
+                          .map((child) => (
+                            <li key={child.id}>
+                              <NavLink
+                                to={normalizeUrl(child.url)}
+                                className={() =>
+                                  `nav-link ${isPathActive(child.url) ? "active" : ""}`
+                                }
+                                onClick={() => {
+                                  onClick?.(child.id, child.permissionName);
+                                  onNavigate?.();
+                                }}
+                              >
+                                <SidebarIcon name={getSidebarIconName(child)} />
+                                {child.permissionName}
+                              </NavLink>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+                  </div>
+                  {showDividerAfter && <div className="sidebar-divider"></div>}
+                </div>
+              );
+            }
+
+            if (controlType === "navgroup" && !hasChildren && url) {
+              return (
+                <div key={item.id}>
+                  {showDividerBefore && <div className="sidebar-divider"></div>}
+                  <NavLink
+                    to={normalizedUrl}
+                    className={() =>
+                      `nav-link ${isPathActive(url) ? "active" : ""}`
+                    }
                     onClick={() => {
-                      setOpenGroup((prev) =>
-                        prev === accordionId ? null : accordionId,
-                      );
                       onClick?.(item.id, label);
+                      onNavigate?.();
                     }}
                   >
                     <SidebarIcon name={iconName} />
                     {label}
-                    <span className="sidebar-chevron">
-                      <i
-                        className={`fa fa-angle-${isOpen ? "down" : "right"}`}
-                      ></i>
-                    </span>
-                  </button>
-                </h2>
-                <div
-                  id={`${accordionId}-collapse`}
-                  className={`accordion-collapse collapse ${isOpen ? "show" : ""}`}
-                  aria-labelledby={`${accordionId}-header`}
-                >
-                  <div className="accordion-body p-0">
-                    <ul className="nav flex-column sidebar-subnav ps-4 mt-3">
-                      {item.childrens
-                        .filter((child) => {
-                          const childType = (
-                            child.controlType || ""
-                          ).toLowerCase();
-                          return childType === "navlink" && !!child.url;
-                        })
-                        .map((child) => (
-                          <li key={child.id}>
-                            <NavLink
-                              to={normalizeUrl(child.url)}
-                              className={() =>
-                                `nav-link ${isPathActive(child.url) ? "active" : ""}`
-                              }
-                              onClick={() => {
-                                onClick?.(child.id, child.permissionName);
-                                onNavigate?.();
-                              }}
-                            >
-                              <SidebarIcon name={getSidebarIconName(child)} />
-                              {child.permissionName}
-                            </NavLink>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
+                  </NavLink>
+                  {showDividerAfter && <div className="sidebar-divider"></div>}
                 </div>
-                {showDividerAfter && <div className="sidebar-divider"></div>}
-              </div>
-            );
-          }
+              );
+            }
 
-          if (controlType === "navgroup" && !hasChildren && url) {
-            return (
-              <div key={item.id}>
-                {showDividerBefore && <div className="sidebar-divider"></div>}
-                <NavLink
-                  to={normalizedUrl}
-                  className={() =>
-                    `nav-link ${isPathActive(url) ? "active" : ""}`
-                  }
-                  onClick={() => {
-                    onClick?.(item.id, label);
-                    onNavigate?.();
-                  }}
-                >
-                  <SidebarIcon name={iconName} />
-                  {label}
-                </NavLink>
-                {showDividerAfter && <div className="sidebar-divider"></div>}
-              </div>
-            );
-          }
+            if (controlType === "navlink" && url) {
+              return (
+                <div key={item.id}>
+                  {showDividerBefore && <div className="sidebar-divider"></div>}
+                  <NavLink
+                    to={normalizedUrl}
+                    className={() =>
+                      `nav-link ${isPathActive(url) ? "active" : ""}`
+                    }
+                    onClick={() => {
+                      onClick?.(item.id, label);
+                      onNavigate?.();
+                    }}
+                  >
+                    <SidebarIcon name={iconName} />
+                    {label}
+                  </NavLink>
+                  {showDividerAfter && <div className="sidebar-divider"></div>}
+                </div>
+              );
+            }
 
-          if (controlType === "navlink" && url) {
-            return (
-              <div key={item.id}>
-                {showDividerBefore && <div className="sidebar-divider"></div>}
-                <NavLink
-                  to={normalizedUrl}
-                  className={() =>
-                    `nav-link ${isPathActive(url) ? "active" : ""}`
-                  }
-                  onClick={() => {
-                    onClick?.(item.id, label);
-                    onNavigate?.();
-                  }}
-                >
-                  <SidebarIcon name={iconName} />
-                  {label}
-                </NavLink>
-                {showDividerAfter && <div className="sidebar-divider"></div>}
-              </div>
-            );
-          }
-
-          return null;
-        })}
+            return null;
+          })}
+        </div>
       </div>
 
-      {/* User Profile Section */}
       <div className="sidebar-user-profile">
         <div
           className="user-profile-header"
-          onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+          onClick={() => setIsUserMenuOpen((prev) => !prev)}
+          aria-expanded={isUserMenuOpen}
         >
           <div className="user-avatar">
             {user?.userData?.firstName?.charAt(0)}
@@ -415,11 +417,6 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
                 ""
               ).trim()}{" "}
               {(user?.userData?.lastName || user?.lastName || "").trim()}
-            </div>
-            <div className="user-handle">
-              @
-              {(user?.userData?.username || user?.userName || "").trim() ||
-                "user"}
             </div>
           </div>
         </div>

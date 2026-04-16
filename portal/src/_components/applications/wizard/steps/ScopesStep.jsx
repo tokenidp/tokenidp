@@ -310,24 +310,7 @@ function ScopesStep({
                             </div>
                             <div className="token-helper">{activeApiResource.name}</div>
                           </div>
-                          <span
-                            className={`scopes-resource-badge ${
-                              selectedResourceSet.has(activeApiResource.name)
-                                ? "is-selected"
-                                : ""
-                            }`}
-                          >
-                            {selectedResourceSet.has(activeApiResource.name)
-                              ? "Assigned"
-                              : "Not assigned"}
-                          </span>
                         </div>
-
-                        {!selectedResourceSet.has(activeApiResource.name) && (
-                          <div className="scopes-api-detail-note">
-                            Selecting a scope will assign this API resource to the client.
-                          </div>
-                        )}
 
                         {activeApiResource.scopes.length === 0 ? (
                           <div className="scopes-resource-empty mb-0">
@@ -377,22 +360,6 @@ function ScopesStep({
                   </div>
                 </div>
 
-                <div className="form-text mt-3">
-                  Assign one or more API resources the client can call.
-                </div>
-                <div className="scopes-resource-selected-list">
-                  {selectedApiResources.length > 0 ? (
-                    selectedApiResources.map((resourceName) => (
-                      <span className="scopes-resource-chip" key={resourceName}>
-                        <i className="fa fa-check-circle" /> {resourceName}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="scopes-resource-chip is-empty">
-                      No API resources assigned.
-                    </span>
-                  )}
-                </div>
               </>
             )}
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -13,12 +13,25 @@ const emptyScope = () => ({
   enabled: true,
 });
 
+const normalizeScope = (scope, clientKey) => ({
+  clientKey,
+  id: scope.id ?? scope.Id ?? null,
+  name: scope.name ?? scope.Name ?? "",
+  displayName: scope.displayName ?? scope.DisplayName ?? "",
+  description: scope.description ?? scope.Description ?? "",
+  enabled: scope.enabled ?? scope.Enabled ?? true,
+});
+
 function AddEditApiResource({ mode = "add" }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const { state, getApiResourceById, createApiResource, updateApiResource } = useApiResources();
   const { setSuccess } = useGlobalSuccess();
-  const [scopes, setScopes] = useState([emptyScope()]);
+  const scopeKeyRef = useRef(0);
+  const [scopes, setScopes] = useState([]);
+  const [scopeDraft, setScopeDraft] = useState(emptyScope());
+  const [editingScopeKey, setEditingScopeKey] = useState(null);
+  const [scopeErrors, setScopeErrors] = useState({});
 
   const {
     register,
@@ -34,6 +47,17 @@ function AddEditApiResource({ mode = "add" }) {
       enabled: true,
     },
   });
+
+  const getNextScopeKey = () => {
+    scopeKeyRef.current += 1;
+    return `scope-${scopeKeyRef.current}`;
+  };
+
+  const resetScopeDraft = () => {
+    setScopeDraft(emptyScope());
+    setEditingScopeKey(null);
+    setScopeErrors({});
+  };
 
   useEffect(() => {
     if (mode !== "edit" || !id) {
@@ -52,34 +76,94 @@ function AddEditApiResource({ mode = "add" }) {
       setValue("description", data.description ?? data.Description ?? "");
       setValue("enabled", data.enabled ?? data.Enabled ?? true);
       const nextScopes = data.scopes ?? data.Scopes ?? [];
-      setScopes(
-        nextScopes.length
-          ? nextScopes.map((scope) => ({
-              id: scope.id ?? scope.Id ?? null,
-              name: scope.name ?? scope.Name ?? "",
-              displayName: scope.displayName ?? scope.DisplayName ?? "",
-              description: scope.description ?? scope.Description ?? "",
-              enabled: scope.enabled ?? scope.Enabled ?? true,
-            }))
-          : [emptyScope()]
-      );
+      setScopes(nextScopes.map((scope) => normalizeScope(scope, getNextScopeKey())));
+      resetScopeDraft();
     };
 
     load();
   }, [getApiResourceById, id, mode, setValue]);
 
-  const updateScope = (index, field, value) => {
-    setScopes((prev) =>
-      prev.map((scope, currentIndex) =>
-        currentIndex === index ? { ...scope, [field]: value } : scope
-      )
-    );
+  const updateScopeDraft = (field, value) => {
+    setScopeDraft((prev) => ({ ...prev, [field]: value }));
+    setScopeErrors((prev) => {
+      if (!prev[field]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
   };
 
-  const addScope = () => setScopes((prev) => [...prev, emptyScope()]);
+  const validateScopeDraft = () => {
+    const nextErrors = {};
 
-  const removeScope = (index) => {
-    setScopes((prev) => (prev.length === 1 ? [emptyScope()] : prev.filter((_, i) => i !== index)));
+    if (!scopeDraft.name.trim()) {
+      nextErrors.name = "Scope name is required.";
+    }
+
+    if (!scopeDraft.displayName.trim()) {
+      nextErrors.displayName = "Display name is required.";
+    }
+
+    setScopeErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const saveScope = () => {
+    if (!validateScopeDraft()) {
+      return;
+    }
+
+    const normalizedDraft = {
+      ...scopeDraft,
+      name: scopeDraft.name.trim(),
+      displayName: scopeDraft.displayName.trim(),
+      description: scopeDraft.description.trim(),
+    };
+
+    setScopes((prev) => {
+      if (editingScopeKey) {
+        return prev.map((scope) =>
+          scope.clientKey === editingScopeKey ? { ...scope, ...normalizedDraft } : scope
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          ...normalizedDraft,
+          clientKey: getNextScopeKey(),
+        },
+      ];
+    });
+
+    resetScopeDraft();
+  };
+
+  const editScope = (clientKey) => {
+    const scope = scopes.find((item) => item.clientKey === clientKey);
+    if (!scope) {
+      return;
+    }
+
+    setScopeDraft({
+      id: scope.id,
+      name: scope.name,
+      displayName: scope.displayName,
+      description: scope.description,
+      enabled: scope.enabled,
+    });
+    setEditingScopeKey(clientKey);
+    setScopeErrors({});
+  };
+
+  const removeScope = (clientKey) => {
+    setScopes((prev) => prev.filter((scope) => scope.clientKey !== clientKey));
+
+    if (editingScopeKey === clientKey) {
+      resetScopeDraft();
+    }
   };
 
   const onSubmit = async (data) => {
@@ -177,79 +261,134 @@ function AddEditApiResource({ mode = "add" }) {
 
         <div className="card form-section-card">
           <div className="card-body">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h6 className="card-title mb-0">Scopes</h6>
-              <button type="button" className="btn btn-soft" onClick={addScope}>
-                <i className="fa fa-plus me-1"></i>
-                Add Scope
-              </button>
-            </div>
-
+            <h6 className="card-title mb-3">Scopes</h6>
             <div className="row g-3">
-              {scopes.map((scope, index) => (
-                <div className="col-12" key={scope.id || `scope-${index}`}>
-                  <div className="card border">
-                    <div className="card-body">
-                      <div className="row g-3">
-                        <div className="col-12 col-md-4">
-                          <label className="form-label">Scope Name *</label>
-                          <input
-                            className="form-control"
-                            value={scope.name}
-                            onChange={(event) => updateScope(index, "name", event.target.value)}
-                            placeholder="inventory.read"
-                          />
-                        </div>
-                        <div className="col-12 col-md-4">
-                          <label className="form-label">Display Name *</label>
-                          <input
-                            className="form-control"
-                            value={scope.displayName}
-                            onChange={(event) =>
-                              updateScope(index, "displayName", event.target.value)
-                            }
-                            placeholder="Inventory Read"
-                          />
-                        </div>
-                        <div className="col-12 col-md-3">
-                          <label className="form-label">Enabled</label>
-                          <div className="form-check form-switch mt-2">
-                            <input
-                              className="form-check-input"
-                              type="checkbox"
-                              checked={scope.enabled}
-                              onChange={(event) =>
-                                updateScope(index, "enabled", event.target.checked)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="col-12 col-md-1 d-flex align-items-end justify-content-end">
-                          <button
-                            type="button"
-                            className="btn btn-link text-danger p-0"
-                            onClick={() => removeScope(index)}
-                            title="Remove scope"
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
-                        </div>
-                        <div className="col-12">
-                          <label className="form-label">Description</label>
-                          <input
-                            className="form-control"
-                            value={scope.description}
-                            onChange={(event) =>
-                              updateScope(index, "description", event.target.value)
-                            }
-                            placeholder="Optional scope description"
-                          />
-                        </div>
+              <div className="col-12 col-xl-5">
+                <div className="api-resource-scope-panel">
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <label className="form-label">Scope Name *</label>
+                      <input
+                        className={`form-control${scopeErrors.name ? " is-invalid" : ""}`}
+                        value={scopeDraft.name}
+                        onChange={(event) => updateScopeDraft("name", event.target.value)}
+                        placeholder="inventory.read"
+                      />
+                      {scopeErrors.name && <div className="error-msg">{scopeErrors.name}</div>}
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Display Name *</label>
+                      <input
+                        className={`form-control${scopeErrors.displayName ? " is-invalid" : ""}`}
+                        value={scopeDraft.displayName}
+                        onChange={(event) => updateScopeDraft("displayName", event.target.value)}
+                        placeholder="Inventory Read"
+                      />
+                      {scopeErrors.displayName && (
+                        <div className="error-msg">{scopeErrors.displayName}</div>
+                      )}
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label">Description</label>
+                      <textarea
+                        className="form-control"
+                        rows="4"
+                        value={scopeDraft.description}
+                        onChange={(event) => updateScopeDraft("description", event.target.value)}
+                        placeholder="Optional scope description"
+                      />
+                    </div>
+                    <div className="col-12">
+                      <div className="form-check form-switch app-switch account-status-switch basic-info-active">
+                        <input
+                          className="form-check-input app-switch-input"
+                          type="checkbox"
+                          checked={scopeDraft.enabled}
+                          onChange={(event) => updateScopeDraft("enabled", event.target.checked)}
+                        />
+                        <label className="form-check-label">Enabled</label>
                       </div>
+                    </div>
+                    <div className="col-12 d-flex justify-content-end gap-2">
+                      <button type="button" className="btn btn-soft" onClick={resetScopeDraft}>
+                        <i className="fa fa-eraser me-1"></i>
+                        Clear
+                      </button>
+                      <button type="button" className="btn btn-primary" onClick={saveScope}>
+                        <i className="fa fa-save me-1"></i>
+                        Save
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
+              </div>
+              <div className="col-12 col-xl-7">
+                <div className="api-resource-scope-panel api-resource-scope-panel-divider">
+                  <div className="table-responsive">
+                    <table className="table table-hover align-middle table-striped table-bordered">
+                      <thead>
+                        <tr>
+                          <th>Scope Name</th>
+                          <th>Display Name</th>
+                          <th>Description</th>
+                          <th>Status</th>
+                          <th className="text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scopes.map((scope) => (
+                          <tr
+                            key={scope.clientKey}
+                            className={
+                              editingScopeKey === scope.clientKey
+                                ? "api-resource-scope-row-active"
+                                : ""
+                            }
+                          >
+                            <td>{scope.name}</td>
+                            <td>{scope.displayName}</td>
+                            <td>{scope.description || "--"}</td>
+                            <td>
+                              <span
+                                className={`status-pill ${
+                                  scope.enabled ? "status-pill-success" : "status-pill-off"
+                                }`}
+                              >
+                                {scope.enabled ? "Active" : "Disabled"}
+                              </span>
+                            </td>
+                            <td className="text-right table-actions">
+                              <button
+                                className="btn btn-link p-0 text-primary ButtonLink"
+                                type="button"
+                                title="Edit scope"
+                                onClick={() => editScope(scope.clientKey)}
+                              >
+                                <i className="fa fa-pen"></i>
+                              </button>
+                              <button
+                                className="btn btn-link p-0 text-danger ButtonLink"
+                                type="button"
+                                title="Remove scope"
+                                onClick={() => removeScope(scope.clientKey)}
+                              >
+                                <i className="fa fa-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {scopes.length === 0 && (
+                          <tr>
+                            <td colSpan="5" className="text-center text-muted py-4">
+                              No scopes added for this ApiResource.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
