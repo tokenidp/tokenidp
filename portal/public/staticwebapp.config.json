@@ -1,0 +1,32 @@
+{
+  "routes": [
+    {
+      "route": "/auth/callback",
+      "rewrite": "/index.html"
+    },
+    {
+      "route": "/logout/callback",
+      "rewrite": "/index.html"
+    }
+  ],
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/static/*",
+      "/*.css",
+      "/*.gif",
+      "/*.ico",
+      "/*.jpeg",
+      "/*.jpg",
+      "/*.js",
+      "/*.json",
+      "/*.map",
+      "/*.png",
+      "/*.svg",
+      "/asset-manifest.json",
+      "/favicon.ico",
+      "/manifest.json",
+      "/robots.txt"
+    ]
+  }
+}
