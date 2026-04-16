@@ -198,6 +198,10 @@ function TenantsList() {
           accessor: (item) => getField(item, "tenantCode", "TenantCode"),
         },
         {
+          header: "Tenant Key",
+          accessor: (item) => getField(item, "tenantKey", "TenantKey"),
+        },
+        {
           header: "Email",
           accessor: (item) => getField(item, "email", "Email"),
         },
@@ -343,6 +347,7 @@ function TenantsList() {
                   </th>
                   <th>Tenant Name</th>
                   <th>Tenant Code</th>
+                  <th>Tenant Key</th>
                   <th>Email</th>
                   <th>Authentication Mode</th>
                   <th>Status</th>
@@ -384,6 +389,9 @@ function TenantsList() {
                       <td>{getField(item, "tenantName", "TenantName")}</td>
                       <td className="text-muted">
                         {getField(item, "tenantCode", "TenantCode")}
+                      </td>
+                      <td className="text-muted">
+                        {getField(item, "tenantKey", "TenantKey")}
                       </td>
                       <td>{getField(item, "email", "Email")}</td>
                       <td>
@@ -449,7 +457,7 @@ function TenantsList() {
                 })}
                 {state.items.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="text-center text-muted py-4">
+                    <td colSpan="8" className="text-center text-muted py-4">
                       No tenants found.
                     </td>
                   </tr>

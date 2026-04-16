@@ -5,6 +5,7 @@ public class TenantSearchResult
     public TenantSearchResult(int id,
         string tenantName,
         string tenantCode,
+        string tenantKey,
         string? email,
         AuthenticationModes? authenticationMode,
         bool? isActive)
@@ -12,6 +13,7 @@ public class TenantSearchResult
         Id = id;
         TenantName = tenantName;
         TenantCode = tenantCode;
+        TenantKey = tenantKey;
         Email = email ?? string.Empty;
         AuthenticationMode = authenticationMode;
         IsActive = isActive ?? false;
@@ -22,6 +24,7 @@ public class TenantSearchResult
            t.Id,
            t.TenantName,
            t.TenantCode,
+           t.TenantKey,
            t.Email,
            t.TenantAuthSetting.AuthenticationMode,
            t.IsActive);
@@ -29,6 +32,7 @@ public class TenantSearchResult
     public int Id { get; set; }
     public string TenantName { get; set; }
     public string TenantCode { get; set; }
+    public string TenantKey { get; set; }
     public string Email { get; set; }
     public AuthenticationModes? AuthenticationMode { get; set; }
     public bool IsActive { get; set; }
