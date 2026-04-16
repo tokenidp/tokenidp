@@ -51,7 +51,9 @@ try
     app.UseCors(policy => policy
         .AllowAnyMethod()
         .AllowAnyHeader()
-        .WithOrigins("http://localhost:3000", "https://tresorauth-admin-cpdyhza4cadhbsfq.canadacentral-01.azurewebsites.net") // replace with your actual client URL
+        .WithOrigins("http://localhost:3000", 
+        "https://tresorauth-admin-cpdyhza4cadhbsfq.canadacentral-01.azurewebsites.net",
+        "https://ashy-meadow-06d616803.7.azurestaticapps.net") // replace with your actual client URL
         .AllowCredentials()
     );
 
