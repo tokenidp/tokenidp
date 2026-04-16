@@ -6,9 +6,6 @@ internal sealed class CreateUpdatePermissionValidator : AbstractValidator<Create
 {
     public CreateUpdatePermissionValidator()
     {
-        RuleFor(x => x.TenantId)
-            .GreaterThan(0);
-
         RuleFor(x => x.PermissionKey)
             .NotEmpty()
             .MaximumLength(200);
