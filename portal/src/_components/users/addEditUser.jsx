@@ -365,6 +365,8 @@ function AddEditUser({ mode }) {
       email: String(data.email ?? "").trim(),
       phone: String(data.phone ?? "").trim(),
       password: data.password ? data.password : null,
+      emailConfirmed: !!data.emailConfirmed,
+      phoneNumberConfirmed: !!data.phoneNumberConfirmed,
       twoFactorEnabled: !!data.twoFactorEnabled,
       lockoutEnabled: !!data.lockoutEnabled,
       accessFailedCount: Number(data.accessFailedCount || 0),

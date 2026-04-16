@@ -8,7 +8,7 @@ const defaultBaseURL = process.env.REACT_APP_BASE_URL;
 
 const useApiClient = (options = {}) => {
   const user = useAuth();
-  const { setError, clearError } = useGlobalError();
+  const { setError } = useGlobalError();
   const { baseURL = defaultBaseURL, skipAuth = false, track = true } = options;
 
   const apiClient = useMemo(() => axios.create({ baseURL }), [baseURL]);
@@ -52,7 +52,6 @@ const useApiClient = (options = {}) => {
             headers,
           }),
         );
-        clearError();
         return response;
       } catch (error) {
         const status = error?.response?.status;
@@ -131,7 +130,7 @@ const useApiClient = (options = {}) => {
         throw error;
       }
     },
-    [apiClient, clearError, run, setError, skipAuth, user?.token],
+    [apiClient, run, setError, skipAuth, user?.token],
   );
 
   const get = useCallback(

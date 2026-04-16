@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import InfoModal from "../common/infoModal";
-import Pagination from "../common/pagination";
 import { useSettings } from "../../_hooks/useSettings";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
+import { useAuth } from "tokenidp-react";
 
 const defaultSearch = {
   pageNumber: 1,
-  pageSize: 10,
-  sortColumn: "ConfigKey",
+  pageSize: 500,
+  sortColumn: "Scope",
   sortOrder: "asc",
   searchAll: false,
 };
@@ -22,147 +22,250 @@ const valueTypeOptions = [
 ];
 
 const scopeValueOptions = [
-  { value: 0, label: "System" },
-  { value: 1, label: "Security" },
-  { value: 2, label: "Notification" },
-  { value: 3, label: "Branding" },
-  { value: 4, label: "Integration" },
+  { value: 0, label: "System", icon: "fa-sliders" },
+  { value: 1, label: "Security", icon: "fa-shield" },
+  { value: 2, label: "Notification", icon: "fa-bell" },
+  { value: 3, label: "Branding", icon: "fa-palette" },
+  { value: 4, label: "Integration", icon: "fa-plug" },
 ];
 
-const scopeFilterOptions = [
-  { value: "", label: "All scopes" },
-  { value: "System", label: "System" },
-  { value: "Security", label: "Security" },
-  { value: "Notification", label: "Notification" },
-  { value: "Branding", label: "Branding" },
-  { value: "Integration", label: "Integration" },
-];
-
-const getField = (item, ...keys) =>
-  keys.find((key) => item?.[key] !== undefined) !== undefined
-    ? item[keys.find((key) => item?.[key] !== undefined)]
-    : undefined;
-
-const normalizeScopeValue = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return null;
-  }
-  if (typeof value === "string") {
-    const match = scopeValueOptions.find(
-      (option) => option.label.toLowerCase() === value.toLowerCase(),
-    );
-    return match ? match.value : null;
-  }
-  return Number(value);
-};
-
-const resolveScopeLabel = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return "";
-  }
-  if (typeof value === "string") {
-    return value;
-  }
-  return (
-    scopeValueOptions.find((option) => option.value === Number(value))?.label ||
-    ""
-  );
+const getField = (item, ...keys) => {
+  const resolvedKey = keys.find((key) => item?.[key] !== undefined);
+  return resolvedKey ? item?.[resolvedKey] : undefined;
 };
 
 const normalizeValueType = (value) => {
   if (value === null || value === undefined || value === "") {
     return 0;
   }
+
   if (typeof value === "string") {
     const match = valueTypeOptions.find(
       (option) => option.label.toLowerCase() === value.toLowerCase(),
     );
     return match ? match.value : Number(value);
   }
+
   return Number(value);
 };
 
+const normalizeScopeValue = (value) => {
+  if (value === null || value === undefined || value === "") {
+    return 0;
+  }
+
+  if (typeof value === "string") {
+    const match = scopeValueOptions.find(
+      (option) => option.label.toLowerCase() === value.toLowerCase(),
+    );
+    return match ? match.value : Number(value);
+  }
+
+  return Number(value);
+};
+
+const getScopeLabel = (value) =>
+  scopeValueOptions.find((option) => option.value === normalizeScopeValue(value))
+    ?.label || "System";
+
+const getValueTypeLabel = (value) =>
+  valueTypeOptions.find((option) => option.value === normalizeValueType(value))
+    ?.label || "String";
+
+const normalizePermissions = (user) => {
+  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
+  let permissions = [];
+
+  if (Array.isArray(rawPermissions)) {
+    permissions = rawPermissions;
+  } else if (typeof rawPermissions === "string") {
+    try {
+      const parsed = JSON.parse(rawPermissions);
+      permissions = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      permissions = [];
+    }
+  }
+
+  return permissions
+    .map((permission) =>
+      permission?.permissionKey || permission?.PermissionKey || permission?.Key,
+    )
+    .filter(Boolean)
+    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
+};
+
+const getDefaultValueForType = (valueType) => {
+  switch (normalizeValueType(valueType)) {
+    case 1:
+      return "0";
+    case 2:
+      return "false";
+    case 4:
+      return "{}";
+    default:
+      return "";
+  }
+};
+
+const normalizeBooleanValue = (value) =>
+  String(value ?? "").trim().toLowerCase() === "true";
+
+const validateConfigurationValue = (valueType, value) => {
+  const normalizedType = normalizeValueType(valueType);
+  const normalizedValue = String(value ?? "");
+
+  if (!normalizedValue.trim()) {
+    return "Value is required.";
+  }
+
+  if (normalizedType === 1 && !/^-?\d+$/.test(normalizedValue.trim())) {
+    return "Int values must be whole numbers.";
+  }
+
+  if (
+    normalizedType === 2 &&
+    !["true", "false"].includes(normalizedValue.trim().toLowerCase())
+  ) {
+    return "Bool values must be true or false.";
+  }
+
+  if (normalizedType === 4) {
+    try {
+      JSON.parse(normalizedValue);
+    } catch {
+      return "Json values must be valid JSON.";
+    }
+  }
+
+  return "";
+};
+
 function SettingsList() {
+  const user = useAuth();
   const { state, loadSettings, bulkSave, deleteConfiguration } = useSettings();
   const { setSuccess } = useGlobalSuccess();
-  const isFirstSettingsLoad = React.useRef(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
-  const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
-  const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
-  const [filters, setFilters] = useState({ search: "", scope: "" });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeScope, setActiveScope] = useState(scopeValueOptions[0].value);
   const [drafts, setDrafts] = useState({});
   const [newEntry, setNewEntry] = useState(null);
 
-  const totalCount = state.totalCount || 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const showInitialLoading = !state.hasLoadedSettings;
   const showRefreshingState = state.hasLoadedSettings && state.loadingSettings;
+  const permissionKeys = useMemo(() => normalizePermissions(user), [user]);
+  const canEditSettings = permissionKeys.includes("settings.edit");
+  const canDeleteSettings = permissionKeys.includes("settings.delete");
 
-  const buildSearchCriterias = () => {
-    const criterias = [];
-    if (filters.search.trim()) {
-      criterias.push({
-        ColumnName: "Search",
-        Value: filters.search.trim(),
-        ColumnType: 1,
-      });
-    }
-    if (filters.scope) {
-      criterias.push({
-        ColumnName: "Scope",
-        Value: filters.scope,
-        ColumnType: 1,
-      });
-    }
-    return criterias;
-  };
-
-  const reload = () =>
-    loadSettings({
+  const loadAllSettings = useCallback(async () => {
+    const initialResult = await loadSettings({
       ...defaultSearch,
-      pageNumber,
-      pageSize,
-      SearchCriterias: buildSearchCriterias(),
+      SearchCriterias: [],
     });
 
-  useEffect(() => {
-    const hasShortSearch =
-      filters.search.trim().length > 0 && filters.search.trim().length < 3;
+    const items = initialResult?.items || initialResult?.Items || [];
+    const totalCount =
+      initialResult?.totalCount ||
+      initialResult?.TotalCount ||
+      (Array.isArray(items) ? items.length : 0);
 
-    if (hasShortSearch) {
-      return () => {};
+    if (Array.isArray(items) && totalCount > items.length) {
+      await loadSettings({
+        ...defaultSearch,
+        pageSize: totalCount,
+        SearchCriterias: [],
+      });
     }
-
-    if (isFirstSettingsLoad.current) {
-      isFirstSettingsLoad.current = false;
-      reload();
-      return () => {};
-    }
-
-    const timeout = setTimeout(() => {
-      reload();
-    }, 250);
-
-    return () => clearTimeout(timeout);
-  }, [loadSettings, pageNumber, pageSize, filters]);
+  }, [loadSettings]);
 
   useEffect(() => {
-    if (pageNumber > totalPages) {
-      setPageNumber(totalPages);
+    loadAllSettings();
+  }, [loadAllSettings]);
+
+  useEffect(() => {
+    if (!newEntry) {
+      return;
     }
-  }, [pageNumber, totalPages]);
 
-  const items = useMemo(() => state.items || [], [state.items]);
+    setNewEntry((prev) =>
+      !prev || prev.scope === activeScope
+        ? prev
+        : {
+            ...prev,
+            scope: activeScope,
+          },
+    );
+  }, [activeScope, newEntry]);
 
-  const handleDraftChange = (id, field, value) => {
+  const items = useMemo(
+    () =>
+      (state.items || [])
+        .map((item) => {
+          const id = getField(item, "id", "Id");
+          const key = String(getField(item, "key", "Key") || "");
+          const value = String(getField(item, "value", "Value") ?? "");
+          const valueType = normalizeValueType(
+            getField(item, "valueType", "ValueType"),
+          );
+          const scopeValue = normalizeScopeValue(
+            getField(item, "scope", "Scope"),
+          );
+          const isEditable =
+            getField(item, "isEditable", "IsEditable") ?? true;
+
+          return {
+            id,
+            key,
+            value,
+            valueType,
+            valueTypeLabel: getValueTypeLabel(valueType),
+            scopeValue,
+            scopeLabel: getScopeLabel(scopeValue),
+            isEditable: !!isEditable,
+          };
+        })
+        .sort((left, right) => left.key.localeCompare(right.key)),
+    [state.items],
+  );
+
+  const itemCountsByScope = useMemo(
+    () =>
+      items.reduce((counts, item) => {
+        counts[item.scopeValue] = (counts[item.scopeValue] || 0) + 1;
+        return counts;
+      }, {}),
+    [items],
+  );
+
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return items.filter((item) => {
+      if (item.scopeValue !== activeScope) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return item.key.toLowerCase().includes(normalizedSearch);
+    });
+  }, [activeScope, items, searchTerm]);
+
+  const activeScopeOption =
+    scopeValueOptions.find((option) => option.value === activeScope) ||
+    scopeValueOptions[0];
+
+  const handleDraftChange = (id, value) => {
     setDrafts((prev) => ({
       ...prev,
       [id]: {
         ...(prev[id] || {}),
-        [field]: value,
+        value,
       },
     }));
   };
@@ -174,6 +277,13 @@ function SettingsList() {
       return next;
     });
   };
+
+  const openInfo = (title, message) => {
+    setInfoContent({ title, message });
+    setInfoOpen(true);
+  };
+
+  const closeInfo = () => setInfoOpen(false);
 
   const requestDelete = (id) => {
     setPendingDeleteId(id);
@@ -195,16 +305,9 @@ function SettingsList() {
     closeConfirm();
 
     if (result.ok) {
-      reload();
+      await loadAllSettings();
     }
   };
-
-  const openInfo = (title, message) => {
-    setInfoContent({ title, message });
-    setInfoOpen(true);
-  };
-
-  const closeInfo = () => setInfoOpen(false);
 
   const hasPendingChanges = useMemo(() => {
     const draftKeys = Object.keys(drafts || {});
@@ -213,39 +316,29 @@ function SettingsList() {
 
   const buildBulkItems = () => {
     const updates = [];
+
     items.forEach((item) => {
-      const id = getField(item, "id", "Id");
-      const draft = drafts[id];
+      const draft = drafts[item.id];
       if (!draft) {
         return;
       }
 
-      const key = getField(item, "key", "Key");
-      const value = draft.value ?? getField(item, "value", "Value") ?? "";
-      const valueType = normalizeValueType(
-        draft.valueType ?? getField(item, "valueType", "ValueType"),
-      );
-      const scope =
-        draft.scope ?? normalizeScopeValue(getField(item, "scope", "Scope"));
-      const isEditable =
-        draft.isEditable ?? getField(item, "isEditable", "IsEditable") ?? true;
-
       updates.push({
-        Id: id,
-        Key: key,
-        Value: value,
-        ValueType: Number(valueType),
-        Scope: scope,
-        IsEditable: !!isEditable,
+        Id: item.id,
+        Key: item.key,
+        Value: draft.value ?? item.value,
+        ValueType: item.valueType,
+        Scope: item.scopeValue,
+        IsEditable: item.isEditable,
       });
     });
 
     if (newEntry) {
       updates.push({
-        Key: newEntry.key?.trim() || "",
-        Value: newEntry.value ?? "",
-        ValueType: Number(newEntry.valueType ?? 0),
-        Scope: normalizeScopeValue(newEntry.scope),
+        Key: newEntry.key.trim(),
+        Value: String(newEntry.value ?? ""),
+        ValueType: Number(newEntry.valueType),
+        Scope: Number(newEntry.scope),
         IsEditable: !!newEntry.isEditable,
       });
     }
@@ -255,12 +348,21 @@ function SettingsList() {
 
   const saveChanges = async () => {
     const payload = buildBulkItems();
-    const invalid = payload.find((item) => !item.Key || !item.Value);
-    if (invalid) {
-      openInfo(
-        "Validation error",
-        "Key and value are required for all entries.",
-      );
+
+    const invalidEntry = payload.find((item) => {
+      if (!item.Key?.trim()) {
+        return true;
+      }
+
+      return !!validateConfigurationValue(item.ValueType, item.Value);
+    });
+
+    if (invalidEntry) {
+      const message = !invalidEntry.Key?.trim()
+        ? "Key is required for every configuration entry."
+        : validateConfigurationValue(invalidEntry.ValueType, invalidEntry.Value);
+
+      openInfo("Validation error", message);
       return;
     }
 
@@ -272,11 +374,74 @@ function SettingsList() {
       });
       setDrafts({});
       setNewEntry(null);
-      reload();
+      await loadAllSettings();
       return;
     }
 
     openInfo("Save failed", "Unable to save configuration changes.");
+  };
+
+  const startNewEntry = () => {
+    setNewEntry((prev) =>
+      prev || {
+        key: "",
+        value: "",
+        valueType: 0,
+        scope: activeScope,
+        isEditable: true,
+      },
+    );
+  };
+
+  const updateNewEntry = (field, value) => {
+    setNewEntry((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const renderValueEditor = (item, value, onChange, disabled = false) => {
+    if (item.valueType === 2) {
+      return (
+        <label className="settings-entry-bool">
+          <div className="form-check form-switch app-switch mb-0">
+            <input
+              className="form-check-input app-switch-input"
+              type="checkbox"
+              checked={normalizeBooleanValue(value)}
+              disabled={disabled}
+              onChange={(event) =>
+                onChange(event.target.checked ? "true" : "false")
+              }
+            />
+          </div>
+          <span className="settings-entry-bool-text">
+            {normalizeBooleanValue(value) ? "On" : "Off"}
+          </span>
+        </label>
+      );
+    }
+
+    if (item.valueType === 4) {
+      return (
+        <textarea
+          className="form-control font-monospace"
+          rows="5"
+          disabled={disabled}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      );
+    }
+
+    return (
+      <input
+        className="form-control"
+        type={item.valueType === 1 ? "number" : "text"}
+        inputMode={item.valueType === 1 ? "numeric" : undefined}
+        step={item.valueType === 1 ? "1" : undefined}
+        disabled={disabled}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    );
   };
 
   return (
@@ -294,81 +459,49 @@ function SettingsList() {
       </div>
 
       <div className="card-surface applications-card">
-        <div className="table-toolbar">
-          <div className="table-length">
-            <select
-              className="form-select"
-              value={pageSize}
-              onChange={(event) => {
-                setPageSize(Number(event.target.value));
-                setPageNumber(1);
-              }}
-            >
-              <option>10</option>
-              <option>25</option>
-              <option>50</option>
-            </select>
+        <div className="settings-topbar">
+          <div className="table-search settings-search">
+            <i className="fa fa-search"></i>
+            <input
+              type="text"
+              className="form-control"
+              placeholder={`Search ${activeScopeOption.label.toLowerCase()} keys`}
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+            />
           </div>
-          <div className="table-toolbar-actions settings-toolbar-actions">
-            <div className="table-search">
-              <i className="fa fa-search"></i>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Search keys (min 3 chars)"
-                value={filters.search}
-                onChange={(event) => {
-                  setFilters((prev) => ({
-                    ...prev,
-                    search: event.target.value,
-                  }));
-                  setPageNumber(1);
-                }}
-              />
+
+          <div className="settings-topbar-actions">
+            <div className="scopes-resource-count" aria-live="polite">
+              {Object.keys(drafts).length + (newEntry ? 1 : 0)} pending
             </div>
-            <select
-              className="form-select settings-scope-select"
-              value={filters.scope}
-              onChange={(event) => {
-                setFilters((prev) => ({
-                  ...prev,
-                  scope: event.target.value,
-                }));
-                setPageNumber(1);
-              }}
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={startNewEntry}
+              disabled={!canEditSettings}
+              title={
+                canEditSettings
+                  ? "Add configuration entry"
+                  : "settings.edit permission is required"
+              }
             >
-              {scopeFilterOptions.map((option) => (
-                <option key={option.value || "all"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <div className="settings-toolbar-buttons">
-              <button
-                className="btn btn-primary"
-                type="button"
-                onClick={() =>
-                  setNewEntry({
-                    key: "",
-                    value: "",
-                    valueType: 0,
-                    scope: null,
-                    isEditable: true,
-                  })
-                }
-              >
-                <i className="fa fa-plus"></i> Add Entry
-              </button>
-              <button
-                className="btn btn-primary"
-                type="button"
-                disabled={!hasPendingChanges || state.saving}
-                onClick={saveChanges}
-              >
-                <i className="fa fa-save me-1" aria-hidden="true"></i>
-                {state.saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
+              <i className="fa fa-plus"></i> Add Entry
+            </button>
+            <button
+              className="btn btn-primary"
+              type="button"
+              disabled={!canEditSettings || !hasPendingChanges || state.saving}
+              onClick={saveChanges}
+              title={
+                canEditSettings
+                  ? "Save configuration changes"
+                  : "settings.edit permission is required"
+              }
+            >
+              <i className="fa fa-save me-1" aria-hidden="true"></i>
+              {state.saving ? "Saving..." : "Save Changes"}
+            </button>
           </div>
         </div>
 
@@ -381,281 +514,235 @@ function SettingsList() {
                 Refreshing configurations...
               </div>
             )}
-            <div className="table-responsive">
-            <table className="table table-hover align-middle table-striped table-bordered">
-              <thead>
-                <tr>
-                  <th>Key</th>
-                  <th>Value</th>
-                  <th>Type</th>
-                  <th>Scope</th>
-                  <th>Editable</th>
-                  <th className="text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {newEntry && (
-                  <tr>
-                    <td>
-                      <input
-                        className="form-control"
-                        placeholder="security.mfa.enabled"
-                        value={newEntry.key}
-                        onChange={(event) =>
-                          setNewEntry((prev) => ({
-                            ...prev,
-                            key: event.target.value,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <input
-                        className="form-control"
-                        placeholder="true"
-                        value={newEntry.value}
-                        onChange={(event) =>
-                          setNewEntry((prev) => ({
-                            ...prev,
-                            value: event.target.value,
-                          }))
-                        }
-                      />
-                    </td>
-                    <td>
-                      <select
-                        className="form-select"
-                        value={newEntry.valueType}
-                        onChange={(event) =>
-                          setNewEntry((prev) => ({
-                            ...prev,
-                            valueType: Number(event.target.value),
-                          }))
-                        }
-                      >
-                        {valueTypeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <select
-                        className="form-select"
-                        value={newEntry.scope ?? ""}
-                        onChange={(event) =>
-                          setNewEntry((prev) => ({
-                            ...prev,
-                            scope:
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value),
-                          }))
-                        }
-                      >
-                        <option value="">None</option>
-                        {scopeValueOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <div className="form-check form-switch app-switch">
-                        <input
-                          className="form-check-input app-switch-input"
-                          type="checkbox"
-                          checked={!!newEntry.isEditable}
-                          onChange={(event) =>
-                            setNewEntry((prev) => ({
-                              ...prev,
-                              isEditable: event.target.checked,
-                            }))
-                          }
-                        />
-                      </div>
-                    </td>
-                    <td className="text-right table-actions">
-                      <button
-                        className="btn btn-link p-0 text-danger ButtonLink"
-                        type="button"
-                        onClick={() => setNewEntry(null)}
-                        title="Remove"
-                      >
-                        <i className="fa fa-times"></i>
-                      </button>
-                    </td>
-                  </tr>
-                )}
-                {items.map((item) => {
-                  const id = getField(item, "id", "Id");
-                  const key = getField(item, "key", "Key");
-                  const valueType = normalizeValueType(
-                    getField(item, "valueType", "ValueType"),
-                  );
-                  const scope = getField(item, "scope", "Scope");
-                  const isEditable =
-                    getField(item, "isEditable", "IsEditable") ?? true;
-                  const draft = drafts[id] || {};
-                  const effectiveValueType = normalizeValueType(
-                    draft.valueType ?? valueType,
-                  );
-                  const effectiveScope =
-                    draft.scope ?? normalizeScopeValue(scope);
 
-                  return (
-                    <tr key={id || key}>
-                      <td className="text-muted">{key}</td>
-                      <td>
-                        {effectiveValueType === 2 ? (
-                          <div className="form-check form-switch app-switch">
+            <div className="settings-shell">
+              <aside className="settings-sidebar" aria-label="Configuration scopes">
+                <div className="settings-nav">
+                  {scopeValueOptions.map((scope) => {
+                    const count = itemCountsByScope[scope.value] || 0;
+                    const isActive = scope.value === activeScope;
+
+                    return (
+                      <button
+                        key={scope.value}
+                        type="button"
+                        className={`settings-nav-item ${
+                          isActive ? "is-active" : ""
+                        }`}
+                        onClick={() => setActiveScope(scope.value)}
+                        aria-current={isActive ? "true" : undefined}
+                      >
+                        <div className="settings-nav-item-top">
+                          <span className="settings-nav-icon" aria-hidden="true">
+                            <i className={`fa ${scope.icon}`}></i>
+                          </span>
+                          <span className="settings-nav-count">{count}</span>
+                        </div>
+                        <div className="settings-nav-title">{scope.label}</div>
+                        <div className="settings-nav-subtitle">
+                          {count === 1 ? "1 setting" : `${count} settings`}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </aside>
+
+              <section className="settings-detail">
+                <div className="settings-detail-header">
+                  <div>
+                    <h6 className="wizard-step-title mb-1">
+                      {activeScopeOption.label}
+                    </h6>
+                    <div className="text-muted small">
+                      Edit tenant configuration values for the selected scope.
+                    </div>
+                  </div>
+                  <div className="settings-detail-summary">
+                    <span className="scopes-resource-count">
+                      {filteredItems.length} visible
+                    </span>
+                  </div>
+                </div>
+
+                <div className="settings-entry-list">
+                  {filteredItems.map((item) => {
+                    const draft = drafts[item.id];
+                    const value = draft?.value ?? item.value;
+
+                    return (
+                      <div
+                        key={item.id || item.key}
+                        className={`settings-entry-card ${
+                          draft ? "has-draft" : ""
+                        } ${item.isEditable ? "" : "is-locked"}`}
+                      >
+                        <div className="settings-entry-info">
+                          <div className="settings-entry-key">{item.key}</div>
+                          <div className="settings-entry-caption">
+                            Scope: {item.scopeLabel}
+                          </div>
+                          <div className="settings-entry-meta">
+                            <span className="status-pill status-pill-secondary">
+                              {item.valueTypeLabel}
+                            </span>
+                            <span
+                              className={`status-pill ${
+                                item.isEditable
+                                  ? "status-pill-success"
+                                  : "status-pill-off"
+                              }`}
+                            >
+                              {item.isEditable ? "Editable" : "Read only"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="settings-entry-field">
+                          {renderValueEditor(
+                            item,
+                            value,
+                            (nextValue) => handleDraftChange(item.id, nextValue),
+                            !canEditSettings || !item.isEditable || state.saving,
+                          )}
+                        </div>
+
+                        <div className="settings-entry-actions">
+                          {draft && (
+                            <button
+                              className="btn btn-link p-0 text-secondary ButtonLink"
+                              type="button"
+                              title="Discard"
+                              onClick={() => clearDraft(item.id)}
+                            >
+                              <i className="fa fa-rotate-left"></i>
+                            </button>
+                          )}
+                          {canDeleteSettings && (
+                            <button
+                              className="btn btn-link p-0 text-danger ButtonLink"
+                              type="button"
+                              title="Delete"
+                              onClick={() => requestDelete(item.id)}
+                              disabled={!item.isEditable || state.saving}
+                            >
+                              <i className="fa fa-trash"></i>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {newEntry && newEntry.scope === activeScope && (
+                    <div className="settings-entry-card settings-entry-card-new">
+                      <div className="settings-entry-info">
+                        <div className="settings-entry-key">New Entry</div>
+                        <div className="settings-entry-caption">
+                          Scope: {activeScopeOption.label}
+                        </div>
+                        <div className="settings-entry-meta">
+                          <span className="status-pill status-pill-warning">
+                            Unsaved
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="settings-entry-field">
+                        <div className="settings-new-entry-grid">
+                          <div>
+                            <label className="form-label">Key</label>
                             <input
-                              className="form-check-input app-switch-input"
-                              type="checkbox"
-                              checked={
-                                String(
-                                  draft.value ??
-                                    getField(item, "value", "Value"),
-                                ).toLowerCase() === "true"
-                              }
-                              disabled={!isEditable}
+                              className="form-control"
+                              placeholder="security.mfa.enabled"
+                              value={newEntry.key}
                               onChange={(event) =>
-                                handleDraftChange(
-                                  id,
-                                  "value",
-                                  event.target.checked ? "true" : "false",
-                                )
+                                updateNewEntry("key", event.target.value)
                               }
                             />
                           </div>
-                        ) : effectiveValueType === 4 ? (
-                          <textarea
-                            className="form-control font-monospace"
-                            rows="2"
-                            disabled={!isEditable}
-                            value={
-                              draft.value ?? getField(item, "value", "Value")
-                            }
-                            onChange={(event) =>
-                              handleDraftChange(id, "value", event.target.value)
-                            }
-                          />
-                        ) : (
-                          <input
-                            className="form-control"
-                            type={effectiveValueType === 1 ? "number" : "text"}
-                            disabled={!isEditable}
-                            value={
-                              draft.value ?? getField(item, "value", "Value")
-                            }
-                            onChange={(event) =>
-                              handleDraftChange(id, "value", event.target.value)
-                            }
-                          />
-                        )}
-                      </td>
-                      <td>
-                        <select
-                          className="form-select"
-                          disabled={!isEditable}
-                          value={effectiveValueType}
-                          onChange={(event) =>
-                            handleDraftChange(
-                              id,
-                              "valueType",
-                              Number(event.target.value),
-                            )
-                          }
-                        >
-                          {valueTypeOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <select
-                          className="form-select"
-                          disabled={!isEditable}
-                          value={effectiveScope ?? ""}
-                          onChange={(event) =>
-                            handleDraftChange(
-                              id,
-                              "scope",
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value),
-                            )
-                          }
-                        >
-                          <option value="">
-                            {resolveScopeLabel(scope) || "None"}
-                          </option>
-                          {scopeValueOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <span
-                          className={`status-pill ${
-                            isEditable
-                              ? "status-pill-success"
-                              : "status-pill-off"
-                          }`}
-                        >
-                          {isEditable ? "Yes" : "No"}
-                        </span>
-                      </td>
-                      <td className="text-right table-actions">
-                        {drafts[id] && (
-                          <button
-                            className="btn btn-link p-0 text-secondary ButtonLink"
-                            type="button"
-                            title="Discard"
-                            onClick={() => clearDraft(id)}
-                          >
-                            <i className="fa fa-rotate-left"></i>
-                          </button>
-                        )}
+
+                          <div>
+                            <label className="form-label">Type</label>
+                            <select
+                              className="form-select"
+                              value={newEntry.valueType}
+                              onChange={(event) => {
+                                const nextType = Number(event.target.value);
+                                updateNewEntry("valueType", nextType);
+                                updateNewEntry(
+                                  "value",
+                                  getDefaultValueForType(nextType),
+                                );
+                              }}
+                            >
+                              {valueTypeOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="form-label">Editable</label>
+                            <label className="settings-entry-bool">
+                              <div className="form-check form-switch app-switch mb-0">
+                                <input
+                                  className="form-check-input app-switch-input"
+                                  type="checkbox"
+                                  checked={!!newEntry.isEditable}
+                                  onChange={(event) =>
+                                    updateNewEntry(
+                                      "isEditable",
+                                      event.target.checked,
+                                    )
+                                  }
+                                />
+                              </div>
+                              <span className="settings-entry-bool-text">
+                                {newEntry.isEditable ? "Yes" : "No"}
+                              </span>
+                            </label>
+                          </div>
+
+                          <div className="settings-new-entry-value">
+                            <label className="form-label">Value</label>
+                            {renderValueEditor(
+                              {
+                                valueType: newEntry.valueType,
+                              },
+                              String(newEntry.value ?? ""),
+                              (nextValue) => updateNewEntry("value", nextValue),
+                              !canEditSettings,
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="settings-entry-actions">
                         <button
                           className="btn btn-link p-0 text-danger ButtonLink"
                           type="button"
-                          title="Delete"
-                          onClick={() => requestDelete(id)}
-                          disabled={!isEditable}
+                          title="Remove"
+                          onClick={() => setNewEntry(null)}
                         >
-                          <i className="fa fa-trash"></i>
+                          <i className="fa fa-times"></i>
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {items.length === 0 && !newEntry && (
-                  <tr>
-                    <td colSpan="6" className="text-center text-muted py-4">
-                      No configurations found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {filteredItems.length === 0 &&
+                    (!newEntry || newEntry.scope !== activeScope) && (
+                      <div className="settings-empty-state">
+                        No configurations found for {activeScopeOption.label}.
+                      </div>
+                    )}
+                </div>
+              </section>
             </div>
           </div>
-        )}
-
-        {!showInitialLoading && (
-          <Pagination
-            pageNumber={pageNumber}
-            pageSize={pageSize}
-            totalCount={totalCount}
-            onPageChange={setPageNumber}
-          />
         )}
       </div>
 

@@ -247,8 +247,8 @@ internal class UserCommandUseCase
         user.ApplyIdentityFlags(
             request.LockoutEnabled,
             request.TwoFactorEnabled,
-            request.EmailConfirmed,
-            request.PhoneNumberConfirmed,
+            request.EmailConfirmed ?? user.EmailConfirmed,
+            request.PhoneNumberConfirmed ?? user.PhoneNumberConfirmed,
             request.AccessFailedCount,
             request.LockoutEnd);
 

@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 const GlobalErrorContext = createContext();
+const MIN_ERROR_DISPLAY_MS = 5000;
 
 export const GlobalErrorProvider = ({ children }) => {
   const [error, setError] = useState(null);
@@ -13,7 +14,7 @@ export const GlobalErrorProvider = ({ children }) => {
 
     const timeoutId = setTimeout(() => {
       setError(null);
-    }, 5000);
+    }, MIN_ERROR_DISPLAY_MS);
 
     return () => clearTimeout(timeoutId);
   }, [error]);
