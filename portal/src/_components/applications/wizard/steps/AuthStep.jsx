@@ -86,18 +86,23 @@ function AuthStep({
     grantTypes.includes(GrantTypeId.AuthorizationCode) ||
     grantTypes.includes(GrantTypeId.Password);
   const secretLocked = isPublicClient || isDeviceIot;
+  const usesClientCredentials = grantTypes.includes(GrantTypeId.ClientCredentials);
 
   const requiresRedirectUri = useMemo(
     () => grantTypes.includes(GrantTypeId.AuthorizationCode),
     [grantTypes],
   );
+  const redirectFieldsDisabled = usesClientCredentials && !requiresRedirectUri;
 
   const redirectHint = useMemo(() => {
+    if (redirectFieldsDisabled) {
+      return "Client credentials is a machine-to-machine flow. Redirect and logout URIs are not used.";
+    }
     if (!requiresRedirectUri || appType === "4") {
       return "This application type does not use redirect-based flows. Redirect URIs are not required.";
     }
     return "Redirect URIs are required for authorization code flow.";
-  }, [appType, requiresRedirectUri]);
+  }, [appType, redirectFieldsDisabled, requiresRedirectUri]);
 
   return (
     <div className="row g-4 justify-content-center">
@@ -269,11 +274,15 @@ function AuthStep({
                 <textarea
                   className={`form-control${errors.redirectUri ? " is-invalid" : ""}`}
                   rows="4"
+                  disabled={redirectFieldsDisabled}
                   placeholder={
                     "https://app.example.com/callback\nhttp://localhost:3000/callback"
                   }
                   {...register("redirectUri", {
-                    validate: (value) => validateUriLines(value, requiresRedirectUri),
+                    validate: (value) =>
+                      redirectFieldsDisabled
+                        ? true
+                        : validateUriLines(value, requiresRedirectUri),
                   })}
                 ></textarea>
               </div>
@@ -282,7 +291,9 @@ function AuthStep({
                 Add one URI per line.{" "}
                 {requiresRedirectUri
                   ? "Required for authorization code flows."
-                  : "Optional when authorization code flow is not enabled."}
+                  : redirectFieldsDisabled
+                    ? "Disabled for client_credentials-only authentication."
+                    : "Optional when authorization code flow is not enabled."}
               </div>
               <div className="form-text text-muted">{redirectHint}</div>
             </div>
@@ -296,15 +307,20 @@ function AuthStep({
                 <textarea
                   className={`form-control${errors.logoutRedirectUri ? " is-invalid" : ""}`}
                   rows="4"
+                  disabled={redirectFieldsDisabled}
                   placeholder={"https://app.example.com/logout\nhttp://localhost:3000/logout"}
-                  {...register("logoutRedirectUri", { validate: validateLogoutLines })}
+                  {...register("logoutRedirectUri", {
+                    validate: (value) => (redirectFieldsDisabled ? true : validateLogoutLines(value)),
+                  })}
                 ></textarea>
               </div>
               {errors.logoutRedirectUri && (
                 <div className="error-msg">{errors.logoutRedirectUri.message}</div>
               )}
               <div className="form-text">
-                Optional. Used after user signs out to redirect back to your application.
+                {redirectFieldsDisabled
+                  ? "Disabled for client_credentials-only authentication."
+                  : "Optional. Used after user signs out to redirect back to your application."}
               </div>
             </div>
           </div>
