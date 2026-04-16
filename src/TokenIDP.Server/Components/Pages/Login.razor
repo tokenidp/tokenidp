@@ -1,6 +1,7 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Logging
+@using System.Text.Json
 @using TokenIDP.Core.Abstractions.Repositories
 @using TokenIDP.Core.Foundation.Exceptions
 @using TokenIDP.Core.OAuth
@@ -266,10 +267,11 @@ else if (ui != null)
 
             var tokenRequest = AntiforgeryProvider.GetAntiforgeryToken();
 
-            var authCodeResponse = await JSRuntime.InvokeAsync<AuthResponseDto>(
+            var authCodePayload = await JSRuntime.InvokeAsync<JsonElement>(
                 "idpAuth.localLogin",
                 request,
                 tokenRequest?.Value);
+            var authCodeResponse = AuthResponseDto.FromJson(authCodePayload);
 
             if (authCodeResponse?.IsSuccess == false)
             {
