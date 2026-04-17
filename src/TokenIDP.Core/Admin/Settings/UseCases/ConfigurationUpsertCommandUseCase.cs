@@ -56,7 +56,12 @@ internal sealed class ConfigurationUpsertCommandUseCase
                 .ToList());
         }
 
-        var configuration = await _repository.GetByKeyAsync(tenantId, normalizedKey, cancellationToken);
+        var configuration = await _repository.GetByKeyAsync(
+            tenantId,
+            normalizedKey,
+            request.Scope,
+            includeDeleted: true,
+            cancellationToken);
         if (configuration == null)
         {
             var createResult = Configuration.Create(
@@ -82,23 +87,40 @@ internal sealed class ConfigurationUpsertCommandUseCase
             return ApiResult<TenantConfigurationDto>.Success(createdDto);
         }
 
-        if (!configuration.IsEditable)
+        if (configuration.IsDeleted)
+        {
+            var restoreResult = configuration.Restore(
+                request.ConfigValue,
+                request.ValueType,
+                request.Scope,
+                request.IsEditable);
+
+            if (!restoreResult.IsSuccess)
+            {
+                return ApiResult<TenantConfigurationDto>.Failure(restoreResult.Errors
+                    .Select(e => ApiError.Failure(e.Code, e.Message))
+                    .ToList());
+            }
+        }
+        else if (!configuration.IsEditable)
         {
             return ApiResult<TenantConfigurationDto>.Failure(ApiError.Failure("configuration.readonly",
                 "Configuration is read-only."));
         }
-
-        var updateResult = configuration.UpdateConfiguration(
-            request.ConfigValue,
-            request.ValueType,
-            request.Scope,
-            request.IsEditable);
-
-        if (!updateResult.IsSuccess)
+        else
         {
-            return ApiResult<TenantConfigurationDto>.Failure(updateResult.Errors
-                .Select(e => ApiError.Failure(e.Code, e.Message))
-                .ToList());
+            var updateResult = configuration.UpdateConfiguration(
+                request.ConfigValue,
+                request.ValueType,
+                request.Scope,
+                request.IsEditable);
+
+            if (!updateResult.IsSuccess)
+            {
+                return ApiResult<TenantConfigurationDto>.Failure(updateResult.Errors
+                    .Select(e => ApiError.Failure(e.Code, e.Message))
+                    .ToList());
+            }
         }
 
         _repository.Update(configuration);

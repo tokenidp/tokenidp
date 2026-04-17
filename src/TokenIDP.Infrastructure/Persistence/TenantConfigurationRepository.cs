@@ -24,11 +24,27 @@ internal sealed class TenantConfigurationRepository : ITenantConfigurationReposi
                 cancellationToken);
     }
 
-    public Task<Configuration?> GetByKeyAsync(int tenantId, string key, CancellationToken cancellationToken = default)
+    public Task<Configuration?> GetByKeyAsync(
+        int tenantId,
+        string key,
+        ConfigurationScopes? scope = null,
+        bool includeDeleted = false,
+        CancellationToken cancellationToken = default)
     {
-        return _dbContext.Configurations
-            .FirstOrDefaultAsync(c => c.TenantId == tenantId && c.ConfigKey == key && !c.IsDeleted,
-                cancellationToken);
+        var query = _dbContext.Configurations
+            .Where(c => c.TenantId == tenantId && c.ConfigKey == key);
+
+        if (scope.HasValue)
+        {
+            query = query.Where(c => c.Scope == scope.Value);
+        }
+
+        if (!includeDeleted)
+        {
+            query = query.Where(c => !c.IsDeleted);
+        }
+
+        return query.FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task AddAsync(Configuration configuration, CancellationToken cancellationToken = default)

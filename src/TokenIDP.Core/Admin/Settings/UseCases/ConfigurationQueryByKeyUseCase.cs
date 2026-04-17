@@ -45,7 +45,10 @@ internal sealed class ConfigurationQueryByKeyUseCase
 
         var configuration = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            return await _repository.GetByKeyAsync(tenantId, normalizedKey, cancellationToken);
+            return await _repository.GetByKeyAsync(
+                tenantId,
+                normalizedKey,
+                cancellationToken: cancellationToken);
         }, new TimeSpan(0, 5, 0));
 
         if (configuration == null)

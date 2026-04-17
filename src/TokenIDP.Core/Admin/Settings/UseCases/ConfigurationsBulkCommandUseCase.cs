@@ -95,12 +95,20 @@ internal sealed class ConfigurationsBulkCommandUseCase
             return ApiResult<BulkUpdateTenantConfigurationsResult>.Failure(validationErrors);
         }
 
-        var keys = normalizedItems.Select(x => x.NormalizedKey).ToList();
+        var requestedKeys = normalizedItems
+            .Select(x => x.NormalizedKey)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var requestedPairs = normalizedItems
+            .Select(x => GetLookupKey(x.NormalizedKey, x.Item.Scope))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var existingConfigurations = await _repository.Query()
-            .Where(c => c.TenantId == tenantId && !c.IsDeleted && keys.Contains(c.ConfigKey))
+            .Where(c => c.TenantId == tenantId && requestedKeys.Contains(c.ConfigKey))
             .ToListAsync(cancellationToken);
 
-        var existingLookup = existingConfigurations.ToDictionary(c => c.ConfigKey, StringComparer.OrdinalIgnoreCase);
+        var existingLookup = existingConfigurations
+            .Where(c => requestedPairs.Contains(GetLookupKey(c.ConfigKey, c.Scope)))
+            .ToDictionary(c => GetLookupKey(c.ConfigKey, c.Scope), StringComparer.OrdinalIgnoreCase);
         var result = new BulkUpdateTenantConfigurationsResult
         {
             Requested = request.Items.Count
@@ -109,8 +117,29 @@ internal sealed class ConfigurationsBulkCommandUseCase
         using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
         foreach (var entry in normalizedItems)
         {
-            if (existingLookup.TryGetValue(entry.NormalizedKey, out var existing))
+            var lookupKey = GetLookupKey(entry.NormalizedKey, entry.Item.Scope);
+            if (existingLookup.TryGetValue(lookupKey, out var existing))
             {
+                if (existing.IsDeleted)
+                {
+                    var restoreResult = existing.Restore(
+                        entry.Item.Value,
+                        entry.Item.ValueType,
+                        entry.Item.Scope,
+                        entry.Item.IsEditable);
+
+                    if (!restoreResult.IsSuccess)
+                    {
+                        validationErrors.AddRange(restoreResult.Errors.Select(e =>
+                            ApiError.Failure(e.Code, "{0}: {1}".FormatString(entry.NormalizedKey, e.Message))));
+                        continue;
+                    }
+
+                    _repository.Update(existing);
+                    result.Updated++;
+                    continue;
+                }
+
                 if (!existing.IsEditable)
                 {
                     validationErrors.Add(ApiError.Failure("configuration.readonly",
@@ -164,7 +193,7 @@ internal sealed class ConfigurationsBulkCommandUseCase
         await _repository.SaveChangesAsync(cancellationToken);
         scope.Complete();
 
-        foreach (var key in keys)
+        foreach (var key in requestedKeys)
         {
             var cacheKey = CacheKeys.CONFIGURATION.FormatCacheKey("Key", tenantId, key);
             await _cache.RemoveAsync(cacheKey);
@@ -174,6 +203,11 @@ internal sealed class ConfigurationsBulkCommandUseCase
             request.Items.Count, tenantId);
 
         return ApiResult<BulkUpdateTenantConfigurationsResult>.Success(result);
+    }
+
+    private static string GetLookupKey(string key, ConfigurationScopes scope)
+    {
+        return $"{scope}:{key}";
     }
 }
 

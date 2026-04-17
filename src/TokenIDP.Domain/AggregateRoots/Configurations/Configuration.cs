@@ -87,6 +87,23 @@ public class Configuration : AggregateRoot<int>, ITenant
         return Result.Success(Id);
     }
 
+    public Result Restore(
+        string configValue,
+        ValueTypes valueType,
+        ConfigurationScopes scope,
+        bool isEditable)
+    {
+        var updateResult = UpdateConfiguration(configValue, valueType, scope, isEditable);
+        if (!updateResult.IsSuccess)
+        {
+            return updateResult;
+        }
+
+        IsDeleted = false;
+
+        return Result.Success(Id);
+    }
+
     public Result SoftDelete()
     {
         IsDeleted = true;

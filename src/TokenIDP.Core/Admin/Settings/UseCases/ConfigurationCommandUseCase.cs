@@ -52,11 +52,39 @@ internal sealed class ConfigurationCommandUseCase
                 .ToList());
         }
 
-        var existing = await _repository.GetByKeyAsync(tenantId, normalizedKey, cancellationToken);
+        var existing = await _repository.GetByKeyAsync(
+            tenantId,
+            normalizedKey,
+            request.Scope,
+            includeDeleted: true,
+            cancellationToken);
         if (existing != null)
         {
-            return ApiResult<int>.Failure(ApiError.Failure("configuration.key.duplicate",
-                "Configuration key already exists for this tenant."));
+            if (!existing.IsDeleted)
+            {
+                return ApiResult<int>.Failure(ApiError.Failure("configuration.key.duplicate",
+                    "Configuration key already exists for this tenant and scope."));
+            }
+
+            var restoreResult = existing.Restore(
+                request.ConfigValue,
+                request.ValueType,
+                request.Scope,
+                request.IsEditable);
+
+            if (!restoreResult.IsSuccess)
+            {
+                return ApiResult<int>.Failure(restoreResult.Errors
+                    .Select(e => ApiError.Failure(e.Code, e.Message))
+                    .ToList());
+            }
+
+            _repository.Update(existing);
+            var restored = await _repository.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInfo("Configuration restored with Id {ConfigId}", existing.Id);
+
+            return ApiResult<int>.Success(restored);
         }
 
         var createResult = Configuration.Create(
