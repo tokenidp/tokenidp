@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { GrantTypeId } from "../wizardState";
 
 const formatList = (value) => {
   if (!value) return "--";
@@ -44,6 +45,7 @@ function ReviewStep({
       label: grant.value,
       raw: grant.key,
     }));
+  const hasCiba = grantTypes.includes(GrantTypeId.Ciba);
 
   const apiScopeLabelMap = Object.fromEntries(
     (Array.isArray(apiResourceOptions) ? apiResourceOptions : []).flatMap((resource) =>
@@ -148,6 +150,10 @@ function ReviewStep({
   const selectedProviderValues = Array.isArray(values.externalProviders)
     ? values.externalProviders
     : [];
+  const cibaDeliveryModeLabel =
+    String(values.backchannelTokenDeliveryMode ?? "0") === "0"
+      ? "Poll"
+      : values.backchannelTokenDeliveryMode || "--";
 
   return (
     <div className="row g-4 justify-content-center">
@@ -320,6 +326,46 @@ function ReviewStep({
                     : "--"}
                 </div>
               </div>
+              {hasCiba && (
+                <>
+                  <div>
+                    <div className="text-muted small">CIBA Delivery Mode</div>
+                    <div>{cibaDeliveryModeLabel}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">CIBA Default Expiry</div>
+                    <div>
+                      {values.cibaDefaultExpirySeconds
+                        ? `${values.cibaDefaultExpirySeconds} seconds`
+                        : "--"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">CIBA Minimum Interval</div>
+                    <div>
+                      {values.cibaMinIntervalSeconds
+                        ? `${values.cibaMinIntervalSeconds} seconds`
+                        : "--"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">Require CIBA User Code</div>
+                    <div>{values.requireCibaUserCode ? "Enabled" : "Disabled"}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted small">CIBA Hint Methods</div>
+                    <div>
+                      {[
+                        values.allowCibaLoginHint ? "login_hint" : null,
+                        values.allowCibaLoginHintToken ? "login_hint_token" : null,
+                        values.allowCibaIdTokenHint ? "id_token_hint" : null,
+                      ]
+                        .filter(Boolean)
+                        .join(", ") || "--"}
+                    </div>
+                  </div>
+                </>
+              )}
               <div>
                 <div className="text-muted small">Authentication Policy</div>
                 <div>

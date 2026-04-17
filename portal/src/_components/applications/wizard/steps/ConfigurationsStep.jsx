@@ -23,6 +23,10 @@ function ConfigurationsStep({
     () => grantTypes.includes(GrantTypeId.RefreshToken),
     [grantTypes],
   );
+  const hasCiba = useMemo(
+    () => grantTypes.includes(GrantTypeId.Ciba),
+    [grantTypes],
+  );
 
   const normalizedTokenOptions = useMemo(
     () =>
@@ -53,6 +57,13 @@ function ConfigurationsStep({
   }, [normalizedTokenOptions, tokenType]);
 
   const showExternalProviders = watch("authPolicy.showExternalProviders");
+  const allowCibaLoginHint = watch("allowCibaLoginHint");
+  const allowCibaLoginHintToken = watch("allowCibaLoginHintToken");
+  const allowCibaIdTokenHint = watch("allowCibaIdTokenHint");
+  const hasAnyCibaHintEnabled =
+    (allowCibaLoginHint === undefined ? true : !!allowCibaLoginHint) ||
+    !!allowCibaLoginHintToken ||
+    !!allowCibaIdTokenHint;
 
   const autoCreateUsersValue = watch("authPolicy.autoCreateUsers");
   const isAutoCreateUsersEnabled =
@@ -217,6 +228,162 @@ function ConfigurationsStep({
               </div>
             </div>
           </div>
+
+          {hasCiba && (
+            <div className="token-section token-section-compact">
+              <label className="form-label fw-semibold">CIBA Settings</label>
+              <div className="row g-3">
+                <div className="col-12 col-lg-4">
+                  <label className="form-label">Delivery Mode</label>
+                  <select
+                    className={`form-select${
+                      errors.backchannelTokenDeliveryMode ? " is-invalid" : ""
+                    }`}
+                    {...register("backchannelTokenDeliveryMode", {
+                      required: hasCiba,
+                      valueAsNumber: true,
+                    })}
+                  >
+                    <option value="0">Poll</option>
+                  </select>
+                  {errors.backchannelTokenDeliveryMode && (
+                    <div className="error-msg">Backchannel delivery mode is required.</div>
+                  )}
+                  <div className="form-text text-muted">
+                    Poll is the only supported CIBA delivery mode right now.
+                  </div>
+                </div>
+                <div className="col-12 col-lg-4">
+                  <label className="form-label">Default Expiry</label>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="fa fa-hourglass-end"></i>
+                    </span>
+                    <input
+                      className={`form-control${
+                        errors.cibaDefaultExpirySeconds ? " is-invalid" : ""
+                      }`}
+                      type="number"
+                      min="1"
+                      {...register("cibaDefaultExpirySeconds", {
+                        required: hasCiba,
+                        valueAsNumber: true,
+                        min: {
+                          value: 1,
+                          message: "CIBA default expiry must be greater than zero.",
+                        },
+                      })}
+                    />
+                    <span className="input-group-text">Seconds</span>
+                  </div>
+                  {errors.cibaDefaultExpirySeconds && (
+                    <div className="error-msg">
+                      {errors.cibaDefaultExpirySeconds.message ||
+                        "CIBA default expiry is required."}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 col-lg-4">
+                  <label className="form-label">Minimum Interval</label>
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="fa fa-stopwatch"></i>
+                    </span>
+                    <input
+                      className={`form-control${
+                        errors.cibaMinIntervalSeconds ? " is-invalid" : ""
+                      }`}
+                      type="number"
+                      min="1"
+                      {...register("cibaMinIntervalSeconds", {
+                        required: hasCiba,
+                        valueAsNumber: true,
+                        min: {
+                          value: 1,
+                          message: "CIBA minimum interval must be greater than zero.",
+                        },
+                      })}
+                    />
+                    <span className="input-group-text">Seconds</span>
+                  </div>
+                  {errors.cibaMinIntervalSeconds && (
+                    <div className="error-msg">
+                      {errors.cibaMinIntervalSeconds.message ||
+                        "CIBA minimum interval is required."}
+                    </div>
+                  )}
+                </div>
+                <div className="col-12 col-md-6">
+                  <div className="form-check">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="require-ciba-user-code"
+                      {...register("requireCibaUserCode")}
+                    />
+                    <label className="form-check-label" htmlFor="require-ciba-user-code">
+                      Require User Code
+                    </label>
+                  </div>
+                  <div className="form-text text-muted">
+                    Require the client to provide a user code during backchannel authentication.
+                  </div>
+                </div>
+                <div className="col-12">
+                  <label className="form-label">Allowed User Hint Methods</label>
+                  <div className="row g-2">
+                    <div className="col-12 col-md-4">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="allow-ciba-login-hint"
+                          {...register("allowCibaLoginHint")}
+                        />
+                        <label className="form-check-label" htmlFor="allow-ciba-login-hint">
+                          `login_hint`
+                        </label>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="allow-ciba-login-hint-token"
+                          {...register("allowCibaLoginHintToken")}
+                        />
+                        <label
+                          className="form-check-label"
+                          htmlFor="allow-ciba-login-hint-token"
+                        >
+                          `login_hint_token`
+                        </label>
+                      </div>
+                    </div>
+                    <div className="col-12 col-md-4">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="allow-ciba-id-token-hint"
+                          {...register("allowCibaIdTokenHint")}
+                        />
+                        <label className="form-check-label" htmlFor="allow-ciba-id-token-hint">
+                          `id_token_hint`
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  {!hasAnyCibaHintEnabled && (
+                    <div className="alert alert-warning mt-3 mb-0" role="alert">
+                      Select at least one CIBA user hint method.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="auth-field">
             <label className="form-label fw-semibold">Authentication Policy</label>
