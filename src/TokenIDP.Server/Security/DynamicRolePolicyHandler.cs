@@ -27,9 +27,8 @@ public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequi
         if (context.Resource is not HttpContext httpContext)
             return;
 
-        if (httpContext.User?.Identity?.IsAuthenticated == false)
+        if (httpContext.User?.Identity?.IsAuthenticated != true)
         {
-            context.Fail();
             return;
         }
 
@@ -40,6 +39,7 @@ public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequi
         if (!authorizeAttributes.Any())
         {
             context.Succeed(requirement);
+            return;
         }
 
         foreach (var authorizeAttribute in authorizeAttributes)

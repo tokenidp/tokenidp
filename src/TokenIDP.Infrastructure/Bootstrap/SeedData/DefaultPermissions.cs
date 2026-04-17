@@ -76,7 +76,7 @@ internal class DefaultPermissions
                         permission.ChildPermissions.Add(resetPasswordPermission);
                     }
 
-                    if (permission.PermissionName.Contains("Roles"))
+                    if (RequiresDeletePermission(permission.PermissionKey))
                     {
                         ++i;
                         var deletePermission = CreateActionPermission(tenantId, i, $"{parent.ToLower()}.delete", $"Delete {parent}");
@@ -175,4 +175,12 @@ internal class DefaultPermissions
             isSystem: true,
             sequence: sequence
         );
+
+    private static bool RequiresDeletePermission(string permissionKey)
+    {
+        return permissionKey.Equals("applications.view", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("roles.view", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("tenants.view", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("settings.view", StringComparison.OrdinalIgnoreCase);
+    }
 }

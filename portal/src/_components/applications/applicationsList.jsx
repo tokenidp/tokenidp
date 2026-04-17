@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "tokenidp-react";
 import { useApplications } from "../../_hooks/useApplications";
 import defaultApplicationImage from "../../_assets/images/TokenIDP.svg";
 import { downloadCsv } from "../../_utils/csvExport";
@@ -42,7 +43,32 @@ const getLookupValue = (options, key) => {
   return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "";
 };
 
+const normalizePermissions = (user) => {
+  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
+  let permissions = [];
+
+  if (Array.isArray(rawPermissions)) {
+    permissions = rawPermissions;
+  } else if (typeof rawPermissions === "string") {
+    try {
+      const parsed = JSON.parse(rawPermissions);
+      permissions = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      permissions = [];
+    }
+  }
+
+  return permissions
+    .map(
+      (permission) =>
+        permission?.permissionKey || permission?.PermissionKey || permission?.Key,
+    )
+    .filter(Boolean)
+    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
+};
+
 function ApplicationsList() {
+  const user = useAuth();
   const { state, loadApplications, loadLookups, deleteApplication } =
     useApplications();
   const navigate = useNavigate();
@@ -60,6 +86,8 @@ function ApplicationsList() {
     status: "",
     search: "",
   });
+  const permissionKeys = normalizePermissions(user);
+  const canDeleteApplications = permissionKeys.includes("applications.delete");
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -193,6 +221,10 @@ function ApplicationsList() {
   }, [state.items]);
 
   const requestDelete = (id) => {
+    if (!canDeleteApplications) {
+      return;
+    }
+
     setPendingDeleteId(id);
     setConfirmOpen(true);
   };
@@ -521,14 +553,16 @@ function ApplicationsList() {
                           >
                             <i className="fa fa-pen"></i>
                           </button>
-                          <button
-                            className="btn btn-link p-0 text-danger ButtonLink"
-                            type="button"
-                            onClick={() => requestDelete(getItemId(item))}
-                            title="Delete"
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
+                          {canDeleteApplications && (
+                            <button
+                              className="btn btn-link p-0 text-danger ButtonLink"
+                              type="button"
+                              onClick={() => requestDelete(getItemId(item))}
+                              title="Delete"
+                            >
+                              <i className="fa fa-trash"></i>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -651,15 +685,17 @@ function ApplicationsList() {
                           >
                             <i className="fa fa-pen"></i>
                           </button>
-                          <button
-                            className="btn btn-link p-0 text-danger ButtonLink"
-                            type="button"
-                            onClick={() => requestDelete(id)}
-                            title="Delete"
-                            aria-label="Delete application"
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
+                          {canDeleteApplications && (
+                            <button
+                              className="btn btn-link p-0 text-danger ButtonLink"
+                              type="button"
+                              onClick={() => requestDelete(id)}
+                              title="Delete"
+                              aria-label="Delete application"
+                            >
+                              <i className="fa fa-trash"></i>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
