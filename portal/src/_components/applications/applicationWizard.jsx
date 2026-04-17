@@ -618,7 +618,6 @@ function ApplicationWizard({
               appType={appType}
               isPublicClient={isPublicClient}
               isDeviceIot={isDeviceIot}
-              isWebClient={isWeb}
               showSecret={showSecret}
               setShowSecret={setShowSecret}
             onRegenerateSecret={regenerateSecret}

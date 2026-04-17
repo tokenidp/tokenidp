@@ -80,7 +80,6 @@ function AuthStep({
   hasInsecureGrant,
   grantError,
   isDeviceIot,
-  isWebClient,
 }) {
   const hasAuthorizationGrant =
     grantTypes.includes(GrantTypeId.AuthorizationCode) ||
@@ -161,14 +160,6 @@ function AuthStep({
                 );
               })}
             </div>
-            <div className="form-text">
-              Grant types are prefiltered based on app type selection.
-            </div>
-            {isWebClient && (
-              <div className="form-text text-muted">
-                CIBA is currently under development and is not yet available for use.
-              </div>
-            )}
             {isDeviceIot && (
               <div className="form-text text-muted">
                 Device and IoT clients sign in with the Device Authorization flow, where users
