@@ -7,6 +7,7 @@ import { downloadCsv } from "../../_utils/csvExport";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
+import { normalizeGrantTypeOptions } from "./wizard/wizardState";
 
 const defaultSearch = {
   pageNumber: 1,
@@ -41,6 +42,38 @@ const getLookupValue = (options, key) => {
       normalized,
   );
   return match?.value ?? match?.name ?? match?.Value ?? match?.Name ?? "";
+};
+
+const getMultiLookupLabels = (options, values) => {
+  if (!Array.isArray(values) || values.length === 0) {
+    return "";
+  }
+
+  const normalizedOptions = (options || []).map((option) => ({
+    id: String(option?.id ?? option?.Id ?? ""),
+    key: String(option?.key ?? option?.Key ?? "").toLowerCase(),
+    value: option?.value ?? option?.name ?? option?.Value ?? option?.Name ?? "",
+  }));
+
+  const labels = values
+    .map((value) => {
+      const raw = String(value ?? "").trim();
+      if (!raw) {
+        return "";
+      }
+
+      const normalizedRaw = raw.toLowerCase();
+      const match = normalizedOptions.find(
+        (option) =>
+          option.id === raw ||
+          option.key === normalizedRaw,
+      );
+
+      return match?.value ?? raw;
+    })
+    .filter(Boolean);
+
+  return Array.from(new Set(labels)).join(", ");
 };
 
 const normalizePermissions = (user) => {
@@ -184,7 +217,11 @@ function ApplicationsList() {
       "accessTokenType",
       "AccessTokenType",
     );
+  const getGrantTypes = (item) => getField(item, "grantTypes", "GrantTypes");
   const isApplicationActive = (item) => getField(item, "isActive", "IsActive");
+  const grantTypeOptions = normalizeGrantTypeOptions(state.grantTypes);
+  const getGrantTypeLabel = (item) =>
+    getMultiLookupLabels(grantTypeOptions, getGrantTypes(item)) || "-";
 
   const displayedIds = state.items
     .map((item) => getItemId(item))
@@ -278,6 +315,10 @@ function ApplicationsList() {
           header: "Token Type",
           accessor: (item) =>
             getLookupLabel(state.tokenTypes, getTokenType(item)),
+        },
+        {
+          header: "Grant Type",
+          accessor: (item) => getGrantTypeLabel(item),
         },
         {
           header: "Status",
@@ -482,6 +523,7 @@ function ApplicationsList() {
                       <th>Client Name</th>
                       <th>Client ID</th>
                       <th>App Type</th>
+                      <th>Grant Type</th>
                       <th>Token Type</th>
                       <th>Status</th>
                       <th className="text-right">Actions</th>
@@ -518,6 +560,7 @@ function ApplicationsList() {
                         <td>
                           {getLookupLabel(state.appTypes, getAppType(item))}
                         </td>
+                        <td>{getGrantTypeLabel(item)}</td>
                         <td>
                           {getLookupLabel(state.tokenTypes, getTokenType(item))}
                         </td>
@@ -650,6 +693,14 @@ function ApplicationsList() {
                             </span>
                             <span className="application-grid-card-meta-value">
                               {getLookupLabel(state.appTypes, getAppType(item))}
+                            </span>
+                          </div>
+                          <div className="application-grid-card-meta-item">
+                            <span className="application-grid-card-meta-label">
+                              Grant Type:
+                            </span>
+                            <span className="application-grid-card-meta-value">
+                              {getGrantTypeLabel(item)}
                             </span>
                           </div>
                           <div className="application-grid-card-meta-item">
