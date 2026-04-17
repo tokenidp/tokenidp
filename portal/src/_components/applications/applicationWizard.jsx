@@ -306,6 +306,14 @@ function ApplicationWizard({
     setGrantTypes((prev) => {
       let next = prev.filter((grant) => allowedGrants.has(grant));
 
+      if (
+        next.includes(GrantTypeId.RefreshToken) &&
+        !next.includes(GrantTypeId.AuthorizationCode) &&
+        !next.includes(GrantTypeId.Password)
+      ) {
+        next = next.filter((grant) => grant !== GrantTypeId.RefreshToken);
+      }
+
       if (isDeviceIot && !next.includes(GrantTypeId.DeviceCode)) {
         next = [GrantTypeId.DeviceCode];
       } else if (isSpa && !next.includes(GrantTypeId.AuthorizationCode)) {
