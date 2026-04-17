@@ -7,6 +7,7 @@ namespace TokenIDP.Core.Admin.Tenants.UseCases;
 
 internal sealed class TenantCommandUseCase
 {
+    private const int SystemTenantId = 1;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
@@ -137,6 +138,12 @@ internal sealed class TenantCommandUseCase
         var providersRequest = request.Providers ?? new List<TenantExternalProviderDetail>();
 
         _logger.LogDebug("Updating tenant {TenantId}", id);
+
+        if (IsCrossTenantAccessDenied(id))
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
+        }
 
         var tenant = await _tenantRepository.GetTenantAggregateAsync(id, cancellationToken);
 
@@ -277,7 +284,7 @@ internal sealed class TenantCommandUseCase
     {
         _logger.LogDebug("Deleting tenant {TenantId}", tenantId);
 
-        if (_currentUserService.TenantId > 0 && tenantId != _currentUserService.TenantId)
+        if (IsCrossTenantAccessDenied(tenantId))
         {
             return ApiResult<int>.Failure(
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
@@ -358,5 +365,17 @@ internal sealed class TenantCommandUseCase
     private static string BuildSecretContext(string tenantId, ExternalProviderTypes providerType)
     {
         return $"tenant:{tenantId}:provider:{providerType}";
+    }
+
+    private bool IsCrossTenantAccessDenied(int tenantId)
+    {
+        return !HasGlobalTenantAccess()
+               && _currentUserService.TenantId > 0
+               && tenantId != _currentUserService.TenantId;
+    }
+
+    private bool HasGlobalTenantAccess()
+    {
+        return _currentUserService.TenantId <= 0 || _currentUserService.TenantId == SystemTenantId;
     }
 }

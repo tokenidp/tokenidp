@@ -6,6 +6,7 @@ namespace TokenIDP.Core.Admin.Tenants.UseCases;
 
 internal sealed class TenantQueryUseCase
 {
+    private const int SystemTenantId = 1;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantQueryUseCase> _logger;
@@ -29,7 +30,7 @@ internal sealed class TenantQueryUseCase
     {
         _logger.LogDebug("Fetching tenant {TenantId}", tenantId);
 
-        if (_currentUserService.TenantId > 0 && tenantId != _currentUserService.TenantId)
+        if (IsCrossTenantAccessDenied(tenantId))
         {
             return ApiResult<TenantDetail>.Failure(
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
@@ -52,7 +53,7 @@ internal sealed class TenantQueryUseCase
         RevealTenantProviderSecretRequest request,
         CancellationToken cancellationToken = default)
     {
-        if (_currentUserService.TenantId > 0 && tenantId != _currentUserService.TenantId)
+        if (IsCrossTenantAccessDenied(tenantId))
         {
             return ApiResult<RevealTenantProviderSecretResponse>.Failure(
                 ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
@@ -104,7 +105,7 @@ internal sealed class TenantQueryUseCase
             request.PageNumber, request.PageSize);
 
         var tenants = await _tenantRepository.SearchTenantsAsync(
-            _currentUserService.TenantId > 0 ? _currentUserService.TenantId : null,
+            GetScopedTenantId(),
             request,
             cancellationToken);
 
@@ -116,6 +117,25 @@ internal sealed class TenantQueryUseCase
     private static string BuildSecretContext(string tenantId, ExternalProviderTypes providerType)
     {
         return $"tenant:{tenantId}:provider:{providerType}";
+    }
+
+    private int? GetScopedTenantId()
+    {
+        return HasGlobalTenantAccess()
+            ? null
+            : _currentUserService.TenantId;
+    }
+
+    private bool IsCrossTenantAccessDenied(int tenantId)
+    {
+        return !HasGlobalTenantAccess()
+               && _currentUserService.TenantId > 0
+               && tenantId != _currentUserService.TenantId;
+    }
+
+    private bool HasGlobalTenantAccess()
+    {
+        return _currentUserService.TenantId <= 0 || _currentUserService.TenantId == SystemTenantId;
     }
 }
 
