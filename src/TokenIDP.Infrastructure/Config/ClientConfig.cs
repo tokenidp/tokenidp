@@ -20,6 +20,7 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.LogoutRedirectUri).HasMaxLength(200);
 
         builder.Property(x => x.IsActive).IsRequired();
+        builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.AccessTokenLifetime).IsRequired();
         builder.Property(x => x.AuthorizationCodeLifetime).IsRequired();
         builder.Property(x => x.RefreshTokenExpiration).IsRequired();
@@ -66,15 +67,15 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
             .HasDatabaseName("IX_Clients_ClientId");
 
         // Token issuance hot-path
-        builder.HasIndex(x => new { x.ClientId, x.IsActive })
-            .HasDatabaseName("IX_Clients_ClientId_IsActive");
+        builder.HasIndex(x => new { x.ClientId, x.IsActive, x.IsDeleted })
+            .HasDatabaseName("IX_Clients_ClientId_IsActive_IsDeleted");
 
         // Admin UI list
-        builder.HasIndex(x => new { x.TenantId })
+        builder.HasIndex(x => new { x.TenantId, x.IsDeleted })
             .HasDatabaseName("IX_Clients_ByTenant");
 
         // Admin UI searches
-        builder.HasIndex(x => new { x.TenantId, x.ClientType, x.TokenType, x.IsActive, x.ClientName })
+        builder.HasIndex(x => new { x.TenantId, x.IsDeleted, x.ClientType, x.TokenType, x.IsActive, x.ClientName })
             .HasDatabaseName("IX_Clients_Lookup");
     }
 }

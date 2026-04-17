@@ -135,5 +135,30 @@ internal class PermissionCommandUseCase
 
         return ApiResult<int>.Success(permission.Id);
     }
+
+    public async Task<ApiResult<int>> DeletePermission(
+        int permissionId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Deleting permission {PermissionId}", permissionId);
+
+        var permission = await _permissionRepository.GetByIdAsync(permissionId, cancellationToken);
+
+        if (permission is null)
+        {
+            _logger.LogWarning("Permission not found for delete: {PermissionId}", permissionId);
+
+            return ApiResult<int>.Failure(
+                ApiError.Failure(
+                    "permission.not_found",
+                    $"Permission not found for Id {permissionId}"));
+        }
+
+        await _permissionRepository.DeleteAsync(permission, cancellationToken);
+
+        _logger.LogDebug("Permission deleted successfully {PermissionId}", permission.Id);
+
+        return ApiResult<int>.Success(permission.Id);
+    }
 }
 

@@ -183,7 +183,7 @@ internal sealed class TokenRepository : ITokenRepository
 
         var clients = await _dbContext.Clients
             .AsNoTracking()
-            .Where(c => c.TenantId == tenantId)
+            .Where(c => c.TenantId == tenantId && !c.IsDeleted)
             .OrderBy(c => c.ClientName)
             .Select(c => new LookupItem
             {

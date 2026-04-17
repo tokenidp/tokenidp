@@ -148,5 +148,26 @@ internal class UserEndpoint : IEndpointDefinition
         })
         .WithName("AdminPasswordReset")
         .WithTags("PasswordReset");
+
+        authGroup.MapDelete("/{id}", async (int id,
+            UserCommandUseCase userService,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await userService.DeleteUser(id, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "users.delete"
+        })
+        .WithName("DeleteUser")
+        .WithTags("Users");
     }
 }

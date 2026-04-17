@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TokenIDP.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using TokenIDP.Infrastructure.Persistence;
 namespace TokenIDP.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260417084956_SoftDeleteAdminEntities")]
+    partial class SoftDeleteAdminEntities
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -46,9 +49,6 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -65,7 +65,7 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "IsDeleted")
+                    b.HasIndex("TenantId")
                         .HasDatabaseName("IX_ApiResources_TenantId");
 
                     b.HasIndex("TenantId", "Name")
@@ -1110,9 +1110,6 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsSystem")
                         .HasColumnType("bit");
 
@@ -1145,14 +1142,14 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.HasIndex("ParentId");
 
-                    b.HasIndex("PermissionKey", "IsDeleted")
+                    b.HasIndex("PermissionKey")
                         .HasDatabaseName("IX_Permissions_Key");
 
                     b.HasIndex("TenantId", "PermissionKey")
                         .IsUnique()
                         .HasDatabaseName("IX_Permissions_Tenant_Key");
 
-                    b.HasIndex("TenantId", "ParentId", "IsDeleted", "Sequence")
+                    b.HasIndex("TenantId", "ParentId", "Sequence")
                         .HasDatabaseName("IX_Permissions_Tenant_Parent_Sequence");
 
                     b.ToTable("Permissions", (string)null);
@@ -1289,9 +1286,6 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("TenantCode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1334,7 +1328,7 @@ namespace TokenIDP.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Tenants_TenantName");
 
-                    b.HasIndex("IsDeleted", "IsActive", "TenantName")
+                    b.HasIndex("IsActive", "TenantName")
                         .HasDatabaseName("IX_Tenants_List");
 
                     b.ToTable("Tenants", (string)null);
@@ -1755,9 +1749,6 @@ namespace TokenIDP.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1822,6 +1813,9 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TenantId", "CreatedAtUtc")
+                        .HasDatabaseName("IX_Users_Tenant_Time");
+
                     b.HasIndex("TenantId", "Email")
                         .IsUnique()
                         .HasDatabaseName("IX_Users_Tenant_Email");
@@ -1834,13 +1828,10 @@ namespace TokenIDP.Infrastructure.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Users_Tenant_UserName");
 
-                    b.HasIndex("TenantId", "IsDeleted", "CreatedAtUtc")
-                        .HasDatabaseName("IX_Users_Tenant_Time");
-
-                    b.HasIndex("TenantId", "Email", "IsDeleted", "StatusId")
+                    b.HasIndex("TenantId", "Email", "StatusId")
                         .HasDatabaseName("IX_Users_Login_ByEmail");
 
-                    b.HasIndex("TenantId", "UserName", "IsDeleted", "StatusId")
+                    b.HasIndex("TenantId", "UserName", "StatusId")
                         .HasDatabaseName("IX_Users_Login_ByUserName");
 
                     b.ToTable("Users", (string)null);

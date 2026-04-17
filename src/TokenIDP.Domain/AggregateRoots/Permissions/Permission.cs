@@ -28,6 +28,7 @@ public sealed class Permission : AggregateRoot<int>, ITenant
     public ControlTypes ControlType { get; private set; }
 
     public bool IsActive { get; private set; }
+    public bool IsDeleted { get; private set; }
     public bool IsSystem { get; private set; }
 
     public Tenant Tenant { get; private set; } = default!;
@@ -73,6 +74,7 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         Icon = icon;
         ControlType = parsedControlType;
         IsActive = isActive;
+        IsDeleted = false;
         IsSystem = false;
         SetCreated(1);
     }
@@ -87,6 +89,13 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         string controlType,
         bool isActive)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure(
+                "permission.deleted",
+                "Deleted permission cannot be modified.");
+        }
+
         var validation = ValidateKey(permissionKey)
             .Combine(ValidateName(permissionName))
             .Combine(ValidateControlType(controlType));
@@ -115,7 +124,29 @@ public sealed class Permission : AggregateRoot<int>, ITenant
 
     public Result ChangeOrder(int newSequence)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure(
+                "permission.deleted",
+                "Deleted permission cannot be modified.");
+        }
+
         Sequence = newSequence;
+        return Result.Success(Id);
+    }
+
+    public Result SoftDelete()
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure(
+                "permission.deleted",
+                "Permission is already deleted.");
+        }
+
+        IsDeleted = true;
+        IsActive = false;
+
         return Result.Success(Id);
     }
 

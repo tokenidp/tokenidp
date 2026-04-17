@@ -22,6 +22,7 @@ internal class UserConfig : IEntityTypeConfiguration<User>
         builder.Property(u => u.ConcurrencyStamp).HasMaxLength(100).IsConcurrencyToken();
 
         builder.Property(x => x.StatusId).HasMaxLength(20).IsRequired();
+        builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(p => p.StatusId)
             .HasConversion(
                 v => v.ToString(),
@@ -64,14 +65,14 @@ internal class UserConfig : IEntityTypeConfiguration<User>
             .HasDatabaseName("IX_Users_Tenant_UserCode");
 
         // Login hot path (username/email)
-        builder.HasIndex(x => new { x.TenantId, x.UserName, x.StatusId })
+        builder.HasIndex(x => new { x.TenantId, x.UserName, x.IsDeleted, x.StatusId })
             .HasDatabaseName("IX_Users_Login_ByUserName");
 
-        builder.HasIndex(x => new { x.TenantId, x.Email, x.StatusId })
+        builder.HasIndex(x => new { x.TenantId, x.Email, x.IsDeleted, x.StatusId })
             .HasDatabaseName("IX_Users_Login_ByEmail");
 
         // Admin listing
-        builder.HasIndex(x => new { x.TenantId, x.CreatedAtUtc })
+        builder.HasIndex(x => new { x.TenantId, x.IsDeleted, x.CreatedAtUtc })
             .HasDatabaseName("IX_Users_Tenant_Time");
     }
 }

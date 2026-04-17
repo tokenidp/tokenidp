@@ -26,7 +26,7 @@ internal sealed class TenantRepository : ITenantRepository
 
         var hasTwoFactorEnabled = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
-            return await _dbContext.Tenants.Where(t => t.Id == tenantId)
+            return await _dbContext.Tenants.Where(t => t.Id == tenantId && !t.IsDeleted)
             .Select(s => s.TenantAuthSetting.TwoFactor.IsEnabled)
             .FirstOrDefaultAsync();
 
@@ -43,7 +43,7 @@ internal sealed class TenantRepository : ITenantRepository
         {
             return await _dbContext.TenantUISettings
             .AsNoTracking()
-            .Where(t => t.TenantId == tenantId)
+            .Where(t => t.TenantId == tenantId && !t.Tenant.IsDeleted)
             .FirstOrDefaultAsync();
 
         }, new TimeSpan(0, 15, 0));
@@ -59,6 +59,7 @@ internal sealed class TenantRepository : ITenantRepository
         var provider = await _dbContext.TenantExternalProviders
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId
+                  && !x.Tenant.IsDeleted
                   && x.ProviderType == providerType
                   && x.Enabled,
                 ct);
@@ -75,14 +76,14 @@ internal sealed class TenantRepository : ITenantRepository
             .Include(t => t.TenantUISetting)
             .Include(t => t.TenantAuthSetting)
             .Include(t => t.TenantExternalProviders)
-            .FirstOrDefaultAsync(t => t.Id == tenantId, ct);
+            .FirstOrDefaultAsync(t => t.Id == tenantId && !t.IsDeleted, ct);
     }
 
     public Task<TenantDetail?> GetTenantDetailAsync(int tenantId, CancellationToken ct)
     {
         return _dbContext.Tenants
             .AsNoTracking()
-            .Where(t => t.Id == tenantId)
+            .Where(t => t.Id == tenantId && !t.IsDeleted)
             .Select(TenantDetail.Projection)
             .FirstOrDefaultAsync(ct);
     }
@@ -92,12 +93,14 @@ internal sealed class TenantRepository : ITenantRepository
         return _dbContext.Tenants
             .AsNoTracking()
             .Include(t => t.TenantExternalProviders)
-            .FirstOrDefaultAsync(t => t.Id == tenantId, ct);
+            .FirstOrDefaultAsync(t => t.Id == tenantId && !t.IsDeleted, ct);
     }
 
     public async Task<PaginatedList<TenantSearchResult>> SearchTenantsAsync(int? scopedTenantId, SearchData request, CancellationToken ct)
     {
-        var query = _dbContext.Tenants.AsNoTracking();
+        var query = _dbContext.Tenants
+            .AsNoTracking()
+            .Where(t => !t.IsDeleted);
         if (scopedTenantId.HasValue && scopedTenantId.Value > 0)
         {
             query = query.Where(t => t.Id == scopedTenantId.Value);
@@ -201,14 +204,14 @@ internal sealed class TenantRepository : ITenantRepository
     {
         return _dbContext.TenantAuthSettings
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && !x.Tenant.IsDeleted, ct);
     }
 
     public async Task<TenantSummary?> GetSummaryAsync(int tenantId, CancellationToken ct)
     {
         return await _dbContext.Tenants
             .AsNoTracking()
-            .Where(t => t.Id == tenantId)
+            .Where(t => t.Id == tenantId && !t.IsDeleted)
             .Select(t => new TenantSummary
             {
                 Id = t.Id,

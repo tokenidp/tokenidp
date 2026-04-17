@@ -9,4 +9,6 @@ AS
 	  CASE WHEN u.Id is NULL THEN 'Administrator' ELSE u.LastName END LastName
 	  From dbo.Roles r
 	  LEFT JOIN dbo.Users u on u.Id = r.EffectiveUserId
+		AND (u.IsDeleted = 0 OR u.IsDeleted IS NULL)
+	  Where (r.IsDeleted = 0 OR r.IsDeleted IS NULL)
 GO

@@ -9,5 +9,7 @@ AS
 	  u.FirstName,
 	  u.LastName	  
 	  From dbo.Tenants t
-	  INNER JOIN dbo.Users u on u.Id = t.EffectiveUserId
+	  LEFT JOIN dbo.Users u on u.Id = t.EffectiveUserId
+		AND (u.IsDeleted = 0 OR u.IsDeleted IS NULL)
+	  Where (t.IsDeleted = 0 OR t.IsDeleted IS NULL)
 GO

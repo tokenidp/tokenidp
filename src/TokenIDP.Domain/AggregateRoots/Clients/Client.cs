@@ -28,6 +28,7 @@ public class Client : AggregateRoot<int>, ITenant
     public string? LogoutRedirectUri { get; private set; }
     public bool RequiredPkce { get; private set; }
     public bool IsActive { get; private set; }
+    public bool IsDeleted { get; private set; }
     public int? ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
@@ -77,6 +78,7 @@ public class Client : AggregateRoot<int>, ITenant
         RedirectUri = redirectUri;
         LogoutRedirectUri = logoutRedirectUri;
         IsActive = isActive;
+        IsDeleted = false;
         ClientSecretExpiry = clientSecretExpiry;
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
@@ -110,6 +112,11 @@ public class Client : AggregateRoot<int>, ITenant
         int? queueLimit,
         bool? enableITracking)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("client.deleted", "Deleted client cannot be modified.");
+        }
+
         var validation = ValidateInput(
             ClientId,
             clientName,
@@ -149,6 +156,19 @@ public class Client : AggregateRoot<int>, ITenant
         }
 
         ClientSecrets.Add(clientSecret);
+        return Result.Success(Id);
+    }
+
+    public Result SoftDelete()
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("client.deleted", "Client is already deleted.");
+        }
+
+        IsDeleted = true;
+        IsActive = false;
+
         return Result.Success(Id);
     }
 

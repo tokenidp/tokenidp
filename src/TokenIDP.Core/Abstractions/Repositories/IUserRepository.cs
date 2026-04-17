@@ -11,6 +11,7 @@ public interface IUserRepository
     Task<UserShortInfo> GetUserShortInfo(int id);
     Task<int> CreateUser(User user, string password);
     Task<int> UpdateUser(User user);
+    Task<int> DeleteAsync(User user, CancellationToken ct);
     Task<User?> GetUserAggregateAsync(int id, int tenantId, CancellationToken ct);
     Task<UserDetail?> GetUserDetailAsync(int tenantId, int userId, CancellationToken ct);
     Task<PaginatedList<UserSearchResult>> SearchUsersAsync(int tenantId, SearchData request, CancellationToken ct);

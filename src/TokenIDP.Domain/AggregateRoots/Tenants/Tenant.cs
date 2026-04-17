@@ -10,6 +10,7 @@ public partial class Tenant : AggregateRoot<int>
     public string TenantKey { get; private set; } = default!;
     public string? Email { get; private set; } = default!;
     public bool IsActive { get; private set; }
+    public bool IsDeleted { get; private set; }
     public int EffectiveUserId { get; private set; }
 
     public virtual TenantAuthSetting TenantAuthSetting { get; private set; } = default!;
@@ -29,6 +30,7 @@ public partial class Tenant : AggregateRoot<int>
         TenantKey = tenantKey;
         Email = email;
         IsActive = isActive;
+        IsDeleted = false;
 
         TenantAuthSetting = authSetting;
         TenantUISetting = tenantUISetting;
@@ -68,6 +70,11 @@ public partial class Tenant : AggregateRoot<int>
         string? email,
         bool isActive)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         var validation = ValidateInput(tenantName);
         if (!validation.IsSuccess)
             return validation;
@@ -90,8 +97,24 @@ public partial class Tenant : AggregateRoot<int>
         return Result.Success(Id);
     }
 
+    public Result SoftDelete()
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Tenant is already deleted.");
+        }
+
+        IsDeleted = true;
+        IsActive = false;
+
+        return Result.Success(Id);
+    }
+
     public Result ConfigureAuthSettings(Action<TenantAuthSetting> configure)
     {
+        if (IsDeleted)
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+
         if (TenantAuthSetting is null)
             return Result.Failure("tenant.authsettings.missing", "Tenant auth settings are missing.");
 
@@ -134,6 +157,11 @@ public partial class Tenant : AggregateRoot<int>
         ExternalProviderTypes providerType,
         OidcClientConfig config)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         if (_tenantExternalProviders.Any(x => x.ProviderType == providerType))
         {
             return Result.Failure(
@@ -151,6 +179,11 @@ public partial class Tenant : AggregateRoot<int>
         ExternalProviderTypes providerType,
         OidcClientConfig config)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         var provider = _tenantExternalProviders
             .FirstOrDefault(x => x.ProviderType == providerType);
 
@@ -167,6 +200,11 @@ public partial class Tenant : AggregateRoot<int>
 
     public Result EnableExternalProvider(ExternalProviderTypes providerType)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         var provider = _tenantExternalProviders
             .FirstOrDefault(x => x.ProviderType == providerType);
 
@@ -183,6 +221,11 @@ public partial class Tenant : AggregateRoot<int>
 
     public Result DisableExternalProvider(ExternalProviderTypes providerType)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         var provider = _tenantExternalProviders
             .FirstOrDefault(x => x.ProviderType == providerType);
 
@@ -199,6 +242,11 @@ public partial class Tenant : AggregateRoot<int>
 
     public Result RemoveExternalProvider(ExternalProviderTypes providerType)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
         var provider = _tenantExternalProviders
             .FirstOrDefault(x => x.ProviderType == providerType);
 

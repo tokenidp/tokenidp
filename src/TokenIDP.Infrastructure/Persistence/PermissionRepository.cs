@@ -19,14 +19,14 @@ internal sealed class PermissionRepository : IPermissionRepository
 
     public Task<Permission?> GetByIdAsync(int permissionId, CancellationToken ct)
     {
-        return _dbContext.Permissions.FirstOrDefaultAsync(p => p.Id == permissionId, ct);
+        return _dbContext.Permissions.FirstOrDefaultAsync(p => p.Id == permissionId && !p.IsDeleted, ct);
     }
 
     public async Task<IEnumerable<PermissionList>> GetActivePermissionsAsync(CancellationToken ct)
     {
         return await _dbContext.Permissions
             .AsNoTracking()
-            .Where(p => p.IsActive != false)
+            .Where(p => p.IsActive != false && !p.IsDeleted)
             .OrderBy(p => p.Sequence)
             .ThenBy(p => p.PermissionKey)
             .Select(PermissionList.Projection)
@@ -35,7 +35,9 @@ internal sealed class PermissionRepository : IPermissionRepository
 
     public async Task<PaginatedList<PermissionList>> SearchPermissionsAsync(SearchData request, CancellationToken ct)
     {
-        var query = _dbContext.Permissions.AsNoTracking();
+        var query = _dbContext.Permissions
+            .AsNoTracking()
+            .Where(p => !p.IsDeleted);
         var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
 
         var controlTypeCriteria = criterias.FirstOrDefault(c =>
@@ -80,7 +82,7 @@ internal sealed class PermissionRepository : IPermissionRepository
     {
         return _dbContext.Permissions
             .AsNoTracking()
-            .Where(p => p.Id == permissionId)
+            .Where(p => p.Id == permissionId && !p.IsDeleted)
             .Select(PermissionById.Projection)
             .FirstOrDefaultAsync(ct);
     }
@@ -95,7 +97,8 @@ internal sealed class PermissionRepository : IPermissionRepository
             {
                 var parentMenus = await _dbContext.Permissions
                     .AsNoTracking()
-                    .Where(p => p.IsActive != false &&
+                    .Where(p => !p.IsDeleted &&
+                                p.IsActive != false &&
                                 (p.ControlType == ControlTypes.NavGroup || p.ControlType == ControlTypes.NavLink))
                     .OrderBy(p => p.Sequence)
                     .Select(p => new LookupItem
@@ -117,7 +120,7 @@ internal sealed class PermissionRepository : IPermissionRepository
     public Task<bool> PermissionKeyExistsAsync(string permissionKey, CancellationToken ct)
     {
         return _dbContext.Permissions.AnyAsync(
-            p => p.PermissionKey.ToUpper() == permissionKey,
+            p => !p.IsDeleted && p.PermissionKey.ToUpper() == permissionKey,
             ct);
     }
 
@@ -130,6 +133,19 @@ internal sealed class PermissionRepository : IPermissionRepository
     public async Task<int> AddAsync(Permission permission, CancellationToken ct)
     {
         _dbContext.Permissions.Add(permission);
+        return await _dbContext.SaveChangesAsync(ct);
+    }
+
+    public async Task<int> DeleteAsync(Permission permission, CancellationToken ct)
+    {
+        var deleteResult = permission.SoftDelete();
+        if (!deleteResult.IsSuccess)
+        {
+            throw new InvalidOperationException(
+                string.Join("; ", deleteResult.Errors.Select(x => x.Message)));
+        }
+
+        _dbContext.Permissions.Update(permission);
         return await _dbContext.SaveChangesAsync(ct);
     }
 

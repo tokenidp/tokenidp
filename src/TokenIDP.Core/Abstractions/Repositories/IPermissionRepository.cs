@@ -15,5 +15,6 @@ public interface IPermissionRepository
     Task<bool> PermissionKeyExistsAsync(string permissionKey, CancellationToken ct);
     Task<int> GetNextPermissionSequenceAsync(CancellationToken ct);
     Task<int> AddAsync(Permission permission, CancellationToken ct);
+    Task<int> DeleteAsync(Permission permission, CancellationToken ct);
     Task<int> SaveChangesAsync(CancellationToken ct);
 }

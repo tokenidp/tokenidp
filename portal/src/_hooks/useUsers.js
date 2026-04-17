@@ -85,7 +85,7 @@ const reducer = (state, action) => {
 };
 
 export const UsersProvider = ({ children }) => {
-  const { get, post, put, patch } = useApiClient();
+  const { get, post, put, patch, deleteRequest } = useApiClient();
   const { setSuccess } = useGlobalSuccess();
   const [state, dispatch] = useReducer(reducer, initialState);
 
@@ -294,6 +294,23 @@ export const UsersProvider = ({ children }) => {
     [patch]
   );
 
+  const deleteUser = useCallback(
+    async (id) => {
+      try {
+        await deleteRequest(`admin/user/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return true;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to delete user.",
+        });
+        return false;
+      }
+    },
+    [deleteRequest]
+  );
+
   return (
     <UsersContext.Provider
       value={{
@@ -306,6 +323,7 @@ export const UsersProvider = ({ children }) => {
         updateUser,
         updateUserStatus,
         resetUserPassword,
+        deleteUser,
       }}
     >
       {children}

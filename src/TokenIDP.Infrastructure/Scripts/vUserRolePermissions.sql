@@ -18,7 +18,9 @@ FROM   dbo.[Permissions] c
 INNER JOIN dbo.RolePermissions rc ON c.Id = rc.PermissionId 
 INNER JOIN dbo.Roles r ON rc.RoleId = r.Id 
 INNER JOIN dbo.UserRoles ur ON r.Id = ur.RoleId
-Where (r.IsDeleted = 0 OR r.IsDeleted IS NULL) AND r.IsActive = 1
+Where (c.IsDeleted = 0 OR c.IsDeleted IS NULL)
+  AND (r.IsDeleted = 0 OR r.IsDeleted IS NULL)
+  AND r.IsActive = 1
 GROUP BY
     c.Id,
     c.[Sequence],

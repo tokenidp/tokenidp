@@ -1,24 +1,52 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "tokenidp-react";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import { useRoles } from "../../_hooks/useRoles";
 
+const normalizePermissions = (user) => {
+  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
+  let permissions = [];
+
+  if (Array.isArray(rawPermissions)) {
+    permissions = rawPermissions;
+  } else if (typeof rawPermissions === "string") {
+    try {
+      const parsed = JSON.parse(rawPermissions);
+      permissions = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      permissions = [];
+    }
+  }
+
+  return permissions
+    .map(
+      (permission) =>
+        permission?.permissionKey || permission?.PermissionKey || permission?.Key,
+    )
+    .filter(Boolean)
+    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
+};
+
+const defaultSearch = {
+  pageNumber: 1,
+  pageSize: 12,
+  sortColumn: "RoleName",
+  sortOrder: "asc",
+  searchAll: true,
+};
+
 function Roles() {
+  const user = useAuth();
   const navigate = useNavigate();
-  const { state, loadRoles } = useRoles();
+  const { state, loadRoles, deleteRole } = useRoles();
   const showInitialLoading = !state.hasLoadedRoles;
   const showRefreshingState = state.hasLoadedRoles && state.loadingRoles;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteRole, setPendingDeleteRole] = useState(null);
-
-  const defaultSearch = {
-    pageNumber: 1,
-    pageSize: 12,
-    sortColumn: "RoleName",
-    sortOrder: "asc",
-    searchAll: true,
-  };
+  const permissionKeys = normalizePermissions(user);
+  const canDeleteRoles = permissionKeys.includes("roles.delete");
 
   useEffect(() => {
     loadRoles(defaultSearch);
@@ -39,9 +67,17 @@ function Roles() {
     setPendingDeleteRole(null);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    if (!pendingDeleteRole?.id) {
+      closeConfirm();
+      return;
+    }
+
+    const isSuccess = await deleteRole(pendingDeleteRole.id);
     closeConfirm();
-    alert("Delete role (placeholder).");
+    if (isSuccess) {
+      loadRoles(defaultSearch);
+    }
   };
 
   return (
@@ -102,16 +138,18 @@ function Roles() {
                         <i className="fa fa-edit me-1" aria-hidden="true"></i>
                         Edit Role
                       </button>
-                      <button
-                        className="btn btn-link p-0 text-danger ButtonLink"
-                        type="button"
-                        onClick={() =>
-                          requestDelete({ id: roleId, name: roleName })
-                        }
-                      >
-                        <i className="fa fa-trash me-1" aria-hidden="true"></i>
-                        Delete
-                      </button>
+                      {canDeleteRoles && (
+                        <button
+                          className="btn btn-link p-0 text-danger ButtonLink"
+                          type="button"
+                          onClick={() =>
+                            requestDelete({ id: roleId, name: roleName })
+                          }
+                        >
+                          <i className="fa fa-trash me-1" aria-hidden="true"></i>
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -144,7 +182,7 @@ function Roles() {
         title="Delete Role"
         message={
           pendingDeleteRole
-            ? `Delete ${pendingDeleteRole.name}? This action cannot be undone.`
+            ? `Delete ${pendingDeleteRole.name}?`
             : "Delete this role?"
         }
         confirmLabel="Delete"

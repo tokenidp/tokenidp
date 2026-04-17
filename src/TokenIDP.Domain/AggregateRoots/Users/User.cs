@@ -37,6 +37,7 @@ public partial class User : AggregateRoot<int>, ITenant
     public string FirstName { get; private set; } = default!;
     public string LastName { get; private set; } = default!;
     public string UserCode { get; private set; } = default!;
+    public bool IsDeleted { get; private set; }
     public int EffectiveUserId { get; private set; }
 
     public IReadOnlyCollection<UserRole> UserRoles => _userRoles.AsReadOnly();
@@ -69,6 +70,7 @@ public partial class User : AggregateRoot<int>, ITenant
         AccessFailedCount = 3;
         EmailConfirmed = true;
         StatusId = UserStatus.Active;
+        IsDeleted = false;
 
         SyncRoles(roles);
     }
@@ -81,6 +83,11 @@ public partial class User : AggregateRoot<int>, ITenant
         string phone,
         int[] roles)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("user.deleted", "Deleted user cannot be modified.");
+        }
+
         var validation = ValidateInput(fName, lName, uName, email, phone);
         if (!validation.IsSuccess)
         {
@@ -111,11 +118,21 @@ public partial class User : AggregateRoot<int>, ITenant
 
     public void UpdateStatus(UserStatus userStatus)
     {
+        if (IsDeleted)
+        {
+            return;
+        }
+
         StatusId = userStatus;
     }
 
     public Result ReplaceAddresses(IEnumerable<UserAddress> addresses)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("user.deleted", "Deleted user cannot be modified.");
+        }
+
         if (addresses == null)
         {
             return Result.Success(Id);
@@ -132,6 +149,11 @@ public partial class User : AggregateRoot<int>, ITenant
 
     public Result ReplaceContacts(IEnumerable<UserContact> contacts)
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("user.deleted", "Deleted user cannot be modified.");
+        }
+
         if (contacts == null)
         {
             return Result.Success(Id);
@@ -184,6 +206,11 @@ public partial class User : AggregateRoot<int>, ITenant
         int accessFailedCount,
         DateTimeOffset? lookoutEnd)
     {
+        if (IsDeleted)
+        {
+            return;
+        }
+
         LockoutEnabled = lookoutEnabled;
         TwoFactorEnabled = twoFactorEnabled;
         EmailConfirmed = emailConfirmed;
@@ -195,6 +222,21 @@ public partial class User : AggregateRoot<int>, ITenant
     public void GenerateUserCode(int value)
     {
         UserCode = $"USR-{DateTime.UtcNow:yyyy}-{value:D6}";
+    }
+
+    public Result SoftDelete()
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("user.deleted", "User is already deleted.");
+        }
+
+        IsDeleted = true;
+        StatusId = UserStatus.Inactive;
+        LockoutEnabled = true;
+        LockoutEnd = DateTimeOffset.UtcNow;
+
+        return Result.Success(Id);
     }
 
     private void SyncRoles(IEnumerable<int> roles)
@@ -280,6 +322,11 @@ public partial class User : AggregateRoot<int>, ITenant
         string? email,
         string? displayName)
     {
+        if (IsDeleted)
+        {
+            return default;
+        }
+
         if (_externalLogins.Any(x =>
             x.Provider == provider &&
             x.ProviderUserId == providerUserId))

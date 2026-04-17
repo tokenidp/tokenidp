@@ -120,6 +120,27 @@ internal class PermissionEndpoint : IEndpointDefinition
         })
         .WithName("PermissionLookups")
         .WithTags("Permissions");
+
+        authGroup.MapDelete("/{id}", async (int id,
+            PermissionCommandUseCase permissionUseCases,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await permissionUseCases.DeletePermission(id, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToNoContentOrError(response);
+        })
+         .RequireAuthorization(new AuthorizeAttribute
+         {
+             Policy = "permissions.delete"
+         })
+        .WithName("DeletePermission")
+        .WithTags("Permissions");
     }
 }
 

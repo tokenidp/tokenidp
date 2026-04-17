@@ -298,7 +298,7 @@ internal sealed class TenantCommandUseCase
                 ApiError.Failure("tenant.delete.active", "Active tenants cannot be deleted."));
         }
 
-        var deleteResult = tenant.Disable();
+        var deleteResult = tenant.SoftDelete();
         if (!deleteResult.IsSuccess)
         {
             return ApiResult<int>.Failure(
@@ -306,6 +306,7 @@ internal sealed class TenantCommandUseCase
         }
 
         await _tenantRepository.SaveChangesAsync(cancellationToken);
+        await InvalidateLookupCaches(tenantId);
 
         _logger.LogInfo("Tenant deleted {TenantId}", tenantId);
 

@@ -90,7 +90,7 @@ const reducer = (state, action) => {
 };
 
 export const PermissionsProvider = ({ children }) => {
-  const { get, post, put } = useApiClient();
+  const { get, post, put, deleteRequest } = useApiClient();
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const normalizeResult = (response) => response?.data?.value || response?.data;
@@ -257,6 +257,23 @@ export const PermissionsProvider = ({ children }) => {
     [post]
   );
 
+  const deletePermission = useCallback(
+    async (id) => {
+      try {
+        await deleteRequest(`admin/permission/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return true;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to delete permission.",
+        });
+        return false;
+      }
+    },
+    [deleteRequest]
+  );
+
   return (
     <PermissionsContext.Provider
       value={{
@@ -268,6 +285,7 @@ export const PermissionsProvider = ({ children }) => {
         updatePermission,
         getPermissionById,
         resolvePermissionIdByKey,
+        deletePermission,
       }}
     >
       {children}

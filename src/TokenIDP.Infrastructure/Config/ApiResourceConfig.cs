@@ -14,6 +14,7 @@ internal sealed class ApiResourceConfig : IEntityTypeConfiguration<ApiResource>
         builder.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(500);
         builder.Property(x => x.Enabled).IsRequired();
+        builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
 
@@ -21,7 +22,7 @@ internal sealed class ApiResourceConfig : IEntityTypeConfiguration<ApiResource>
             .IsUnique()
             .HasDatabaseName("IX_ApiResources_TenantId_Name");
 
-        builder.HasIndex(x => x.TenantId)
+        builder.HasIndex(x => new { x.TenantId, x.IsDeleted })
             .HasDatabaseName("IX_ApiResources_TenantId");
     }
 }

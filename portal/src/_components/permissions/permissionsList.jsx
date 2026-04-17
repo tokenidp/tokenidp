@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "tokenidp-react";
 import Breadcrumbs from "../common/breadcrumbs";
+import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import { usePermissions } from "../../_hooks/usePermissions";
 import { downloadCsv } from "../../_utils/csvExport";
@@ -11,6 +13,30 @@ const defaultSearch = {
   sortColumn: "Sequence",
   sortOrder: "asc",
   searchAll: false,
+};
+
+const normalizePermissions = (user) => {
+  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
+  let permissions = [];
+
+  if (Array.isArray(rawPermissions)) {
+    permissions = rawPermissions;
+  } else if (typeof rawPermissions === "string") {
+    try {
+      const parsed = JSON.parse(rawPermissions);
+      permissions = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      permissions = [];
+    }
+  }
+
+  return permissions
+    .map(
+      (permission) =>
+        permission?.permissionKey || permission?.PermissionKey || permission?.Key,
+    )
+    .filter(Boolean)
+    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
 };
 
 const buildSearchCriterias = (filters) => {
@@ -49,7 +75,8 @@ const buildSearchCriterias = (filters) => {
 };
 
 function PermissionsList() {
-  const { state, loadPermissions } = usePermissions();
+  const user = useAuth();
+  const { state, loadPermissions, deletePermission } = usePermissions();
   const navigate = useNavigate();
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
@@ -63,6 +90,10 @@ function PermissionsList() {
     status: "",
     search: "",
   });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeletePermission, setPendingDeletePermission] = useState(null);
+  const permissionKeys = normalizePermissions(user);
+  const canDeletePermissions = permissionKeys.includes("permissions.delete");
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -175,6 +206,38 @@ function PermissionsList() {
       ],
       rowsToExport,
     );
+  };
+
+  const requestDelete = (item) => {
+    setPendingDeletePermission({
+      id: getField(item, "id", "Id"),
+      name: getField(item, "permissionName", "PermissionName"),
+    });
+    setConfirmOpen(true);
+  };
+
+  const closeConfirm = () => {
+    setPendingDeletePermission(null);
+    setConfirmOpen(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDeletePermission?.id) {
+      closeConfirm();
+      return;
+    }
+
+    const isSuccess = await deletePermission(pendingDeletePermission.id);
+    closeConfirm();
+
+    if (isSuccess) {
+      loadPermissions({
+        ...defaultSearch,
+        pageNumber,
+        pageSize,
+        SearchCriterias: buildSearchCriterias(filters),
+      });
+    }
   };
 
   return (
@@ -405,6 +468,16 @@ function PermissionsList() {
                         >
                           <i className="fa fa-pen"></i>
                         </button>
+                        {canDeletePermissions && (
+                          <button
+                            className="btn btn-link p-0 text-danger ButtonLink"
+                            type="button"
+                            title="Delete"
+                            onClick={() => requestDelete(item)}
+                          >
+                            <i className="fa fa-trash"></i>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -430,6 +503,19 @@ function PermissionsList() {
           />
         )}
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Delete Permission"
+        message={
+          pendingDeletePermission?.name
+            ? `Delete ${pendingDeletePermission.name}?`
+            : "Delete this permission?"
+        }
+        confirmLabel="Delete"
+        onConfirm={confirmDelete}
+        onClose={closeConfirm}
+      />
     </div>
   );
 }

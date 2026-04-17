@@ -17,6 +17,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         builder.Property(x => x.Email).HasMaxLength(100);
 
         builder.Property(x => x.IsActive).IsRequired();
+        builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 
         // Computed column for audit
@@ -35,7 +36,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
             .HasDatabaseName("IX_Tenants_TenantCode");
 
         // Admin listing / filtering
-        builder.HasIndex(x => new { x.IsActive, x.TenantName })
+        builder.HasIndex(x => new { x.IsDeleted, x.IsActive, x.TenantName })
             .HasDatabaseName("IX_Tenants_List");
 
         // Audit queries

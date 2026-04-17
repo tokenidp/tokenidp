@@ -206,6 +206,31 @@ internal class UserCommandUseCase
         return ApiResult<int>.Success(user.Id);
     }
 
+    public async Task<ApiResult<int>> DeleteUser(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Deleting user {UserId}", id);
+
+        var user = await _userRepository.GetUserAggregateAsync(
+            id,
+            _currentUserService.TenantId,
+            cancellationToken);
+
+        if (user == null)
+        {
+            _logger.LogWarning("User not found for delete: {UserId}", id);
+            return ApiResult<int>.Failure(ApiError.Failure("NotFound",
+                "User not found for the Id {0}".FormatString(id)));
+        }
+
+        await _userRepository.DeleteAsync(user, cancellationToken);
+
+        _logger.LogInfo("User deleted {UserId}", id);
+
+        return ApiResult<int>.Success(user.Id);
+    }
+
     private async Task<ApiResult<int>?> EnsureUniqueUserAsync(
         int userId,
         string userName,

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "tokenidp-react";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
@@ -13,6 +14,30 @@ const defaultSearch = {
   sortColumn: "FullName",
   sortOrder: "desc",
   searchAll: false,
+};
+
+const normalizePermissions = (user) => {
+  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
+  let permissions = [];
+
+  if (Array.isArray(rawPermissions)) {
+    permissions = rawPermissions;
+  } else if (typeof rawPermissions === "string") {
+    try {
+      const parsed = JSON.parse(rawPermissions);
+      permissions = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      permissions = [];
+    }
+  }
+
+  return permissions
+    .map(
+      (permission) =>
+        permission?.permissionKey || permission?.PermissionKey || permission?.Key,
+    )
+    .filter(Boolean)
+    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
 };
 
 const buildSearchCriterias = (filters) => {
@@ -56,8 +81,9 @@ const buildSearchCriterias = (filters) => {
 };
 
 function Users() {
+  const user = useAuth();
   const navigate = useNavigate();
-  const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus } =
+  const { state, loadUsers, loadLookups, resetUserPassword, updateUserStatus, deleteUser } =
     useUsers();
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
@@ -82,10 +108,17 @@ function Users() {
     userName: "",
     status: "",
   });
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteUser, setPendingDeleteUser] = useState({
+    id: 0,
+    userName: "",
+  });
   const [infoOpen, setInfoOpen] = useState(false);
   const [infoContent, setInfoContent] = useState({ title: "", message: "" });
   const isFirstUsersLoad = useRef(true);
   const selectAllRef = useRef(null);
+  const permissionKeys = normalizePermissions(user);
+  const canDeleteUsers = permissionKeys.includes("users.delete");
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -275,6 +308,22 @@ function Users() {
     setStatusConfirmOpen(true);
   };
 
+  const openDeleteConfirm = (item) => {
+    const id = Number(getField(item, "id", "Id") || 0);
+    if (!id) {
+      return;
+    }
+
+    setPendingDeleteUser({
+      id,
+      userName: String(
+        getField(item, "fullName", "name", "Name", "userName", "UserName") ||
+          "this user",
+      ),
+    });
+    setDeleteConfirmOpen(true);
+  };
+
   const closeStatusConfirm = () => {
     if (statusUpdatingUserId) {
       return;
@@ -282,6 +331,11 @@ function Users() {
 
     setStatusConfirmOpen(false);
     setPendingStatusUpdate({ id: 0, userName: "", status: "" });
+  };
+
+  const closeDeleteConfirm = () => {
+    setDeleteConfirmOpen(false);
+    setPendingDeleteUser({ id: 0, userName: "" });
   };
 
   const submitUserStatusUpdate = async () => {
@@ -310,6 +364,32 @@ function Users() {
     setInfoContent({
       title: "Status updated",
       message: `User status changed to ${nextStatus}.`,
+    });
+    setInfoOpen(true);
+  };
+
+  const submitDeleteUser = async () => {
+    if (!pendingDeleteUser.id) {
+      return;
+    }
+
+    const isSuccess = await deleteUser(pendingDeleteUser.id);
+    closeDeleteConfirm();
+
+    if (!isSuccess) {
+      return;
+    }
+
+    await loadUsers({
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(filters),
+    });
+
+    setInfoContent({
+      title: "User deleted",
+      message: "User was archived successfully.",
     });
     setInfoOpen(true);
   };
@@ -634,6 +714,16 @@ function Users() {
                             }`}
                           ></i>
                         </button>
+                        {canDeleteUsers && (
+                          <button
+                            className="btn btn-link p-0 text-danger ButtonLink"
+                            type="button"
+                            onClick={() => openDeleteConfirm(item)}
+                            title="Delete"
+                          >
+                            <i className="fa fa-trash"></i>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -693,6 +783,19 @@ function Users() {
         confirmLabel={pendingStatusUpdate.status || "Confirm"}
         onConfirm={submitUserStatusUpdate}
         onClose={closeStatusConfirm}
+      />
+
+      <ConfirmModal
+        open={deleteConfirmOpen}
+        title="Delete User"
+        message={
+          pendingDeleteUser.id
+            ? `Delete ${pendingDeleteUser.userName}?`
+            : "Delete this user?"
+        }
+        confirmLabel="Delete"
+        onConfirm={submitDeleteUser}
+        onClose={closeDeleteConfirm}
       />
     </div>
   );

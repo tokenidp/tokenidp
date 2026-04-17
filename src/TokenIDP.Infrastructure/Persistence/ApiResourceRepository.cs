@@ -17,14 +17,14 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
     {
         return _dbContext.ApiResources
             .Include(x => x.Scopes)
-            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(x => x.Id == id && x.TenantId == tenantId && !x.IsDeleted, ct);
     }
 
     public Task<List<ApiResourceDetail>> GetApiResourcesAsync(int tenantId, CancellationToken ct)
     {
         return _dbContext.ApiResources
             .AsNoTracking()
-            .Where(x => x.TenantId == tenantId)
+            .Where(x => x.TenantId == tenantId && !x.IsDeleted)
             .OrderBy(x => x.DisplayName)
             .Select(ApiResourceDetail.Projection)
             .ToListAsync(ct);
@@ -34,7 +34,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
     {
         return _dbContext.ApiResources
             .AsNoTracking()
-            .Where(x => x.Id == id && x.TenantId == tenantId)
+            .Where(x => x.Id == id && x.TenantId == tenantId && !x.IsDeleted)
             .Select(ApiResourceDetail.Projection)
             .FirstOrDefaultAsync(ct);
     }
@@ -46,6 +46,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
             .AsNoTracking()
             .AnyAsync(x =>
                 x.TenantId == tenantId &&
+                !x.IsDeleted &&
                 (!excludeId.HasValue || x.Id != excludeId.Value) &&
                 x.Name.ToLower() == normalized,
                 ct);
@@ -61,6 +62,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
             .AsNoTracking()
             .Where(resource =>
                 resource.TenantId == tenantId &&
+                !resource.IsDeleted &&
                 resource.Enabled &&
                 (requestedApiResources.Contains(resource.Name) ||
                  resource.Scopes.Any(scope => scope.Enabled && requestedScopes.Contains(scope.Name))))
@@ -85,7 +87,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
         return await (
             from clientScope in _dbContext.ClientScopes.AsNoTracking()
             join client in _dbContext.Clients.AsNoTracking() on clientScope.ClientId equals client.Id
-            where client.TenantId == tenantId && scopeNames.Contains(clientScope.Scope)
+            where client.TenantId == tenantId && !client.IsDeleted && scopeNames.Contains(clientScope.Scope)
             select clientScope.Id
         ).AnyAsync(ct);
     }
@@ -95,7 +97,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
         return await (
             from clientApiResource in _dbContext.ClientApiResources.AsNoTracking()
             join client in _dbContext.Clients.AsNoTracking() on clientApiResource.ClientId equals client.Id
-            where client.TenantId == tenantId && clientApiResource.Name == apiResourceName
+            where client.TenantId == tenantId && !client.IsDeleted && clientApiResource.Name == apiResourceName
             select clientApiResource.Id
         ).AnyAsync(ct);
     }
@@ -108,7 +110,13 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
 
     public async Task<int> DeleteAsync(ApiResource apiResource, CancellationToken ct)
     {
-        _dbContext.ApiResources.Remove(apiResource);
+        var deleteResult = apiResource.SoftDelete();
+        if (!deleteResult.IsSuccess)
+        {
+            throw new InvalidOperationException(
+                string.Join("; ", deleteResult.Errors.Select(x => x.Message)));
+        }
+
         return await _dbContext.SaveChangesAsync(ct);
     }
 
@@ -122,7 +130,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
         var clientAssignments = await (
             from clientApiResource in _dbContext.ClientApiResources
             join client in _dbContext.Clients on clientApiResource.ClientId equals client.Id
-            where client.TenantId == tenantId && clientApiResource.Name == oldName
+            where client.TenantId == tenantId && !client.IsDeleted && clientApiResource.Name == oldName
             select clientApiResource
         ).ToListAsync(ct);
 
@@ -137,7 +145,7 @@ internal sealed class ApiResourceRepository : IApiResourceRepository
         var assignedScopes = await (
             from clientScope in _dbContext.ClientScopes
             join client in _dbContext.Clients on clientScope.ClientId equals client.Id
-            where client.TenantId == tenantId && clientScope.Scope == oldName
+            where client.TenantId == tenantId && !client.IsDeleted && clientScope.Scope == oldName
             select clientScope
         ).ToListAsync(ct);
 

@@ -38,6 +38,7 @@ internal sealed class AuthenticationService : IAuthenticationService
 
             var user = await _applicationDbContext.Users
                 .FirstOrDefaultAsync(u => u.TenantId == tenantId
+                && !u.IsDeleted
                 && (
                  u.UserName == userName
                 || u.Email == userName

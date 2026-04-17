@@ -49,7 +49,7 @@ const reducer = (state, action) => {
 };
 
 export const RolesProvider = ({ children }) => {
-  const { get, post, put } = useApiClient();
+  const { get, post, put, deleteRequest } = useApiClient();
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const normalizeResult = (response) => response?.data?.value || response?.data;
@@ -190,6 +190,23 @@ export const RolesProvider = ({ children }) => {
     }
   }, [get]);
 
+  const deleteRole = useCallback(
+    async (id) => {
+      try {
+        await deleteRequest(`admin/role/${id}`);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return true;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to delete role.",
+        });
+        return false;
+      }
+    },
+    [deleteRequest]
+  );
+
   return (
     <RolesContext.Provider
       value={{
@@ -200,6 +217,7 @@ export const RolesProvider = ({ children }) => {
         getRoleById,
         resolveRoleIdByName,
         loadAssignablePermissions,
+        deleteRole,
       }}
     >
       {children}

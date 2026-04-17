@@ -49,6 +49,7 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
             .Include(x => x.ExternalLogins)
             .FirstOrDefaultAsync(
                 x => x.TenantId == tenantId &&
+                     !x.IsDeleted &&
                      x.ExternalLogins.Any(l =>
                          l.Provider == identity.Provider &&
                          l.ProviderUserId == identity.ProviderUserId),
@@ -94,6 +95,7 @@ internal sealed class ExternalIdentityLinkService : IExternalIdentityLinkService
                 .Include(x => x.ExternalLogins)
                 .FirstOrDefaultAsync(
                     x => x.TenantId == tenantId &&
+                         !x.IsDeleted &&
                          x.Email == identity.Email,
                     cancellationToken);
         }

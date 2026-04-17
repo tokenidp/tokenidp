@@ -219,14 +219,6 @@ internal sealed class ApiResourceCommandUseCase
                 ApiError.Failure("api_resource.not_found", $"ApiResource not found for Id {id}"));
         }
 
-        if (apiResource.Scopes.Count > 0)
-        {
-            return ApiResult<Guid>.Failure(
-                ApiError.Failure(
-                    "api_resource.delete.blocked",
-                    "Cannot delete ApiResource if it has assigned scopes or clients"));
-        }
-
         var hasAssignedClients = await _apiResourceRepository.HasAssignedClientsAsync(
             tenantId,
             apiResource.Name,
@@ -237,7 +229,7 @@ internal sealed class ApiResourceCommandUseCase
             return ApiResult<Guid>.Failure(
                 ApiError.Failure(
                     "api_resource.delete.blocked",
-                    "Cannot delete ApiResource if it has assigned scopes or clients"));
+                    "Cannot delete ApiResource while it is assigned to one or more clients."));
         }
 
         await _apiResourceRepository.DeleteAsync(apiResource, cancellationToken);

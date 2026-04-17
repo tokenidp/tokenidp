@@ -21,6 +21,7 @@ internal class PermissionConfig : IEntityTypeConfiguration<Permission>
                    v => Enum.Parse<ControlTypes>(v));
 
         builder.Property(x => x.IsActive).IsRequired();
+        builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.IsSystem).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 
@@ -30,11 +31,11 @@ internal class PermissionConfig : IEntityTypeConfiguration<Permission>
             .HasDatabaseName("IX_Permissions_Tenant_Key");
 
         // Authorization lookup
-        builder.HasIndex(x => x.PermissionKey)
+        builder.HasIndex(x => new { x.PermissionKey, x.IsDeleted })
             .HasDatabaseName("IX_Permissions_Key");
 
         // Tree rendering
-        builder.HasIndex(x => new { x.TenantId, x.ParentId, x.Sequence })
+        builder.HasIndex(x => new { x.TenantId, x.ParentId, x.IsDeleted, x.Sequence })
             .HasDatabaseName("IX_Permissions_Tenant_Parent_Sequence");
 
         // Self-referencing hierarchy

@@ -39,7 +39,7 @@ internal sealed class ClientRepository : IClientRepository
                 .Include(x => x.ClientScopes)
                 .Include(x => x.ClientApiResources)
                 .Include(x => x.ClientSecrets)
-                .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive);
+                .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive && !x.IsDeleted);
 
             if (client == null)
             {
@@ -58,6 +58,7 @@ internal sealed class ClientRepository : IClientRepository
                     .AsNoTracking()
                     .Where(x =>
                         x.TenantId == client.TenantId &&
+                        !x.IsDeleted &&
                         x.Enabled &&
                         activeApiResourceNames.Contains(x.Name))
                     .SelectMany(resource => resource.Scopes
@@ -103,7 +104,7 @@ internal sealed class ClientRepository : IClientRepository
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-                .Where(x => x.Id == clientId)
+                .Where(x => x.Id == clientId && !x.IsDeleted)
                 .Select(ClientShortInfoProjection.Projection)
                 .FirstOrDefaultAsync();
 
@@ -126,7 +127,7 @@ internal sealed class ClientRepository : IClientRepository
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-                .Where(x => x.ClientId == clientId)
+                .Where(x => x.ClientId == clientId && !x.IsDeleted)
                 .Select(ClientShortInfoProjection.Projection)
                 .FirstOrDefaultAsync();
 
@@ -156,6 +157,7 @@ internal sealed class ClientRepository : IClientRepository
                  from s in _dbContext.ClientSecrets
                  join c in _dbContext.Clients on s.ClientId equals c.Id
                  where c.TenantId == tenantId
+                    && !c.IsDeleted
                     && s.ExpiresAt <= untilUtc
                     && c.IsActive
                  group new { s, c } by new { s.ClientId, c.ClientName } into g
@@ -190,7 +192,7 @@ internal sealed class ClientRepository : IClientRepository
     {
         return _dbContext.Clients
             .AsNoTracking()
-            .Where(c => c.Id == clientId && c.TenantId == tenantId)
+            .Where(c => c.Id == clientId && c.TenantId == tenantId && !c.IsDeleted)
             .Select(ClientDetail.Projection)
             .FirstOrDefaultAsync(ct);
     }
@@ -199,7 +201,7 @@ internal sealed class ClientRepository : IClientRepository
     {
         var query = _dbContext.Clients
             .AsNoTracking()
-            .Where(c => c.TenantId == tenantId);
+            .Where(c => c.TenantId == tenantId && !c.IsDeleted);
 
         var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
         var searchCriteria = criterias.FirstOrDefault(c =>
@@ -241,7 +243,7 @@ internal sealed class ClientRepository : IClientRepository
     {
         var apiResources = await _dbContext.ApiResources
             .AsNoTracking()
-            .Where(resource => resource.TenantId == tenantId && resource.Enabled)
+            .Where(resource => resource.TenantId == tenantId && resource.Enabled && !resource.IsDeleted)
             .OrderBy(resource => resource.DisplayName)
             .Select(resource => new ApiResourceLookup
             {
@@ -367,7 +369,7 @@ internal sealed class ClientRepository : IClientRepository
             .Include(c => c.ClientSecrets)
             .Include(c => c.ClientAuthPolicy)
             .Include(c => c.ClientExternalProviders)
-            .FirstOrDefaultAsync(c => c.Id == clientId && c.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(c => c.Id == clientId && c.TenantId == tenantId && !c.IsDeleted, ct);
     }
 
     public async Task<int> AddAsync(Client client, CancellationToken ct)
@@ -383,15 +385,29 @@ internal sealed class ClientRepository : IClientRepository
 
     public async Task<int> DeleteAsync(Client client, CancellationToken ct)
     {
-        _dbContext.Clients.Remove(client);
-        return await _dbContext.SaveChangesAsync(ct);
+        var deleteResult = client.SoftDelete();
+        if (!deleteResult.IsSuccess)
+        {
+            throw new InvalidOperationException(
+                string.Join("; ", deleteResult.Errors.Select(x => x.Message)));
+        }
+
+        var rows = await _dbContext.SaveChangesAsync(ct);
+
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("ACT", client.ClientId));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("SHT", client.Id));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("VAL", client.ClientId));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("EPRV", client.Id));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("AUTH", client.Id));
+
+        return rows;
     }
 
     public async Task<IReadOnlyList<LookupItem>> GetTokenClientLookupsAsync(int tenantId, int limit, CancellationToken ct)
     {
         return await _dbContext.Clients
             .AsNoTracking()
-            .Where(c => c.TenantId == tenantId)
+            .Where(c => c.TenantId == tenantId && !c.IsDeleted)
             .OrderBy(c => c.ClientName)
             .Select(c => new LookupItem
             {

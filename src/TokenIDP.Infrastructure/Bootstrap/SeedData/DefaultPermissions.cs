@@ -179,7 +179,9 @@ internal class DefaultPermissions
     private static bool RequiresDeletePermission(string permissionKey)
     {
         return permissionKey.Equals("applications.view", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("users.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("roles.view", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("permissions.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("tenants.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("settings.view", StringComparison.OrdinalIgnoreCase);
     }

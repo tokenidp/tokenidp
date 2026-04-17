@@ -26,7 +26,7 @@ public sealed class UserRepository : IUserRepository
     {
         var user = await _dbContext.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == id);
+            .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted);
 
         return user!;
     }
@@ -34,7 +34,7 @@ public sealed class UserRepository : IUserRepository
     public async Task<UserShortInfo> GetUserShortInfo(int id)
     {
         var user = await _dbContext.Users
-            .Where(u => u.Id == id)
+            .Where(u => u.Id == id && !u.IsDeleted)
             .AsNoTracking()
             .Select(UserProjection.Projection)
             .FirstOrDefaultAsync();
@@ -48,14 +48,14 @@ public sealed class UserRepository : IUserRepository
             .Include(u => u.UserRoles)
             .Include(u => u.UserAddresses)
             .Include(u => u.UserContacts)
-            .FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(u => u.Id == id && u.TenantId == tenantId && !u.IsDeleted, ct);
     }
 
     public Task<UserDetail?> GetUserDetailAsync(int tenantId, int userId, CancellationToken ct)
     {
         return _dbContext.Users
             .AsNoTracking()
-            .Where(u => u.Id == userId && u.TenantId == tenantId)
+            .Where(u => u.Id == userId && u.TenantId == tenantId && !u.IsDeleted)
             .Select(UserDetail.Projection)
             .FirstOrDefaultAsync(ct);
     }
@@ -94,7 +94,7 @@ public sealed class UserRepository : IUserRepository
     {
         var roles = await _dbContext.Roles
             .AsNoTracking()
-            .Where(r => r.TenantId == tenantId)
+            .Where(r => r.TenantId == tenantId && !r.IsDeleted)
             .Select(r => new LookupItem
             {
                 Key = r.Id.ToString(),
@@ -149,11 +149,24 @@ public sealed class UserRepository : IUserRepository
         return rows;
     }
 
+    public async Task<int> DeleteAsync(User user, CancellationToken ct)
+    {
+        var deleteResult = user.SoftDelete();
+        if (!deleteResult.IsSuccess)
+        {
+            throw new InvalidOperationException(
+                string.Join("; ", deleteResult.Errors.Select(x => x.Message)));
+        }
+
+        _dbContext.Users.Update(user);
+        return await _dbContext.SaveChangesAsync(ct);
+    }
+
     public async Task<User?> GetByTenantAndEmailAsync(int tenantId, string email, CancellationToken ct)
     {
         return await _dbContext.Users
             .FirstOrDefaultAsync(
-                u => u.TenantId == tenantId && u.Email == email,
+                u => u.TenantId == tenantId && u.Email == email && !u.IsDeleted,
                 ct);
     }
 
@@ -161,7 +174,7 @@ public sealed class UserRepository : IUserRepository
     {
         return await _dbContext.Users
             .FirstOrDefaultAsync(
-                u => u.Id == userId && u.TenantId == tenantId,
+                u => u.Id == userId && u.TenantId == tenantId && !u.IsDeleted,
                 ct);
     }
 

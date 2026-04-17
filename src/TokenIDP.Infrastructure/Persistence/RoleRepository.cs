@@ -120,7 +120,6 @@ internal sealed class RoleRepository : IRoleRepository
 
         return _dbContext.Roles.AnyAsync(
             r => r.TenantId == tenantId &&
-                 !r.IsDeleted &&
                  (!excludeRoleId.HasValue || r.Id != excludeRoleId.Value) &&
                  r.Name.ToLower() == normalized,
             ct);
