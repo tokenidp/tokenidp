@@ -12,7 +12,16 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
 
         RuleFor(x => x.RedirectUri)
             .NotEmpty()
+            .When(RequiresAuthorizationCodeRedirect)
+            .WithMessage("'Redirect Uri' must not be empty.");
+
+        RuleFor(x => x.RedirectUri)
+            .Must(value => string.IsNullOrWhiteSpace(value) || BeAbsoluteUri(value))
+            .When(x => !string.IsNullOrWhiteSpace(x.RedirectUri));
+
+        RuleFor(x => x.RedirectUri)
             .Must(BeAbsoluteUri)
+            .When(RequiresAuthorizationCodeRedirect)
             .WithMessage("RedirectUri must be a valid absolute URI.");
 
         RuleFor(x => x.LogoutRedirectUri)
@@ -54,6 +63,12 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
     private static bool BeAbsoluteUri(string value)
     {
         return Uri.TryCreate(value, UriKind.Absolute, out _);
+    }
+
+    private static bool RequiresAuthorizationCodeRedirect(CreateUpdateClient client)
+    {
+        return (client.GrantTypes ?? new List<GrantTypes>())
+            .Contains(GrantTypes.authorization_code);
     }
 
     private static bool HaveDistinctValues(IEnumerable<string> values)

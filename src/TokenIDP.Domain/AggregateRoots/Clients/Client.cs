@@ -374,8 +374,8 @@ public class Client : AggregateRoot<int>, ITenant
                 "Client Id cannot be empty.")
             .Combine(ValidateRequired(clientName, "client.name.invalid",
                 "Client name cannot be empty."))
-            .Combine(ValidateRequired(redirectUri, "client.redirect.invalid",
-                "Redirect URI cannot be empty."));
+            .Combine(ValidateOptionalAbsoluteUri(redirectUri, "client.redirect.invalid",
+                "Redirect URI must be a valid absolute URI."));
 
         if (accessTokenLifetime <= 0)
         {
@@ -406,5 +406,12 @@ public class Client : AggregateRoot<int>, ITenant
         return string.IsNullOrWhiteSpace(value)
             ? Result.Failure(code, message)
             : Result.Success(0);
+    }
+
+    private static Result ValidateOptionalAbsoluteUri(string? value, string code, string message)
+    {
+        return string.IsNullOrWhiteSpace(value) || Uri.TryCreate(value, UriKind.Absolute, out _)
+            ? Result.Success(0)
+            : Result.Failure(code, message);
     }
 }
