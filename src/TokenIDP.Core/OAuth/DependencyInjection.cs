@@ -34,6 +34,7 @@ public static class DependencyInjection
     {
         services.AddScoped<GrantTypeValidatorUseCase>();
         services.AddScoped<TokenEndpointClientAuthService>();
+        services.AddScoped<BackchannelAuthenticationEndpointClientAuthService>();
         services.AddScoped<UserInfoUseCase>();
         services.AddScoped<TokenIssuerUseCase>();
         services.AddScoped<RevokeTokenUseCase>();
@@ -42,6 +43,10 @@ public static class DependencyInjection
         services.AddScoped<TenantUserMfaPolicy>();
         services.AddScoped<DeviceAuthorizationUseCase>();
         services.AddScoped<IDeviceAuthenticationUseCase, DeviceAuthenticationUseCase>();
+        services.AddScoped<CibaUserResolver>();
+        services.AddScoped<CibaBackchannelAuthenticationUseCase>();
+        services.AddScoped<CibaApprovalUseCase>();
+        services.AddScoped<CibaTokenRedemptionUseCase>();
 
         services.AddMfaService();
         services.AddAuthorizationUseCase();
@@ -89,6 +94,7 @@ public static class DependencyInjection
         services.AddScoped<AuthorizationCodeGrantHandler>();
         services.AddScoped<ClientCredentialGrantHandler>();
         services.AddScoped<DeviceFlowGrantHandler>();
+        services.AddScoped<CibaGrantHandler>();
         services.AddScoped<PasswordGrantHandler>();
 
         services.AddTransient<Func<GrantTypes, ITokenGrantHandler>>(serviceProvider => key =>
@@ -99,6 +105,7 @@ public static class DependencyInjection
                 GrantTypes.refresh_token => serviceProvider.GetRequiredService<RefreshTokenGrantHandler>(),
                 GrantTypes.client_credentials => serviceProvider.GetRequiredService<ClientCredentialGrantHandler>(),
                 GrantTypes.device_code => serviceProvider.GetRequiredService<DeviceFlowGrantHandler>(),
+                GrantTypes.ciba => serviceProvider.GetRequiredService<CibaGrantHandler>(),
                 GrantTypes.password => serviceProvider.GetRequiredService<PasswordGrantHandler>(),
                 _ => throw new TokenRequestValidationException("unsupported_grant_type",
                     $"Grant type '{key}' is not supported.")

@@ -164,6 +164,12 @@ internal sealed class TokenEndpointClientAuthService
             throw new TokenRequestValidationException("invalid_client", "Client authentication is required.");
         }
 
+        if (string.Equals(request.GrantType, TokenGrantTypeNames.Ciba, StringComparison.OrdinalIgnoreCase) &&
+            usesNoClientAuthentication)
+        {
+            throw new TokenRequestValidationException("invalid_client", "Client authentication is required.");
+        }
+
         // Keep existing PKCE/browser flows working: if no secret was supplied,
         // allow the request unless the grant itself requires client auth.
         if (usesNoClientAuthentication)
@@ -259,6 +265,7 @@ internal sealed class TokenEndpointClientAuthService
         string RedirectUri,
         string? RefreshToken,
         string? DeviceCode,
+        string? AuthReqId,
         string Scope)
     {
         public static ParsedTokenRequest From(IReadOnlyDictionary<string, string?> values)
@@ -274,6 +281,7 @@ internal sealed class TokenEndpointClientAuthService
                 GetValue(values, "redirect_uri", "redirectUri"),
                 TrimToNull(GetValue(values, "refresh_token", "refreshToken")),
                 TrimToNull(GetValue(values, "device_code", "deviceCode")),
+                TrimToNull(GetValue(values, "auth_req_id", "authReqId")),
                 GetValue(values, "scope"));
         }
 
@@ -291,6 +299,7 @@ internal sealed class TokenEndpointClientAuthService
                 RedirectUri = RedirectUri,
                 RefreshToken = RefreshToken,
                 DeviceCode = DeviceCode,
+                AuthReqId = AuthReqId,
                 Scope = Scope
             };
 

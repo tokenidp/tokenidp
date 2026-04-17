@@ -20,6 +20,14 @@ public class ClientValidationSnapshot
     public int AccessTokenLifetime { get; }
     public int AuthorizationCodeLifetime { get; }
     public int RefreshTokenExpiration { get; }
+    public bool CibaEnabled { get; }
+    public CibaTokenDeliveryModes BackchannelTokenDeliveryMode { get; }
+    public int CibaDefaultExpirySeconds { get; }
+    public int CibaMinIntervalSeconds { get; }
+    public bool RequireCibaUserCode { get; }
+    public bool AllowCibaLoginHint { get; }
+    public bool AllowCibaLoginHintToken { get; }
+    public bool AllowCibaIdTokenHint { get; }
 
     public ClientValidationSnapshot(
         string clientId,
@@ -38,7 +46,15 @@ public class ClientValidationSnapshot
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
-        int? clientSecretExpiry)
+        int? clientSecretExpiry,
+        bool cibaEnabled,
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool requireCibaUserCode,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint)
     {
         ClientId = clientId;
         ClientName = clientName;
@@ -60,6 +76,14 @@ public class ClientValidationSnapshot
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;
         ClientSecretExpiry = clientSecretExpiry;
+        CibaEnabled = cibaEnabled;
+        BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+        CibaDefaultExpirySeconds = cibaDefaultExpirySeconds;
+        CibaMinIntervalSeconds = cibaMinIntervalSeconds;
+        RequireCibaUserCode = requireCibaUserCode;
+        AllowCibaLoginHint = allowCibaLoginHint;
+        AllowCibaLoginHintToken = allowCibaLoginHintToken;
+        AllowCibaIdTokenHint = allowCibaIdTokenHint;
     }
 
     public bool TryGetApiResourceForScope(string scopeName, out string apiResourceName)

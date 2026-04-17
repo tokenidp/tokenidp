@@ -16,6 +16,13 @@ public enum TokenTypes
     ReferenceToken
 }
 
+public enum CibaTokenDeliveryModes
+{
+    Poll,
+    Ping,
+    Push
+}
+
 public class Client : AggregateRoot<int>, ITenant
 {
     public string ClientId { get; private set; } = default!;
@@ -37,6 +44,14 @@ public class Client : AggregateRoot<int>, ITenant
     public TimeSpan? TimeWindow { get; private set; }
     public int? QueueLimit { get; private set; }
     public bool? EnableITracking { get; private set; }
+    public bool CibaEnabled { get; private set; }
+    public CibaTokenDeliveryModes BackchannelTokenDeliveryMode { get; private set; }
+    public int CibaDefaultExpirySeconds { get; private set; }
+    public int CibaMinIntervalSeconds { get; private set; }
+    public bool RequireCibaUserCode { get; private set; }
+    public bool AllowCibaLoginHint { get; private set; }
+    public bool AllowCibaLoginHintToken { get; private set; }
+    public bool AllowCibaIdTokenHint { get; private set; }
 
     public virtual Tenant Tenant { get; private set; } = default!;
     public virtual ClientAuthPolicy ClientAuthPolicy { get; private set; } = default!;
@@ -67,7 +82,15 @@ public class Client : AggregateRoot<int>, ITenant
         int? permitLimit,
         TimeSpan? timeWindow,
         int? queueLimit,
-        bool? enableITracking)
+        bool? enableITracking,
+        bool cibaEnabled,
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool requireCibaUserCode,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint)
     {
         TenantId = tenantId;
         ClientId = clientId;
@@ -87,6 +110,14 @@ public class Client : AggregateRoot<int>, ITenant
         TimeWindow = timeWindow;
         QueueLimit = queueLimit;
         EnableITracking = enableITracking;
+        CibaEnabled = cibaEnabled;
+        BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+        CibaDefaultExpirySeconds = cibaDefaultExpirySeconds;
+        CibaMinIntervalSeconds = cibaMinIntervalSeconds;
+        RequireCibaUserCode = requireCibaUserCode;
+        AllowCibaLoginHint = allowCibaLoginHint;
+        AllowCibaLoginHintToken = allowCibaLoginHintToken;
+        AllowCibaIdTokenHint = allowCibaIdTokenHint;
 
         ClientScopes = new List<ClientScope>();
         ClientGrantTypes = new List<ClientGrantType>();
@@ -110,7 +141,15 @@ public class Client : AggregateRoot<int>, ITenant
         int? permitLimit,
         TimeSpan? timeWindow,
         int? queueLimit,
-        bool? enableITracking)
+        bool? enableITracking,
+        bool cibaEnabled,
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool requireCibaUserCode,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint)
     {
         if (IsDeleted)
         {
@@ -144,6 +183,14 @@ public class Client : AggregateRoot<int>, ITenant
         TimeWindow = timeWindow;
         QueueLimit = queueLimit;
         EnableITracking = enableITracking;
+        CibaEnabled = cibaEnabled;
+        BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+        CibaDefaultExpirySeconds = cibaDefaultExpirySeconds;
+        CibaMinIntervalSeconds = cibaMinIntervalSeconds;
+        RequireCibaUserCode = requireCibaUserCode;
+        AllowCibaLoginHint = allowCibaLoginHint;
+        AllowCibaLoginHintToken = allowCibaLoginHintToken;
+        AllowCibaIdTokenHint = allowCibaIdTokenHint;
 
         return Result.Success(Id);
     }
@@ -324,6 +371,14 @@ public class Client : AggregateRoot<int>, ITenant
         TimeSpan? timeWindow,
         int? queueLimit,
         bool? enableITracking,
+        bool cibaEnabled,
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool requireCibaUserCode,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint,
         out Client? client)
     {
         client = null;
@@ -338,6 +393,21 @@ public class Client : AggregateRoot<int>, ITenant
         if (!validation.IsSuccess)
         {
             return validation;
+        }
+
+        if (cibaEnabled)
+        {
+            var cibaValidation = ValidateCibaSettings(
+                backchannelTokenDeliveryMode,
+                cibaDefaultExpirySeconds,
+                cibaMinIntervalSeconds,
+                allowCibaLoginHint,
+                allowCibaLoginHintToken,
+                allowCibaIdTokenHint);
+            if (!cibaValidation.IsSuccess)
+            {
+                return cibaValidation;
+            }
         }
 
         client = new Client(
@@ -357,7 +427,15 @@ public class Client : AggregateRoot<int>, ITenant
             permitLimit,
             timeWindow,
             queueLimit,
-            enableITracking);
+            enableITracking,
+            cibaEnabled,
+            backchannelTokenDeliveryMode,
+            cibaDefaultExpirySeconds,
+            cibaMinIntervalSeconds,
+            requireCibaUserCode,
+            allowCibaLoginHint,
+            allowCibaLoginHintToken,
+            allowCibaIdTokenHint);
 
         return Result.Success(0);
     }
@@ -396,6 +474,47 @@ public class Client : AggregateRoot<int>, ITenant
             validation = validation.Combine(Result.Failure(
                 "client.refresh_token_expiration.invalid",
                 "Refresh token expiration must be greater than zero."));
+        }
+
+        return validation;
+    }
+
+    private static Result ValidateCibaSettings(
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint)
+    {
+        var validation = Result.Success(0);
+
+        if (backchannelTokenDeliveryMode != CibaTokenDeliveryModes.Poll)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.ciba.delivery_mode.invalid",
+                "Only Poll delivery mode is currently supported."));
+        }
+
+        if (cibaDefaultExpirySeconds <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.ciba.expiry.invalid",
+                "CIBA default expiry must be greater than zero."));
+        }
+
+        if (cibaMinIntervalSeconds <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.ciba.interval.invalid",
+                "CIBA minimum interval must be greater than zero."));
+        }
+
+        if (!allowCibaLoginHint && !allowCibaLoginHintToken && !allowCibaIdTokenHint)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.ciba.hints.invalid",
+                "At least one CIBA user hint method must be enabled."));
         }
 
         return validation;

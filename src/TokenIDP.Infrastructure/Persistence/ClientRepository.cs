@@ -87,7 +87,15 @@ internal sealed class ClientRepository : IClientRepository
                 client.AccessTokenLifetime,
                 client.AuthorizationCodeLifetime,
                 client.RefreshTokenExpiration,
-                client.ClientSecretExpiry);
+                client.ClientSecretExpiry,
+                client.CibaEnabled,
+                client.BackchannelTokenDeliveryMode,
+                client.CibaDefaultExpirySeconds,
+                client.CibaMinIntervalSeconds,
+                client.RequireCibaUserCode,
+                client.AllowCibaLoginHint,
+                client.AllowCibaLoginHintToken,
+                client.AllowCibaIdTokenHint);
         });
 
         _logger.LogDebug("Retrieved client {ClientId}", clientId);

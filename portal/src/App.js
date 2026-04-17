@@ -28,6 +28,7 @@ import ActivitiesList from "./_components/activities/activitiesList";
 import ActivitiesLayout from "./_components/activities/activitiesLayout";
 import SettingsList from "./_components/settings/settingsList";
 import SettingsLayout from "./_components/settings/settingsLayout";
+import CibaRequestsList from "./_components/cibaRequests/cibaRequestsList";
 import AddPermission from "./_components/permissions/addPermission";
 import PermissionsList from "./_components/permissions/permissionsList";
 import PermissionsLayout from "./_components/permissions/permissionsLayout";
@@ -272,6 +273,14 @@ function App() {
             >
               <Route index element={<SettingsList />} />
             </Route>
+            <Route
+              path="/ciba-requests"
+              element={
+                <PrivateRoute requiredAnyOf={["ciba.view"]}>
+                  <CibaRequestsList />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/permissions"
               element={

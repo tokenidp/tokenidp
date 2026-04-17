@@ -8,11 +8,12 @@ internal static class SupportedTokenGrantTypes
         GrantTypes.refresh_token,
         GrantTypes.client_credentials,
         GrantTypes.device_code,
+        GrantTypes.ciba,
         GrantTypes.password
     ];
 
     public static IReadOnlyList<string> Names { get; } = SupportedGrantTypes
-        .Select(static grantType => grantType.ToString())
+        .Select(TokenGrantTypeNames.GetName)
         .ToArray();
 
     public static bool IsSupported(GrantTypes grantType)

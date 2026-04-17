@@ -62,6 +62,14 @@ internal sealed class ClientCommandUseCase
             request.TimeWindow,
             request.QueueLimit,
             request.EnableITracking,
+            request.CibaEnabled,
+            request.BackchannelTokenDeliveryMode,
+            request.CibaDefaultExpirySeconds,
+            request.CibaMinIntervalSeconds,
+            request.RequireCibaUserCode,
+            request.AllowCibaLoginHint,
+            request.AllowCibaLoginHintToken,
+            request.AllowCibaIdTokenHint,
             out var client);
 
         if (!createResult.IsSuccess || client == null)
@@ -116,7 +124,15 @@ internal sealed class ClientCommandUseCase
             request.PermitLimit,
             request.TimeWindow,
             request.QueueLimit,
-            request.EnableITracking);
+            request.EnableITracking,
+            request.CibaEnabled,
+            request.BackchannelTokenDeliveryMode,
+            request.CibaDefaultExpirySeconds,
+            request.CibaMinIntervalSeconds,
+            request.RequireCibaUserCode,
+            request.AllowCibaLoginHint,
+            request.AllowCibaLoginHintToken,
+            request.AllowCibaIdTokenHint);
 
         if (!updateResult.IsSuccess)
         {

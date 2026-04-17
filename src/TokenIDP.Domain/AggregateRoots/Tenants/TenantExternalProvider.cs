@@ -4,7 +4,10 @@ public enum ExternalProviderTypes
 {
     Google,
     Microsoft,
-    GitHub
+    GitHub,
+    Apple,
+    LinkedIn,
+    Okta
 }
 
 public class TenantExternalProvider : Entity<int>

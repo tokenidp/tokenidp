@@ -20,6 +20,14 @@ public class CreateUpdateClient
     public TimeSpan? TimeWindow { get; set; }
     public int? QueueLimit { get; set; }
     public bool? EnableITracking { get; set; }
+    public bool CibaEnabled { get; set; }
+    public CibaTokenDeliveryModes BackchannelTokenDeliveryMode { get; set; } = CibaTokenDeliveryModes.Poll;
+    public int CibaDefaultExpirySeconds { get; set; } = 300;
+    public int CibaMinIntervalSeconds { get; set; } = 5;
+    public bool RequireCibaUserCode { get; set; }
+    public bool AllowCibaLoginHint { get; set; } = true;
+    public bool AllowCibaLoginHintToken { get; set; }
+    public bool AllowCibaIdTokenHint { get; set; }
     public List<string> Scopes { get; set; } = new();
     public List<string> ApiResources { get; set; } = new();
     public List<GrantTypes> GrantTypes { get; set; } = new();

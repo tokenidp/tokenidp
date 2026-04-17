@@ -37,6 +37,24 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
         RuleFor(x => x.RefreshTokenExpiration)
             .GreaterThan(0);
 
+        RuleFor(x => x.CibaDefaultExpirySeconds)
+            .GreaterThan(0)
+            .When(x => x.CibaEnabled);
+
+        RuleFor(x => x.CibaMinIntervalSeconds)
+            .GreaterThan(0)
+            .When(x => x.CibaEnabled);
+
+        RuleFor(x => x.BackchannelTokenDeliveryMode)
+            .Equal(CibaTokenDeliveryModes.Poll)
+            .When(x => x.CibaEnabled)
+            .WithMessage("Only Poll delivery mode is currently supported.");
+
+        RuleFor(x => x)
+            .Must(HaveAtLeastOneCibaHint)
+            .When(x => x.CibaEnabled)
+            .WithMessage("At least one CIBA user hint type must be enabled.");
+
         RuleFor(x => x.TwoFactorCodeExpiry)
             .GreaterThan(0)
             .When(x => x.TwoFactorEnabled);
@@ -78,6 +96,11 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
             .Select(value => value.Trim());
 
         return normalized.Distinct(StringComparer.OrdinalIgnoreCase).Count() == normalized.Count();
+    }
+
+    private static bool HaveAtLeastOneCibaHint(CreateUpdateClient client)
+    {
+        return client.AllowCibaLoginHint || client.AllowCibaLoginHintToken || client.AllowCibaIdTokenHint;
     }
 }
 

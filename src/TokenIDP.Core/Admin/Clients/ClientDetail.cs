@@ -22,6 +22,14 @@ public class ClientDetail
             TimeWindow = client.TimeWindow,
             QueueLimit = client.QueueLimit,
             EnableITracking = client.EnableITracking,
+            CibaEnabled = client.CibaEnabled,
+            BackchannelTokenDeliveryMode = client.BackchannelTokenDeliveryMode,
+            CibaDefaultExpirySeconds = client.CibaDefaultExpirySeconds,
+            CibaMinIntervalSeconds = client.CibaMinIntervalSeconds,
+            RequireCibaUserCode = client.RequireCibaUserCode,
+            AllowCibaLoginHint = client.AllowCibaLoginHint,
+            AllowCibaLoginHintToken = client.AllowCibaLoginHintToken,
+            AllowCibaIdTokenHint = client.AllowCibaIdTokenHint,
             Scopes = client.ClientScopes.Select(scope => scope.Scope).ToList(),
             ApiResources = client.ClientApiResources
                 .Where(apiResource => apiResource.IsActive)
@@ -64,6 +72,14 @@ public class ClientDetail
     public TimeSpan? TimeWindow { get; private set; }
     public int? QueueLimit { get; private set; }
     public bool? EnableITracking { get; private set; }
+    public bool CibaEnabled { get; private set; }
+    public CibaTokenDeliveryModes BackchannelTokenDeliveryMode { get; private set; }
+    public int CibaDefaultExpirySeconds { get; private set; }
+    public int CibaMinIntervalSeconds { get; private set; }
+    public bool RequireCibaUserCode { get; private set; }
+    public bool AllowCibaLoginHint { get; private set; }
+    public bool AllowCibaLoginHintToken { get; private set; }
+    public bool AllowCibaIdTokenHint { get; private set; }
     public List<string> Scopes { get; private set; } = new();
     public List<string> ApiResources { get; private set; } = new();
     public List<GrantTypes> GrantTypes { get; private set; } = new();

@@ -14,5 +14,11 @@ public interface IAuthorizationRepository
     Task<int> UpdateDeviceAuthorization(DeviceAuthorization deviceAuthorization);
     Task<DeviceAuthorization?> GetDeviceAuthorizationByUCode(string userCodeHash);
     Task<DeviceAuthorization?> GetDeviceAuthorizationByDCode(string deviceCodeHash);
+
+    Task<int> CreateBackchannelAuthenticationRequest(BackchannelAuthenticationRequest request, CancellationToken ct);
+    Task<int> UpdateBackchannelAuthenticationRequest(BackchannelAuthenticationRequest request, CancellationToken ct);
+    Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByHashAsync(string authReqIdHash, CancellationToken ct);
+    Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByIdAsync(int id, CancellationToken ct);
+    Task<IReadOnlyList<BackchannelAuthenticationRequest>> GetPendingBackchannelRequestsForUserAsync(int tenantId, int userId, CancellationToken ct);
 }
 

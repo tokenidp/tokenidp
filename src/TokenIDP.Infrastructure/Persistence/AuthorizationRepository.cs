@@ -171,6 +171,86 @@ internal sealed class AuthorizationRepository : IAuthorizationRepository
 
         return deviceAuthorization;
     }
+
+    public async Task<int> CreateBackchannelAuthenticationRequest(
+        BackchannelAuthenticationRequest request,
+        CancellationToken ct)
+    {
+        _dbContext.BackchannelAuthenticationRequests.Add(request);
+
+        await _dbContext.SaveChangesAsync(ct);
+
+        await _cache.SetAsync(
+            CacheKeys.CIBA_AUTHORIZATION.FormatCacheKey(request.AuthReqIdHash),
+            request,
+            TimeSpan.FromMinutes(5));
+
+        return request.Id;
+    }
+
+    public async Task<int> UpdateBackchannelAuthenticationRequest(
+        BackchannelAuthenticationRequest request,
+        CancellationToken ct)
+    {
+        _dbContext.BackchannelAuthenticationRequests.Update(request);
+
+        await _dbContext.SaveChangesAsync(ct);
+
+        await _cache.SetAsync(
+            CacheKeys.CIBA_AUTHORIZATION.FormatCacheKey(request.AuthReqIdHash),
+            request,
+            TimeSpan.FromMinutes(5));
+
+        return request.Id;
+    }
+
+    public async Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByHashAsync(
+        string authReqIdHash,
+        CancellationToken ct)
+    {
+        var cacheKey = CacheKeys.CIBA_AUTHORIZATION.FormatCacheKey(authReqIdHash);
+
+        var request = await _cache.GetAsync<BackchannelAuthenticationRequest>(cacheKey);
+
+        if (request != null)
+        {
+            return request;
+        }
+
+        request = await _dbContext.BackchannelAuthenticationRequests
+            .FirstOrDefaultAsync(x => x.AuthReqIdHash == authReqIdHash, ct);
+
+        if (request != null)
+        {
+            await _cache.SetAsync(cacheKey, request, TimeSpan.FromMinutes(5));
+        }
+
+        return request;
+    }
+
+    public Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByIdAsync(
+        int id,
+        CancellationToken ct)
+    {
+        return _dbContext.BackchannelAuthenticationRequests
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+    }
+
+    public async Task<IReadOnlyList<BackchannelAuthenticationRequest>> GetPendingBackchannelRequestsForUserAsync(
+        int tenantId,
+        int userId,
+        CancellationToken ct)
+    {
+        return await _dbContext.BackchannelAuthenticationRequests
+            .AsNoTracking()
+            .Where(x =>
+                x.TenantId == tenantId &&
+                x.UserId == userId &&
+                x.Status == CibaRequestStatus.AwaitingAuthorization &&
+                x.ExpiresAtUtc > DateTime.UtcNow)
+            .OrderByDescending(x => x.Id)
+            .ToListAsync(ct);
+    }
 }
 
 

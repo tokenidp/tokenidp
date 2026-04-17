@@ -30,13 +30,16 @@ internal class DefaultPermissions
         allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 8, "/tokens", "fa-id-badge me-2"));
         allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 9, "/activities", "fa-clipboard-list me-2"));
         allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 10, "/settings", "fa-cog me-2"));
+        var cibaView = CreatePermission(tenantId, "ciba.view", "CIBA Requests", "NavGroup", 11, "/ciba-requests", "fa-mobile-screen-button me-2");
+        allPermissions.Add(cibaView);
 
         //Actions
         int i = 11;
         foreach (var permission in allPermissions
             .Where(p => p.PermissionKey != "dashboard.view"
                 && p.PermissionKey != "activities.view"
-                && p.PermissionKey != "apiresources.view"))
+                && p.PermissionKey != "apiresources.view"
+                && p.PermissionKey != "ciba.view"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
             {
@@ -134,6 +137,18 @@ internal class DefaultPermissions
                 "apiresources.delete",
                 "Delete API Resources"));
         }
+
+        cibaView.ChildPermissions ??= new List<CreateUpdatePermission>();
+        cibaView.ChildPermissions.Add(CreateActionPermission(
+            tenantId,
+            ++i,
+            "ciba.approve",
+            "Approve CIBA Requests"));
+        cibaView.ChildPermissions.Add(CreateActionPermission(
+            tenantId,
+            ++i,
+            "ciba.deny",
+            "Deny CIBA Requests"));
 
         return allPermissions;
     }

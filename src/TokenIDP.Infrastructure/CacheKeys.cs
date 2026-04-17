@@ -11,6 +11,7 @@ public static class CacheKeys
     public const string PRE_AUTHORIZATION = "PAUTH";
     public const string AUTHORIZATION = "AUTH";
     public const string DEVICE_AUTHORIZATION = "DAUTH";
+    public const string CIBA_AUTHORIZATION = "CIBA";
     public const string CLIENT = "CLT";
     public const string CONFIGURATION = "CNFG";
     public const string DASHBOARD_EXPIRING_CLIENT_SECRETS = "CLT:EXP";

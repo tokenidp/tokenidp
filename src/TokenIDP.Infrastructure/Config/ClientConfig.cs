@@ -24,6 +24,13 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.AccessTokenLifetime).IsRequired();
         builder.Property(x => x.AuthorizationCodeLifetime).IsRequired();
         builder.Property(x => x.RefreshTokenExpiration).IsRequired();
+        builder.Property(x => x.CibaEnabled).IsRequired();
+        builder.Property(x => x.CibaDefaultExpirySeconds).IsRequired();
+        builder.Property(x => x.CibaMinIntervalSeconds).IsRequired();
+        builder.Property(x => x.RequireCibaUserCode).IsRequired();
+        builder.Property(x => x.AllowCibaLoginHint).IsRequired();
+        builder.Property(x => x.AllowCibaLoginHintToken).IsRequired();
+        builder.Property(x => x.AllowCibaIdTokenHint).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
 
@@ -36,6 +43,11 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
             .HasConversion(
                 v => v.ToString(),
                 v => Enum.Parse<ClientTypes>(v));
+
+        builder.Property(p => p.BackchannelTokenDeliveryMode)
+            .HasConversion(
+                v => v.ToString(),
+                v => Enum.Parse<CibaTokenDeliveryModes>(v));
 
         builder.HasMany(a => a.ClientGrantTypes)
             .WithOne(e => e.Client)

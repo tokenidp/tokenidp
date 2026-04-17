@@ -29,8 +29,7 @@ internal sealed class GrantTypeValidatorUseCase
             throw new NotFoundException("Client grant types not found.");
         }
 
-        if (!Enum.TryParse<GrantTypes>(grantType, ignoreCase: true, out var parsedGrantType)
-            || !Enum.IsDefined(typeof(GrantTypes), parsedGrantType))
+        if (!TokenGrantTypeNames.TryParse(grantType, out var parsedGrantType))
         {
             _logger.LogWarning("Grant type {GrantType} is unknown for Client: {ClientId}", grantType, clientId);
 

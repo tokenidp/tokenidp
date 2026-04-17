@@ -18,6 +18,7 @@ public interface IUserRepository
     Task<UserLookups> GetUserLookupsAsync(int tenantId, CancellationToken ct);
     Task<IReadOnlyList<PermissionInfo>> GetUserPermissionsAsync(int userId, CancellationToken ct);
     Task<User?> GetByTenantAndEmailAsync(int tenantId, string email, CancellationToken ct);
+    Task<User?> FindByLoginHintAsync(int tenantId, string loginHint, CancellationToken ct);
     Task<User?> GetByTenantAsync(int userId, int tenantId, CancellationToken ct);
     Task<bool> EmailExistsAsync(int tenantId, int excludeUserId, string normalizedEmail, CancellationToken ct);
     Task<bool> UserNameExistsAsync(int tenantId, int excludeUserId, string normalizedUserName, CancellationToken ct);

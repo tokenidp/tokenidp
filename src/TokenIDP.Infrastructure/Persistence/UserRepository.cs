@@ -170,6 +170,29 @@ public sealed class UserRepository : IUserRepository
                 ct);
     }
 
+    public async Task<User?> FindByLoginHintAsync(int tenantId, string loginHint, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(loginHint))
+        {
+            return null;
+        }
+
+        var normalizedHint = loginHint.Trim().ToUpperInvariant();
+        var isUserId = int.TryParse(loginHint, out var userId);
+
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(u =>
+                u.TenantId == tenantId &&
+                !u.IsDeleted &&
+                (
+                    u.NormalizedEmail == normalizedHint ||
+                    u.NormalizedUserName == normalizedHint ||
+                    u.UserCode == loginHint ||
+                    (isUserId && u.Id == userId)
+                ),
+                ct);
+    }
+
     public async Task<User?> GetByTenantAsync(int userId, int tenantId, CancellationToken ct)
     {
         return await _dbContext.Users

@@ -288,6 +288,132 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.ToTable("DeviceAuthorizationRequests", (string)null);
                 });
 
+            modelBuilder.Entity("TokenIDP.Domain.AggregateRoots.Authorization.BackchannelAuthenticationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AcrValues")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovedAcr")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ApprovedAmr")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("AuthReqIdHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("BindingMessage")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ClientNotificationTokenHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime?>("ConsumedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DenialReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<byte>("DeliveryMode")
+                        .HasColumnType("tinyint");
+
+                    b.Property<DateTime?>("DeniedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HintValueHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<byte>("HintType")
+                        .HasColumnType("tinyint");
+
+                    b.Property<int>("IntervalSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastPolledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PollCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestedScopes")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int?>("RequestedExpirySeconds")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("SubjectHint")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserCodeHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthReqIdHash")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BackchannelAuthenticationRequests_AuthReqIdHash");
+
+                    b.HasIndex("TenantId", "ClientId", "Status", "ExpiresAtUtc")
+                        .HasDatabaseName("IX_BackchannelAuthenticationRequests_Client_Status_Expiry");
+
+                    b.HasIndex("TenantId", "UserId", "Status", "ExpiresAtUtc")
+                        .HasDatabaseName("IX_BackchannelAuthenticationRequests_User_Status_Expiry");
+
+                    b.ToTable("BackchannelAuthenticationRequests", (string)null);
+                });
+
             modelBuilder.Entity("TokenIDP.Domain.AggregateRoots.Authorization.PreAuthorization", b =>
                 {
                     b.Property<int>("Id")
@@ -386,6 +512,19 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<int>("AuthorizationCodeLifetime")
                         .HasColumnType("int");
 
+                    b.Property<bool>("AllowCibaIdTokenHint")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowCibaLoginHint")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AllowCibaLoginHintToken")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("BackchannelTokenDeliveryMode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ClientId")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -397,6 +536,15 @@ namespace TokenIDP.Infrastructure.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<int?>("ClientSecretExpiry")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("CibaEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CibaDefaultExpirySeconds")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CibaMinIntervalSeconds")
                         .HasColumnType("int");
 
                     b.Property<string>("ClientType")
@@ -442,6 +590,9 @@ namespace TokenIDP.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<bool>("RequiredPkce")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("RequireCibaUserCode")
                         .HasColumnType("bit");
 
                     b.Property<int>("TenantId")

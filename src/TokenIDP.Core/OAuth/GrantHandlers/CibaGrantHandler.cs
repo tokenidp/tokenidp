@@ -1,11 +1,19 @@
+using TokenIDP.Core.OAuth.UseCases;
+
 namespace TokenIDP.Core.OAuth.GrantHandlers;
 
 internal class CibaGrantHandler : ITokenGrantHandler
 {
+    private readonly CibaTokenRedemptionUseCase _redemptionUseCase;
+
+    public CibaGrantHandler(CibaTokenRedemptionUseCase redemptionUseCase)
+    {
+        _redemptionUseCase = redemptionUseCase;
+    }
+
     public Task<TokenResponse> HandleAsync(TokenRequest request)
     {
-        throw new TokenRequestValidationException("unsupported_grant_type",
-            "The ciba grant_type is not supported.");
+        return _redemptionUseCase.RedeemAsync(request, CancellationToken.None);
     }
 }
 

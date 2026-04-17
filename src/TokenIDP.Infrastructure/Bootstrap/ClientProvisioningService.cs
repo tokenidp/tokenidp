@@ -30,6 +30,14 @@ internal class ClientProvisioningService : IClientProvisioningService
             command.TimeWindow,
             command.QueueLimit,
             command.EnableITracking,
+            command.CibaEnabled,
+            command.BackchannelTokenDeliveryMode,
+            command.CibaDefaultExpirySeconds,
+            command.CibaMinIntervalSeconds,
+            command.RequireCibaUserCode,
+            command.AllowCibaLoginHint,
+            command.AllowCibaLoginHintToken,
+            command.AllowCibaIdTokenHint,
             out var client);
 
         BuildScopes(command.Scopes, out var scopes);

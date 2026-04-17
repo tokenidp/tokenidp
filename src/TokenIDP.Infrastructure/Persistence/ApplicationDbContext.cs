@@ -49,6 +49,7 @@ public partial class ApplicationDbContext : DbContext
     public DbSet<PreAuthorization> PreAuthorizations { get; set; }
     public DbSet<AuthorizationCode> AuthorizationCodes { get; set; }
     public DbSet<DeviceAuthorization> DeviceAuthorizations { get; set; }
+    public DbSet<BackchannelAuthenticationRequest> BackchannelAuthenticationRequests { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<ClientScope> ClientScopes { get; set; }
     public DbSet<ClientApiResource> ClientApiResources { get; set; }

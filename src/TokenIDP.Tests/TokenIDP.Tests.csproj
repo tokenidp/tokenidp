@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -32,7 +33,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TokenIDP.Server\TokenIDP.Server.csproj" />
+    <ProjectReference Include="..\TokenIDP.Core\TokenIDP.Core.csproj" />
+    <ProjectReference Include="..\TokenIDP.Domain\TokenIDP.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Program.cs" />
+    <Compile Remove="Infrastructure\**\*.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -147,6 +147,7 @@ const getSidebarIconName = (item) => {
   if (key.includes("token")) return "key";
   if (key.includes("activity")) return "activity";
   if (key.includes("setting")) return "settings";
+  if (key.includes("ciba") || key.includes("backchannel")) return "shield-check";
   if (key.includes("profile")) return "user";
   if (key.includes("help")) return "help-circle";
   if (key.includes("log")) return "log-out";

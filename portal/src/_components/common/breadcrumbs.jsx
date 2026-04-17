@@ -18,6 +18,7 @@ const bcMap = {
   "/tokens": "Tokens",
   "/activities": "Activities",
   "/settings": "Settings",
+  "/ciba-requests": "CIBA Requests",
   "/permissions": "Permissions",
   "/permissions/new": "Add Permission",
   "/api-resources": "Api Resources",

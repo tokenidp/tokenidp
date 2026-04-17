@@ -14,6 +14,7 @@ public class TokenRequest
 
     public string? RefreshToken { get; init; }
     public string? DeviceCode { get; init; }
+    public string? AuthReqId { get; init; }
 
     public string Scope { get; init; } = string.Empty;
     public string? IpAddress { get; set; }
