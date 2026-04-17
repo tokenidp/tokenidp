@@ -168,6 +168,21 @@ public class Client : AggregateRoot<int>, ITenant
             return validation;
         }
 
+        if (cibaEnabled)
+        {
+            var cibaValidation = ValidateCibaSettings(
+                backchannelTokenDeliveryMode,
+                cibaDefaultExpirySeconds,
+                cibaMinIntervalSeconds,
+                allowCibaLoginHint,
+                allowCibaLoginHintToken,
+                allowCibaIdTokenHint);
+            if (!cibaValidation.IsSuccess)
+            {
+                return cibaValidation;
+            }
+        }
+
         ClientName = clientName;
         Description = description;
         ClientType = appType;

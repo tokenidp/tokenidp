@@ -77,7 +77,11 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(createResult);
         }
 
-        var applyChangesResult = await PrepareAndApplyAsync(client, command, cancellationToken);
+        var applyChangesResult = await PrepareAndApplyAsync(
+            client,
+            command,
+            includeClientSecret: true,
+            cancellationToken);
         if (!applyChangesResult.IsSuccess)
         {
             return FailureFromResult(applyChangesResult);
@@ -139,7 +143,11 @@ internal sealed class ClientCommandUseCase
             return FailureFromResult(updateResult);
         }
 
-        var applyChangesResult = await PrepareAndApplyAsync(client, command, cancellationToken);
+        var applyChangesResult = await PrepareAndApplyAsync(
+            client,
+            command,
+            includeClientSecret: false,
+            cancellationToken);
         if (!applyChangesResult.IsSuccess)
         {
             return FailureFromResult(applyChangesResult);
@@ -254,6 +262,7 @@ internal sealed class ClientCommandUseCase
     private async Task<Result> PrepareAndApplyAsync(
         Client client,
         NormalizedClientCommand command,
+        bool includeClientSecret,
         CancellationToken cancellationToken)
     {
         var validationResult = await _validator.ValidateForSaveAsync(command, cancellationToken);
@@ -262,7 +271,10 @@ internal sealed class ClientCommandUseCase
             return validationResult;
         }
 
-        var buildChangesResult = ClientCommandMapper.BuildChanges(command, out var changes);
+        var buildChangesResult = ClientCommandMapper.BuildChanges(
+            command,
+            includeClientSecret,
+            out var changes);
         if (!buildChangesResult.IsSuccess || changes == null)
         {
             return buildChangesResult;

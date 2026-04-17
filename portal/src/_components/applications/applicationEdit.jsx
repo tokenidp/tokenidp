@@ -4,6 +4,7 @@ import ApplicationWizard from "./applicationWizard";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useApplications } from "../../_hooks/useApplications";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
+import { GrantTypeId } from "./wizard/wizardState";
 
 const emptyValues = {
   clientName: "",
@@ -22,6 +23,14 @@ const emptyValues = {
   timeWindow: "",
   queueLimit: "",
   enableITracking: false,
+  cibaEnabled: false,
+  backchannelTokenDeliveryMode: 0,
+  cibaDefaultExpirySeconds: 300,
+  cibaMinIntervalSeconds: 5,
+  requireCibaUserCode: false,
+  allowCibaLoginHint: true,
+  allowCibaLoginHintToken: false,
+  allowCibaIdTokenHint: false,
   grantTypes: [0],
   scopes: ["openid", "profile"],
   apiResources: [],
@@ -109,6 +118,21 @@ function ApplicationEdit() {
         timeWindow: data.timeWindow ?? data.TimeWindow ?? "",
         queueLimit: data.queueLimit ?? data.QueueLimit ?? "",
         enableITracking: data.enableITracking ?? data.EnableITracking ?? false,
+        cibaEnabled: data.cibaEnabled ?? data.CibaEnabled ?? false,
+        backchannelTokenDeliveryMode:
+          data.backchannelTokenDeliveryMode ?? data.BackchannelTokenDeliveryMode ?? 0,
+        cibaDefaultExpirySeconds:
+          data.cibaDefaultExpirySeconds ?? data.CibaDefaultExpirySeconds ?? 300,
+        cibaMinIntervalSeconds:
+          data.cibaMinIntervalSeconds ?? data.CibaMinIntervalSeconds ?? 5,
+        requireCibaUserCode:
+          data.requireCibaUserCode ?? data.RequireCibaUserCode ?? false,
+        allowCibaLoginHint:
+          data.allowCibaLoginHint ?? data.AllowCibaLoginHint ?? true,
+        allowCibaLoginHintToken:
+          data.allowCibaLoginHintToken ?? data.AllowCibaLoginHintToken ?? false,
+        allowCibaIdTokenHint:
+          data.allowCibaIdTokenHint ?? data.AllowCibaIdTokenHint ?? false,
         grantTypes: data.grantTypes ?? data.GrantTypes ?? [0],
         scopes: data.scopes ?? data.Scopes ?? ["openid"],
         apiResources:
@@ -188,6 +212,10 @@ function ApplicationEdit() {
       return;
     }
 
+    const selectedGrantTypes = Array.isArray(data.grantTypes)
+      ? data.grantTypes.map((value) => Number(value)).filter((value) => Number.isInteger(value))
+      : [];
+    const cibaEnabled = !!data.cibaEnabled || selectedGrantTypes.includes(GrantTypeId.Ciba);
     const selectedProviderIds = Array.isArray(data.externalProviders)
       ? data.externalProviders
           .map((value) => Number(value))
@@ -231,9 +259,18 @@ function ApplicationEdit() {
       timeWindow: data.timeWindow || null,
       queueLimit: data.queueLimit === "" ? null : Number(data.queueLimit),
       enableITracking: !!data.enableITracking,
+      cibaEnabled,
+      backchannelTokenDeliveryMode: Number(data.backchannelTokenDeliveryMode ?? 0),
+      cibaDefaultExpirySeconds: Number(data.cibaDefaultExpirySeconds ?? 300),
+      cibaMinIntervalSeconds: Number(data.cibaMinIntervalSeconds ?? 5),
+      requireCibaUserCode: !!data.requireCibaUserCode,
+      allowCibaLoginHint:
+        data.allowCibaLoginHint === undefined ? true : !!data.allowCibaLoginHint,
+      allowCibaLoginHintToken: !!data.allowCibaLoginHintToken,
+      allowCibaIdTokenHint: !!data.allowCibaIdTokenHint,
       scopes: data.scopes || [],
       apiResources: data.apiResources || [],
-      grantTypes: data.grantTypes || [],
+      grantTypes: selectedGrantTypes,
       clientSecret: null,
       clientSecretDescription: null,
       authPolicy: {

@@ -59,4 +59,68 @@ public class ClientSecretTests
         client.ClientSecrets.Should().HaveCount(1);
         client.ClientSecrets.Single().SecretHash.Should().Be("secret-hash");
     }
+
+    [Fact]
+    public void UpdateClient_ShouldRejectInvalidCibaSettings()
+    {
+        var createResult = Client.Create(
+            tenantId: 1,
+            clientId: "client-1",
+            clientName: "Test Client",
+            description: null,
+            appType: ClientTypes.WebApp,
+            tokenType: TokenTypes.JWT,
+            redirectUri: "https://app.example.com/callback",
+            logoutRedirectUri: "https://app.example.com/logout",
+            isActive: true,
+            clientSecretExpiry: 30,
+            accessTokenLifetime: 60,
+            authorizationCodeLifetime: 5,
+            refreshTokenExpiration: 30,
+            permitLimit: null,
+            timeWindow: null,
+            queueLimit: null,
+            enableITracking: false,
+            cibaEnabled: false,
+            backchannelTokenDeliveryMode: CibaTokenDeliveryModes.Poll,
+            cibaDefaultExpirySeconds: 300,
+            cibaMinIntervalSeconds: 5,
+            requireCibaUserCode: false,
+            allowCibaLoginHint: true,
+            allowCibaLoginHintToken: false,
+            allowCibaIdTokenHint: false,
+            out var client);
+
+        createResult.IsSuccess.Should().BeTrue();
+        client.Should().NotBeNull();
+
+        var updateResult = client!.UpdateClient(
+            clientName: "Updated Client",
+            description: null,
+            appType: ClientTypes.WebApp,
+            tokenType: TokenTypes.JWT,
+            redirectUri: "https://app.example.com/callback",
+            logoutRedirectUri: "https://app.example.com/logout",
+            isActive: true,
+            clientSecretExpiry: 30,
+            accessTokenLifetime: 60,
+            authorizationCodeLifetime: 5,
+            refreshTokenExpiration: 30,
+            permitLimit: null,
+            timeWindow: null,
+            queueLimit: null,
+            enableITracking: false,
+            cibaEnabled: true,
+            backchannelTokenDeliveryMode: CibaTokenDeliveryModes.Poll,
+            cibaDefaultExpirySeconds: 300,
+            cibaMinIntervalSeconds: 5,
+            requireCibaUserCode: false,
+            allowCibaLoginHint: false,
+            allowCibaLoginHintToken: false,
+            allowCibaIdTokenHint: false);
+
+        updateResult.IsSuccess.Should().BeFalse();
+        updateResult.Errors.Should().ContainSingle(error => error.Code == "client.ciba.hints.invalid");
+        client.CibaEnabled.Should().BeFalse();
+    }
 }

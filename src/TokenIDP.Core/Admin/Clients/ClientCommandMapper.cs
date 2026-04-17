@@ -6,9 +6,11 @@ internal static class ClientCommandMapper
 {
     public static Result BuildChanges(
         NormalizedClientCommand command,
+        bool includeClientSecret,
         out ClientCommandChanges? changes)
     {
         changes = null;
+        ClientSecret? clientSecret = null;
 
         var scopeResult = BuildScopes(command.Scopes, out var scopes);
         if (!scopeResult.IsSuccess)
@@ -28,11 +30,13 @@ internal static class ClientCommandMapper
             return apiResourceResult;
         }
 
-        var secretResult = BuildSecret(
-            command.Request.ClientSecret,
-            command.Request.ClientSecretDescription,
-            command.Request.ClientSecretExpiry,
-            out var clientSecret);
+        var secretResult = includeClientSecret
+            ? BuildSecret(
+                command.Request.ClientSecret,
+                command.Request.ClientSecretDescription,
+                command.Request.ClientSecretExpiry,
+                out clientSecret)
+            : Result.Success(0);
         if (!secretResult.IsSuccess)
         {
             return secretResult;

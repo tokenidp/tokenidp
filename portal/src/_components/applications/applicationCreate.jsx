@@ -4,6 +4,7 @@ import ApplicationWizard from "./applicationWizard";
 import { useApplications } from "../../_hooks/useApplications";
 import Breadcrumbs from "../common/breadcrumbs";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
+import { GrantTypeId } from "./wizard/wizardState";
 
 const defaultValues = {
   clientName: "",
@@ -22,6 +23,14 @@ const defaultValues = {
   timeWindow: "",
   queueLimit: "",
   enableITracking: false,
+  cibaEnabled: false,
+  backchannelTokenDeliveryMode: 0,
+  cibaDefaultExpirySeconds: 300,
+  cibaMinIntervalSeconds: 5,
+  requireCibaUserCode: false,
+  allowCibaLoginHint: true,
+  allowCibaLoginHintToken: false,
+  allowCibaIdTokenHint: false,
   grantTypes: [0],
   scopes: ["openid", "profile"],
   apiResources: [],
@@ -48,6 +57,10 @@ function ApplicationCreate() {
   }, [loadLookups]);
 
   const handleSubmit = async (data) => {
+    const selectedGrantTypes = Array.isArray(data.grantTypes)
+      ? data.grantTypes.map((value) => Number(value)).filter((value) => Number.isInteger(value))
+      : [];
+    const cibaEnabled = !!data.cibaEnabled || selectedGrantTypes.includes(GrantTypeId.Ciba);
     const selectedProviderIds = Array.isArray(data.externalProviders)
       ? data.externalProviders
           .map((value) => Number(value))
@@ -91,9 +104,18 @@ function ApplicationCreate() {
       timeWindow: data.timeWindow || null,
       queueLimit: data.queueLimit === "" ? null : Number(data.queueLimit),
       enableITracking: !!data.enableITracking,
+      cibaEnabled,
+      backchannelTokenDeliveryMode: Number(data.backchannelTokenDeliveryMode ?? 0),
+      cibaDefaultExpirySeconds: Number(data.cibaDefaultExpirySeconds ?? 300),
+      cibaMinIntervalSeconds: Number(data.cibaMinIntervalSeconds ?? 5),
+      requireCibaUserCode: !!data.requireCibaUserCode,
+      allowCibaLoginHint:
+        data.allowCibaLoginHint === undefined ? true : !!data.allowCibaLoginHint,
+      allowCibaLoginHintToken: !!data.allowCibaLoginHintToken,
+      allowCibaIdTokenHint: !!data.allowCibaIdTokenHint,
       scopes: data.scopes || [],
       apiResources: data.apiResources || [],
-      grantTypes: data.grantTypes || [],
+      grantTypes: selectedGrantTypes,
       clientSecret: data.clientSecret || null,
       clientSecretDescription: null,
       authPolicy: {
