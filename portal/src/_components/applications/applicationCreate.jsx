@@ -65,6 +65,10 @@ function ApplicationCreate() {
       parsedDefaultRoleId !== null && Number.isFinite(parsedDefaultRoleId) && parsedDefaultRoleId > 0
         ? parsedDefaultRoleId
         : null;
+    const clientSecretExpiry =
+      data.clientSecretExpiry === "" || data.clientSecretExpiry === null || data.clientSecretExpiry === undefined
+        ? null
+        : Number(data.clientSecretExpiry);
 
     const payload = {
       id: 0,
@@ -76,7 +80,10 @@ function ApplicationCreate() {
       redirectUri: String(data.redirectUri ?? "").trim(),
       logoutRedirectUri: String(data.logoutRedirectUri ?? "").trim() || null,
       isActive: !!data.isActive,
-      clientSecretExpiry: data.clientSecretExpiry || null,
+      clientSecretExpiry:
+        clientSecretExpiry !== null && Number.isFinite(clientSecretExpiry)
+          ? clientSecretExpiry
+          : null,
       accessTokenLifetime: Number(data.accessTokenLifetime),
       authorizationCodeLifetime: Number(data.authorizationCodeLifetime),
       refreshTokenExpiration: Number(data.refreshTokenExpiration),

@@ -250,11 +250,16 @@ function AuthStep({
                   </span>
                   <input
                     className="form-control"
-                    type="date"
+                    type="number"
+                    min="1"
                     disabled={secretLocked}
                     {...register("clientSecretExpiry")}
                     aria-label="Client secret expiry"
                   />
+                  <span className="input-group-text">Days</span>
+                </div>
+                <div className="form-text text-muted">
+                  Number of days until the client secret expires.
                 </div>
               </div>
             </div>
