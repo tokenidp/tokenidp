@@ -12,12 +12,16 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
             ?? Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
             ?? "Development";
 
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true)
-            .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
-            .AddJsonFile(Path.Combine("..", "IDP.Service", "appsettings.json"), optional: true)
-            .AddJsonFile(Path.Combine("..", "IDP.Service", $"appsettings.{environmentName}.json"), optional: true)
+        var configurationBuilder = new ConfigurationBuilder();
+
+        foreach (var configurationDirectory in GetConfigurationDirectories())
+        {
+            configurationBuilder
+                .AddJsonFile(Path.Combine(configurationDirectory, "appsettings.json"), optional: true)
+                .AddJsonFile(Path.Combine(configurationDirectory, $"appsettings.{environmentName}.json"), optional: true);
+        }
+
+        var configuration = configurationBuilder
             .AddEnvironmentVariables()
             .Build();
 
@@ -86,6 +90,39 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
         }
 
         return null;
+    }
+
+    private static IEnumerable<string> GetConfigurationDirectories()
+    {
+        var yieldedDirectories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var directory in EnumerateCurrentAndParentDirectories(Directory.GetCurrentDirectory()))
+        {
+            foreach (var candidate in GetConfigurationDirectoryCandidates(directory))
+            {
+                if (Directory.Exists(candidate) && yieldedDirectories.Add(candidate))
+                {
+                    yield return candidate;
+                }
+            }
+        }
+    }
+
+    private static IEnumerable<string> EnumerateCurrentAndParentDirectories(string startDirectory)
+    {
+        for (var current = new DirectoryInfo(startDirectory); current is not null; current = current.Parent)
+        {
+            yield return current.FullName;
+        }
+    }
+
+    private static IEnumerable<string> GetConfigurationDirectoryCandidates(string directory)
+    {
+        yield return directory;
+        yield return Path.Combine(directory, "TokenIDP.Service");
+        yield return Path.Combine(directory, "IDP.Service");
+        yield return Path.Combine(directory, "src", "TokenIDP.Service");
+        yield return Path.Combine(directory, "src", "IDP.Service");
     }
 }
 

@@ -25,7 +25,7 @@ internal class UserContactConfig : IEntityTypeConfiguration<UserContact>
         builder.HasOne(u => u.User)
             .WithMany(u => u.UserContacts)
             .HasForeignKey(x => x.UserId)
-            .OnDelete(DeleteBehavior.NoAction)
+            .OnDelete(DeleteBehavior.Cascade)
             .IsRequired();
 
         // Fast lookup for profile load
