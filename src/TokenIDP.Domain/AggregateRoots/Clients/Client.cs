@@ -202,6 +202,12 @@ public class Client : AggregateRoot<int>, ITenant
             return Result.Failure("client.secret.invalid", "Client secret cannot be empty.");
         }
 
+        if (ClientSecrets.Any(secret =>
+                string.Equals(secret.SecretHash, clientSecret.SecretHash, StringComparison.Ordinal)))
+        {
+            return Result.Success(Id);
+        }
+
         ClientSecrets.Add(clientSecret);
         return Result.Success(Id);
     }

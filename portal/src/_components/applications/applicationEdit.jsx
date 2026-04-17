@@ -234,7 +234,7 @@ function ApplicationEdit() {
       scopes: data.scopes || [],
       apiResources: data.apiResources || [],
       grantTypes: data.grantTypes || [],
-      clientSecret: data.clientSecret || null,
+      clientSecret: null,
       clientSecretDescription: null,
       authPolicy: {
         allowLocalLoginOverride: !!data.authPolicy?.allowLocalLoginOverride,
