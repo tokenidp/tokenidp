@@ -340,6 +340,25 @@ export const ApplicationsProvider = ({ children }) => {
     [put]
   );
 
+  const regenerateClientSecret = useCallback(
+    async (id, payload) => {
+      dispatch({ type: actions.CREATE_START });
+      try {
+        const response = await post(`admin/client/${id}/regenerate-secret`, payload);
+        const result = normalizeResult(response) || null;
+        dispatch({ type: actions.CREATE_SUCCESS, payload: id });
+        return { ok: true, result };
+      } catch (error) {
+        dispatch({
+          type: actions.CREATE_ERROR,
+          payload: error?.message || "Failed to regenerate client secret.",
+        });
+        return { ok: false, error };
+      }
+    },
+    [post]
+  );
+
   const deleteApplication = useCallback(
     async (id) => {
       try {
@@ -371,6 +390,7 @@ export const ApplicationsProvider = ({ children }) => {
         resolveApplicationIdByClientId,
         createApplication,
         updateApplication,
+        regenerateClientSecret,
         deleteApplication,
         clearStatus,
       }}

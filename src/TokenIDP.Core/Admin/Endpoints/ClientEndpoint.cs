@@ -118,5 +118,27 @@ internal class ClientEndpoint : IEndpointDefinition
         })
         .WithName("DeleteClient")
         .WithTags("Clients");
+
+        authGroup.MapPost("/{id}/regenerate-secret", async (int id,
+            RotateClientSecretRequest request,
+            ClientCommandUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.RotateClientSecret(id, request, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "applications.edit"
+        })
+        .WithName("RegenerateClientSecret")
+        .WithTags("Clients");
     }
 }

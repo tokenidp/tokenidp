@@ -152,6 +152,19 @@ public class Client : AggregateRoot<int>, ITenant
         return Result.Success(Id);
     }
 
+    public bool RequiresClientSecret()
+    {
+        return ClientType is ClientTypes.WebApp or ClientTypes.Backend;
+    }
+
+    public void RevokeActiveSecrets()
+    {
+        foreach (var secret in ClientSecrets.Where(s => !s.IsRevoked))
+        {
+            secret.Revoke();
+        }
+    }
+
     public Result ReplaceScopes(IEnumerable<ClientScope> scopes)
     {
         if (scopes == null)

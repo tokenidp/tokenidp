@@ -65,3 +65,13 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
         return normalized.Distinct(StringComparer.OrdinalIgnoreCase).Count() == normalized.Count();
     }
 }
+
+internal sealed class RotateClientSecretRequestValidator : AbstractValidator<RotateClientSecretRequest>
+{
+    public RotateClientSecretRequestValidator()
+    {
+        RuleFor(x => x.ClientSecretExpiry)
+            .GreaterThan(0)
+            .When(x => x.ClientSecretExpiry.HasValue);
+    }
+}

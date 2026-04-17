@@ -53,4 +53,9 @@ public class ClientSecret : Entity<int>
             ? Result.Failure(code, message)
             : Result.Success(0);
     }
+
+    public void Revoke()
+    {
+        IsRevoked = true;
+    }
 }

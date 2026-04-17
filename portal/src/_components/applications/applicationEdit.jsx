@@ -48,6 +48,7 @@ function ApplicationEdit() {
     getApplicationById,
     resolveApplicationIdByClientId,
     updateApplication,
+    regenerateClientSecret,
     clearStatus,
   } = useApplications();
   const [initialValues, setInitialValues] = useState(emptyValues);
@@ -262,6 +263,14 @@ function ApplicationEdit() {
     }
   };
 
+  const handleRegenerateSecret = async (payload) => {
+    if (!applicationId) {
+      return { ok: false };
+    }
+
+    return regenerateClientSecret(Number(applicationId), payload);
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -277,6 +286,7 @@ function ApplicationEdit() {
       <ApplicationWizard
         initialValues={initialValues}
         onSubmit={handleSubmit}
+        onRegenerateSecret={handleRegenerateSecret}
         onCancel={() => navigate("/applications")}
         submitting={state.loading}
         lookups={state}

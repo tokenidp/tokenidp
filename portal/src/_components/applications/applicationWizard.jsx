@@ -60,6 +60,7 @@ const formatAppTypeLabel = (label) => {
 function ApplicationWizard({
   initialValues,
   onSubmit,
+  onRegenerateSecret,
   onCancel,
   submitting,
   lookups,
@@ -489,10 +490,60 @@ function ApplicationWizard({
     setInfoOpen(true);
   };
 
-  const regenerateSecret = () => {
+  const regenerateSecret = async () => {
+    if (!onRegenerateSecret) {
+      setInfoContent({
+        title: "Save Required",
+        message: "Save the application first, then regenerate the client secret from edit mode.",
+      });
+      setInfoOpen(true);
+      return;
+    }
+
+    const currentExpiry = getValues("clientSecretExpiry");
+    const payload = {
+      clientSecretExpiry:
+        currentExpiry === "" || currentExpiry === null || currentExpiry === undefined
+          ? null
+          : Number(currentExpiry),
+    };
+
+    const result = await onRegenerateSecret(payload);
+    if (!result?.ok) {
+      setInfoContent({
+        title: "Unable to regenerate",
+        message: "Client secret regeneration failed. Review the current client settings and try again.",
+      });
+      setInfoOpen(true);
+      return;
+    }
+
+    const rotatedSecret =
+      result.result?.clientSecret ?? result.result?.ClientSecret ?? "";
+    const rotatedExpiry =
+      result.result?.clientSecretExpiry ?? result.result?.ClientSecretExpiry ?? payload.clientSecretExpiry;
+
+    setValue("clientSecret", rotatedSecret, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (rotatedExpiry === null || rotatedExpiry === undefined) {
+      setValue("clientSecretExpiry", "", {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } else {
+      setValue("clientSecretExpiry", String(rotatedExpiry), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+
+    setShowSecret(true);
     setInfoContent({
-      title: "Client secret regenerated",
-      message: "A new client secret has been generated (placeholder).",
+      title: "Client secret rotated",
+      message: "The new client secret is now shown once. Copy it now because only the hash is stored.",
     });
     setInfoOpen(true);
   };
@@ -706,6 +757,7 @@ function ApplicationWizard({
 ApplicationWizard.defaultProps = {
   initialValues: {},
   onSubmit: () => {},
+  onRegenerateSecret: null,
   onCancel: () => {},
   submitting: false,
   lookups: {},

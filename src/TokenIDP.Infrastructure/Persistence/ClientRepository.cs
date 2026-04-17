@@ -364,6 +364,7 @@ internal sealed class ClientRepository : IClientRepository
             .Include(c => c.ClientScopes)
             .Include(c => c.ClientGrantTypes)
             .Include(c => c.ClientApiResources)
+            .Include(c => c.ClientSecrets)
             .Include(c => c.ClientAuthPolicy)
             .Include(c => c.ClientExternalProviders)
             .FirstOrDefaultAsync(c => c.Id == clientId && c.TenantId == tenantId, ct);

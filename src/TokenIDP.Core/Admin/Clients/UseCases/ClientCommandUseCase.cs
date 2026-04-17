@@ -1,5 +1,8 @@
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Security;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Security.Cryptography;
 
 namespace TokenIDP.Core.Admin.Clients.UseCases;
 
@@ -158,6 +161,74 @@ internal sealed class ClientCommandUseCase
         return ApiResult<int>.Success(clientId);
     }
 
+    public async Task<ApiResult<RotateClientSecretResponse>> RotateClientSecret(
+        int clientId,
+        RotateClientSecretRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Rotating client secret for client {ClientId}", clientId);
+
+        var client = await _clientRepository.GetClientAggregateAsync(
+            clientId,
+            _currentUserService.TenantId,
+            cancellationToken);
+
+        if (client == null)
+        {
+            _logger.LogWarning("Client not found for secret rotation: {ClientId}", clientId);
+            return ApiResult<RotateClientSecretResponse>.Failure(ApiError.Failure(
+                "NotFound",
+                "Client not found for the Id {0}".FormatString(clientId)));
+        }
+
+        if (!client.RequiresClientSecret())
+        {
+            return ApiResult<RotateClientSecretResponse>.Failure(ApiError.Failure(
+                "client.secret.unsupported",
+                "Client secrets are supported for WebApp and Backend clients only."));
+        }
+
+        client.RevokeActiveSecrets();
+
+        var rawSecret = GenerateClientSecret();
+        var expiresAt = request.ClientSecretExpiry.HasValue
+            ? DateTime.UtcNow.AddDays(request.ClientSecretExpiry.Value)
+            : (DateTime?)null;
+
+        var createSecretResult = ClientSecret.Create(
+            SecretHasher.HashSecret(rawSecret),
+            description: "Rotated via admin portal",
+            expiresAt,
+            out var clientSecret);
+
+        if (!createSecretResult.IsSuccess || clientSecret == null)
+        {
+            return ApiResult<RotateClientSecretResponse>.Failure(
+                createSecretResult.Errors
+                    .Select(e => ApiError.Failure(e.Code, e.Message))
+                    .ToList());
+        }
+
+        var addSecretResult = client.AddSecret(clientSecret);
+        if (!addSecretResult.IsSuccess)
+        {
+            return ApiResult<RotateClientSecretResponse>.Failure(
+                addSecretResult.Errors
+                    .Select(e => ApiError.Failure(e.Code, e.Message))
+                    .ToList());
+        }
+
+        await _clientRepository.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInfo("Client secret rotated for client {ClientId}", clientId);
+
+        return ApiResult<RotateClientSecretResponse>.Success(new RotateClientSecretResponse
+        {
+            ClientSecret = rawSecret,
+            ClientSecretExpiry = request.ClientSecretExpiry
+        });
+    }
+
     private static ApiResult<int> FailureFromResult(Result result)
     {
         return ApiResult<int>.Failure(
@@ -182,5 +253,11 @@ internal sealed class ClientCommandUseCase
         }
 
         return ClientCommandMapper.ApplyToClient(client, command, changes);
+    }
+
+    private static string GenerateClientSecret()
+    {
+        var secretBytes = RandomNumberGenerator.GetBytes(32);
+        return WebEncoders.Base64UrlEncode(secretBytes);
     }
 }
