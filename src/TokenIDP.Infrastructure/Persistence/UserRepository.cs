@@ -66,28 +66,21 @@ public sealed class UserRepository : IUserRepository
             .AsNoTracking()
             .Where(u => u.TenantId == tenantId);
 
-        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
-        var searchCriteria = criterias.FirstOrDefault(c =>
-            string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase));
+        return await SearchUsersAsync(query, request);
+    }
 
-        if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
-        {
-            var term = searchCriteria.Value.Trim().ToLowerInvariant();
-            query = query.Where(user =>
-                (user.FullName ?? string.Empty).ToLower().Contains(term) ||
-                (user.UserName ?? string.Empty).ToLower().Contains(term) ||
-                (user.Email ?? string.Empty).ToLower().Contains(term));
-        }
+    public async Task<PaginatedList<UserSearchResult>> SearchUsersByRoleAsync(
+        int tenantId,
+        int roleId,
+        SearchData request,
+        CancellationToken ct)
+    {
+        var query = _dbContext.UsersSearch
+            .AsNoTracking()
+            .Where(u => u.TenantId == tenantId)
+            .Where(u => _dbContext.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId == roleId));
 
-        criterias = criterias
-            .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        return await query
-            .Select(UserSearchResult.Projection)
-            .ApplyFilter(criterias)
-            .ApplySort(request.SortColumn, request.SortOrder)
-            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
+        return await SearchUsersAsync(query, request);
     }
 
     public async Task<UserLookups> GetUserLookupsAsync(int tenantId, CancellationToken ct)
@@ -253,6 +246,34 @@ public sealed class UserRepository : IUserRepository
                 !t.IsUsed &&
                 t.ExpiresAt > nowUtc,
                 ct);
+    }
+
+    private static async Task<PaginatedList<UserSearchResult>> SearchUsersAsync(
+        IQueryable<UserSearch> query,
+        SearchData request)
+    {
+        var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
+        var searchCriteria = criterias.FirstOrDefault(c =>
+            string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(searchCriteria?.Value))
+        {
+            var term = searchCriteria.Value.Trim().ToLowerInvariant();
+            query = query.Where(user =>
+                (user.FullName ?? string.Empty).ToLower().Contains(term) ||
+                (user.UserName ?? string.Empty).ToLower().Contains(term) ||
+                (user.Email ?? string.Empty).ToLower().Contains(term));
+        }
+
+        criterias = criterias
+            .Where(c => !string.Equals(c.ColumnName, "Search", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return await query
+            .Select(UserSearchResult.Projection)
+            .ApplyFilter(criterias)
+            .ApplySort(request.SortColumn, request.SortOrder)
+            .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
     }
 }
 

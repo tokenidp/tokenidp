@@ -12,6 +12,7 @@ const bcMap = {
   "/roles/new": "Add Role",
   "/roles/edit": "Edit Role",
   "/roles/permissions": "Assign Permissions",
+  "/roles/users": "Assigned Users",
   "/tenants": "Tenants",
   "/tenants/new": "Create Tenant",
   "/tenants/edit": "Edit Tenant",

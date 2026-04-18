@@ -32,6 +32,21 @@ internal class RoleEndpoint : IEndpointDefinition
         .WithName("Roles")
         .WithTags("Roles");
 
+        authGroup.MapPost("/user-counts", async ([FromBody] RoleUserCountRequest request,
+            [FromServices] RoleQueryUseCase roleService,
+            HttpContext httpContext) =>
+        {
+            var response = await roleService.GetRoleUserCounts(request, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "roles.view"
+        })
+        .WithName("RoleUserCounts")
+        .WithTags("Roles");
+
         authGroup.MapGet("/{id}", async (int id,
             [FromServices] RoleQueryUseCase roleService,
             HttpContext httpContext) =>
@@ -55,6 +70,28 @@ internal class RoleEndpoint : IEndpointDefinition
              Policy = "roles.view"
          })
         .WithName("RoleById")
+        .WithTags("Roles");
+
+        authGroup.MapPost("/{id}/users/list", async (int id,
+            [FromBody] SearchData data,
+            [FromServices] RoleQueryUseCase roleService,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await roleService.GetUsersByRole(id, data, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "roles.view"
+        })
+        .WithName("RoleUsers")
         .WithTags("Roles");
 
         authGroup.MapPost("/", async ([FromBody] CreateUpdateRole role,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "tokenidp-react";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -37,25 +37,70 @@ const defaultSearch = {
   searchAll: true,
 };
 
+const getField = (item, ...keys) =>
+  keys.find((key) => item?.[key] !== undefined) !== undefined
+    ? item[keys.find((key) => item?.[key] !== undefined)]
+    : undefined;
+
+const getItems = (result) => {
+  const items = result?.items ?? result?.Items ?? result;
+  return Array.isArray(items) ? items : [];
+};
+
+const buildRoleUserCountMap = (counts) => {
+  const map = {};
+
+  getItems(counts).forEach((item) => {
+    const roleId = Number(getField(item, "roleId", "RoleId"));
+    if (roleId <= 0) {
+      return;
+    }
+
+    map[roleId] = Number(getField(item, "totalUsers", "TotalUsers") || 0);
+  });
+
+  return map;
+};
+
 function Roles() {
   const user = useAuth();
   const navigate = useNavigate();
-  const { state, loadRoles, deleteRole } = useRoles();
+  const { state, loadRoles, loadRoleUserCounts, deleteRole } = useRoles();
   const showInitialLoading = !state.hasLoadedRoles;
   const showRefreshingState = state.hasLoadedRoles && state.loadingRoles;
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteRole, setPendingDeleteRole] = useState(null);
+  const [roleUserCounts, setRoleUserCounts] = useState({});
+  const [loadingRoleUserCounts, setLoadingRoleUserCounts] = useState(false);
   const permissionKeys = normalizePermissions(user);
   const canDeleteRoles = permissionKeys.includes("roles.delete");
+  const canViewAssignedUsers = permissionKeys.includes("users.view");
+
+  const refreshRoles = useCallback(async () => {
+    const result = await loadRoles(defaultSearch);
+    const items = getItems(result);
+    const roleIds = items
+      .map((item) => Number(getField(item, "id", "Id")))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (roleIds.length === 0) {
+      setRoleUserCounts({});
+      setLoadingRoleUserCounts(false);
+      return;
+    }
+
+    setLoadingRoleUserCounts(true);
+    try {
+      const counts = await loadRoleUserCounts(roleIds);
+      setRoleUserCounts(buildRoleUserCountMap(counts));
+    } finally {
+      setLoadingRoleUserCounts(false);
+    }
+  }, [loadRoleUserCounts, loadRoles]);
 
   useEffect(() => {
-    loadRoles(defaultSearch);
-  }, [loadRoles]);
-
-  const getField = (item, ...keys) =>
-    keys.find((key) => item?.[key] !== undefined) !== undefined
-      ? item[keys.find((key) => item?.[key] !== undefined)]
-      : undefined;
+    refreshRoles();
+  }, [refreshRoles]);
 
   const requestDelete = (role) => {
     setPendingDeleteRole(role);
@@ -76,7 +121,7 @@ function Roles() {
     const isSuccess = await deleteRole(pendingDeleteRole.id);
     closeConfirm();
     if (isSuccess) {
-      loadRoles(defaultSearch);
+      refreshRoles();
     }
   };
 
@@ -110,12 +155,39 @@ function Roles() {
               "name",
               "Name",
             );
+            const totalUsers = roleUserCounts[roleId] ?? 0;
             return (
               <div key={roleId} className="col-12 col-md-6 col-xl-4">
                 <div className="role-card">
                   <div className="role-card-top">
                     <span className="text-muted">&nbsp;</span>
-                    <span className="text-muted">Total users 5</span>
+                    {canViewAssignedUsers ? (
+                      <button
+                        className="btn btn-link role-user-count-link"
+                        type="button"
+                        onClick={() =>
+                          navigate(`users/${roleId}`, {
+                            state: {
+                              roleName,
+                              totalUsers,
+                            },
+                          })
+                        }
+                      >
+                        <i className="fa fa-users" aria-hidden="true"></i>
+                        <span>Total users</span>
+                        <span className="role-user-count-value">
+                          {loadingRoleUserCounts ? "..." : totalUsers}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="role-user-count-text text-muted">
+                        <i className="fa fa-users" aria-hidden="true"></i>
+                        <span>
+                          Total users {loadingRoleUserCounts ? "..." : totalUsers}
+                        </span>
+                      </span>
+                    )}
                   </div>
                   <div className="role-card-body">
                     <h6 className="mb-2">{roleName}</h6>

@@ -15,6 +15,11 @@ public interface IUserRepository
     Task<User?> GetUserAggregateAsync(int id, int tenantId, CancellationToken ct);
     Task<UserDetail?> GetUserDetailAsync(int tenantId, int userId, CancellationToken ct);
     Task<PaginatedList<UserSearchResult>> SearchUsersAsync(int tenantId, SearchData request, CancellationToken ct);
+    Task<PaginatedList<UserSearchResult>> SearchUsersByRoleAsync(
+        int tenantId,
+        int roleId,
+        SearchData request,
+        CancellationToken ct);
     Task<UserLookups> GetUserLookupsAsync(int tenantId, CancellationToken ct);
     Task<IReadOnlyList<PermissionInfo>> GetUserPermissionsAsync(int userId, CancellationToken ct);
     Task<User?> GetByTenantAndEmailAsync(int tenantId, string email, CancellationToken ct);

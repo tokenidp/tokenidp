@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
@@ -10,6 +10,7 @@ const DEFAULT_ADDRESS_TYPES = [
   { key: "2", value: "Work" },
   { key: "3", value: "Billing" },
 ];
+const EMPTY_SELECTION = [];
 
 const getLookupValue = (item) =>
   item?.key ??
@@ -75,6 +76,13 @@ function AddEditUser({ mode }) {
   const [currentUserId, setCurrentUserId] = useState(
     location?.state?.id ? Number(location.state.id) : 0,
   );
+  const preselectedRoleId = Number(location?.state?.preselectedRoleId || 0);
+  const preselectedRoleName = String(
+    location?.state?.preselectedRoleName || "",
+  );
+  const returnTo = String(location?.state?.returnTo || "");
+  const returnToState = location?.state?.returnToState;
+  const hasSeededPreselectedRole = useRef(false);
   const [activeTab, setActiveTab] = useState("details");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -121,7 +129,10 @@ function AddEditUser({ mode }) {
     },
   });
 
-  const selectedRoles = watch("roles") || [];
+  const watchedRoles = watch("roles");
+  const selectedRoles = Array.isArray(watchedRoles)
+    ? watchedRoles
+    : EMPTY_SELECTION;
   const lockoutEnabled = watch("lockoutEnabled");
   const emailConfirmed = watch("emailConfirmed");
   const phoneNumberConfirmed = watch("phoneNumberConfirmed");
@@ -316,6 +327,44 @@ function AddEditUser({ mode }) {
     }
   }, [addressType, addressTypeOptions, mode, setValue]);
 
+  useEffect(() => {
+    if (mode !== "add") return;
+    if (!preselectedRoleId || hasSeededPreselectedRole.current) return;
+    if (state.roles.length === 0) return;
+
+    const availableRoleIds = state.roles
+      .map((role) => Number(role.key ?? role.id ?? role.Id))
+      .filter((value) => Number.isInteger(value) && value > 0);
+
+    hasSeededPreselectedRole.current = true;
+
+    if (!availableRoleIds.includes(preselectedRoleId)) {
+      return;
+    }
+
+    const nextRoles = selectedRoles.includes(preselectedRoleId)
+      ? selectedRoles
+      : [...selectedRoles, preselectedRoleId];
+
+    setValue("roles", nextRoles, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  }, [mode, preselectedRoleId, selectedRoles, setValue, state.roles]);
+
+  const navigateBack = () => {
+    if (returnTo) {
+      navigate(returnTo, {
+        state:
+          returnToState ||
+          (preselectedRoleName ? { roleName: preselectedRoleName } : undefined),
+      });
+      return;
+    }
+
+    navigate(-1);
+  };
+
   const toggleRole = (roleId) => {
     const value = Number(roleId);
     const next = selectedRoles.includes(value)
@@ -385,12 +434,18 @@ function AddEditUser({ mode }) {
         return;
       }
       clearError();
+      if (returnTo) {
+        navigateBack();
+      }
     } else {
       const result = await createUser(payload);
       if (result == null) {
         return;
       }
       clearError();
+      if (returnTo) {
+        navigateBack();
+      }
     }
   };
 
@@ -1202,7 +1257,7 @@ function AddEditUser({ mode }) {
             <button
               className="btn btn-soft"
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={navigateBack}
             >
               <i className="fa fa-times me-1" aria-hidden="true"></i>
               Cancel

@@ -114,6 +114,42 @@ internal sealed class RoleRepository : IRoleRepository
             .ToPaginatedListAsync(request.PageNumber, request.PageSize, request.SearchAll);
     }
 
+    public async Task<IReadOnlyList<RoleUserCountItem>> GetRoleUserCountsAsync(
+        int tenantId,
+        IReadOnlyCollection<int> roleIds,
+        CancellationToken ct)
+    {
+        var ids = (roleIds ?? Array.Empty<int>())
+            .Where(id => id > 0)
+            .Distinct()
+            .ToArray();
+
+        if (ids.Length == 0)
+        {
+            return Array.Empty<RoleUserCountItem>();
+        }
+
+        return await (from ur in _dbContext.UserRoles.AsNoTracking()
+                      join u in _dbContext.Users.AsNoTracking() on ur.UserId equals u.Id
+                      join r in _dbContext.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                      where ids.Contains(ur.RoleId)
+                            && u.TenantId == tenantId
+                            && r.TenantId == tenantId
+                            && !u.IsDeleted
+                            && !r.IsDeleted
+                      group ur by ur.RoleId
+            into grouped
+                      select new RoleUserCountItem
+                      {
+                          RoleId = grouped.Key,
+                          TotalUsers = grouped
+                              .Select(x => x.UserId)
+                              .Distinct()
+                              .Count()
+                      })
+            .ToListAsync(ct);
+    }
+
     public Task<bool> RoleNameExistsAsync(int tenantId, string roleName, int? excludeRoleId, CancellationToken ct)
     {
         var normalized = roleName.ToLowerInvariant();

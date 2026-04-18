@@ -5,6 +5,7 @@ import Roles from "./_components/roles/roles";
 import RolesLayout from "./_components/roles/rolesLayout";
 import AddEditRole from "./_components/roles/addEditRole";
 import AssignPermissions from "./_components/roles/assignPermissions";
+import RoleUsers from "./_components/roles/roleUsers";
 import Users from "./_components/users/users";
 import UsersLayout from "./_components/users/usersLayout";
 import LandingLayout from "./_components/layout/landingLayout";
@@ -36,6 +37,7 @@ import ApiResourcesLayout from "./_components/apiResources/apiResourcesLayout";
 import ApiResourcesList from "./_components/apiResources/apiResourcesList";
 import AddEditApiResource from "./_components/apiResources/addEditApiResource";
 import { AuthCallback, LoginPage } from "tokenidp-react";
+import { UsersProvider } from "./_hooks/useUsers";
 import logo from "./_assets/images/TokenIDP.svg";
 
 function App() {
@@ -135,6 +137,16 @@ function App() {
                 element={
                   <PrivateRoute requiredAnyOf={["roles.edit"]}>
                     <AssignPermissions />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="users/:roleId"
+                element={
+                  <PrivateRoute requiredAnyOf={["roles.view"]}>
+                    <UsersProvider>
+                      <RoleUsers />
+                    </UsersProvider>
                   </PrivateRoute>
                 }
               />

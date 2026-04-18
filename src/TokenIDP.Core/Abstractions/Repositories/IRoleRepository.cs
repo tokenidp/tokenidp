@@ -15,6 +15,10 @@ public interface IRoleRepository
     Task<Role?> GetRoleAggregateAsync(int roleId, int tenantId, CancellationToken ct);
     Task<RoleInfo?> GetRoleDetailAsync(int tenantId, int roleId, CancellationToken ct);
     Task<PaginatedList<RoleList>> SearchRolesAsync(int tenantId, SearchData request, CancellationToken ct);
+    Task<IReadOnlyList<RoleUserCountItem>> GetRoleUserCountsAsync(
+        int tenantId,
+        IReadOnlyCollection<int> roleIds,
+        CancellationToken ct);
     Task<bool> RoleNameExistsAsync(int tenantId, string roleName, int? excludeRoleId, CancellationToken ct);
     Task<RoleAssignmentValidation?> GetRoleAssignmentValidationAsync(int tenantId, int roleId, CancellationToken ct);
     Task<int> AddAsync(Role role, CancellationToken ct);

@@ -60,11 +60,15 @@ export const RolesProvider = ({ children }) => {
       try {
         const response = await post("admin/role/list", search);
         const result = normalizeResult(response) || {};
+        const items = result.items || result.Items || result || [];
         dispatch({
           type: actions.LIST_SUCCESS,
           payload: {
-            items: result.items || result || [],
-            totalCount: result.totalCount || 0,
+            items,
+            totalCount:
+              result.totalCount ||
+              result.TotalCount ||
+              (Array.isArray(items) ? items.length : 0),
           },
         });
         return result;
@@ -190,6 +194,64 @@ export const RolesProvider = ({ children }) => {
     }
   }, [get]);
 
+  const loadRoleUserCounts = useCallback(
+    async (roleIds) => {
+      const ids = Array.isArray(roleIds)
+        ? roleIds
+            .map((id) => Number(id))
+            .filter((id) => Number.isInteger(id) && id > 0)
+        : [];
+
+      if (ids.length === 0) {
+        dispatch({ type: actions.CLEAR_ERROR });
+        return [];
+      }
+
+      try {
+        const response = await post("admin/role/user-counts", {
+          roleIds: ids,
+        });
+        const result = normalizeResult(response) || [];
+        dispatch({ type: actions.CLEAR_ERROR });
+        return Array.isArray(result) ? result : [];
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to load role user counts.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
+  const loadRoleUsers = useCallback(
+    async (roleId, search) => {
+      const id = Number(roleId);
+      if (!Number.isInteger(id) || id <= 0) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: "Invalid role identifier.",
+        });
+        return null;
+      }
+
+      try {
+        const response = await post(`admin/role/${id}/users/list`, search);
+        const result = normalizeResult(response) || {};
+        dispatch({ type: actions.CLEAR_ERROR });
+        return result;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to load users assigned to role.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const deleteRole = useCallback(
     async (id) => {
       try {
@@ -217,6 +279,8 @@ export const RolesProvider = ({ children }) => {
         getRoleById,
         resolveRoleIdByName,
         loadAssignablePermissions,
+        loadRoleUserCounts,
+        loadRoleUsers,
         deleteRole,
       }}
     >
