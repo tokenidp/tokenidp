@@ -7,6 +7,7 @@ namespace TokenIDP.Core.Admin.Users.UseCases;
 internal class UserCommandUseCase
 {
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantRepository _tenantRepository;
     private readonly IUserRepository _userRepository;
     private readonly IAppLogger<UserCommandUseCase> _logger;
     private readonly ICodeSequenceGenerator _userCodeGenerator;
@@ -15,6 +16,7 @@ internal class UserCommandUseCase
 
     public UserCommandUseCase(
         ICurrentUserService currentUserService,
+        ITenantRepository tenantRepository,
         IAppLogger<UserCommandUseCase> logger,
         ICodeSequenceGenerator userCodeGenerator,
         UserNormalizationService userNormalizationService,
@@ -22,6 +24,7 @@ internal class UserCommandUseCase
         IUserRepository userRepository)
     {
         _currentUserService = currentUserService;
+        _tenantRepository = tenantRepository;
         _logger = logger;
         _userCodeGenerator = userCodeGenerator;
         _userNormalizationService = userNormalizationService;
@@ -74,7 +77,16 @@ internal class UserCommandUseCase
         }
 
         _userNormalizationService.Normalize(user);
-        ApplyUserState(user, request);
+
+        var emailConfirmed = await ResolveEmailConfirmedOnCreateAsync(request, cancellationToken);
+        if (emailConfirmed is null)
+        {
+            return ApiResult<int>.Failure(
+                ApiError.Failure("tenant.authsettings.not_found",
+                    "Tenant authentication settings were not found."));
+        }
+
+        ApplyUserState(user, request, emailConfirmed.Value);
 
         var nextValue = await _userCodeGenerator
             .NextUserCodeAsync(_currentUserService.TenantId, cancellationToken);
@@ -267,12 +279,34 @@ internal class UserCommandUseCase
             : null;
     }
 
-    private static void ApplyUserState(User user, UserDetail request)
+    private async Task<bool?> ResolveEmailConfirmedOnCreateAsync(
+        UserDetail request,
+        CancellationToken cancellationToken)
+    {
+        var tenantAuth = await _tenantRepository.GetTenantAuthSettingAsync(
+            _currentUserService.TenantId,
+            cancellationToken);
+
+        if (tenantAuth is null)
+        {
+            _logger.LogWarning(
+                "Tenant auth settings not found while creating user for tenant {TenantId}",
+                _currentUserService.TenantId);
+            return null;
+        }
+
+        return !tenantAuth.RequireEmailVerification;
+    }
+
+    private static void ApplyUserState(
+        User user,
+        UserDetail request,
+        bool? emailConfirmedOverride = null)
     {
         user.ApplyIdentityFlags(
             request.LockoutEnabled,
             request.TwoFactorEnabled,
-            request.EmailConfirmed ?? user.EmailConfirmed,
+            emailConfirmedOverride ?? request.EmailConfirmed ?? user.EmailConfirmed,
             request.PhoneNumberConfirmed ?? user.PhoneNumberConfirmed,
             request.AccessFailedCount,
             request.LockoutEnd);
