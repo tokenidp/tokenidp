@@ -112,6 +112,44 @@ export async function refreshWithToken(config, payload) {
   return await httpPostJson(url, payload);
 }
 
+export async function revokeToken(config, { accessToken, token, reasonRevoked }) {
+  if (!config?.authority || !accessToken || !token) {
+    return null;
+  }
+
+  const url = new URL(config.revokePath || "/revoke", config.authority).toString();
+
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      token,
+      reasonRevoked: reasonRevoked || "logout",
+    }),
+  });
+
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+
+  if (!res.ok) {
+    const msg = getErrorMessage(data, res.status);
+    const err = new Error(msg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+
+  return data;
+}
+
 export async function loadUserPermissions(config, accessToken) {
   const url = config.authority + config.userPermissionsPath;
   return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });

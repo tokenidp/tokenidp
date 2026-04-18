@@ -13,6 +13,7 @@ import { buildAuthorizeUrl, randomState } from "./oauth";
 import {
   exchangeAuthorizationCode,
   refreshWithToken,
+  revokeToken,
   loadUserPermissions,
   extractToken,
   extractPermissions,
@@ -176,9 +177,19 @@ export function IdpAuthProvider({ children, config }) {
         window.location.assign(authorizeUrl);
       },
 
-      logout: () => {
+      logout: async () => {
         const logoutUrl = buildLogoutUrl(mergedConfig);
         clearRefreshTimer();
+
+        try {
+          await revokeToken(mergedConfig, {
+            accessToken: state.accessToken,
+            token: state.refreshToken,
+            reasonRevoked: "logout",
+          });
+        } catch (error) {
+          console.warn("Token revocation during logout failed.", error);
+        }
 
         if (typeof window !== "undefined" && logoutUrl) {
           window.addEventListener("pagehide", clearLocalSession, { once: true });
