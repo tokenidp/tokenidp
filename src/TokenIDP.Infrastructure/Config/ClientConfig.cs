@@ -26,7 +26,7 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.RefreshTokenExpiration).IsRequired();
         builder.Property(x => x.RefreshTokenDeliveryMode)
             .HasConversion<int>()
-            .HasDefaultValue((int)RefreshTokenDeliveryMode.Response)
+            .HasDefaultValue(RefreshTokenDeliveryMode.Response)
             .IsRequired();
         builder.Property(x => x.CibaEnabled).IsRequired();
         builder.Property(x => x.CibaDefaultExpirySeconds).IsRequired();
