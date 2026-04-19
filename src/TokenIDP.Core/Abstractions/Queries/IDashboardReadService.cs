@@ -4,5 +4,5 @@ namespace TokenIDP.Core.Abstractions.Queries;
 
 public interface IDashboardReadService
 {
-    Task<DashboardResponse> GetDashboardAsync(int tenantId, CancellationToken ct);
+    Task<DashboardResponse> GetDashboardAsync(int tenantId, DashboardPeriod period, CancellationToken ct);
 }

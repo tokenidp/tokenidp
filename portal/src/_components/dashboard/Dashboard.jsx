@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import AuthenticationActivity from "./AuthenticationActivity";
@@ -46,6 +45,8 @@ const normalizeDashboard = (value) => {
   const globalLastUpdated = value.lastUpdated ?? value.LastUpdated ?? null;
 
   return {
+    period: value.period ?? value.Period ?? "daily",
+    periodLabel: value.periodLabel ?? value.PeriodLabel ?? PERIOD_LABELS.daily,
     accessTokenIssued: value.accessTokenIssued ?? value.AccessTokenIssued ?? 0,
     refreshTokenIssued:
       value.refreshTokenIssued ?? value.RefreshTokenIssued ?? 0,
@@ -185,6 +186,18 @@ const pctChange = (prev, curr) => {
   return { trend: `${pct >= 0 ? "+" : ""}${pct}%`, trendUp: pct >= 0 };
 };
 
+const DASHBOARD_PERIOD_OPTIONS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+];
+
+const PERIOD_LABELS = {
+  daily: "Last 24 Hours",
+  weekly: "Last 7 Days",
+  monthly: "Last 30 Days",
+};
+
 const POLL_INTERVAL_MS = 60_000; // refresh every 60 seconds
 
 function Dashboard() {
@@ -193,7 +206,7 @@ function Dashboard() {
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const didLoadRef = useRef(false);
+  const [selectedPeriod, setSelectedPeriod] = useState("daily");
 
   const loadDashboard = useCallback(
     async (silent = false) => {
@@ -202,7 +215,7 @@ function Dashboard() {
 
       try {
         const [dashboardResponse, healthResponse] = await Promise.all([
-          get("admin/dashboard"),
+          get(`admin/dashboard?period=${selectedPeriod}`),
           get("health"),
         ]);
         const dashboardResult =
@@ -220,14 +233,10 @@ function Dashboard() {
         if (!silent) setLoading(false);
       }
     },
-    [get],
+    [get, selectedPeriod],
   );
 
   useEffect(() => {
-    if (didLoadRef.current) {
-      return;
-    }
-    didLoadRef.current = true;
     loadDashboard();
   }, [loadDashboard]);
 
@@ -244,6 +253,8 @@ function Dashboard() {
   const viewModel = useMemo(() => {
     const healthEntries = health?.entries || {};
     const emptyDashboard = normalizedDashboard || {
+      period: selectedPeriod,
+      periodLabel: PERIOD_LABELS[selectedPeriod] || PERIOD_LABELS.daily,
       accessTokenIssued: 0,
       refreshTokenIssued: 0,
       totalLoginAttempts: 0,
@@ -487,6 +498,12 @@ function Dashboard() {
     }
 
     return {
+      selectedPeriod: emptyDashboard.period || selectedPeriod,
+      periodLabel:
+        emptyDashboard.periodLabel ||
+        PERIOD_LABELS[emptyDashboard.period] ||
+        PERIOD_LABELS[selectedPeriod] ||
+        PERIOD_LABELS.daily,
       kpis,
       lastUpdatedLabel: toRelativeLabel(emptyDashboard.lastUpdated),
       authSeries: emptyDashboard.authLast24h,
@@ -639,7 +656,7 @@ function Dashboard() {
         };
       })(),
     };
-  }, [normalizedDashboard, health, loading, error]);
+  }, [normalizedDashboard, health, loading, error, selectedPeriod]);
 
   return (
     <>
@@ -647,6 +664,9 @@ function Dashboard() {
       <DashboardActiveAlerts
         activeAlertCount={viewModel.activeAlertCount}
         alertCards={viewModel.alertCards}
+        periodOptions={DASHBOARD_PERIOD_OPTIONS}
+        selectedPeriod={viewModel.selectedPeriod}
+        onPeriodChange={setSelectedPeriod}
       />
       <DashboardMetricCards
         tokenMetrics={viewModel.tokenMetrics}
@@ -660,6 +680,8 @@ function Dashboard() {
           <AuthenticationActivity
             series={viewModel.authSeries}
             totals={viewModel.totals}
+            period={viewModel.selectedPeriod}
+            periodLabel={viewModel.periodLabel}
           />
         </div>
 
@@ -670,7 +692,10 @@ function Dashboard() {
         </div>
       </div>
       <div className="mb-3">
-        <TopClientsVolume topClients={viewModel.topClients} />
+        <TopClientsVolume
+          topClients={viewModel.topClients}
+          periodLabel={viewModel.periodLabel}
+        />
       </div>
     </>
   );

@@ -1,6 +1,6 @@
 import React from "react";
 
-function TopClientsVolume({ topClients }) {
+function TopClientsVolume({ topClients, periodLabel }) {
   return (
     <div className="card-lite h-100 dashboard-top-clients-card">
       <div className="card-header d-flex justify-content-between align-items-center">
@@ -8,7 +8,7 @@ function TopClientsVolume({ topClients }) {
           <h6 className="mb-0">Top clients by volume</h6>
           <div className="text-muted small">Token issuance by client</div>
         </div>
-        <span className="badge bg-light text-dark">Last 24h</span>
+        <span className="badge bg-light text-dark">{periodLabel || "Last 24 Hours"}</span>
       </div>
       <div className="card-body">
         <div className="table-responsive">

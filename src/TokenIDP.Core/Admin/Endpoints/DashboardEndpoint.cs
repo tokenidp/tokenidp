@@ -16,9 +16,10 @@ internal class DashboardEndpoint : IEndpointDefinition
              .AddEndpointFilter<EndpointValidationFilter>();
 
         authGroup.MapGet("", async (DashboardQueryUseCase useCase,
+            string? period,
             HttpContext httpContext) =>
         {
-            var response = await useCase.GetDashboard(CancellationToken.None);
+            var response = await useCase.GetDashboard(period, CancellationToken.None);
 
             return EndpointResultMapper.ToOkOrError(response);
 

@@ -3,8 +3,13 @@ import React, { useMemo } from "react";
 const CHART_WIDTH = 720;
 const CHART_HEIGHT = 320;
 const CHART_MARGIN = { top: 18, right: 18, bottom: 42, left: 54 };
-const FALLBACK_POINT_COUNT = 24;
 const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const PERIOD_CONFIG = {
+  daily: { pointCount: 24, bucketMs: HOUR_MS, label: "Last 24 Hours" },
+  weekly: { pointCount: 7, bucketMs: DAY_MS, label: "Last 7 Days" },
+  monthly: { pointCount: 30, bucketMs: DAY_MS, label: "Last 30 Days" },
+};
 
 const formatCompactNumber = (value) => {
   const numericValue = Number(value) || 0;
@@ -24,6 +29,12 @@ const formatHourLabel = (timestamp) =>
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+  }).format(new Date(timestamp));
+
+const formatDayLabel = (timestamp) =>
+  new Intl.DateTimeFormat([], {
+    month: "short",
+    day: "numeric",
   }).format(new Date(timestamp));
 
 const getTimestamp = (point) => {
@@ -171,21 +182,33 @@ const buildSeriesFromRows = (rows, totals) => {
   }));
 };
 
+const getPeriodConfig = (period) => PERIOD_CONFIG[period] || PERIOD_CONFIG.daily;
+
 const floorToHour = (timestamp) => {
   const date = new Date(timestamp);
   date.setMinutes(0, 0, 0);
   return date.getTime();
 };
 
-const densifyHourlySeries = (series) => {
+const floorToDay = (timestamp) => {
+  const date = new Date(timestamp);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+};
+
+const floorToBucket = (timestamp, period) =>
+  period === "daily" ? floorToHour(timestamp) : floorToDay(timestamp);
+
+const densifySeries = (series, period) => {
   if (!series.length) {
     return [];
   }
 
+  const config = getPeriodConfig(period);
   const grouped = new Map();
 
   series.forEach((point) => {
-    const bucket = floorToHour(point.timestamp);
+    const bucket = floorToBucket(point.timestamp, period);
     const current = grouped.get(bucket) ?? {
       timestamp: bucket,
       success: 0,
@@ -198,27 +221,29 @@ const densifyHourlySeries = (series) => {
   });
 
   const maxTimestamp = Math.max(...Array.from(grouped.keys()));
-  const endHour = floorToHour(maxTimestamp || Date.now());
-  const startHour = endHour - (FALLBACK_POINT_COUNT - 1) * HOUR_MS;
+  const endBucket = floorToBucket(maxTimestamp || Date.now(), period);
+  const startBucket = endBucket - (config.pointCount - 1) * config.bucketMs;
 
-  return Array.from({ length: FALLBACK_POINT_COUNT }, (_, index) => {
-    const timestamp = startHour + index * HOUR_MS;
+  return Array.from({ length: config.pointCount }, (_, index) => {
+    const timestamp = startBucket + index * config.bucketMs;
     const point = grouped.get(timestamp);
     return point ?? { timestamp, success: 0, failed: 0 };
   });
 };
 
-const buildFallbackSeries = () => {
-  const endHour = floorToHour(Date.now());
-  const startHour = endHour - (FALLBACK_POINT_COUNT - 1) * HOUR_MS;
-  return Array.from({ length: FALLBACK_POINT_COUNT }, (_, index) => ({
-    timestamp: startHour + index * HOUR_MS,
+const buildFallbackSeries = (period) => {
+  const config = getPeriodConfig(period);
+  const endBucket = floorToBucket(Date.now(), period);
+  const startBucket = endBucket - (config.pointCount - 1) * config.bucketMs;
+  return Array.from({ length: config.pointCount }, (_, index) => ({
+    timestamp: startBucket + index * config.bucketMs,
     success: 0,
     failed: 0,
   }));
 };
 
-const normalizeActivitySeries = (series, totals) => {
+const normalizeActivitySeries = (series, totals, period) => {
+  const config = getPeriodConfig(period);
   const rows = (series || [])
     .map((point, index) => {
       const inlineCounts = extractInlineCounts(point);
@@ -252,11 +277,11 @@ const normalizeActivitySeries = (series, totals) => {
       ...point,
       timestamp:
         point.timestamp ??
-        Date.now() - (builtSeries.length - 1 - index) * HOUR_MS,
+        Date.now() - (builtSeries.length - 1 - index) * config.bucketMs,
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  return normalized.length ? densifyHourlySeries(normalized) : buildFallbackSeries();
+  return normalized.length ? densifySeries(normalized, period) : buildFallbackSeries(period);
 };
 
 const roundUpYAxis = (value) => {
@@ -301,10 +326,10 @@ const createAreaPath = (points, baselineY) => {
   return `${linePath} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
 };
 
-function AuthenticationActivity({ series, totals }) {
+function AuthenticationActivity({ series, totals, period, periodLabel }) {
   const normalizedSeries = useMemo(
-    () => normalizeActivitySeries(series, totals),
-    [series, totals],
+    () => normalizeActivitySeries(series, totals, period),
+    [series, totals, period],
   );
 
   const summaryStats = useMemo(() => {
@@ -316,6 +341,7 @@ function AuthenticationActivity({ series, totals }) {
   }, [totals]);
 
   const chart = useMemo(() => {
+    const isDaily = period === "daily";
     const innerWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
     const innerHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
     const timestamps = normalizedSeries.map((point) => point.timestamp);
@@ -361,11 +387,12 @@ function AuthenticationActivity({ series, totals }) {
       };
     });
 
-    // X ticks: 7 labels across the 24-hour range
-    const xTicks = Array.from({ length: 7 }, (_, index) => {
-      const timestamp = minTimestamp + (totalRange / 6) * index;
+    const xTickCount = isDaily ? 7 : period === "monthly" ? 6 : 7;
+    const xTicks = Array.from({ length: xTickCount }, (_, index) => {
+      const divisor = Math.max(xTickCount - 1, 1);
+      const timestamp = minTimestamp + (totalRange / divisor) * index;
       return {
-        label: formatHourLabel(timestamp),
+        label: isDaily ? formatHourLabel(timestamp) : formatDayLabel(timestamp),
         x: toX(timestamp),
       };
     });
@@ -386,7 +413,7 @@ function AuthenticationActivity({ series, totals }) {
       successPoints,
       failedPoints,
     };
-  }, [normalizedSeries]);
+  }, [normalizedSeries, period]);
 
   return (
     <div className="card-lite h-100 dashboard-auth-card">
@@ -410,7 +437,7 @@ function AuthenticationActivity({ series, totals }) {
             <div>
               <h6 className="mb-0">
                 Authentication Activity
-                <span className="dashboard-auth-period"> (Last 24 Hours)</span>
+                <span className="dashboard-auth-period"> ({periodLabel || getPeriodConfig(period).label})</span>
               </h6>
               <div className="dashboard-auth-sub text-muted small">
                 Success Rate: {summaryStats.rate}%{" "}

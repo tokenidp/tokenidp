@@ -3195,19 +3195,31 @@ table td i {
   .dashboard-alert-card-grid {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-active-alerts-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 /* ── Dashboard Active Alerts Section ────────────────────────── */
 .dashboard-active-alerts-heading {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-bottom: 10px;
+}
+
+.dashboard-active-alerts-heading-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .dashboard-active-alerts-badge {
@@ -3223,6 +3235,41 @@ table td i {
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
+}
+
+.dashboard-range-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--surface-border);
+  border-radius: 999px;
+  background: var(--surface-muted);
+}
+
+.dashboard-range-tab {
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-range-tab:hover {
+  color: var(--text);
+}
+
+.dashboard-range-tab.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
 }
 
 /* ── Dashboard Metric Cards (Token / Login / Security) ──────── */

@@ -20,17 +20,21 @@ internal sealed class DashboardReadService : IDashboardReadService
         _clientRepository = clientRepository;
     }
 
-    public async Task<DashboardResponse> GetDashboardAsync(int tenantId, CancellationToken ct)
+    public async Task<DashboardResponse> GetDashboardAsync(int tenantId, DashboardPeriod period, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
         var minute = now.Minute - now.Minute % 15;
-        var currentWindowStart = now.AddHours(-24);
-        var currentHourBucketStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
+        var currentWindowStart = period.GetWindowStart(now);
+        var currentBucketStart = period.GetCurrentBucketStart(now);
         var latest15MinBucketStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, minute, 0, DateTimeKind.Utc);
-        var dashboard = new DashboardResponse();
+        var dashboard = new DashboardResponse
+        {
+            Period = period.ToQueryValue(),
+            PeriodLabel = period.ToLabel()
+        };
 
-        await PopulateTokenMetricsAsync(dashboard, tenantId, currentWindowStart, currentHourBucketStart, now, ct);
-        await PopulateAuthMetricsAsync(dashboard, tenantId, currentWindowStart, currentHourBucketStart, now, ct);
+        await PopulateTokenMetricsAsync(dashboard, tenantId, period, currentWindowStart, currentBucketStart, now, ct);
+        await PopulateAuthMetricsAsync(dashboard, tenantId, period, currentWindowStart, currentBucketStart, now, ct);
         await PopulateTopClientsAsync(dashboard, tenantId, currentWindowStart, now, ct);
         await PopulateFailedLoginsAsync(dashboard, tenantId, latest15MinBucketStart, ct);
 
@@ -44,8 +48,9 @@ internal sealed class DashboardReadService : IDashboardReadService
     private async Task PopulateTokenMetricsAsync(
         DashboardResponse dashboard,
         int tenantId,
+        DashboardPeriod period,
         DateTime since,
-        DateTime currentHourBucketStart,
+        DateTime currentBucketStart,
         DateTime now,
         CancellationToken ct)
     {
@@ -59,7 +64,7 @@ internal sealed class DashboardReadService : IDashboardReadService
                  || m.MetricKey == MetricType.TokensIssuedPerClient) &&
                 m.BucketType == TimeBucketType.Hour &&
                 m.BucketStart >= since &&
-                m.BucketStart < currentHourBucketStart)
+                m.BucketStart < currentBucketStart)
             .OrderBy(m => m.BucketStart)
             .Select(m => new { m.MetricKey, m.BucketStart, m.MetricValue, m.DimensionKey })
             .ToListAsync(ct);
@@ -68,7 +73,7 @@ internal sealed class DashboardReadService : IDashboardReadService
             .AsNoTracking()
             .Where(t =>
                 t.TenantId == tenantId &&
-                t.CreatedOn >= currentHourBucketStart &&
+                t.CreatedOn >= currentBucketStart &&
                 t.CreatedOn <= now)
             .Select(t => new { t.SourceType, t.GrantType, t.ClientId })
             .ToListAsync(ct);
@@ -96,7 +101,7 @@ internal sealed class DashboardReadService : IDashboardReadService
             : Convert.ToInt32(Math.Round((double)grantTypeTokens * 100 / accessTokenCount, 0));
 
         dashboard.TokensLast24h = historicalRows
-            .GroupBy(x => x.BucketStart)
+            .GroupBy(x => period.NormalizeSeriesBucketStart(x.BucketStart))
             .Select(g => new TimeSeriesPoint
             {
                 Timestamp = g.Key,
@@ -108,7 +113,7 @@ internal sealed class DashboardReadService : IDashboardReadService
             })
             .Append(new TimeSeriesPoint
             {
-                Timestamp = currentHourBucketStart,
+                Timestamp = currentBucketStart,
                 AccessTokens = currentHourTokens.Count(x => x.SourceType == "JWT" || x.SourceType == "Reference"),
                 RefreshTokens = currentHourTokens.Count(x => x.SourceType == "Refresh"),
                 Value = currentHourTokens.Count(x =>
@@ -156,8 +161,9 @@ internal sealed class DashboardReadService : IDashboardReadService
     private async Task PopulateAuthMetricsAsync(
         DashboardResponse dashboard,
         int tenantId,
+        DashboardPeriod period,
         DateTime since,
-        DateTime currentHourBucketStart,
+        DateTime currentBucketStart,
         DateTime now,
         CancellationToken ct)
     {
@@ -171,7 +177,7 @@ internal sealed class DashboardReadService : IDashboardReadService
                  || m.MetricKey == MetricType.AccountLockout) &&
                 m.BucketType == TimeBucketType.Hour &&
                 m.BucketStart >= since &&
-                m.BucketStart < currentHourBucketStart)
+                m.BucketStart < currentBucketStart)
             .OrderBy(m => m.BucketStart)
             .Select(m => new { m.MetricKey, m.BucketStart, m.MetricValue })
             .ToListAsync(ct);
@@ -180,7 +186,7 @@ internal sealed class DashboardReadService : IDashboardReadService
             .AsNoTracking()
             .Where(a =>
                 a.TenantId == tenantId &&
-                a.CreatedAtUtc >= currentHourBucketStart &&
+                a.CreatedAtUtc >= currentBucketStart &&
                 a.CreatedAtUtc <= now &&
                 (a.EventType == ActivityEventType.LoginSucceeded ||
                  a.EventType == ActivityEventType.LoginFailed ||
@@ -210,7 +216,7 @@ internal sealed class DashboardReadService : IDashboardReadService
         dashboard.TotalLoginAttempts = dashboard.SuccessfulLogins + dashboard.FailedLogins;
 
         var historicalAuthSeries = historicalRows
-            .GroupBy(x => x.BucketStart)
+            .GroupBy(x => period.NormalizeSeriesBucketStart(x.BucketStart))
             .Select(g => new TimeSeriesPoint
             {
                 Timestamp = g.Key,
@@ -225,7 +231,7 @@ internal sealed class DashboardReadService : IDashboardReadService
         dashboard.AuthLast24h = historicalAuthSeries
             .Append(new TimeSeriesPoint
             {
-                Timestamp = currentHourBucketStart,
+                Timestamp = currentBucketStart,
                 Successful = currentHourActivities.Count(x => x == ActivityEventType.LoginSucceeded),
                 Failed = currentHourActivities.Count(x => x == ActivityEventType.LoginFailed),
                 MfaChallenges = currentHourActivities.Count(x => x == ActivityEventType.MfaChallengeSent),

@@ -81,16 +81,40 @@ const getAlertCardIcon = (type) => {
   }
 };
 
-function DashboardActiveAlerts({ activeAlertCount, alertCards }) {
+function DashboardActiveAlerts({
+  activeAlertCount,
+  alertCards,
+  periodOptions,
+  selectedPeriod,
+  onPeriodChange,
+}) {
   return (
     <div className="dashboard-active-alerts-section mb-3">
       <div className="dashboard-active-alerts-heading">
-        <span>Active Alerts</span>
-        {activeAlertCount > 0 && (
-          <span className="dashboard-active-alerts-badge">
-            {activeAlertCount}
-          </span>
-        )}
+        <div className="dashboard-active-alerts-heading-main">
+          <span>Active Alerts</span>
+          {activeAlertCount > 0 && (
+            <span className="dashboard-active-alerts-badge">
+              {activeAlertCount}
+            </span>
+          )}
+        </div>
+        <div className="dashboard-range-tabs" role="tablist" aria-label="Dashboard period">
+          {periodOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="tab"
+              aria-selected={selectedPeriod === option.value}
+              className={`dashboard-range-tab ${
+                selectedPeriod === option.value ? "is-active" : ""
+              }`}
+              onClick={() => onPeriodChange(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="dashboard-alert-card-grid">
         {alertCards.map((card) => (

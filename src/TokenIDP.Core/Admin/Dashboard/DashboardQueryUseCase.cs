@@ -22,9 +22,10 @@ internal sealed class DashboardQueryUseCase
         _logger = logger;
     }
 
-    public async Task<ApiResult<DashboardResponse>> GetDashboard(CancellationToken ct)
+    public async Task<ApiResult<DashboardResponse>> GetDashboard(string? period, CancellationToken ct)
     {
-        var dashboard = await _dashboardReadService.GetDashboardAsync(_currentUserService.TenantId, ct);
+        var selectedPeriod = DashboardPeriodExtensions.Parse(period);
+        var dashboard = await _dashboardReadService.GetDashboardAsync(_currentUserService.TenantId, selectedPeriod, ct);
         return ApiResult<DashboardResponse>.Success(dashboard);
     }
 }

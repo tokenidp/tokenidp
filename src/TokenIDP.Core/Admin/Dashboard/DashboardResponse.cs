@@ -2,6 +2,8 @@ namespace TokenIDP.Core.Admin.Dashboard;
 
 public class DashboardResponse
 {
+    public string Period { get; set; } = DashboardPeriod.Daily.ToQueryValue();
+    public string PeriodLabel { get; set; } = DashboardPeriod.Daily.ToLabel();
     public int AccessTokenIssued { get; set; }
     public int RefreshTokenIssued { get; set; }
     public int TokenIssueanceByGrantType { get; set; }
