@@ -198,9 +198,15 @@ internal sealed class DashboardReadService : IDashboardReadService
         dashboard.MfaChallenge =
             historicalRows.Where(x => x.MetricKey == MetricType.MfaChallenges).Sum(x => x.MetricValue) +
             currentHourActivities.Count(x => x == ActivityEventType.MfaChallengeSent);
-        dashboard.AccountLockout =
-            historicalRows.Where(x => x.MetricKey == MetricType.AccountLockout).Sum(x => x.MetricValue) +
-            currentHourActivities.Count(x => x == ActivityEventType.AccountLocked);
+        dashboard.AccountLockout = await _db.Users
+            .AsNoTracking()
+            .Where(u =>
+                u.TenantId == tenantId &&
+                !u.IsDeleted &&
+                u.LockoutEnabled &&
+                u.LockoutEnd.HasValue &&
+                u.LockoutEnd > now)
+            .CountAsync(ct);
         dashboard.TotalLoginAttempts = dashboard.SuccessfulLogins + dashboard.FailedLogins;
 
         var historicalAuthSeries = historicalRows

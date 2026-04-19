@@ -428,6 +428,20 @@ function Dashboard() {
         icon: "clock",
       },
       {
+        title: "Accounts currently locked out",
+        detail:
+          emptyDashboard.accountLockout > 0
+            ? `${formatNumber(emptyDashboard.accountLockout)} user accounts are currently locked out.`
+            : "No locked user accounts.",
+        badgeText: `${formatNumber(emptyDashboard.accountLockout)} accounts`,
+        meta:
+          emptyDashboard.accountLockout > 0
+            ? "Requires review"
+            : "No action needed",
+        status: emptyDashboard.accountLockout > 0 ? "danger" : "secondary",
+        icon: "shield",
+      },
+      {
         title: "Suspicious activity from unusual locations",
         detail:
           emptyDashboard.suspiciousActivity > 0
