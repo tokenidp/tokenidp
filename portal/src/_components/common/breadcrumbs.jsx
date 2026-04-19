@@ -16,6 +16,7 @@ const bcMap = {
   "/tenants": "Tenants",
   "/tenants/new": "Create Tenant",
   "/tenants/edit": "Edit Tenant",
+  "/tenants/social-sign-in": "Social Sign In",
   "/tokens": "Tokens",
   "/activities": "Activities",
   "/settings": "Settings",

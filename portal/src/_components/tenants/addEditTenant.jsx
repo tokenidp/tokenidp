@@ -31,7 +31,7 @@ const isProviderEnabled = (provider) =>
 const getProviderField = (provider, camel, pascal, fallback = "") =>
   provider?.[camel] ?? provider?.[pascal] ?? fallback;
 
-const SHOW_EXTERNAL_PROVIDERS_SECTION = true;
+const SHOW_EXTERNAL_PROVIDERS_SECTION = false;
 
 function AddEditTenant({ mode }) {
   const navigate = useNavigate();
@@ -265,39 +265,6 @@ function AddEditTenant({ mode }) {
   const getProviderConfigError = (providerKey, fieldName) =>
     providerConfigErrors?.[providerKey]?.[fieldName] || "";
 
-  const validateProviderConfigs = (selectedKeys) => {
-    const nextErrors = {};
-    selectedKeys.forEach((providerKey) => {
-      const detail = providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
-      const providerErrors = {};
-
-      if (!String(detail.clientId || "").trim()) {
-        providerErrors.clientId = "Client ID is required when provider is enabled.";
-      }
-
-      if (Object.keys(providerErrors).length) {
-        nextErrors[providerKey] = providerErrors;
-      }
-    });
-
-    setProviderConfigErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const toProviderPayload = (providerKey, detail, enabled) => {
-    const payload = {
-      providerType: toNumberOrDefault(detail.providerType ?? providerKey),
-      enabled: Boolean(enabled),
-      clientId: String(detail.clientId || "").trim(),
-    };
-
-    if (detail.clientSecretChanged && String(detail.clientSecret || "").trim()) {
-      payload.clientSecret = String(detail.clientSecret).trim();
-    }
-
-    return payload;
-  };
-
   useEffect(() => {
     loadLookups();
   }, [loadLookups]);
@@ -473,48 +440,6 @@ function AddEditTenant({ mode }) {
       return;
     }
 
-    const selectedProviderKeySet = new Set(
-      (Array.isArray(data.externalProviderKeys) ? data.externalProviderKeys : [])
-        .map((key) => String(key))
-        .filter(Boolean)
-    );
-
-    if (!validateProviderConfigs(Array.from(selectedProviderKeySet))) {
-      return;
-    }
-
-    const existingByKey = new Map(
-      (existingProviders ?? [])
-        .map((provider) => [toProviderKey(provider), provider])
-        .filter(([key]) => !!key)
-    );
-
-    const updatedExistingProviders = Array.from(existingByKey.values()).map((provider) => {
-      const providerKey = toProviderKey(provider);
-      const providerEnum = resolveProviderEnum(
-        provider.providerType ?? provider.ProviderType ?? providerKey
-      );
-      const detail =
-        providerDetailsByKey[providerKey] ||
-        toProviderDetail(providerEnum ?? providerKey, provider);
-
-      return toProviderPayload(
-        providerEnum ?? providerKey,
-        {
-          ...detail,
-          providerType: toNumberOrDefault(providerEnum ?? providerKey),
-        },
-        selectedProviderKeySet.has(providerKey)
-      );
-    });
-
-    const newSelectedProviders = Array.from(selectedProviderKeySet)
-      .filter((providerKey) => !existingByKey.has(providerKey))
-      .map((providerKey) => {
-        const detail = providerDetailsByKey[providerKey] || toProviderDetail(providerKey);
-        return toProviderPayload(providerKey, detail, true);
-      });
-
     const payload = {
       id: mode === "edit" ? Number(tenantId) : 0,
       tenantName: data.tenantName.trim(),
@@ -537,7 +462,6 @@ function AddEditTenant({ mode }) {
         primaryColor: data.primaryColor || null,
         loginText: data.loginText.trim() || null,
       },
-      providers: [...updatedExistingProviders, ...newSelectedProviders],
     };
 
     const result =
@@ -567,6 +491,28 @@ function AddEditTenant({ mode }) {
           </h5>
           <Breadcrumbs className="app-breadcrumb mb-0" />
         </div>
+        {mode === "edit" && tenantId && (
+          <button
+            type="button"
+            className="btn btn-soft"
+            onClick={() => {
+              const tenantCodeValue =
+                watch("tenantCode") || decodedTenantKey || "";
+              if (tenantCodeValue) {
+                navigate(
+                  `/tenants/social-sign-in/${encodeURIComponent(String(tenantCodeValue))}`,
+                  { state: { id: tenantId } }
+                );
+                return;
+              }
+
+              navigate("/tenants/social-sign-in", { state: { id: tenantId } });
+            }}
+          >
+            <i className="fa fa-globe me-1" aria-hidden="true"></i>
+            Social Sign In
+          </button>
+        )}
       </div>
 
       {!isActive && (

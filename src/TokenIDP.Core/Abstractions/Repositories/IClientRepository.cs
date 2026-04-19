@@ -18,6 +18,7 @@ public interface IClientRepository
     Task<PaginatedList<ClientDetail>> SearchClientsAsync(int tenantId, SearchData request, CancellationToken ct);
     Task<ClientLookups> GetClientLookupsAsync(int tenantId, CancellationToken ct);
     Task<bool> ClientIdExistsAsync(int tenantId, string clientId, CancellationToken ct);
+    Task<IReadOnlyList<int>> GetTenantClientIdsAsync(int tenantId, CancellationToken ct);
 
     Task<IEnumerable<ClientExternalProviderSnapshot>> GetExternalProviders(int clientId);
 

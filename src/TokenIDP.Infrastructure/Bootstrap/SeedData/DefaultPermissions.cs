@@ -109,6 +109,24 @@ internal class DefaultPermissions
 
         tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
 
+        var socialSignInView = CreatePermission(
+            tenantId,
+            "tenants.socialsignin.view",
+            "Social Sign In",
+            "NavLink",
+            ++i,
+            "/tenants/social-sign-in",
+            "fa-globe");
+        socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
+        {
+            CreateActionPermission(
+                tenantId,
+                ++i,
+                "tenants.socialsignin.edit",
+                "Modify Social Sign In")
+        };
+        tenantsView.ChildPermissions.Add(socialSignInView);
+
         tenantsView.ChildPermissions.Add(CreateActionPermission(
             tenantId,
             ++i,

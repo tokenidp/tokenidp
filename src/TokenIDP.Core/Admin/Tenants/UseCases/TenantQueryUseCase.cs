@@ -48,6 +48,52 @@ internal sealed class TenantQueryUseCase
         return ApiResult<TenantDetail>.Success(tenant);
     }
 
+    public async Task<ApiResult<TenantSocialSignInDetail>> GetTenantSocialSignIn(
+        int tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsCrossTenantAccessDenied(tenantId))
+        {
+            return ApiResult<TenantSocialSignInDetail>.Failure(
+                ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
+        }
+
+        var tenant = await _tenantRepository.GetTenantWithProvidersAsync(tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return ApiResult<TenantSocialSignInDetail>.Failure(
+                ApiError.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(tenantId)));
+        }
+
+        var providerMap = tenant.TenantExternalProviders
+            .ToDictionary(provider => provider.ProviderType, provider => provider);
+
+        var result = new TenantSocialSignInDetail
+        {
+            TenantId = tenant.Id,
+            TenantName = tenant.TenantName,
+            TenantCode = tenant.TenantCode,
+            Providers = Enum.GetValues<ExternalProviderTypes>()
+                .Select(providerType =>
+                {
+                    providerMap.TryGetValue(providerType, out var provider);
+
+                    return new TenantSocialProviderDetail
+                    {
+                        ProviderType = providerType,
+                        Enabled = provider?.Enabled ?? false,
+                        HasClientSecret = provider?.OidcConfig?.ClientSecret is { Length: > 0 },
+                        ClientId = provider?.OidcConfig?.ClientId ?? string.Empty,
+                        ClientSecret = provider?.OidcConfig?.ClientSecret is { Length: > 0 } ? "********" : null,
+                        Scopes = provider?.OidcConfig?.Scopes ?? string.Empty
+                    };
+                })
+                .ToList()
+        };
+
+        return ApiResult<TenantSocialSignInDetail>.Success(result);
+    }
+
     public async Task<ApiResult<RevealTenantProviderSecretResponse>> RevealTenantProviderSecret(
         int tenantId,
         RevealTenantProviderSecretRequest request,

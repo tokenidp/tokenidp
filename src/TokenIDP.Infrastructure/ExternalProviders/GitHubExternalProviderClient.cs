@@ -25,13 +25,14 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
     public override string BuildAuthorizeUrl(ExternalChallengeRequest request)
     {
         var config = ResolveConfigurationAsync(request.TenantId).GetAwaiter().GetResult();
+        var scope = string.IsNullOrWhiteSpace(config.Scopes) ? Scope : config.Scopes;
         var endpoint = Combine(Authority, "/login/oauth/authorize");
 
         var parameters = new Dictionary<string, string?>
         {
             ["client_id"] = config.ClientId,
             ["redirect_uri"] = request.CallbackUrl,
-            ["scope"] = Scope,
+            ["scope"] = scope,
             ["state"] = request.State
         };
 
@@ -43,6 +44,7 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
         CancellationToken cancellationToken)
     {
         var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
+        var scope = string.IsNullOrWhiteSpace(config.Scopes) ? Scope : config.Scopes;
         var endpoint = Combine(Authority, "/login/oauth/access_token");
 
         using var client = CreateClient();
@@ -58,7 +60,7 @@ internal sealed class GitHubExternalProviderClient : ExternalProviderClientBase
                 new("code", request.Code),
                 new("redirect_uri", request.CallbackUrl),
                 new("state", request.State),
-                new("scope", Scope)
+                new("scope", scope)
             ]),
             cancellationToken);
 

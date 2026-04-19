@@ -26,6 +26,10 @@ internal class TenantExternalProviderConfig : IEntityTypeConfiguration<TenantExt
             cfg.Property(p => p.ClientSecret)
                .HasColumnName("ClientSecret")
                .HasMaxLength(250);
+
+            cfg.Property(p => p.Scopes)
+               .HasColumnName("Scopes")
+               .HasMaxLength(1000);
         });
 
         builder.HasOne(t => t.Tenant)

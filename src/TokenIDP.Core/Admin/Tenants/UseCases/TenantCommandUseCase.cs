@@ -9,6 +9,7 @@ internal sealed class TenantCommandUseCase
 {
     private const int SystemTenantId = 1;
     private readonly ITenantRepository _tenantRepository;
+    private readonly IClientRepository _clientRepository;
     private readonly ICache _cache;
     private readonly ICurrentUserService _currentUserService;
     private readonly IAppLogger<TenantCommandUseCase> _logger;
@@ -17,6 +18,7 @@ internal sealed class TenantCommandUseCase
 
     public TenantCommandUseCase(
         ITenantRepository tenantRepository,
+        IClientRepository clientRepository,
         ICache cache,
         ICurrentUserService currentUserService,
         IAppLogger<TenantCommandUseCase> logger,
@@ -24,6 +26,7 @@ internal sealed class TenantCommandUseCase
         ISecretProtector secretProtector)
     {
         _tenantRepository = tenantRepository;
+        _clientRepository = clientRepository;
         _cache = cache;
         _currentUserService = currentUserService;
         _logger = logger;
@@ -37,7 +40,6 @@ internal sealed class TenantCommandUseCase
     {
         var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();
         var uiSettingsRequest = request.UISetting ?? new TenantUISettingDetail();
-        var providersRequest = request.Providers ?? new List<TenantExternalProviderDetail>();
 
         _logger.LogDebug("Creating tenant {TenantName} by user {UserId}",
             request.TenantName, _currentUserService.UserId);
@@ -107,20 +109,6 @@ internal sealed class TenantCommandUseCase
 
         tenant.GenerateTenantCode(nextValue);
 
-        foreach (var p in providersRequest)
-        {
-            var config = OidcClientConfig.Create(
-                clientId: p.ClientId,
-                clientSecret: EncryptProviderSecret(tenant.Id.ToString(), p.ProviderType, p.ClientSecret));
-
-            var addResult = tenant.AddExternalProvider(p.ProviderType, config);
-            if (!addResult.IsSuccess)
-                return FailureFromResult(addResult);
-
-            if (!p.Enabled)
-                tenant.DisableExternalProvider(p.ProviderType);
-        }
-
         await _tenantRepository.AddAsync(tenant, cancellationToken);
         await InvalidateLookupCaches(tenant.Id);
 
@@ -135,7 +123,6 @@ internal sealed class TenantCommandUseCase
     {
         var authSettingsRequest = request.AuthSettings ?? new TenantAuthSettingDetail();
         var uiSettingsRequest = request.UISetting ?? new TenantUISettingDetail();
-        var providersRequest = request.Providers ?? new List<TenantExternalProviderDetail>();
 
         _logger.LogDebug("Updating tenant {TenantId}", id);
 
@@ -215,67 +202,139 @@ internal sealed class TenantCommandUseCase
             return FailureFromResult(authConfigureResult);
         }
 
-        foreach (var p in providersRequest)
-        {
-            var existingProvider = tenant.TenantExternalProviders
-                .FirstOrDefault(x => x.ProviderType == p.ProviderType);
-
-            var resolvedClientSecret = string.IsNullOrWhiteSpace(p.ClientSecret)
-                ? existingProvider?.OidcConfig?.ClientSecret
-                : p.ClientSecret;
-            var encryptedClientSecret = EncryptProviderSecret(tenant.Id.ToString(), p.ProviderType, resolvedClientSecret);
-
-            var config = OidcClientConfig.Create(
-                p.ClientId,
-                encryptedClientSecret);
-
-            if (existingProvider is null)
-            {
-                var addResult = tenant.AddExternalProvider(p.ProviderType, config);
-                if (!addResult.IsSuccess)
-                    return FailureFromResult(addResult);
-            }
-            else
-            {
-                var updateProviderResult = tenant.UpdateExternalProviderConfig(p.ProviderType, config);
-                if (!updateProviderResult.IsSuccess)
-                    return FailureFromResult(updateProviderResult);
-            }
-
-            if (p.Enabled)
-            {
-                var enableResult = tenant.EnableExternalProvider(p.ProviderType);
-                if (!enableResult.IsSuccess)
-                    return FailureFromResult(enableResult);
-            }
-            else
-            {
-                var disableResult = tenant.DisableExternalProvider(p.ProviderType);
-                if (!disableResult.IsSuccess)
-                    return FailureFromResult(disableResult);
-            }
-        }
-
-        // Any existing provider missing from the request is treated as unchecked.
-        var requestedProviderTypes = providersRequest
-            .Select(p => p.ProviderType)
-            .ToHashSet();
-
-        foreach (var existingProviderType in tenant.TenantExternalProviders
-                     .Select(p => p.ProviderType)
-                     .Where(type => !requestedProviderTypes.Contains(type)))
-        {
-            var disableMissingResult = tenant.DisableExternalProvider(existingProviderType);
-            if (!disableMissingResult.IsSuccess)
-                return FailureFromResult(disableMissingResult);
-        }
-
         await _tenantRepository.SaveChangesAsync(cancellationToken);
         await InvalidateLookupCaches(id);
 
         _logger.LogInfo("Tenant updated {TenantId}", id);
 
         return ApiResult<int>.Success(tenant.Id);
+    }
+
+    public async Task<ApiResult<TenantSocialProviderDetail>> UpdateTenantSocialProvider(
+        int tenantId,
+        ExternalProviderTypes providerType,
+        UpdateTenantSocialProvider request,
+        CancellationToken cancellationToken = default)
+    {
+        if (IsCrossTenantAccessDenied(tenantId))
+        {
+            return ApiResult<TenantSocialProviderDetail>.Failure(
+                ApiError.Failure("tenant.forbidden", "Cross-tenant access is not allowed."));
+        }
+
+        var tenant = await _tenantRepository.GetTenantAggregateAsync(tenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return ApiResult<TenantSocialProviderDetail>.Failure(
+                ApiError.Failure("NotFound", "Tenant not found for the Id {0}".FormatString(tenantId)));
+        }
+
+        var existingProvider = tenant.TenantExternalProviders
+            .FirstOrDefault(provider => provider.ProviderType == providerType);
+
+        var hasAnySubmittedConfig =
+            !string.IsNullOrWhiteSpace(request.ClientId)
+            || !string.IsNullOrWhiteSpace(request.ClientSecret)
+            || !string.IsNullOrWhiteSpace(request.Scopes)
+            || request.Enabled;
+
+        if (existingProvider is null && !hasAnySubmittedConfig)
+        {
+            return ApiResult<TenantSocialProviderDetail>.Success(new TenantSocialProviderDetail
+            {
+                ProviderType = providerType,
+                Enabled = false,
+                HasClientSecret = false,
+                ClientId = string.Empty,
+                ClientSecret = null,
+                Scopes = string.Empty
+            });
+        }
+
+        var effectiveClientId = string.IsNullOrWhiteSpace(request.ClientId)
+            ? existingProvider?.OidcConfig?.ClientId ?? string.Empty
+            : request.ClientId.Trim();
+        var effectiveScopes = string.IsNullOrWhiteSpace(request.Scopes)
+            ? existingProvider?.OidcConfig?.Scopes ?? string.Empty
+            : request.Scopes.Trim();
+        var effectiveSecret = string.IsNullOrWhiteSpace(request.ClientSecret)
+            ? existingProvider?.OidcConfig?.ClientSecret
+            : EncryptProviderSecret(tenant.Id.ToString(), providerType, request.ClientSecret.Trim());
+
+        if (request.Enabled)
+        {
+            if (string.IsNullOrWhiteSpace(effectiveClientId))
+            {
+                return ApiResult<TenantSocialProviderDetail>.Failure(
+                    ApiError.Failure("tenant.provider.client_id.required",
+                        "Client ID is required when provider is enabled."));
+            }
+
+            if (string.IsNullOrWhiteSpace(effectiveScopes))
+            {
+                return ApiResult<TenantSocialProviderDetail>.Failure(
+                    ApiError.Failure("tenant.provider.scopes.required",
+                        "Scopes are required when provider is enabled."));
+            }
+
+            if (string.IsNullOrWhiteSpace(effectiveSecret))
+            {
+                return ApiResult<TenantSocialProviderDetail>.Failure(
+                    ApiError.Failure("tenant.provider.client_secret.required",
+                        "Client secret is required when provider is enabled."));
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(effectiveClientId))
+        {
+            return ApiResult<TenantSocialProviderDetail>.Failure(
+                ApiError.Failure("tenant.provider.client_id.required",
+                    "Client ID is required to configure the provider."));
+        }
+
+        var config = OidcClientConfig.Create(
+            effectiveClientId,
+            effectiveSecret,
+            effectiveScopes);
+
+        if (existingProvider is null)
+        {
+            var addResult = tenant.AddExternalProvider(providerType, config);
+            if (!addResult.IsSuccess)
+            {
+                return FailureFromResult<TenantSocialProviderDetail>(addResult);
+            }
+        }
+        else
+        {
+            var updateProviderResult = tenant.UpdateExternalProviderConfig(providerType, config);
+            if (!updateProviderResult.IsSuccess)
+            {
+                return FailureFromResult<TenantSocialProviderDetail>(updateProviderResult);
+            }
+        }
+
+        var toggleResult = request.Enabled
+            ? tenant.EnableExternalProvider(providerType)
+            : tenant.DisableExternalProvider(providerType);
+        if (!toggleResult.IsSuccess)
+        {
+            return FailureFromResult<TenantSocialProviderDetail>(toggleResult);
+        }
+
+        await _tenantRepository.SaveChangesAsync(cancellationToken);
+        await InvalidateLookupCaches(tenantId);
+        await InvalidateProviderCaches(tenantId, providerType, cancellationToken);
+
+        return ApiResult<TenantSocialProviderDetail>.Success(new TenantSocialProviderDetail
+        {
+            ProviderType = providerType,
+            Enabled = request.Enabled,
+            HasClientSecret = !string.IsNullOrWhiteSpace(effectiveSecret),
+            ClientId = effectiveClientId,
+            ClientSecret = !string.IsNullOrWhiteSpace(effectiveSecret) ? "********" : null,
+            Scopes = effectiveScopes
+        });
     }
 
     public async Task<ApiResult<int>> DeleteTenant(
@@ -326,10 +385,29 @@ internal sealed class TenantCommandUseCase
             result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
     }
 
+    private static ApiResult<T> FailureFromResult<T>(Result result)
+    {
+        return ApiResult<T>.Failure(
+            result.Errors.Select(e => ApiError.Failure(e.Code, e.Message)).ToList());
+    }
+
     private async Task InvalidateLookupCaches(int tenantId)
     {
         await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
         await _cache.RemoveAsync($"{CacheKeys.LOOKUP}:client:{tenantId}");
+    }
+
+    private async Task InvalidateProviderCaches(
+        int tenantId,
+        ExternalProviderTypes providerType,
+        CancellationToken cancellationToken)
+    {
+        var clientIds = await _clientRepository.GetTenantClientIdsAsync(tenantId, cancellationToken);
+        foreach (var clientId in clientIds)
+        {
+            await _cache.RemoveAsync("CLT".FormatCacheKey("EPRV", clientId));
+            await _cache.RemoveAsync("CLT".FormatCacheKey("EPRV", tenantId, clientId, providerType));
+        }
     }
 
     private async Task<bool> CheckTenantByKey(string key, CancellationToken cancellationToken)

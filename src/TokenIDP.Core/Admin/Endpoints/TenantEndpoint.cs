@@ -138,9 +138,96 @@ internal class TenantEndpoint : IEndpointDefinition
         })
         .RequireAuthorization(new AuthorizeAttribute
         {
-            Policy = "Tenant.Secret.Reveal"
+            Policy = "tenant.secret.reveal"
         })
         .WithName("RevealTenantProviderSecret")
+        .WithTags("Tenants");
+
+        authGroup.MapGet("/{id}/social-signin", async (int id,
+            TenantQueryUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.GetTenantSocialSignIn(id, httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tenants.socialsignin.view"
+        })
+        .WithName("TenantSocialSignIn")
+        .WithTags("Tenants");
+
+        authGroup.MapPut("/{id}/social-signin/{providerType}", async (
+            int id,
+            string providerType,
+            UpdateTenantSocialProvider request,
+            TenantCommandUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            if (!Enum.TryParse<ExternalProviderTypes>(providerType, true, out var parsedProviderType))
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("tenant.provider.invalid", "Invalid external provider type.")));
+            }
+
+            var response = await useCase.UpdateTenantSocialProvider(
+                id,
+                parsedProviderType,
+                request,
+                httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tenants.socialsignin.edit"
+        })
+        .WithName("UpdateTenantSocialSignInProvider")
+        .WithTags("Tenants");
+
+        authGroup.MapPost("/{id}/social-signin/{providerType}/reveal-secret", async (
+            int id,
+            string providerType,
+            TenantQueryUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            if (!Enum.TryParse<ExternalProviderTypes>(providerType, true, out var parsedProviderType))
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("tenant.provider.invalid", "Invalid external provider type.")));
+            }
+
+            var response = await useCase.RevealTenantProviderSecret(
+                id,
+                new RevealTenantProviderSecretRequest { ProviderType = parsedProviderType },
+                httpContext.RequestAborted);
+
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tenant.secret.reveal"
+        })
+        .WithName("RevealTenantSocialSignInProviderSecret")
         .WithTags("Tenants");
     }
 }

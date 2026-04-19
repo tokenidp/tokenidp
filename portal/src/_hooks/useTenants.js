@@ -273,6 +273,65 @@ export const TenantsProvider = ({ children }) => {
     [post]
   );
 
+  const getTenantSocialSignIn = useCallback(
+    async (id) => {
+      try {
+        const response = await get(`admin/tenant/${id}/social-signin`);
+        dispatch({ type: actions.CLEAR_ERROR });
+        return normalizeResult(response) || null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload: error?.message || "Failed to load tenant social sign-in.",
+        });
+        return null;
+      }
+    },
+    [get]
+  );
+
+  const updateTenantSocialProvider = useCallback(
+    async (id, providerType, payload) => {
+      dispatch({ type: actions.CREATE_START });
+      try {
+        const response = await put(
+          `admin/tenant/${id}/social-signin/${providerType}`,
+          payload
+        );
+        dispatch({ type: actions.CREATE_SUCCESS, payload: id });
+        return normalizeResult(response) || null;
+      } catch (error) {
+        dispatch({
+          type: actions.CREATE_ERROR,
+          payload: error?.message || "Failed to update tenant social sign-in.",
+        });
+        return null;
+      }
+    },
+    [put]
+  );
+
+  const revealTenantSocialProviderSecret = useCallback(
+    async (id, providerType) => {
+      try {
+        const response = await post(
+          `admin/tenant/${id}/social-signin/${providerType}/reveal-secret`
+        );
+        dispatch({ type: actions.CLEAR_ERROR });
+        return normalizeResult(response) || null;
+      } catch (error) {
+        dispatch({
+          type: actions.LIST_ERROR,
+          payload:
+            error?.message ||
+            "Failed to reveal tenant social sign-in provider secret.",
+        });
+        return null;
+      }
+    },
+    [post]
+  );
+
   const deleteTenant = useCallback(
     async (id) => {
       try {
@@ -301,10 +360,13 @@ export const TenantsProvider = ({ children }) => {
         loadTenants,
         loadLookups,
         getTenantById,
+        getTenantSocialSignIn,
         resolveTenantIdByCode,
         createTenant,
         updateTenant,
+        updateTenantSocialProvider,
         revealTenantProviderSecret,
+        revealTenantSocialProviderSecret,
         deleteTenant,
         clearStatus,
       }}

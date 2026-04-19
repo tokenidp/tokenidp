@@ -315,6 +315,15 @@ internal sealed class ClientRepository : IClientRepository
                 ct);
     }
 
+    public async Task<IReadOnlyList<int>> GetTenantClientIdsAsync(int tenantId, CancellationToken ct)
+    {
+        return await _dbContext.Clients
+            .AsNoTracking()
+            .Where(client => client.TenantId == tenantId && !client.IsDeleted)
+            .Select(client => client.Id)
+            .ToListAsync(ct);
+    }
+
     public async Task<IEnumerable<ClientExternalProviderSnapshot>> GetExternalProviders(int clientId)
     {
         _logger.LogDebug("GetExternalProviders: Get external providers for client: {ClientId}", clientId);
@@ -333,7 +342,8 @@ internal sealed class ClientRepository : IClientRepository
                                     cp.EnabledForClient,
                                     tp.Enabled,
                                     tp.OidcConfig!.ClientId,
-                                    tp.OidcConfig.ClientSecret
+                                    tp.OidcConfig.ClientSecret,
+                                    tp.OidcConfig.Scopes
                                 )).ToListAsync();
 
             _logger.LogDebug("Cached client external providers for {CacheKey}", cacheKey);

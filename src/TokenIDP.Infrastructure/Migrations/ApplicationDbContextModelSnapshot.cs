@@ -3029,6 +3029,11 @@ namespace TokenIDP.Infrastructure.Migrations
                                 .HasColumnType("nvarchar(250)")
                                 .HasColumnName("ClientSecret");
 
+                            b1.Property<string>("Scopes")
+                                .HasMaxLength(1000)
+                                .HasColumnType("nvarchar(1000)")
+                                .HasColumnName("Scopes");
+
                             b1.HasKey("TenantExternalProviderId");
 
                             b1.ToTable("TenantExternalProviders");

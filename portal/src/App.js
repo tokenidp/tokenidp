@@ -23,6 +23,7 @@ import AdminDashboard from "./_components/admin-dashboard/AdminDashboard";
 import TenantsLayout from "./_components/tenants/tenantsLayout";
 import TenantsList from "./_components/tenants/tenantsList";
 import AddEditTenant from "./_components/tenants/addEditTenant";
+import TenantSocialSignIn from "./_components/tenants/tenantSocialSignIn";
 import TokensList from "./_components/tokens/tokensList";
 import TokensLayout from "./_components/tokens/tokensLayout";
 import ActivitiesList from "./_components/activities/activitiesList";
@@ -251,6 +252,22 @@ function App() {
                 element={
                   <PrivateRoute requiredAnyOf={["tenants.edit"]}>
                     <AddEditTenant mode="edit" />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="social-sign-in"
+                element={
+                  <PrivateRoute requiredAnyOf={["tenants.socialsignin.view"]}>
+                    <TenantSocialSignIn />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="social-sign-in/:tenantKey"
+                element={
+                  <PrivateRoute requiredAnyOf={["tenants.socialsignin.view"]}>
+                    <TenantSocialSignIn />
                   </PrivateRoute>
                 }
               />

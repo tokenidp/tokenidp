@@ -43,3 +43,18 @@ internal sealed class TenantExternalProviderDetailValidator : AbstractValidator<
         });
     }
 }
+
+internal sealed class UpdateTenantSocialProviderValidator : AbstractValidator<UpdateTenantSocialProvider>
+{
+    public UpdateTenantSocialProviderValidator()
+    {
+        When(x => x.Enabled, () =>
+        {
+            RuleFor(x => x.ClientId)
+                .NotEmpty();
+
+            RuleFor(x => x.Scopes)
+                .NotEmpty();
+        });
+    }
+}

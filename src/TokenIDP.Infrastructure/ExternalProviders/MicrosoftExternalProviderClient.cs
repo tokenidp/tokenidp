@@ -27,6 +27,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
     public override string BuildAuthorizeUrl(ExternalChallengeRequest request)
     {
         var config = ResolveConfigurationAsync(request.TenantId).GetAwaiter().GetResult();
+        var scope = string.IsNullOrWhiteSpace(config.Scopes) ? Scope : config.Scopes;
         var endpoint = Combine(Authority, "/oauth2/v2.0/authorize");
 
         var parameters = new Dictionary<string, string?>
@@ -34,7 +35,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
             ["client_id"] = config.ClientId,
             ["response_type"] = "code",
             ["redirect_uri"] = request.CallbackUrl,
-            ["scope"] = Scope,
+            ["scope"] = scope,
             ["state"] = request.State,
             ["nonce"] = request.Nonce,
             ["code_challenge"] = request.CodeVerifier is null ? null : PkceGenerator.CreateCodeChallenge(request.CodeVerifier),
@@ -49,6 +50,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
         CancellationToken cancellationToken)
     {
         var config = await ResolveConfigurationAsync(request.TenantId, cancellationToken);
+        var scope = string.IsNullOrWhiteSpace(config.Scopes) ? Scope : config.Scopes;
         var endpoint = Combine(Authority, "/oauth2/v2.0/token");
 
         var form = new List<KeyValuePair<string, string>>
@@ -58,7 +60,7 @@ internal sealed class MicrosoftExternalProviderClient : ExternalProviderClientBa
             new("client_secret", config.ClientSecret),
             new("code", request.Code),
             new("redirect_uri", request.CallbackUrl),
-            new("scope", Scope)
+            new("scope", scope)
         };
 
         if (!string.IsNullOrWhiteSpace(request.CodeVerifier))

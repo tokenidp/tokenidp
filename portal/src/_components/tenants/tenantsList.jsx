@@ -428,6 +428,30 @@ function TenantsList() {
                               return;
                             }
                             navigate(
+                              `social-sign-in/${encodeURIComponent(String(tenantCode))}`,
+                              {
+                                state: { id },
+                              },
+                            );
+                          }}
+                          title="Social Sign In"
+                        >
+                          <i className="fa fa-globe"></i>
+                        </button>
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
+                          onClick={() => {
+                            const id = getField(item, "id", "Id");
+                            const tenantCode = getField(
+                              item,
+                              "tenantCode",
+                              "TenantCode",
+                            );
+                            if (!tenantCode) {
+                              return;
+                            }
+                            navigate(
                               `edit/${encodeURIComponent(String(tenantCode))}`,
                               {
                                 state: { id },
