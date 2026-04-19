@@ -325,7 +325,7 @@ function AuthenticationActivity({ series, totals }) {
 
     const maxValue = Math.max(
       1,
-      ...normalizedSeries.map((point) => point.success + point.failed),
+      ...normalizedSeries.flatMap((point) => [point.success, point.failed]),
     );
     const yMax = roundUpYAxis(maxValue);
 
@@ -335,11 +335,17 @@ function AuthenticationActivity({ series, totals }) {
     const toY = (value) =>
       CHART_MARGIN.top + innerHeight - (value / yMax) * innerHeight;
 
-    // Single combined total line
-    const totalPoints = normalizedSeries.map((point) => ({
+    const successPoints = normalizedSeries.map((point) => ({
       x: toX(point.timestamp),
-      y: toY(point.success + point.failed),
-      value: point.success + point.failed,
+      y: toY(point.success),
+      value: point.success,
+      timestamp: point.timestamp,
+    }));
+
+    const failedPoints = normalizedSeries.map((point) => ({
+      x: toX(point.timestamp),
+      y: toY(point.failed),
+      value: point.failed,
       timestamp: point.timestamp,
     }));
 
@@ -365,14 +371,20 @@ function AuthenticationActivity({ series, totals }) {
     });
 
     return {
-      totalLinePath: createLinePath(totalPoints),
-      totalAreaPath: createAreaPath(
-        totalPoints,
+      successLinePath: createLinePath(successPoints),
+      successAreaPath: createAreaPath(
+        successPoints,
+        CHART_MARGIN.top + innerHeight,
+      ),
+      failedLinePath: createLinePath(failedPoints),
+      failedAreaPath: createAreaPath(
+        failedPoints,
         CHART_MARGIN.top + innerHeight,
       ),
       yTicks,
       xTicks,
-      totalPoints,
+      successPoints,
+      failedPoints,
     };
   }, [normalizedSeries]);
 
@@ -424,6 +436,16 @@ function AuthenticationActivity({ series, totals }) {
             </strong>
           </span>
         </div>
+        <div className="dashboard-auth-legend">
+          <span className="dashboard-auth-legend-item">
+            <span className="dashboard-auth-legend-swatch is-success" />
+            Successful
+          </span>
+          <span className="dashboard-auth-legend-item">
+            <span className="dashboard-auth-legend-swatch is-failed" />
+            Failed
+          </span>
+        </div>
       </div>
       <div className="card-body">
         <div className="dashboard-auth-chart-shell">
@@ -436,9 +458,13 @@ function AuthenticationActivity({ series, totals }) {
             aria-label="Authentication activity chart"
           >
             <defs>
-              <linearGradient id="auth-total-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.22" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.03" />
+              <linearGradient id="auth-success-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#22c55e" stopOpacity="0.18" />
+                <stop offset="100%" stopColor="#22c55e" stopOpacity="0.03" />
+              </linearGradient>
+              <linearGradient id="auth-failed-fill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.16" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.02" />
               </linearGradient>
             </defs>
 
@@ -474,18 +500,34 @@ function AuthenticationActivity({ series, totals }) {
               </text>
             ))}
 
-            {chart.totalAreaPath && (
-              <path d={chart.totalAreaPath} fill="url(#auth-total-fill)" />
+            {chart.successAreaPath && (
+              <path d={chart.successAreaPath} fill="url(#auth-success-fill)" />
             )}
 
-            {chart.totalLinePath && (
+            {chart.failedAreaPath && (
+              <path d={chart.failedAreaPath} fill="url(#auth-failed-fill)" />
+            )}
+
+            {chart.successLinePath && (
               <path
-                d={chart.totalLinePath}
+                d={chart.successLinePath}
                 fill="none"
-                stroke="#3b82f6"
+                stroke="#22c55e"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+              />
+            )}
+
+            {chart.failedLinePath && (
+              <path
+                d={chart.failedLinePath}
+                fill="none"
+                stroke="#ef4444"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="6 4"
               />
             )}
           </svg>
