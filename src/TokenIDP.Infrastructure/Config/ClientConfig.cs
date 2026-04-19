@@ -11,6 +11,7 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
 
         builder.Property(x => x.ClientId).HasMaxLength(100).IsRequired();
         builder.Property(x => x.ClientName).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.IconUrl).HasMaxLength(500);
 
         builder.Property(x => x.ClientType).HasMaxLength(50).IsRequired();
         builder.Property(x => x.TokenType).HasMaxLength(50).IsRequired();

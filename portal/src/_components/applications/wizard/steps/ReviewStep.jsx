@@ -194,6 +194,10 @@ function ReviewStep({
                 <div className="text-muted small">Description</div>
                 <div>{values.description || "--"}</div>
               </div>
+              <div>
+                <div className="text-muted small">Icon URL</div>
+                <div>{values.iconUrl || "--"}</div>
+              </div>
             </div>
           </div>
 

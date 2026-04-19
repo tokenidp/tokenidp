@@ -1628,15 +1628,19 @@ table td i {
   height: 54px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   border-radius: 14px;
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--surface-border);
 }
 
 .application-grid-card-avatar {
-  width: 34px;
-  height: 34px;
+  width: auto;
+  height: auto;
+  max-width: 30px;
+  max-height: 30px;
   object-fit: contain;
+  display: block;
 }
 
 .application-grid-card-title {

@@ -28,6 +28,11 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
             .Must(value => string.IsNullOrWhiteSpace(value) || BeAbsoluteUri(value))
             .WithMessage("LogoutRedirectUri must be a valid absolute URI.");
 
+        RuleFor(x => x.IconUrl)
+            .MaximumLength(500)
+            .Must(value => string.IsNullOrWhiteSpace(value) || BeAbsoluteUri(value))
+            .WithMessage("IconUrl must be a valid absolute URI.");
+
         RuleFor(x => x.AccessTokenLifetime)
             .GreaterThan(0);
 

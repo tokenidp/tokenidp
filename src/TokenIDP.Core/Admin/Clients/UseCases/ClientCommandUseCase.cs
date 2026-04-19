@@ -49,6 +49,7 @@ internal sealed class ClientCommandUseCase
             clientId,
             request.ClientName,
             request.Description,
+            request.IconUrl,
             request.AppType,
             request.AccessTokenType,
             request.RedirectUri,
@@ -117,6 +118,7 @@ internal sealed class ClientCommandUseCase
         var updateResult = client.UpdateClient(
             request.ClientName,
             request.Description,
+            request.IconUrl,
             request.AppType,
             request.AccessTokenType,
             request.RedirectUri,

@@ -6,6 +6,7 @@ public class CreateUpdateClient
     public string ClientName { get; set; } = default!;
     public string RedirectUri { get; set; } = default!;
     public string? Description { get; set; }
+    public string? IconUrl { get; set; }
     public ClientTypes AppType { get; set; }
     public TokenTypes AccessTokenType { get; set; }
     public string? LogoutRedirectUri { get; set; }

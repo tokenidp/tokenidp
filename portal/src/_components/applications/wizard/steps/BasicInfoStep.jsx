@@ -137,6 +137,31 @@ function BasicInfoStep({
               </div>
             </div>
             <div className="col-12">
+              <label className="form-label fw-semibold">Icon URL</label>
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="fa fa-image"></i>
+                </span>
+                <input
+                  className={`form-control${errors.iconUrl ? " is-invalid" : ""}`}
+                  type="url"
+                  placeholder="https://cdn.example.com/apps/acme-logo.svg"
+                  {...register("iconUrl", {
+                    validate: (value) =>
+                      !value ||
+                      /^https?:\/\/.+/i.test(String(value).trim()) ||
+                      "Icon URL must be a valid absolute URL.",
+                  })}
+                />
+              </div>
+              <div className="form-text">
+                Optional logo shown in the application card list. Recommended: square SVG or PNG.
+              </div>
+              {errors.iconUrl && (
+                <div className="error-msg">{errors.iconUrl.message}</div>
+              )}
+            </div>
+            <div className="col-12">
               <div className="form-check form-switch app-switch mt-1 basic-info-active">
                 <input
                   className="form-check-input app-switch-input"

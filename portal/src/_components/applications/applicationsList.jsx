@@ -208,6 +208,7 @@ function ApplicationsList() {
   const getItemId = (item) => getField(item, "id", "Id");
   const getClientName = (item) => getField(item, "clientName", "ClientName");
   const getClientId = (item) => getField(item, "clientId", "ClientId");
+  const getIconUrl = (item) => getField(item, "iconUrl", "IconUrl");
   const getAppType = (item) => getField(item, "appType", "AppType");
   const getTokenType = (item) =>
     getField(
@@ -634,6 +635,7 @@ function ApplicationsList() {
                     state.appTypes,
                     getAppType(item),
                   );
+                  const iconUrl = getIconUrl(item);
                   const grantTypeLabel = getGrantTypeLabel(item);
                   const tokenTypeLabel = getLookupLabel(
                     state.tokenTypes,
@@ -685,9 +687,14 @@ function ApplicationsList() {
                       <div className="application-grid-card-icon">
                         <div className="application-grid-card-avatar-wrap">
                           <img
-                            src={defaultApplicationImage}
-                            alt="Application"
+                            src={iconUrl || defaultApplicationImage}
+                            alt={`${getClientName(item) || "Application"} logo`}
                             className="application-grid-card-avatar"
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.onerror = null;
+                              event.currentTarget.src = defaultApplicationImage;
+                            }}
                           />
                         </div>
                       </div>

@@ -9,6 +9,7 @@ public class ClientDetail
             ClientId = client.ClientId,
             ClientName = client.ClientName,
             Description = client.Description,
+            IconUrl = client.IconUrl,
             AppType = client.ClientType,
             TokenType = client.TokenType,
             RedirectUri = client.RedirectUri,
@@ -60,6 +61,7 @@ public class ClientDetail
     public string ClientId { get; private set; } = string.Empty;
     public string ClientName { get; private set; } = string.Empty;
     public string? Description { get; private set; }
+    public string? IconUrl { get; private set; }
     public ClientTypes AppType { get; private set; }
     public TokenTypes TokenType { get; private set; }
     public string RedirectUri { get; private set; } = string.Empty;

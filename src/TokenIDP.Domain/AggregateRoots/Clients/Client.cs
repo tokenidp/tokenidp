@@ -35,6 +35,7 @@ public class Client : AggregateRoot<int>, ITenant
     public string ClientId { get; private set; } = default!;
     public string ClientName { get; private set; } = default!;
     public string? Description { get; private set; }
+    public string? IconUrl { get; private set; }
     public ClientTypes ClientType { get; private set; }
     public TokenTypes TokenType { get; private set; }
     public int TenantId { get; private set; }
@@ -78,6 +79,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
+        string? iconUrl,
         ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -105,6 +107,7 @@ public class Client : AggregateRoot<int>, ITenant
         ClientId = clientId;
         ClientName = clientName;
         Description = description;
+        IconUrl = iconUrl;
         ClientType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
@@ -139,6 +142,7 @@ public class Client : AggregateRoot<int>, ITenant
     public Result UpdateClient(
         string clientName,
         string? description,
+        string? iconUrl,
         ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -171,6 +175,7 @@ public class Client : AggregateRoot<int>, ITenant
             ClientId,
             clientName,
             redirectUri,
+            iconUrl,
             accessTokenLifetime,
             authorizationCodeLifetime,
             refreshTokenExpiration,
@@ -200,6 +205,7 @@ public class Client : AggregateRoot<int>, ITenant
 
         ClientName = clientName;
         Description = description;
+        IconUrl = iconUrl;
         ClientType = appType;
         TokenType = tokenType;
         RedirectUri = redirectUri;
@@ -395,6 +401,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string? description,
+        string? iconUrl,
         ClientTypes appType,
         TokenTypes tokenType,
         string redirectUri,
@@ -425,6 +432,7 @@ public class Client : AggregateRoot<int>, ITenant
             clientId,
             clientName,
             redirectUri,
+            iconUrl,
             accessTokenLifetime,
             authorizationCodeLifetime,
             refreshTokenExpiration,
@@ -457,6 +465,7 @@ public class Client : AggregateRoot<int>, ITenant
             clientId.Trim(),
             clientName.Trim(),
             description?.Trim(),
+            iconUrl?.Trim(),
             appType,
             tokenType,
             redirectUri.Trim(),
@@ -487,6 +496,7 @@ public class Client : AggregateRoot<int>, ITenant
         string clientId,
         string clientName,
         string redirectUri,
+        string? iconUrl,
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
@@ -500,7 +510,9 @@ public class Client : AggregateRoot<int>, ITenant
             .Combine(ValidateRequired(clientName, "client.name.invalid",
                 "Client name cannot be empty."))
             .Combine(ValidateOptionalAbsoluteUri(redirectUri, "client.redirect.invalid",
-                "Redirect URI must be a valid absolute URI."));
+                "Redirect URI must be a valid absolute URI."))
+            .Combine(ValidateOptionalAbsoluteUri(iconUrl, "client.icon_url.invalid",
+                "Icon URL must be a valid absolute URI."));
 
         if (accessTokenLifetime <= 0)
         {

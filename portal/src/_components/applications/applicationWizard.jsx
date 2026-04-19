@@ -23,7 +23,7 @@ import ProtectionStep from "./wizard/steps/ProtectionStep";
 import ReviewStep from "./wizard/steps/ReviewStep";
 
 const stepFields = {
-  [WizardStep.BasicInfo]: ["clientName", "appType"],
+  [WizardStep.BasicInfo]: ["clientName", "appType", "iconUrl"],
   [WizardStep.Auth]: ["redirectUri"],
   [WizardStep.Scopes]: [],
   [WizardStep.Configurations]: [

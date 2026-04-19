@@ -17,6 +17,7 @@ internal class ClientProvisioningService : IClientProvisioningService
             clientId,
             command.ClientName,
             command.Description,
+            command.IconUrl,
             command.AppType,
             command.AccessTokenType,
             command.RedirectUri,

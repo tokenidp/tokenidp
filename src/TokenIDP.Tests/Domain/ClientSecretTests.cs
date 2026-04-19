@@ -13,6 +13,7 @@ public class ClientSecretTests
             clientId: "client-1",
             clientName: "Test Client",
             description: null,
+            iconUrl: null,
             appType: ClientTypes.WebApp,
             tokenType: TokenTypes.JWT,
             redirectUri: "https://app.example.com/callback",
@@ -69,6 +70,7 @@ public class ClientSecretTests
             clientId: "client-1",
             clientName: "Test Client",
             description: null,
+            iconUrl: null,
             appType: ClientTypes.WebApp,
             tokenType: TokenTypes.JWT,
             redirectUri: "https://app.example.com/callback",
@@ -99,6 +101,7 @@ public class ClientSecretTests
         var updateResult = client!.UpdateClient(
             clientName: "Updated Client",
             description: null,
+            iconUrl: null,
             appType: ClientTypes.WebApp,
             tokenType: TokenTypes.JWT,
             redirectUri: "https://app.example.com/callback",

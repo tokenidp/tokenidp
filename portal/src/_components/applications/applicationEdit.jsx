@@ -10,6 +10,7 @@ const emptyValues = {
   clientName: "",
   clientId: "",
   description: "",
+  iconUrl: "",
   appType: "",
   tokenType: "",
   redirectUri: "",
@@ -102,6 +103,7 @@ function ApplicationEdit() {
         clientName: data.clientName ?? data.ClientName ?? "",
         clientId: data.clientId ?? data.ClientId ?? "",
         description: data.description ?? data.Description ?? "",
+        iconUrl: data.iconUrl ?? data.IconUrl ?? "",
         appType: String(data.appType ?? data.AppType ?? ""),
         tokenType: String(
           data.tokenType ?? data.TokenType ?? data.accessTokenType ?? data.AccessTokenType ?? ""
@@ -250,6 +252,7 @@ function ApplicationEdit() {
       clientId: data.clientId.trim(),
       clientName: data.clientName.trim(),
       description: data.description?.trim() || null,
+      iconUrl: String(data.iconUrl ?? "").trim() || null,
       appType: Number(data.appType),
       accessTokenType: Number(data.tokenType),
       redirectUri: String(data.redirectUri ?? "").trim(),
