@@ -700,7 +700,7 @@ function ApplicationsList() {
                       <div className="application-grid-card-meta">
                         <div className="application-grid-card-meta-item">
                           <span className="application-grid-card-meta-label">
-                            App Type
+                            App Type:
                           </span>
                           <span className="application-grid-card-meta-value">
                             {appTypeLabel}
@@ -708,7 +708,7 @@ function ApplicationsList() {
                         </div>
                         <div className="application-grid-card-meta-item">
                           <span className="application-grid-card-meta-label">
-                            Grant Type
+                            Grant Type:
                           </span>
                           <span className="application-grid-card-meta-value">
                             {grantTypeLabel}
@@ -716,7 +716,7 @@ function ApplicationsList() {
                         </div>
                         <div className="application-grid-card-meta-item">
                           <span className="application-grid-card-meta-label">
-                            Token Type
+                            Token Type:
                           </span>
                           <span className="application-grid-card-meta-value">
                             {tokenTypeLabel}
