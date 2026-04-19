@@ -34,6 +34,10 @@ public sealed class TimeSeriesPoint
     public long Value { get; init; }
     public long Successful { get; init; }
     public long Failed { get; init; }
+    public long AccessTokens { get; init; }
+    public long RefreshTokens { get; init; }
+    public long MfaChallenges { get; init; }
+    public long AccountLockouts { get; init; }
 }
 
 public sealed class MetricSummary

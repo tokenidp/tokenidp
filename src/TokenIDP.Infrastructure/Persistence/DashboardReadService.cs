@@ -96,17 +96,25 @@ internal sealed class DashboardReadService : IDashboardReadService
             : Convert.ToInt32(Math.Round((double)grantTypeTokens * 100 / accessTokenCount, 0));
 
         dashboard.TokensLast24h = historicalRows
-            .Where(x => x.MetricKey == MetricType.TokensIssued)
             .GroupBy(x => x.BucketStart)
             .Select(g => new TimeSeriesPoint
             {
                 Timestamp = g.Key,
-                Value = g.Sum(x => x.MetricValue)
+                AccessTokens = g.Where(x => x.MetricKey == MetricType.TokensIssued).Sum(x => x.MetricValue),
+                RefreshTokens = g.Where(x => x.MetricKey == MetricType.RefreshTokensIssued).Sum(x => x.MetricValue),
+                Value = g.Where(x =>
+                    x.MetricKey == MetricType.TokensIssued ||
+                    x.MetricKey == MetricType.RefreshTokensIssued).Sum(x => x.MetricValue)
             })
             .Append(new TimeSeriesPoint
             {
                 Timestamp = currentHourBucketStart,
-                Value = currentHourTokens.Count(x => x.SourceType == "JWT" || x.SourceType == "Reference")
+                AccessTokens = currentHourTokens.Count(x => x.SourceType == "JWT" || x.SourceType == "Reference"),
+                RefreshTokens = currentHourTokens.Count(x => x.SourceType == "Refresh"),
+                Value = currentHourTokens.Count(x =>
+                    x.SourceType == "JWT" ||
+                    x.SourceType == "Reference" ||
+                    x.SourceType == "Refresh")
             })
             .OrderBy(x => x.Timestamp)
             .ToList();
@@ -202,6 +210,8 @@ internal sealed class DashboardReadService : IDashboardReadService
                 Timestamp = g.Key,
                 Successful = g.Where(x => x.MetricKey == MetricType.AuthSuccess).Sum(x => x.MetricValue),
                 Failed = g.Where(x => x.MetricKey == MetricType.AuthFailed).Sum(x => x.MetricValue),
+                MfaChallenges = g.Where(x => x.MetricKey == MetricType.MfaChallenges).Sum(x => x.MetricValue),
+                AccountLockouts = g.Where(x => x.MetricKey == MetricType.AccountLockout).Sum(x => x.MetricValue),
                 Value = g.Where(x => x.MetricKey == MetricType.AuthSuccess || x.MetricKey == MetricType.AuthFailed)
                     .Sum(x => x.MetricValue)
             });
@@ -212,6 +222,8 @@ internal sealed class DashboardReadService : IDashboardReadService
                 Timestamp = currentHourBucketStart,
                 Successful = currentHourActivities.Count(x => x == ActivityEventType.LoginSucceeded),
                 Failed = currentHourActivities.Count(x => x == ActivityEventType.LoginFailed),
+                MfaChallenges = currentHourActivities.Count(x => x == ActivityEventType.MfaChallengeSent),
+                AccountLockouts = currentHourActivities.Count(x => x == ActivityEventType.AccountLocked),
                 Value = currentHourActivities.Count(x =>
                     x == ActivityEventType.LoginSucceeded || x == ActivityEventType.LoginFailed)
             })

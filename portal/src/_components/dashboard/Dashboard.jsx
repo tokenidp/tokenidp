@@ -59,6 +59,7 @@ const normalizeDashboard = (value) => {
       value.multipleFailedLogin ?? value.MultipleFailedLogin ?? 0,
     suspiciousActivity:
       value.suspiciousActivity ?? value.SuspiciousActivity ?? 0,
+    tokensLast24h: value.tokensLast24h ?? value.TokensLast24h ?? [],
     authLast24h: value.authLast24h ?? value.AuthLast24h ?? [],
     topClients: value.topClients ?? value.TopClients ?? [],
     failedLoginSpikes: spikes,
@@ -104,7 +105,7 @@ const toRelativeShort = (utcValue) => {
   return d ? `${d.value}${d.unit} ago` : null;
 };
 
-const sumSeries = (arr) =>
+const sumAuthSeries = (arr) =>
   arr.reduce(
     (acc, p) => ({
       success:
@@ -131,6 +132,51 @@ const sumSeries = (arr) =>
         ) || 0),
     }),
     { success: 0, failed: 0 },
+  );
+
+const sumTokenSeries = (arr) =>
+  arr.reduce(
+    (acc, p) => ({
+      access:
+        acc.access +
+        (Number(p?.accessTokens ?? p?.AccessTokens ?? p?.access ?? p?.Access ?? 0) ||
+          0),
+      refresh:
+        acc.refresh +
+        (Number(
+          p?.refreshTokens ?? p?.RefreshTokens ?? p?.refresh ?? p?.Refresh ?? 0,
+        ) || 0),
+    }),
+    { access: 0, refresh: 0 },
+  );
+
+const sumSecuritySeries = (arr) =>
+  arr.reduce(
+    (acc, p) => ({
+      mfa:
+        acc.mfa +
+        (Number(
+          p?.mfaChallenges ??
+            p?.MfaChallenges ??
+            p?.mfa ??
+            p?.Mfa ??
+            p?.mfaChallenge ??
+            p?.MfaChallenge ??
+            0,
+        ) || 0),
+      lockouts:
+        acc.lockouts +
+        (Number(
+          p?.accountLockouts ??
+            p?.AccountLockouts ??
+            p?.accountLockout ??
+            p?.AccountLockout ??
+            p?.lockouts ??
+            p?.Lockouts ??
+            0,
+        ) || 0),
+    }),
+    { mfa: 0, lockouts: 0 },
   );
 
 const pctChange = (prev, curr) => {
@@ -207,6 +253,7 @@ function Dashboard() {
       accountLockout: 0,
       multipleFailedLogin: 0,
       suspiciousActivity: 0,
+      tokensLast24h: [],
       authLast24h: [],
       topClients: [],
       failedLoginSpikes: [],
@@ -219,20 +266,42 @@ function Dashboard() {
     };
 
     // ── Computed metrics from time-series ──────────────────────
-    const seriesData = emptyDashboard.authLast24h;
-    const mid = Math.floor(seriesData.length / 2);
-    const firstHalf = sumSeries(seriesData.slice(0, mid));
-    const secondHalf = sumSeries(seriesData.slice(mid));
+    const authSeriesData = emptyDashboard.authLast24h;
+    const tokenSeriesData = emptyDashboard.tokensLast24h;
+    const authMid = Math.floor(authSeriesData.length / 2);
+    const tokenMid = Math.floor(tokenSeriesData.length / 2);
 
-    const seriesTrends = {
+    const firstHalfAuth = sumAuthSeries(authSeriesData.slice(0, authMid));
+    const secondHalfAuth = sumAuthSeries(authSeriesData.slice(authMid));
+    const firstHalfTokens = sumTokenSeries(tokenSeriesData.slice(0, tokenMid));
+    const secondHalfTokens = sumTokenSeries(tokenSeriesData.slice(tokenMid));
+    const firstHalfSecurity = sumSecuritySeries(authSeriesData.slice(0, authMid));
+    const secondHalfSecurity = sumSecuritySeries(authSeriesData.slice(authMid));
+
+    const authTrends = {
       total: pctChange(
-        firstHalf.success + firstHalf.failed,
-        secondHalf.success + secondHalf.failed,
+        firstHalfAuth.success + firstHalfAuth.failed,
+        secondHalfAuth.success + secondHalfAuth.failed,
       ),
-      successful: pctChange(firstHalf.success, secondHalf.success),
-      // Failed: invert trendUp so rising failures show as red
+      successful: pctChange(firstHalfAuth.success, secondHalfAuth.success),
       failed: (() => {
-        const t = pctChange(firstHalf.failed, secondHalf.failed);
+        const t = pctChange(firstHalfAuth.failed, secondHalfAuth.failed);
+        return t ? { trend: t.trend, trendUp: !t.trendUp } : null;
+      })(),
+    };
+
+    const tokenTrends = {
+      access: pctChange(firstHalfTokens.access, secondHalfTokens.access),
+      refresh: pctChange(firstHalfTokens.refresh, secondHalfTokens.refresh),
+    };
+
+    const securityTrends = {
+      mfa: pctChange(firstHalfSecurity.mfa, secondHalfSecurity.mfa),
+      lockouts: (() => {
+        const t = pctChange(
+          firstHalfSecurity.lockouts,
+          secondHalfSecurity.lockouts,
+        );
         return t ? { trend: t.trend, trendUp: !t.trendUp } : null;
       })(),
     };
@@ -245,12 +314,12 @@ function Dashboard() {
       errorRate > 0.05 ? "danger" : errorRate > 0.01 ? "warning" : "secondary";
 
     const errFirst =
-      firstHalf.success + firstHalf.failed > 0
-        ? firstHalf.failed / (firstHalf.success + firstHalf.failed)
+      firstHalfAuth.success + firstHalfAuth.failed > 0
+        ? firstHalfAuth.failed / (firstHalfAuth.success + firstHalfAuth.failed)
         : 0;
     const errSecond =
-      secondHalf.success + secondHalf.failed > 0
-        ? secondHalf.failed / (secondHalf.success + secondHalf.failed)
+      secondHalfAuth.success + secondHalfAuth.failed > 0
+        ? secondHalfAuth.failed / (secondHalfAuth.success + secondHalfAuth.failed)
         : 0;
     const errorRateTrend = (() => {
       const t = pctChange(errFirst, errSecond);
@@ -261,12 +330,12 @@ function Dashboard() {
       totalAttempts > 0 ? emptyDashboard.successfulLogins / totalAttempts : 0;
     const successRateStr = `${(successRate * 100).toFixed(1)}%`;
     const srFirst =
-      firstHalf.success + firstHalf.failed > 0
-        ? firstHalf.success / (firstHalf.success + firstHalf.failed)
+      firstHalfAuth.success + firstHalfAuth.failed > 0
+        ? firstHalfAuth.success / (firstHalfAuth.success + firstHalfAuth.failed)
         : 0;
     const srSecond =
-      secondHalf.success + secondHalf.failed > 0
-        ? secondHalf.success / (secondHalf.success + secondHalf.failed)
+      secondHalfAuth.success + secondHalfAuth.failed > 0
+        ? secondHalfAuth.success / (secondHalfAuth.success + secondHalfAuth.failed)
         : 0;
     const successRateTrend = pctChange(srFirst, srSecond);
     // ──────────────────────────────────────────────────────────
@@ -480,12 +549,12 @@ function Dashboard() {
         {
           label: "Access Tokens",
           value: formatNumber(emptyDashboard.accessTokenIssued),
-          ...(seriesTrends.successful ?? { trend: null, trendUp: true }),
+          ...(tokenTrends.access ?? { trend: null, trendUp: true }),
         },
         {
           label: "Refresh Tokens",
           value: formatNumber(emptyDashboard.refreshTokenIssued),
-          ...(seriesTrends.total ?? { trend: null, trendUp: true }),
+          ...(tokenTrends.refresh ?? { trend: null, trendUp: true }),
         },
         {
           label: "Success Rate",
@@ -497,31 +566,29 @@ function Dashboard() {
         {
           label: "Total Attempts",
           value: formatNumber(emptyDashboard.totalLoginAttempts),
-          ...(seriesTrends.total ?? { trend: null, trendUp: true }),
+          ...(authTrends.total ?? { trend: null, trendUp: true }),
         },
         {
           label: "Successful",
           value: formatNumber(emptyDashboard.successfulLogins),
-          ...(seriesTrends.successful ?? { trend: null, trendUp: true }),
+          ...(authTrends.successful ?? { trend: null, trendUp: true }),
         },
         {
           label: "Failed",
           value: formatNumber(emptyDashboard.failedLogins),
-          ...(seriesTrends.failed ?? { trend: null, trendUp: false }),
+          ...(authTrends.failed ?? { trend: null, trendUp: false }),
         },
       ],
       securityMetrics: [
         {
           label: "MFA Challenges",
           value: formatNumber(emptyDashboard.mfaChallenge),
-          trend: null,
-          trendUp: true,
+          ...(securityTrends.mfa ?? { trend: null, trendUp: true }),
         },
         {
           label: "Account Lockouts",
           value: formatNumber(emptyDashboard.accountLockout),
-          trend: null,
-          trendUp: false,
+          ...(securityTrends.lockouts ?? { trend: null, trendUp: false }),
         },
         {
           label: "Error Rate",
