@@ -32,7 +32,7 @@ const stepFields = {
     "authorizationCodeLifetime",
     "refreshTokenExpiration",
   ],
-  [WizardStep.Protection]: ["timeWindow"],
+  [WizardStep.Protection]: ["permitLimit", "queueLimit", "timeWindow"],
   [WizardStep.Review]: [],
 };
 

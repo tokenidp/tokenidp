@@ -150,6 +150,20 @@ internal sealed class ClientRepository : IClientRepository
         return clientDto ?? throw new NotFoundException("Client not found.");
     }
 
+    public Task<ClientRateLimitProfile?> FindRateLimitProfileAsync(string clientId, CancellationToken ct)
+    {
+        return _dbContext.Clients
+            .AsNoTracking()
+            .Where(x => x.ClientId == clientId && x.IsActive && !x.IsDeleted)
+            .Select(x => new ClientRateLimitProfile(
+                x.ClientId,
+                x.TenantId,
+                x.PermitLimit,
+                x.QueueLimit,
+                x.TimeWindow))
+            .FirstOrDefaultAsync(ct);
+    }
+
     public async Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead,
         CancellationToken ct)
     {

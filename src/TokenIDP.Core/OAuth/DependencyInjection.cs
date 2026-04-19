@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.OAuth.RateLimiting;
 
 namespace TokenIDP.Core.OAuth;
 
@@ -27,6 +28,9 @@ public static class DependencyInjection
         services.AddScoped<TokenSecretGenerator>();
         services.AddScoped<IRefreshTokenCookieService, RefreshTokenCookieService>();
         services.AddScoped<RefreshTokenResponseTransport>();
+        services.AddScoped<IClientRateLimitPolicyStore, ClientRateLimitPolicyStore>();
+        services.AddScoped<IOAuthClientRateLimitRequestResolver, OAuthClientRateLimitRequestResolver>();
+        services.AddScoped<OAuthRateLimitRejectionHandler>();
 
         AddUseCases(services);
         AddGrantHandlers(services);

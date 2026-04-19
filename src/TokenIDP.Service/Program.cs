@@ -57,6 +57,8 @@ try
         .AllowCredentials()
     );
 
+    app.UseRateLimiter();
+
     app.UseAntiforgery();
     app.UseAuthentication();
     app.UseAuthorization();

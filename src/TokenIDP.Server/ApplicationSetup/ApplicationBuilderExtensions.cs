@@ -12,6 +12,8 @@ using TokenIDP.Server.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -19,6 +21,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.OAuth.RateLimiting;
 
 namespace TokenIDP.Server.ApplicationSetup;
 
@@ -62,6 +65,18 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddInfrastructureServices(builder.Configuration, connectionStringName);
 
         builder.Services.AddAuthentication(tokenOptions, builder.Environment);
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.GlobalLimiter = new OAuthClientRateLimiter();
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                var handler = context.HttpContext.RequestServices
+                    .GetRequiredService<OAuthRateLimitRejectionHandler>();
+
+                await handler.HandleAsync(context, cancellationToken);
+            };
+        });
 
 
         builder.Services.ConfigureHttpJsonOptions(options =>

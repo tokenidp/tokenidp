@@ -174,7 +174,10 @@ public class Client : AggregateRoot<int>, ITenant
             accessTokenLifetime,
             authorizationCodeLifetime,
             refreshTokenExpiration,
-            refreshTokenDeliveryMode);
+            refreshTokenDeliveryMode,
+            permitLimit,
+            timeWindow,
+            queueLimit);
         if (!validation.IsSuccess)
         {
             return validation;
@@ -425,7 +428,10 @@ public class Client : AggregateRoot<int>, ITenant
             accessTokenLifetime,
             authorizationCodeLifetime,
             refreshTokenExpiration,
-            refreshTokenDeliveryMode);
+            refreshTokenDeliveryMode,
+            permitLimit,
+            timeWindow,
+            queueLimit);
         if (!validation.IsSuccess)
         {
             return validation;
@@ -484,7 +490,10 @@ public class Client : AggregateRoot<int>, ITenant
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
-        RefreshTokenDeliveryMode refreshTokenDeliveryMode)
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
+        int? permitLimit = null,
+        TimeSpan? timeWindow = null,
+        int? queueLimit = null)
     {
         var validation = ValidateRequired(clientId, "client.id.invalid",
                 "Client Id cannot be empty.")
@@ -519,6 +528,27 @@ public class Client : AggregateRoot<int>, ITenant
             validation = validation.Combine(Result.Failure(
                 "client.refresh_token_delivery_mode.invalid",
                 "Refresh token delivery mode is invalid."));
+        }
+
+        if (permitLimit.HasValue && permitLimit.Value <= 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.rate_limit.permit.invalid",
+                "Permit limit must be greater than zero."));
+        }
+
+        if (queueLimit.HasValue && queueLimit.Value < 0)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.rate_limit.queue.invalid",
+                "Queue limit cannot be negative."));
+        }
+
+        if (timeWindow.HasValue && timeWindow.Value <= TimeSpan.Zero)
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.rate_limit.window.invalid",
+                "Time window must be greater than zero."));
         }
 
         return validation;

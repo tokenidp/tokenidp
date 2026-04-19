@@ -12,6 +12,7 @@ public interface IClientRepository
     Task<ClientShortInfo> GetClientShortInfo(int clientId);
 
     Task<ClientShortInfo> GetClientShortInfo(string clientId);
+    Task<ClientRateLimitProfile?> FindRateLimitProfileAsync(string clientId, CancellationToken ct);
 
     Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead, CancellationToken ct);
     Task<ClientDetail?> GetClientDetailAsync(int tenantId, int clientId, CancellationToken ct);
