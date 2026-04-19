@@ -22,6 +22,7 @@ using Microsoft.Extensions.Options;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.OAuth.RateLimiting;
+using TokenIDP.Workers;
 
 namespace TokenIDP.Server.ApplicationSetup;
 
@@ -64,7 +65,10 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddInfrastructureServices(builder.Configuration, connectionStringName);
 
+        builder.Services.AddProjectionServices(builder.Configuration);
+
         builder.Services.AddAuthentication(tokenOptions, builder.Environment);
+
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
