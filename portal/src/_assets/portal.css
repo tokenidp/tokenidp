@@ -3267,9 +3267,9 @@ table td i {
 }
 
 .dashboard-range-tab.is-active {
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  background: #172033;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
 }
 
 /* ── Dashboard Metric Cards (Token / Login / Security) ──────── */

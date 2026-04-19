@@ -463,16 +463,6 @@ function AuthenticationActivity({ series, totals, period, periodLabel }) {
             </strong>
           </span>
         </div>
-        <div className="dashboard-auth-legend">
-          <span className="dashboard-auth-legend-item">
-            <span className="dashboard-auth-legend-swatch is-success" />
-            Successful
-          </span>
-          <span className="dashboard-auth-legend-item">
-            <span className="dashboard-auth-legend-swatch is-failed" />
-            Failed
-          </span>
-        </div>
       </div>
       <div className="card-body">
         <div className="dashboard-auth-chart-shell">
