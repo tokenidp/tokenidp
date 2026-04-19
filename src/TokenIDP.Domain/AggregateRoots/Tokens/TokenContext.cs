@@ -13,6 +13,7 @@ public class TokenContext
     public int ClientSecretExpiry { get; private set; }
     public int AccessTokenLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; private set; }
     public bool RememberMe { get; private set; }
     public DateTime IssuedAt { get; private set; }
     public DateTime ExpiresAt { get; private set; }
@@ -33,6 +34,7 @@ public class TokenContext
         int clientSecretExpiry,
         int accessTokenLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         bool rememberMe,
         string[] roles,
         string[] scopes,
@@ -52,6 +54,7 @@ public class TokenContext
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
             RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
+            RefreshTokenDeliveryMode = refreshTokenDeliveryMode,
             Scopes = scopes,
             Audiences = audiences,
             IpAddress = ipAddress,
@@ -68,6 +71,7 @@ public class TokenContext
         int clientSecretExpiry,
         int accessTokenLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         string[] scopes,
         string[] audiences,
         IReadOnlySet<string> secrets,
@@ -83,6 +87,7 @@ public class TokenContext
             ClientSecretExpiry = clientSecretExpiry,
             AccessTokenLifetime = accessTokenLifetime * 60,
             RefreshTokenExpiration = (refreshTokenExpiration * 24) * 60,
+            RefreshTokenDeliveryMode = refreshTokenDeliveryMode,
             Scopes = scopes,
             Audiences = audiences,
             IpAddress = ipAddress,

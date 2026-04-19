@@ -87,6 +87,7 @@ internal sealed class ClientRepository : IClientRepository
                 client.AccessTokenLifetime,
                 client.AuthorizationCodeLifetime,
                 client.RefreshTokenExpiration,
+                client.RefreshTokenDeliveryMode,
                 client.ClientSecretExpiry,
                 client.CibaEnabled,
                 client.BackchannelTokenDeliveryMode,
@@ -297,6 +298,7 @@ internal sealed class ClientRepository : IClientRepository
         {
             AppTypes = ClientLookupMapper.MapAppTypes(),
             TokenTypes = ClientLookupMapper.MapTokenTypes(),
+            RefreshTokenDeliveryModes = ClientLookupMapper.MapRefreshTokenDeliveryModes(),
             ClientScopes = ClientLookupMapper.MapClientScopes(),
             ApiResources = apiResources,
             GrantTypes = ClientLookupMapper.MapGrantTypes(),

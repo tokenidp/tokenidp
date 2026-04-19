@@ -26,6 +26,7 @@ internal class ClientProvisioningService : IClientProvisioningService
             command.AccessTokenLifetime,
             command.AuthorizationCodeLifetime,
             command.RefreshTokenExpiration,
+            command.RefreshTokenDeliveryMode,
             command.PermitLimit,
             command.TimeWindow,
             command.QueueLimit,

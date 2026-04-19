@@ -19,6 +19,7 @@ internal class RevokeEndpoint : IEndpointDefinition
         authGroup.MapDelete("", static async (HttpContext httpContext,
             [FromBody] RevokeTokenRequest request,
             IAppLogger<RevokeEndpoint> _logger,
+            IRefreshTokenCookieService refreshTokenCookieService,
             RevokeTokenUseCase revokeTokenService) =>
         {
             string ipAddress = httpContext.Connection?.RemoteIpAddress?.MapToIPv4().ToString() ?? string.Empty;
@@ -29,6 +30,7 @@ internal class RevokeEndpoint : IEndpointDefinition
                 ipAddress, request.Token);
 
             await revokeTokenService.RevokeToken(request);
+            refreshTokenCookieService.Delete(httpContext);
 
             _logger.LogInfo("Refresh token revoked for IP: {IP}", ipAddress);
 

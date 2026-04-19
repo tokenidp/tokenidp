@@ -24,6 +24,17 @@ public static class ClientLookupMapper
             .ToList();
     }
 
+    public static List<LookupItem> MapRefreshTokenDeliveryModes()
+    {
+        return Enum.GetValues<RefreshTokenDeliveryMode>()
+            .Select(value => new LookupItem
+            {
+                Key = ((int)value).ToString(),
+                Value = value.ToString()
+            })
+            .ToList();
+    }
+
     public static List<LookupItem> MapClientScopes()
     {
         return StandardScopes.Supported

@@ -82,6 +82,7 @@ internal static class CibaTestData
             accessTokenLifetime: 60,
             authorizationCodeLifetime: 5,
             refreshTokenExpiration: 7,
+            refreshTokenDeliveryMode: RefreshTokenDeliveryMode.Response,
             clientSecretExpiry: null,
             cibaEnabled: cibaEnabled,
             backchannelTokenDeliveryMode: CibaTokenDeliveryModes.Poll,

@@ -19,6 +19,7 @@ const emptyValues = {
   accessTokenLifetime: 60,
   authorizationCodeLifetime: 5,
   refreshTokenExpiration: 30,
+  refreshTokenDeliveryMode: 1,
   permitLimit: "",
   timeWindow: "",
   queueLimit: "",
@@ -114,6 +115,12 @@ function ApplicationEdit() {
           data.authorizationCodeLifetime ?? data.AuthorizationCodeLifetime ?? 5,
         refreshTokenExpiration:
           data.refreshTokenExpiration ?? data.RefreshTokenExpiration ?? 30,
+        refreshTokenDeliveryMode:
+          String(
+            data.refreshTokenDeliveryMode ??
+              data.RefreshTokenDeliveryMode ??
+              1,
+          ),
         permitLimit: data.permitLimit ?? data.PermitLimit ?? "",
         timeWindow: data.timeWindow ?? data.TimeWindow ?? "",
         queueLimit: data.queueLimit ?? data.QueueLimit ?? "",
@@ -255,6 +262,7 @@ function ApplicationEdit() {
       accessTokenLifetime: Number(data.accessTokenLifetime),
       authorizationCodeLifetime: Number(data.authorizationCodeLifetime),
       refreshTokenExpiration: Number(data.refreshTokenExpiration),
+      refreshTokenDeliveryMode: Number(data.refreshTokenDeliveryMode ?? 1),
       permitLimit: data.permitLimit === "" ? null : Number(data.permitLimit),
       timeWindow: data.timeWindow || null,
       queueLimit: data.queueLimit === "" ? null : Number(data.queueLimit),

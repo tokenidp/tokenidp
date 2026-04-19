@@ -23,6 +23,15 @@ public class TokenResponse
     public string? ErrorCode { get; private set; }
     public string? ErrorDescription { get; private set; }
 
+    [JsonIgnore]
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; private set; } =
+        RefreshTokenDeliveryMode.Response;
+
+    [JsonIgnore]
+    public bool RequiresRefreshTokenCookieDelivery =>
+        RefreshTokenDeliveryMode is
+            RefreshTokenDeliveryMode.Cookie or RefreshTokenDeliveryMode.Both;
+
     private TokenResponse() { }
 
 
@@ -57,8 +66,16 @@ public class TokenResponse
             ErrorDescription = description
         };
 
-    public void AddRefreshToken(string? refreshToken)
+    public void AddRefreshToken(
+        string? refreshToken,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode)
     {
         RefreshToken = refreshToken;
+        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
+    }
+
+    public void RemoveRefreshToken()
+    {
+        RefreshToken = null;
     }
 }

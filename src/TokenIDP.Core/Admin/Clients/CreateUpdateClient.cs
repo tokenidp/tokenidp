@@ -16,6 +16,8 @@ public class CreateUpdateClient
     public int AccessTokenLifetime { get; set; }
     public int AuthorizationCodeLifetime { get; set; }
     public int RefreshTokenExpiration { get; set; }
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; set; } =
+        RefreshTokenDeliveryMode.Response;
     public int? PermitLimit { get; set; }
     public TimeSpan? TimeWindow { get; set; }
     public int? QueueLimit { get; set; }

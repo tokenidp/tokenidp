@@ -23,6 +23,13 @@ public enum CibaTokenDeliveryModes
     Push
 }
 
+public enum RefreshTokenDeliveryMode
+{
+    Response = 1,
+    Cookie = 2,
+    Both = 3
+}
+
 public class Client : AggregateRoot<int>, ITenant
 {
     public string ClientId { get; private set; } = default!;
@@ -40,6 +47,7 @@ public class Client : AggregateRoot<int>, ITenant
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; private set; }
     public int? PermitLimit { get; private set; }
     public TimeSpan? TimeWindow { get; private set; }
     public int? QueueLimit { get; private set; }
@@ -79,6 +87,7 @@ public class Client : AggregateRoot<int>, ITenant
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         int? permitLimit,
         TimeSpan? timeWindow,
         int? queueLimit,
@@ -106,6 +115,7 @@ public class Client : AggregateRoot<int>, ITenant
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;
+        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
         PermitLimit = permitLimit;
         TimeWindow = timeWindow;
         QueueLimit = queueLimit;
@@ -138,6 +148,7 @@ public class Client : AggregateRoot<int>, ITenant
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         int? permitLimit,
         TimeSpan? timeWindow,
         int? queueLimit,
@@ -162,7 +173,8 @@ public class Client : AggregateRoot<int>, ITenant
             redirectUri,
             accessTokenLifetime,
             authorizationCodeLifetime,
-            refreshTokenExpiration);
+            refreshTokenExpiration,
+            refreshTokenDeliveryMode);
         if (!validation.IsSuccess)
         {
             return validation;
@@ -194,6 +206,7 @@ public class Client : AggregateRoot<int>, ITenant
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;
+        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
         PermitLimit = permitLimit;
         TimeWindow = timeWindow;
         QueueLimit = queueLimit;
@@ -388,6 +401,7 @@ public class Client : AggregateRoot<int>, ITenant
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         int? permitLimit,
         TimeSpan? timeWindow,
         int? queueLimit,
@@ -410,7 +424,8 @@ public class Client : AggregateRoot<int>, ITenant
             redirectUri,
             accessTokenLifetime,
             authorizationCodeLifetime,
-            refreshTokenExpiration);
+            refreshTokenExpiration,
+            refreshTokenDeliveryMode);
         if (!validation.IsSuccess)
         {
             return validation;
@@ -445,6 +460,7 @@ public class Client : AggregateRoot<int>, ITenant
             accessTokenLifetime,
             authorizationCodeLifetime,
             refreshTokenExpiration,
+            refreshTokenDeliveryMode,
             permitLimit,
             timeWindow,
             queueLimit,
@@ -467,7 +483,8 @@ public class Client : AggregateRoot<int>, ITenant
         string redirectUri,
         int accessTokenLifetime,
         int authorizationCodeLifetime,
-        int refreshTokenExpiration)
+        int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode)
     {
         var validation = ValidateRequired(clientId, "client.id.invalid",
                 "Client Id cannot be empty.")
@@ -495,6 +512,13 @@ public class Client : AggregateRoot<int>, ITenant
             validation = validation.Combine(Result.Failure(
                 "client.refresh_token_expiration.invalid",
                 "Refresh token expiration must be greater than zero."));
+        }
+
+        if (!Enum.IsDefined(refreshTokenDeliveryMode))
+        {
+            validation = validation.Combine(Result.Failure(
+                "client.refresh_token_delivery_mode.invalid",
+                "Refresh token delivery mode is invalid."));
         }
 
         return validation;

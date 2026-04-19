@@ -53,7 +53,9 @@ internal sealed class TokenIssuerUseCase
                             parentRefreshTokenId,
                             refreshTokenId);
 
-                        tokenResponse.AddRefreshToken(refreshToken);
+                        tokenResponse.AddRefreshToken(
+                            refreshToken,
+                            context.RefreshTokenDeliveryMode);
                     }
 
                     token.IssueJwt(context.ClientName);
@@ -78,7 +80,9 @@ internal sealed class TokenIssuerUseCase
                             parentRefreshTokenId,
                             refreshTokenId);
 
-                        tokenResponse.AddRefreshToken(refreshToken);
+                        tokenResponse.AddRefreshToken(
+                            refreshToken,
+                            context.RefreshTokenDeliveryMode);
                     }
 
                     await _tokenStore.CreateToken(token);

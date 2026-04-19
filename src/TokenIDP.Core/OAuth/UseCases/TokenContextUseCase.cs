@@ -61,6 +61,7 @@ internal class TokenContextUseCase
             client.ClientSecretExpiry ?? 0,
             client.AccessTokenLifetime,
             client.RefreshTokenExpiration,
+            client.RefreshTokenDeliveryMode,
             rememberMe,
             distinctRoles,
             scopeSelection.Scopes,
@@ -87,6 +88,7 @@ internal class TokenContextUseCase
             client.ClientSecretExpiry ?? 0,
             client.AccessTokenLifetime,
             client.RefreshTokenExpiration,
+            client.RefreshTokenDeliveryMode,
             scopeSelection.Scopes,
             scopeSelection.Audiences,
             client.ActiveSecretHashes);

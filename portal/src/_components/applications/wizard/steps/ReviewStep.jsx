@@ -19,6 +19,7 @@ function ReviewStep({
   values,
   appTypeOptions,
   tokenTypeOptions,
+  refreshTokenDeliveryModeOptions,
   grantTypes,
   scopeOptions,
   apiResourceOptions,
@@ -154,6 +155,10 @@ function ReviewStep({
     String(values.backchannelTokenDeliveryMode ?? "0") === "0"
       ? "Poll"
       : values.backchannelTokenDeliveryMode || "--";
+  const refreshTokenDeliveryModeLabel = getOptionLabel(
+    refreshTokenDeliveryModeOptions || [],
+    values.refreshTokenDeliveryMode,
+  );
 
   return (
     <div className="row g-4 justify-content-center">
@@ -325,6 +330,10 @@ function ReviewStep({
                     ? `${values.refreshTokenExpiration} days`
                     : "--"}
                 </div>
+              </div>
+              <div>
+                <div className="text-muted small">Refresh Token Delivery</div>
+                <div>{refreshTokenDeliveryModeLabel}</div>
               </div>
               {hasCiba && (
                 <>

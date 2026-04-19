@@ -16,6 +16,7 @@ const initialState = {
   clientTypes: [],
   grantTypes: [],
   tokenTypes: [],
+  refreshTokenDeliveryModes: [],
   scopes: [],
   apiResources: [],
   externalProviders: [],
@@ -135,6 +136,7 @@ const reducer = (state, action) => {
         clientTypes: action.payload.clientTypes,
         grantTypes: action.payload.grantTypes,
         tokenTypes: action.payload.tokenTypes,
+        refreshTokenDeliveryModes: action.payload.refreshTokenDeliveryModes,
         scopes: action.payload.scopes,
         apiResources: action.payload.apiResources,
         externalProviders: action.payload.externalProviders,
@@ -223,6 +225,10 @@ export const ApplicationsProvider = ({ children }) => {
           clientTypes: result.clientTypes || result.ClientTypes || [],
           grantTypes: result.grantTypes || result.GrantTypes || [],
           tokenTypes: result.tokenTypes || result.TokenTypes || [],
+          refreshTokenDeliveryModes:
+            result.refreshTokenDeliveryModes ||
+            result.RefreshTokenDeliveryModes ||
+            [],
           scopes: result.clientScopes || result.ClientScopes || [],
           apiResources: mergeApiResources(
             result.apiResources || result.ApiResources || [],

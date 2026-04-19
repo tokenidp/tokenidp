@@ -18,6 +18,7 @@ public class ClientDetail
             AccessTokenLifetime = client.AccessTokenLifetime,
             AuthorizationCodeLifetime = client.AuthorizationCodeLifetime,
             RefreshTokenExpiration = client.RefreshTokenExpiration,
+            RefreshTokenDeliveryMode = client.RefreshTokenDeliveryMode,
             PermitLimit = client.PermitLimit,
             TimeWindow = client.TimeWindow,
             QueueLimit = client.QueueLimit,
@@ -68,6 +69,7 @@ public class ClientDetail
     public int AccessTokenLifetime { get; private set; }
     public int AuthorizationCodeLifetime { get; private set; }
     public int RefreshTokenExpiration { get; private set; }
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; private set; }
     public int? PermitLimit { get; private set; }
     public TimeSpan? TimeWindow { get; private set; }
     public int? QueueLimit { get; private set; }

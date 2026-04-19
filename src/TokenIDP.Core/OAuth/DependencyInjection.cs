@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Options;
 
 namespace TokenIDP.Core.OAuth;
 
@@ -19,9 +20,13 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.AddAssemblyValidators(typeof(DependencyInjection).Assembly);
+        services.Configure<RefreshTokenCookieOptions>(
+            configuration.GetSection(RefreshTokenCookieOptions.SectionName));
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<TokenSecretGenerator>();
+        services.AddScoped<IRefreshTokenCookieService, RefreshTokenCookieService>();
+        services.AddScoped<RefreshTokenResponseTransport>();
 
         AddUseCases(services);
         AddGrantHandlers(services);
@@ -88,7 +93,9 @@ public static class DependencyInjection
         services.AddScoped<ITokenGrantUseCase>(sp =>
            new TokenGrantPipeline(sp.GetRequiredService<TokenGrantFactory>(),
                sp.GetRequiredService<IAppLogger<TokenGrantPipeline>>(),
-               sp.GetRequiredService<GrantTypeValidatorUseCase>()));
+               sp.GetRequiredService<GrantTypeValidatorUseCase>(),
+               sp.GetRequiredService<IHttpContextAccessor>(),
+               sp.GetRequiredService<RefreshTokenResponseTransport>()));
 
         services.AddScoped<RefreshTokenGrantHandler>();
         services.AddScoped<AuthorizationCodeGrantHandler>();

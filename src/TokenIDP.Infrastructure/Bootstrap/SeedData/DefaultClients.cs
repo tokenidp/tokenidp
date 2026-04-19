@@ -21,6 +21,7 @@ internal static class DefaultClients
             AccessTokenLifetime = 30,             // 30 minutes
             AuthorizationCodeLifetime = 5,        // 5 minutes
             RefreshTokenExpiration = 24,          // 24 hours
+            RefreshTokenDeliveryMode = RefreshTokenDeliveryMode.Response,
 
             PermitLimit = null,
             TimeWindow = null,

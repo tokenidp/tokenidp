@@ -10,6 +10,7 @@ function ConfigurationsStep({
   tokenType,
   setTokenType,
   tokenTypeOptions,
+  refreshTokenDeliveryModeOptions,
   clearErrors,
   grantTypes,
   externalProviderOptions,
@@ -225,6 +226,39 @@ function ConfigurationsStep({
                   </div>
                 )}
                 <div className="form-text">Longer-lived refresh tokens increase risk.</div>
+              </div>
+              <div className="col-12 col-lg-4">
+                <label className="form-label">Refresh Token Delivery</label>
+                <select
+                  className={`form-select${
+                    errors.refreshTokenDeliveryMode ? " is-invalid" : ""
+                  }`}
+                  disabled={!hasRefreshToken}
+                  {...register("refreshTokenDeliveryMode", {
+                    required: hasRefreshToken,
+                    valueAsNumber: true,
+                  })}
+                >
+                  {(refreshTokenDeliveryModeOptions || []).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {!hasRefreshToken && (
+                  <div className="form-text text-muted">
+                    Applies only when refresh tokens are enabled.
+                  </div>
+                )}
+                {hasRefreshToken && errors.refreshTokenDeliveryMode && (
+                  <div className="error-msg">
+                    Refresh token delivery mode is required.
+                  </div>
+                )}
+                <div className="form-text">
+                  Choose whether refresh tokens are returned in the response,
+                  sent by secure cookie, or both.
+                </div>
               </div>
             </div>
           </div>

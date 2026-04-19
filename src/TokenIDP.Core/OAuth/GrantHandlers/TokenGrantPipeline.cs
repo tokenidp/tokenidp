@@ -8,14 +8,20 @@ internal sealed class TokenGrantPipeline : ITokenGrantUseCase
     private readonly GrantTypeValidatorUseCase _grantTypeValidator;
     private readonly TokenGrantFactory _tokenGrantFactory;
     private readonly IAppLogger<TokenGrantPipeline> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly RefreshTokenResponseTransport _refreshTokenResponseTransport;
 
     public TokenGrantPipeline(TokenGrantFactory tokenGrantFactory,
         IAppLogger<TokenGrantPipeline> logger,
-        GrantTypeValidatorUseCase grantTypeValidator)
+        GrantTypeValidatorUseCase grantTypeValidator,
+        IHttpContextAccessor httpContextAccessor,
+        RefreshTokenResponseTransport refreshTokenResponseTransport)
     {
         _tokenGrantFactory = tokenGrantFactory;
         _logger = logger;
         _grantTypeValidator = grantTypeValidator;
+        _httpContextAccessor = httpContextAccessor;
+        _refreshTokenResponseTransport = refreshTokenResponseTransport;
     }
 
     public async Task<IResult> GetAccessToken(TokenRequest request)
@@ -33,6 +39,15 @@ internal sealed class TokenGrantPipeline : ITokenGrantUseCase
             request.SetTenantId(tenantId);
 
             TokenResponse response = await tokenGrantHandler.HandleAsync(request);
+
+            if (response.RequiresRefreshTokenCookieDelivery)
+            {
+                var httpContext = _httpContextAccessor.HttpContext
+                    ?? throw new InvalidOperationException(
+                        "An active HttpContext is required for refresh token cookie delivery.");
+
+                _refreshTokenResponseTransport.Apply(httpContext, response);
+            }
 
             _logger.LogInfo("Token generated for ClientId: {ClientId} for grant type: {GrantType}",
                 request.ClientId, request.GrantType);

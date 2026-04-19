@@ -57,6 +57,12 @@ const formatAppTypeLabel = (label) => {
   return String(label || "");
 };
 
+const fallbackRefreshTokenDeliveryModes = [
+  { value: "1", label: "Response" },
+  { value: "2", label: "Cookie" },
+  { value: "3", label: "Both" },
+];
+
 function ApplicationWizard({
   initialValues,
   onSubmit,
@@ -175,6 +181,18 @@ function ApplicationWizard({
       { value: "1", label: "Reference" },
     ];
   }, [lookups?.tokenTypes]);
+
+  const refreshTokenDeliveryModeOptions = useMemo(() => {
+    const normalized = normalizeLookupOptions(lookups?.refreshTokenDeliveryModes);
+    if (normalized.length) {
+      return normalized.map((option) => ({
+        value: String(option.key ?? ""),
+        label: String(option.value ?? ""),
+      }));
+    }
+
+    return fallbackRefreshTokenDeliveryModes;
+  }, [lookups?.refreshTokenDeliveryModes]);
 
   const availableGrantTypes = useMemo(
     () => normalizeGrantTypeOptions(lookups?.grantTypes),
@@ -652,10 +670,11 @@ function ApplicationWizard({
               errors={errors}
               tokenType={tokenType}
               setTokenType={setTokenType}
-              tokenTypeOptions={tokenTypeOptions}
-              clearErrors={clearErrors}
-              grantTypes={grantTypes}
-              externalProviderOptions={externalProviderOptions}
+            tokenTypeOptions={tokenTypeOptions}
+            refreshTokenDeliveryModeOptions={refreshTokenDeliveryModeOptions}
+            clearErrors={clearErrors}
+            grantTypes={grantTypes}
+            externalProviderOptions={externalProviderOptions}
               externalRoleOptions={externalAssignableRoleOptions}
             />
         );
@@ -673,9 +692,10 @@ function ApplicationWizard({
             <ReviewStep
               values={getValues()}
               appTypeOptions={appTypeOptions}
-              tokenTypeOptions={tokenTypeOptions}
-              grantTypes={grantTypes}
-              grantOptions={availableGrantTypes}
+            tokenTypeOptions={tokenTypeOptions}
+            refreshTokenDeliveryModeOptions={refreshTokenDeliveryModeOptions}
+            grantTypes={grantTypes}
+            grantOptions={availableGrantTypes}
               scopeOptions={scopeOptions}
               apiResourceOptions={apiResourceOptions}
               externalProviderOptions={externalProviderOptions}

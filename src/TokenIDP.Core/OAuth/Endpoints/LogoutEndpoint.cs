@@ -11,6 +11,7 @@ public class LogoutEndpoint : IEndpointDefinition
     {
         app.MapGet("/logout", async (HttpContext context,
             IAppLogger<LoginEndpoint> logger,
+            IRefreshTokenCookieService refreshTokenCookieService,
             IUserSignInService userSignInService,
             IClientRepository clientStore) =>
         {
@@ -21,6 +22,7 @@ public class LogoutEndpoint : IEndpointDefinition
             var redirectUri = "/login";
 
             await userSignInService.SignOutAsync(CancellationToken.None);
+            refreshTokenCookieService.Delete(context);
 
             logger.LogDebug("SSO session cleared");
 

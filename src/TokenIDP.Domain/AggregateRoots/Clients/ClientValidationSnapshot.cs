@@ -20,6 +20,7 @@ public class ClientValidationSnapshot
     public int AccessTokenLifetime { get; }
     public int AuthorizationCodeLifetime { get; }
     public int RefreshTokenExpiration { get; }
+    public RefreshTokenDeliveryMode RefreshTokenDeliveryMode { get; }
     public bool CibaEnabled { get; }
     public CibaTokenDeliveryModes BackchannelTokenDeliveryMode { get; }
     public int CibaDefaultExpirySeconds { get; }
@@ -46,6 +47,7 @@ public class ClientValidationSnapshot
         int accessTokenLifetime,
         int authorizationCodeLifetime,
         int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
         int? clientSecretExpiry,
         bool cibaEnabled,
         CibaTokenDeliveryModes backchannelTokenDeliveryMode,
@@ -75,6 +77,7 @@ public class ClientValidationSnapshot
         AccessTokenLifetime = accessTokenLifetime;
         AuthorizationCodeLifetime = authorizationCodeLifetime;
         RefreshTokenExpiration = refreshTokenExpiration;
+        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
         ClientSecretExpiry = clientSecretExpiry;
         CibaEnabled = cibaEnabled;
         BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;

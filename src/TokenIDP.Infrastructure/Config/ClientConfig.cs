@@ -24,6 +24,10 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
         builder.Property(x => x.AccessTokenLifetime).IsRequired();
         builder.Property(x => x.AuthorizationCodeLifetime).IsRequired();
         builder.Property(x => x.RefreshTokenExpiration).IsRequired();
+        builder.Property(x => x.RefreshTokenDeliveryMode)
+            .HasConversion<int>()
+            .HasDefaultValue((int)RefreshTokenDeliveryMode.Response)
+            .IsRequired();
         builder.Property(x => x.CibaEnabled).IsRequired();
         builder.Property(x => x.CibaDefaultExpirySeconds).IsRequired();
         builder.Property(x => x.CibaMinIntervalSeconds).IsRequired();

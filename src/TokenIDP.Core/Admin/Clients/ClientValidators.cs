@@ -37,6 +37,9 @@ internal sealed class CreateUpdateClientValidator : AbstractValidator<CreateUpda
         RuleFor(x => x.RefreshTokenExpiration)
             .GreaterThan(0);
 
+        RuleFor(x => x.RefreshTokenDeliveryMode)
+            .IsInEnum();
+
         RuleFor(x => x.CibaDefaultExpirySeconds)
             .GreaterThan(0)
             .When(x => x.CibaEnabled);

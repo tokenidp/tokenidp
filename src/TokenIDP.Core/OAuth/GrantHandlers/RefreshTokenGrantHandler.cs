@@ -6,19 +6,26 @@ namespace TokenIDP.Core.OAuth.GrantHandlers;
 
 internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAppLogger<RefreshTokenGrantHandler> _logger;
+    private readonly IRefreshTokenCookieService _refreshTokenCookieService;
     private readonly ITokenRepository _tokenStore;
     private readonly TokenIssuerUseCase _tokenService;
     private readonly TokenContextUseCase _tokenContextUseCase;
     private readonly TokenSecretGenerator _tokenSecretGenerator;
 
-    public RefreshTokenGrantHandler(IAppLogger<RefreshTokenGrantHandler> logger,
+    public RefreshTokenGrantHandler(
+        IHttpContextAccessor httpContextAccessor,
+        IAppLogger<RefreshTokenGrantHandler> logger,
+        IRefreshTokenCookieService refreshTokenCookieService,
         ITokenRepository tokenStore,
         TokenContextUseCase tokenContextUseCase,
         TokenIssuerUseCase tokenService,
         TokenSecretGenerator tokenSecretGenerator)
     {
+        _httpContextAccessor = httpContextAccessor;
         _logger = logger;
+        _refreshTokenCookieService = refreshTokenCookieService;
         _tokenService = tokenService;
         _tokenStore = tokenStore;
         _tokenContextUseCase = tokenContextUseCase;
@@ -32,12 +39,23 @@ internal sealed class RefreshTokenGrantHandler : ITokenGrantHandler
             throw new ArgumentNullException(nameof(request));
         }
 
-        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        var refreshToken = request.RefreshToken;
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext is not null)
+            {
+                refreshToken = _refreshTokenCookieService.Get(httpContext);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
         {
             throw new TokenRequestValidationException("invalid_request", "Missing refresh_token.");
         }
 
-        var tokenHash = _tokenSecretGenerator.HashToken(request.RefreshToken!);
+        var tokenHash = _tokenSecretGenerator.HashToken(refreshToken);
 
         var existingToken = await _tokenStore.GetRefreshToken(tokenHash);
 
