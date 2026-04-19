@@ -3,7 +3,8 @@ import React, { useMemo } from "react";
 const CHART_WIDTH = 720;
 const CHART_HEIGHT = 320;
 const CHART_MARGIN = { top: 18, right: 18, bottom: 42, left: 54 };
-const FALLBACK_POINT_COUNT = 6;
+const FALLBACK_POINT_COUNT = 24;
+const HOUR_MS = 60 * 60 * 1000;
 
 const formatCompactNumber = (value) => {
   const numericValue = Number(value) || 0;
@@ -170,10 +171,48 @@ const buildSeriesFromRows = (rows, totals) => {
   }));
 };
 
+const floorToHour = (timestamp) => {
+  const date = new Date(timestamp);
+  date.setMinutes(0, 0, 0);
+  return date.getTime();
+};
+
+const densifyHourlySeries = (series) => {
+  if (!series.length) {
+    return [];
+  }
+
+  const grouped = new Map();
+
+  series.forEach((point) => {
+    const bucket = floorToHour(point.timestamp);
+    const current = grouped.get(bucket) ?? {
+      timestamp: bucket,
+      success: 0,
+      failed: 0,
+    };
+
+    current.success += Number(point.success) || 0;
+    current.failed += Number(point.failed) || 0;
+    grouped.set(bucket, current);
+  });
+
+  const maxTimestamp = Math.max(...Array.from(grouped.keys()));
+  const endHour = floorToHour(maxTimestamp || Date.now());
+  const startHour = endHour - (FALLBACK_POINT_COUNT - 1) * HOUR_MS;
+
+  return Array.from({ length: FALLBACK_POINT_COUNT }, (_, index) => {
+    const timestamp = startHour + index * HOUR_MS;
+    const point = grouped.get(timestamp);
+    return point ?? { timestamp, success: 0, failed: 0 };
+  });
+};
+
 const buildFallbackSeries = () => {
-  const now = Date.now();
+  const endHour = floorToHour(Date.now());
+  const startHour = endHour - (FALLBACK_POINT_COUNT - 1) * HOUR_MS;
   return Array.from({ length: FALLBACK_POINT_COUNT }, (_, index) => ({
-    timestamp: now - (FALLBACK_POINT_COUNT - 1 - index) * 4 * 60 * 60 * 1000,
+    timestamp: startHour + index * HOUR_MS,
     success: 0,
     failed: 0,
   }));
@@ -213,11 +252,19 @@ const normalizeActivitySeries = (series, totals) => {
       ...point,
       timestamp:
         point.timestamp ??
-        Date.now() - (builtSeries.length - 1 - index) * 4 * 60 * 60 * 1000,
+        Date.now() - (builtSeries.length - 1 - index) * HOUR_MS,
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
-  return normalized.length ? normalized : buildFallbackSeries();
+  return normalized.length ? densifyHourlySeries(normalized) : buildFallbackSeries();
+};
+
+const roundUpYAxis = (value) => {
+  if (value <= 10) return 10;
+  if (value <= 50) return Math.ceil(value / 5) * 5;
+  if (value <= 100) return Math.ceil(value / 10) * 10;
+  if (value <= 500) return Math.ceil(value / 50) * 50;
+  return Math.ceil(value / 100) * 100;
 };
 
 const createLinePath = (points) => {
@@ -277,11 +324,10 @@ function AuthenticationActivity({ series, totals }) {
     const totalRange = Math.max(maxTimestamp - minTimestamp, 1);
 
     const maxValue = Math.max(
-      500,
+      1,
       ...normalizedSeries.map((point) => point.success + point.failed),
     );
-    // Round up to nearest 500 for clean y-axis ticks
-    const yMax = Math.ceil(maxValue / 500) * 500;
+    const yMax = roundUpYAxis(maxValue);
 
     const toX = (timestamp) =>
       CHART_MARGIN.left +
