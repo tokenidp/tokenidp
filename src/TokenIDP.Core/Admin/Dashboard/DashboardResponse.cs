@@ -15,11 +15,11 @@ public class DashboardResponse
     public int ExpiringClientCount { get; set; }
     public DateTime LastUpdated { get; set; }
     public DimensionValue TokenVolumeSpike { get; set; } = default!;
-    public IEnumerable<TimeSeriesPoint> TokensLast24h { get; set; } = default!;
-    public IEnumerable<TimeSeriesPoint> AuthLast24h { get; set; } = default!;
-    public IEnumerable<RankingItem> TopClients { get; set; } = default!;
-    public IEnumerable<MetricSummary> AuthSummary { get; set; } = default!;
-    public IEnumerable<DimensionValue> FailedLoginSpikes { get; set; } = default!;
+    public IEnumerable<TimeSeriesPoint> TokensLast24h { get; set; } = [];
+    public IEnumerable<TimeSeriesPoint> AuthLast24h { get; set; } = [];
+    public IEnumerable<RankingItem> TopClients { get; set; } = [];
+    public IEnumerable<MetricSummary> AuthSummary { get; set; } = [];
+    public IEnumerable<DimensionValue> FailedLoginSpikes { get; set; } = [];
 
 
     public DashboardResponse()
@@ -32,6 +32,8 @@ public sealed class TimeSeriesPoint
 {
     public DateTime Timestamp { get; init; }
     public long Value { get; init; }
+    public long Successful { get; init; }
+    public long Failed { get; init; }
 }
 
 public sealed class MetricSummary
