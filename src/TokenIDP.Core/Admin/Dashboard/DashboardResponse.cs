@@ -15,6 +15,13 @@ public class DashboardResponse
     public int MultipleFailedLogin { get; set; }
     public int SuspiciousActivity { get; set; }
     public int ExpiringClientCount { get; set; }
+    public int ActiveSessions { get; set; }
+    public int RegisteredClients { get; set; }
+    public int AverageTokenTtlSeconds { get; set; }
+    public long UptimeSeconds { get; set; }
+    public string Region { get; set; } = string.Empty;
+    public string Version { get; set; } = string.Empty;
+    public DateTime? LastKeyRotationUtc { get; set; }
     public DateTime LastUpdated { get; set; }
     public DimensionValue TokenVolumeSpike { get; set; } = default!;
     public IEnumerable<TimeSeriesPoint> TokensLast24h { get; set; } = [];

@@ -1,23 +1,39 @@
 using TokenIDP.Core.Abstractions.Queries;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Dashboard;
 using TokenIDP.Domain.AggregateRoots;
+using TokenIDP.Domain.AggregateRoots.Configurations;
 using TokenIDP.Domain.ReadModels;
 using TokenIDP.Domain.ReadModels.Enums;
+using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
 internal sealed class DashboardReadService : IDashboardReadService
 {
+    private const string DashboardRegionConfigKey = "dashboard.region";
+    private const string DashboardVersionConfigKey = "dashboard.version";
+    private const string DashboardLastKeyRotationConfigKey = "dashboard.last_key_rotation_utc";
+
     private readonly ApplicationDbContext _db;
     private readonly IClientRepository _clientRepository;
+    private readonly ITenantConfigurationRepository _tenantConfigurationRepository;
+    private readonly IConfiguration _configuration;
 
     public DashboardReadService(
         ApplicationDbContext db,
-        IClientRepository clientRepository)
+        IClientRepository clientRepository,
+        ITenantConfigurationRepository tenantConfigurationRepository,
+        IConfiguration configuration)
     {
         _db = db;
         _clientRepository = clientRepository;
+        _tenantConfigurationRepository = tenantConfigurationRepository;
+        _configuration = configuration;
     }
 
     public async Task<DashboardResponse> GetDashboardAsync(int tenantId, DashboardPeriod period, CancellationToken ct)
@@ -37,6 +53,7 @@ internal sealed class DashboardReadService : IDashboardReadService
         await PopulateAuthMetricsAsync(dashboard, tenantId, period, currentWindowStart, currentBucketStart, now, ct);
         await PopulateTopClientsAsync(dashboard, tenantId, currentWindowStart, now, ct);
         await PopulateFailedLoginsAsync(dashboard, tenantId, latest15MinBucketStart, ct);
+        await PopulateTechnicalDetailsAsync(dashboard, tenantId, now, ct);
 
         var expiringSecret = await _clientRepository.GetClientExpiringSecretsAsync(7, ct);
         dashboard.ExpiringClientCount = expiringSecret?.ExpiringClientCount ?? 0;
@@ -303,5 +320,118 @@ internal sealed class DashboardReadService : IDashboardReadService
                 m.BucketStart == latest15MinBucketStart)
             .Select(m => m.MetricValue)
             .FirstOrDefaultAsync(ct);
+    }
+
+    private async Task PopulateTechnicalDetailsAsync(
+        DashboardResponse dashboard,
+        int tenantId,
+        DateTime now,
+        CancellationToken ct)
+    {
+        dashboard.ActiveSessions = await _db.TokenReadModel
+            .AsNoTracking()
+            .Where(t =>
+                t.TenantId == tenantId &&
+                (t.SourceType == "JWT" || t.SourceType == "Reference") &&
+                t.ExpiresAt > now &&
+                !string.Equals(t.Status, "Revoked", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(t.Status, "Expired", StringComparison.OrdinalIgnoreCase))
+            .CountAsync(ct);
+
+        var activeClientsQuery = _db.Clients
+            .AsNoTracking()
+            .Where(c =>
+                c.TenantId == tenantId &&
+                c.IsActive &&
+                !c.IsDeleted);
+
+        dashboard.RegisteredClients = await activeClientsQuery.CountAsync(ct);
+
+        var averageTokenLifetimeMinutes = await activeClientsQuery
+            .Select(c => (double?)c.AccessTokenLifetime)
+            .AverageAsync(ct);
+
+        dashboard.AverageTokenTtlSeconds = averageTokenLifetimeMinutes.HasValue
+            ? Convert.ToInt32(Math.Round(averageTokenLifetimeMinutes.Value * 60, 0))
+            : 0;
+
+        var processStartUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime();
+        dashboard.UptimeSeconds = Math.Max(0, (long)(now - processStartUtc).TotalSeconds);
+
+        dashboard.Region = await ResolveTenantSettingAsync(
+                tenantId,
+                DashboardRegionConfigKey,
+                ConfigurationScopes.System,
+                ct)
+            ?? _configuration["Dashboard:Region"]
+            ?? _configuration["Region"]
+            ?? Environment.GetEnvironmentVariable("WEBSITE_REGION")
+            ?? Environment.GetEnvironmentVariable("REGION_NAME")
+            ?? string.Empty;
+
+        dashboard.Version = await ResolveTenantSettingAsync(
+                tenantId,
+                DashboardVersionConfigKey,
+                ConfigurationScopes.System,
+                ct)
+            ?? _configuration["Dashboard:Version"]
+            ?? GetApplicationVersion();
+
+        var lastRotationValue = await ResolveTenantSettingAsync(
+            tenantId,
+            DashboardLastKeyRotationConfigKey,
+            ConfigurationScopes.Security,
+            ct);
+
+        dashboard.LastKeyRotationUtc = ParseUtcDateTime(lastRotationValue);
+    }
+
+    private async Task<string?> ResolveTenantSettingAsync(
+        int tenantId,
+        string key,
+        ConfigurationScopes scope,
+        CancellationToken ct)
+    {
+        var config = await _tenantConfigurationRepository.GetByKeyAsync(
+            tenantId,
+            key,
+            scope,
+            cancellationToken: ct);
+
+        return string.IsNullOrWhiteSpace(config?.ConfigValue)
+            ? null
+            : config.ConfigValue.Trim();
+    }
+
+    private static DateTime? ParseUtcDateTime(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return DateTime.TryParse(
+            value,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+            out var parsed)
+            ? parsed
+            : null;
+    }
+
+    private static string GetApplicationVersion()
+    {
+        var assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+        var informational = assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (!string.IsNullOrWhiteSpace(informational))
+        {
+            return informational;
+        }
+
+        var version = assembly.GetName().Version;
+        return version is null ? string.Empty : $"v{version}";
     }
 }

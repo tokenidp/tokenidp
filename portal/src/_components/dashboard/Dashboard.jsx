@@ -67,6 +67,15 @@ const normalizeDashboard = (value) => {
     expiringClientCount:
       value.expiringClientCount ?? value.ExpiringClientCount ?? 0,
     tokenVolumeSpike: value.tokenVolumeSpike ?? value.TokenVolumeSpike ?? null,
+    activeSessions: value.activeSessions ?? value.ActiveSessions ?? 0,
+    registeredClients: value.registeredClients ?? value.RegisteredClients ?? 0,
+    averageTokenTtlSeconds:
+      value.averageTokenTtlSeconds ?? value.AverageTokenTtlSeconds ?? 0,
+    uptimeSeconds: value.uptimeSeconds ?? value.UptimeSeconds ?? 0,
+    region: value.region ?? value.Region ?? "",
+    version: value.version ?? value.Version ?? "",
+    lastKeyRotationUtc:
+      value.lastKeyRotationUtc ?? value.LastKeyRotationUtc ?? null,
     lastUpdated: globalLastUpdated,
     multipleFailedLoginAt:
       latestSpikeTs ??
@@ -104,6 +113,72 @@ const toRelativeLabel = (utcValue) => {
 const toRelativeShort = (utcValue) => {
   const d = calcTimeDiff(utcValue);
   return d ? `${d.value}${d.unit} ago` : null;
+};
+
+const formatUptime = (seconds) => {
+  const total = Number(seconds) || 0;
+  if (total <= 0) return "0m";
+
+  const days = Math.floor(total / 86400);
+  const hours = Math.floor((total % 86400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${Math.max(1, minutes)}m`;
+};
+
+const parseDurationMs = (value) => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  const text = String(value).trim();
+  if (!text) return null;
+
+  if (/^\d+(\.\d+)?$/.test(text)) {
+    return Number(text);
+  }
+
+  const parts = text.split(":");
+  if (parts.length !== 3) return null;
+
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  const seconds = Number(parts[2]);
+
+  if ([hours, minutes, seconds].some((part) => Number.isNaN(part))) {
+    return null;
+  }
+
+  return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+};
+
+const getHealthLatencyMs = (health) => {
+  const total =
+    parseDurationMs(health?.totalDurationMs) ??
+    parseDurationMs(health?.totalDuration);
+  if (total !== null) return total;
+
+  const entryDurations = Object.values(health?.entries || {})
+    .map((entry) => parseDurationMs(entry?.duration ?? entry?.Duration))
+    .filter((duration) => duration !== null);
+
+  if (entryDurations.length === 0) return null;
+
+  return (
+    entryDurations.reduce((sum, duration) => sum + duration, 0) /
+    entryDurations.length
+  );
+};
+
+const formatTokenTtl = (seconds) => {
+  const ttl = Number(seconds) || 0;
+  return ttl > 0 ? `${formatNumber(ttl)}s` : "N/A";
+};
+
+const formatLastKeyRotation = (utcValue) => {
+  if (!utcValue) return "Not configured";
+  return toRelativeShort(utcValue) || new Date(utcValue).toLocaleString();
 };
 
 const sumAuthSeries = (arr) =>
@@ -270,6 +345,13 @@ function Dashboard() {
       failedLoginSpikes: [],
       expiringClientCount: 0,
       tokenVolumeSpike: null,
+      activeSessions: 0,
+      registeredClients: 0,
+      averageTokenTtlSeconds: 0,
+      uptimeSeconds: 0,
+      region: "",
+      version: "",
+      lastKeyRotationUtc: null,
       lastUpdated: null,
       multipleFailedLoginAt: null,
       suspiciousActivityAt: null,
@@ -458,6 +540,7 @@ function Dashboard() {
     const spikeDimension =
       spike?.dimension ?? spike?.Dimension ?? "Unknown client";
     const spikeValue = spike?.value ?? spike?.Value ?? 0;
+    const healthLatencyMs = getHealthLatencyMs(health);
 
     alerts.push({
       title: "Suspicious activity indicators",
@@ -623,10 +706,25 @@ function Dashboard() {
                 )
               : String(health?.status || "").toLowerCase() === "healthy",
           metaItems: [
-            { label: "Uptime", value: "99.99%" },
-            { label: "Region", value: "US-East-1" },
-            { label: "Version", value: "v3.4.2" },
-            { label: "Latency", value: "42ms" },
+            {
+              label: "Uptime",
+              value: formatUptime(emptyDashboard.uptimeSeconds),
+            },
+            {
+              label: "Region",
+              value: emptyDashboard.region || "Not configured",
+            },
+            {
+              label: "Version",
+              value: emptyDashboard.version || "Not configured",
+            },
+            {
+              label: "Latency",
+              value:
+                healthLatencyMs !== null
+                  ? `${Math.round(healthLatencyMs)}ms`
+                  : "Not instrumented",
+            },
           ],
           endpoints: Object.entries(healthEntries).map(([key, val]) => ({
             name: key.charAt(0).toUpperCase() + key.slice(1) + " Endpoint",
@@ -634,10 +732,22 @@ function Dashboard() {
             badge: statusToBadge(val?.status),
           })),
           infoItems: [
-            { label: "Active Sessions", value: "2,847" },
-            { label: "Registered Clients", value: "156" },
-            { label: "Token TTL (avg)", value: "3600s" },
-            { label: "Last Key Rotation", value: "2 days ago" },
+            {
+              label: "Active Sessions",
+              value: formatNumber(emptyDashboard.activeSessions),
+            },
+            {
+              label: "Registered Clients",
+              value: formatNumber(emptyDashboard.registeredClients),
+            },
+            {
+              label: "Token TTL (avg)",
+              value: formatTokenTtl(emptyDashboard.averageTokenTtlSeconds),
+            },
+            {
+              label: "Last Key Rotation",
+              value: formatLastKeyRotation(emptyDashboard.lastKeyRotationUtc),
+            },
           ],
         };
       })(),
