@@ -628,33 +628,61 @@ function ApplicationsList() {
                 {state.items.map((item) => {
                   const id = getItemId(item);
                   const clientId = getClientId(item);
+                  const isSelected = selectedIds.has(id);
+                  const isActive = isApplicationActive(item);
+                  const appTypeLabel = getLookupLabel(
+                    state.appTypes,
+                    getAppType(item),
+                  );
+                  const grantTypeLabel = getGrantTypeLabel(item);
+                  const tokenTypeLabel = getLookupLabel(
+                    state.tokenTypes,
+                    getTokenType(item),
+                  );
 
                   return (
-                    <div key={id} className="application-grid-card">
-                      <label className="application-grid-card-checkbox">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={selectedIds.has(id)}
-                          onChange={(event) => {
-                            if (id === undefined || id === null) {
-                              return;
-                            }
-
-                            const isChecked = event.target.checked;
-                            setSelectedIds((prev) => {
-                              const next = new Set(prev);
-                              if (isChecked) {
-                                next.add(id);
-                              } else {
-                                next.delete(id);
+                    <div
+                      key={id}
+                      className={`application-grid-card ${
+                        isActive ? "is-active" : ""
+                      } ${isSelected ? "is-selected" : ""}`}
+                    >
+                      <div className="application-grid-card-top">
+                        <span
+                          className={`status-pill ${
+                            isActive
+                              ? "status-pill-success"
+                              : "status-pill-off"
+                          }`}
+                        >
+                          {isActive ? "Active" : "Disabled"}
+                        </span>
+                        <label className="application-grid-card-checkbox">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(event) => {
+                              if (id === undefined || id === null) {
+                                return;
                               }
-                              return next;
-                            });
-                          }}
-                        />
-                      </label>
-                      <div className="application-grid-card-header">
+
+                              const isChecked = event.target.checked;
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (isChecked) {
+                                  next.add(id);
+                                } else {
+                                  next.delete(id);
+                                }
+                                return next;
+                              });
+                            }}
+                            aria-label={`Select ${getClientName(item)}`}
+                          />
+                        </label>
+                      </div>
+                      <div className="application-grid-card-icon">
                         <div className="application-grid-card-avatar-wrap">
                           <img
                             src={defaultApplicationImage}
@@ -662,92 +690,71 @@ function ApplicationsList() {
                             className="application-grid-card-avatar"
                           />
                         </div>
-                        <div className="application-grid-card-header-info">
-                          <div className="application-grid-card-title-row">
-                            <h6 className="application-grid-card-title">
-                              {getClientName(item)}
-                            </h6>
-                            <span
-                              className={`status-pill ${
-                                isApplicationActive(item)
-                                  ? "status-pill-success"
-                                  : "status-pill-off"
-                              }`}
-                            >
-                              {isApplicationActive(item)
-                                ? "Active"
-                                : "Disabled"}
-                            </span>
-                          </div>
+                      </div>
+                      <div className="application-grid-card-title">
+                        {getClientName(item)}
+                      </div>
+                      <div className="application-grid-card-id" title={clientId}>
+                        {clientId || "No client ID"}
+                      </div>
+                      <div className="application-grid-card-meta">
+                        <div className="application-grid-card-meta-item">
+                          <span className="application-grid-card-meta-label">
+                            App Type
+                          </span>
+                          <span className="application-grid-card-meta-value">
+                            {appTypeLabel}
+                          </span>
+                        </div>
+                        <div className="application-grid-card-meta-item">
+                          <span className="application-grid-card-meta-label">
+                            Grant Type
+                          </span>
+                          <span className="application-grid-card-meta-value">
+                            {grantTypeLabel}
+                          </span>
+                        </div>
+                        <div className="application-grid-card-meta-item">
+                          <span className="application-grid-card-meta-label">
+                            Token Type
+                          </span>
+                          <span className="application-grid-card-meta-value">
+                            {tokenTypeLabel}
+                          </span>
                         </div>
                       </div>
-                      <div className="application-grid-card-body">
-                        <div className="application-grid-card-id">
-                          <i className="fa fa-key pe-2 " aria-hidden="true"></i>
-                          {clientId}
-                        </div>
-                        <div className="application-grid-card-meta">
-                          <div className="application-grid-card-meta-item">
-                            <span className="application-grid-card-meta-label">
-                              App Type:
-                            </span>
-                            <span className="application-grid-card-meta-value">
-                              {getLookupLabel(state.appTypes, getAppType(item))}
-                            </span>
-                          </div>
-                          <div className="application-grid-card-meta-item">
-                            <span className="application-grid-card-meta-label">
-                              Grant Type:
-                            </span>
-                            <span className="application-grid-card-meta-value">
-                              {getGrantTypeLabel(item)}
-                            </span>
-                          </div>
-                          <div className="application-grid-card-meta-item">
-                            <span className="application-grid-card-meta-label">
-                              Token Type:
-                            </span>
-                            <span className="application-grid-card-meta-value">
-                              {getLookupLabel(
-                                state.tokenTypes,
-                                getTokenType(item),
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="application-grid-card-actions application-grid-footer">
-                          <button
-                            className="btn btn-link p-0 text-primary ButtonLink"
-                            type="button"
-                            onClick={() => {
-                              if (!clientId) {
-                                return;
-                              }
+                      <div className="application-grid-card-actions">
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
+                          onClick={() => {
+                            if (!clientId) {
+                              return;
+                            }
 
-                              navigate(
-                                `edit/${encodeURIComponent(String(clientId))}`,
-                                {
-                                  state: { id },
-                                },
-                              );
-                            }}
-                            title="Edit"
-                            aria-label="Edit application"
+                            navigate(
+                              `edit/${encodeURIComponent(String(clientId))}`,
+                              {
+                                state: { id },
+                              },
+                            );
+                          }}
+                          title="Edit"
+                          aria-label="Edit application"
+                        >
+                          <i className="fa fa-pen"></i>
+                        </button>
+                        {canDeleteApplications && (
+                          <button
+                            className="btn btn-link p-0 text-danger ButtonLink"
+                            type="button"
+                            onClick={() => requestDelete(id)}
+                            title="Delete"
+                            aria-label="Delete application"
                           >
-                            <i className="fa fa-pen"></i>
+                            <i className="fa fa-trash"></i>
                           </button>
-                          {canDeleteApplications && (
-                            <button
-                              className="btn btn-link p-0 text-danger ButtonLink"
-                              type="button"
-                              onClick={() => requestDelete(id)}
-                              title="Delete"
-                              aria-label="Delete application"
-                            >
-                              <i className="fa fa-trash"></i>
-                            </button>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
                   );
