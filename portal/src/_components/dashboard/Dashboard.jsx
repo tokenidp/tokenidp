@@ -5,11 +5,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import DashboardHeader from "./DashboardHeader";
-import KpiRow from "./KpiRow";
 import AuthenticationActivity from "./AuthenticationActivity";
+import DashboardActiveAlerts from "./DashboardActiveAlerts";
+import DashboardMetricCards from "./DashboardMetricCards";
+import DashboardSystemStatusCard from "./DashboardSystemStatusCard";
+import DashboardTechnicalDetails from "./DashboardTechnicalDetails";
 import TopClientsVolume from "./TopClientsVolume";
-import SecurityAlerts from "./SecurityAlerts";
 import useApiClient from "../../_hooks/useApiClient";
 
 const formatNumber = (value) => {
@@ -136,144 +137,6 @@ const pctChange = (prev, curr) => {
   if (!prev) return null;
   const pct = Math.round(((curr - prev) / prev) * 1000) / 10;
   return { trend: `${pct >= 0 ? "+" : ""}${pct}%`, trendUp: pct >= 0 };
-};
-
-const TrendIndicator = ({ trendUp, trend }) => {
-  if (!trend) return null;
-  return (
-    <span
-      className={`dashboard-kpi-trend ${trendUp ? "trend-up" : "trend-down"}`}
-    >
-      {trendUp ? (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 19V5M5 12l7-7 7 7"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ) : (
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 5v14M19 12l-7 7-7-7"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-      {trend}
-    </span>
-  );
-};
-
-const MetricCard = ({ title, icon, metrics, skeleton }) => (
-  <div className="card-lite mb-0">
-    <div className="card-header dashboard-kpi-card-header">
-      <div className="dashboard-kpi-card-icon">{icon}</div>
-      <h6 className="mb-0">{title}</h6>
-    </div>
-    <div className="card-body dashboard-kpi-card-body">
-      {metrics.map((metric, i) => (
-        <React.Fragment key={metric.label}>
-          {i > 0 && <div className="dashboard-kpi-divider" />}
-          <div className="dashboard-kpi-metric">
-            <div className="dashboard-kpi-metric-top">
-              <span className="dashboard-kpi-metric-label">{metric.label}</span>
-              <TrendIndicator trendUp={metric.trendUp} trend={metric.trend} />
-            </div>
-            <div className="dashboard-kpi-metric-value">
-              {skeleton ? "--" : metric.value}
-            </div>
-          </div>
-        </React.Fragment>
-      ))}
-    </div>
-  </div>
-);
-
-const getAlertCardIcon = (type) => {
-  switch (type) {
-    case "shield":
-      return (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 2 4 5v6c0 5.55 3.84 10.74 8 11 4.16-.26 8-5.45 8-11V5l-8-3Z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="m9 12 2 2 4-4"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "clock":
-      return (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-          <path
-            d="M12 7v5l3 3"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "alert":
-      return (
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 9v4"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M12 17h.01"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-          <path
-            d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    default:
-      return null;
-  }
 };
 
 const POLL_INTERVAL_MS = 60_000; // refresh every 60 seconds
@@ -699,187 +562,17 @@ function Dashboard() {
 
   return (
     <>
-      {/* <DashboardHeader lastUpdatedLabel={viewModel.lastUpdatedLabel}   /> */}
-
-      <div className="dashboard-system-status-card card-lite mb-3">
-        <div className="dashboard-system-status-card-body">
-          <div className="dashboard-system-status-card-main">
-            <div className="dashboard-system-status-card-icon">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                />
-                <path
-                  d="M8 12.5L10.5 15L16 9"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="dashboard-system-status-card-info">
-              <div className="dashboard-system-status-card-title-row">
-                <h5 className="dashboard-system-status-card-title">
-                  {viewModel.systemStatus.title}
-                </h5>
-                <span
-                  className={`status-pill status-pill-${viewModel.systemStatus.liveStatus} dashboard-system-status-live`}
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M4 12h4l2 5 3-10 2 5h5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  {viewModel.systemStatus.liveLabel}
-                </span>
-              </div>
-              <div className="dashboard-system-status-card-caption">
-                {viewModel.systemStatus.caption}
-              </div>
-            </div>
-          </div>
-          <div className="dashboard-system-status-items">
-            {viewModel.systemStatus.items.map((item) => (
-              <div key={item.label} className="dashboard-system-status-item">
-                <span
-                  className={`dashboard-system-status-dot ${item.status}`}
-                />
-                <div>
-                  <div className="dashboard-system-status-item-label">
-                    {item.label}
-                  </div>
-                  <div className="dashboard-system-status-item-value">
-                    {item.value}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="dashboard-active-alerts-section mb-3">
-        <div className="dashboard-active-alerts-heading">
-          <span>Active Alerts</span>
-          {viewModel.activeAlertCount > 0 && (
-            <span className="dashboard-active-alerts-badge">
-              {viewModel.activeAlertCount}
-            </span>
-          )}
-        </div>
-        <div className="dashboard-alert-card-grid">
-          {viewModel.alertCards.map((card) => (
-            <div
-              key={card.title}
-              className={`dashboard-alert-card card-lite dashboard-alert-card-${card.status}`}
-            >
-              <div className="dashboard-alert-card-body">
-                <div className="dashboard-alert-card-icon-wrap">
-                  <div
-                    className={`dashboard-alert-card-icon dashboard-alert-card-icon-${card.status}`}
-                  >
-                    {getAlertCardIcon(card.icon)}
-                  </div>
-                  <div className="dashboard-alert-card-copy">
-                    <div className="dashboard-alert-card-title">
-                      {card.title}
-                    </div>
-                    <div className="dashboard-alert-card-footer">
-                      <span
-                        className={`dashboard-alert-card-pill dashboard-alert-card-pill-${card.status}`}
-                      >
-                        {card.badgeText}
-                      </span>
-                      <span className="dashboard-alert-card-meta">
-                        {card.meta}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="dashboard-alert-card-detail">{card.detail}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="dashboard-metric-cards-grid mb-3">
-        <MetricCard
-          title="Token Metrics"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="12"
-                cy="12"
-                r="3"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M3 12h6M15 12h6M12 3v6M12 15v6"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          }
-          metrics={viewModel.tokenMetrics}
-          skeleton={loading && !normalizedDashboard}
-        />
-        <MetricCard
-          title="Login Activity"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          }
-          metrics={viewModel.loginActivity}
-          skeleton={loading && !normalizedDashboard}
-        />
-        <MetricCard
-          title="Security Metrics"
-          icon={
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2 4 5v6c0 5.55 3.84 10.74 8 11 4.16-.26 8-5.45 8-11V5l-8-3Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          }
-          metrics={viewModel.securityMetrics}
-          skeleton={loading && !normalizedDashboard}
-        />
-      </div>
+      <DashboardSystemStatusCard systemStatus={viewModel.systemStatus} />
+      <DashboardActiveAlerts
+        activeAlertCount={viewModel.activeAlertCount}
+        alertCards={viewModel.alertCards}
+      />
+      <DashboardMetricCards
+        tokenMetrics={viewModel.tokenMetrics}
+        loginActivity={viewModel.loginActivity}
+        securityMetrics={viewModel.securityMetrics}
+        skeleton={loading && !normalizedDashboard}
+      />
 
       <div className="dashboard-auth-layout mb-3">
         <div className="dashboard-auth-main">
@@ -890,86 +583,9 @@ function Dashboard() {
         </div>
 
         <div className="dashboard-summary-panel">
-          <div className="card-lite h-100">
-            <div className="card-header dashboard-tech-header">
-              <div className="dashboard-tech-header-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <rect
-                    x="2"
-                    y="3"
-                    width="20"
-                    height="14"
-                    rx="2"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M8 21h8M12 17v4"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h6 className="mb-0">Technical Details</h6>
-                <div className="text-muted" style={{ fontSize: "12px" }}>
-                  Endpoint configuration &amp; validation
-                </div>
-              </div>
-            </div>
-            <div className="card-body">
-              <div className="dashboard-tech-status-section">
-                <div className="dashboard-tech-status-row">
-                  <span
-                    className={`dashboard-system-status-dot ${viewModel.technicalDetails.allOperational ? "success" : "warning"}`}
-                  />
-                  <div>
-                    <div className="fw-semibold" style={{ fontSize: "13px" }}>
-                      IDP Service Status
-                    </div>
-                    <div
-                      className={
-                        viewModel.technicalDetails.allOperational
-                          ? "text-success"
-                          : "text-warning"
-                      }
-                      style={{ fontSize: "12px" }}
-                    >
-                      {viewModel.technicalDetails.allOperational
-                        ? "All endpoints operational"
-                        : "Some endpoints degraded"}
-                    </div>
-                  </div>
-                </div>
-                <div className="dashboard-tech-meta-grid">
-                  {viewModel.technicalDetails.metaItems.map((item) => (
-                    <div key={item.label} className="dashboard-tech-meta-item">
-                      <span className="dashboard-tech-meta-label">
-                        {item.label}
-                      </span>
-                      <span className="dashboard-tech-meta-value">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="dashboard-tech-info-grid">
-                {viewModel.technicalDetails.infoItems.map((item) => (
-                  <div key={item.label} className="dashboard-tech-info-row">
-                    <span className="dashboard-tech-info-label">
-                      {item.label}
-                    </span>
-                    <span className="dashboard-tech-info-value">
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <DashboardTechnicalDetails
+            technicalDetails={viewModel.technicalDetails}
+          />
         </div>
       </div>
       <div className="mb-3">
