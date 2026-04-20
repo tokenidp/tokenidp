@@ -72,6 +72,8 @@ const normalizeDashboard = (value) => {
     averageTokenTtlSeconds:
       value.averageTokenTtlSeconds ?? value.AverageTokenTtlSeconds ?? 0,
     uptimeSeconds: value.uptimeSeconds ?? value.UptimeSeconds ?? 0,
+    latencyP95Ms: value.latencyP95Ms ?? value.LatencyP95Ms ?? 0,
+    latencyP99Ms: value.latencyP99Ms ?? value.LatencyP99Ms ?? 0,
     region: value.region ?? value.Region ?? "",
     version: value.version ?? value.Version ?? "",
     lastKeyRotationUtc:
@@ -128,57 +130,24 @@ const formatUptime = (seconds) => {
   return `${Math.max(1, minutes)}m`;
 };
 
-const parseDurationMs = (value) => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-
-  const text = String(value).trim();
-  if (!text) return null;
-
-  if (/^\d+(\.\d+)?$/.test(text)) {
-    return Number(text);
-  }
-
-  const parts = text.split(":");
-  if (parts.length !== 3) return null;
-
-  const hours = Number(parts[0]);
-  const minutes = Number(parts[1]);
-  const seconds = Number(parts[2]);
-
-  if ([hours, minutes, seconds].some((part) => Number.isNaN(part))) {
-    return null;
-  }
-
-  return ((hours * 60 + minutes) * 60 + seconds) * 1000;
-};
-
-const getHealthLatencyMs = (health) => {
-  const total =
-    parseDurationMs(health?.totalDurationMs) ??
-    parseDurationMs(health?.totalDuration);
-  if (total !== null) return total;
-
-  const entryDurations = Object.values(health?.entries || {})
-    .map((entry) => parseDurationMs(entry?.duration ?? entry?.Duration))
-    .filter((duration) => duration !== null);
-
-  if (entryDurations.length === 0) return null;
-
-  return (
-    entryDurations.reduce((sum, duration) => sum + duration, 0) /
-    entryDurations.length
-  );
-};
-
 const formatTokenTtl = (seconds) => {
   const ttl = Number(seconds) || 0;
   return ttl > 0 ? `${formatNumber(ttl)}s` : "N/A";
 };
 
-const formatLastKeyRotation = (utcValue) => {
-  if (!utcValue) return "Not configured";
-  return toRelativeShort(utcValue) || new Date(utcValue).toLocaleString();
+const formatLatency = (p95Ms, p99Ms) => {
+  const p95 = Number(p95Ms) || 0;
+  const p99 = Number(p99Ms) || 0;
+
+  if (p95 <= 0 && p99 <= 0) {
+    return "No traffic yet";
+  }
+
+  if (p99 > 0) {
+    return `${Math.round(p95)}ms / ${Math.round(p99)}ms`;
+  }
+
+  return `${Math.round(p95)}ms`;
 };
 
 const sumAuthSeries = (arr) =>
@@ -349,6 +318,8 @@ function Dashboard() {
       registeredClients: 0,
       averageTokenTtlSeconds: 0,
       uptimeSeconds: 0,
+      latencyP95Ms: 0,
+      latencyP99Ms: 0,
       region: "",
       version: "",
       lastKeyRotationUtc: null,
@@ -540,8 +511,6 @@ function Dashboard() {
     const spikeDimension =
       spike?.dimension ?? spike?.Dimension ?? "Unknown client";
     const spikeValue = spike?.value ?? spike?.Value ?? 0;
-    const healthLatencyMs = getHealthLatencyMs(health);
-
     alerts.push({
       title: "Suspicious activity indicators",
       detail:
@@ -720,10 +689,10 @@ function Dashboard() {
             },
             {
               label: "Latency",
-              value:
-                healthLatencyMs !== null
-                  ? `${Math.round(healthLatencyMs)}ms`
-                  : "Not instrumented",
+              value: formatLatency(
+                emptyDashboard.latencyP95Ms,
+                emptyDashboard.latencyP99Ms,
+              ),
             },
           ],
           endpoints: Object.entries(healthEntries).map(([key, val]) => ({
@@ -743,10 +712,6 @@ function Dashboard() {
             {
               label: "Token TTL (avg)",
               value: formatTokenTtl(emptyDashboard.averageTokenTtlSeconds),
-            },
-            {
-              label: "Last Key Rotation",
-              value: formatLastKeyRotation(emptyDashboard.lastKeyRotationUtc),
             },
           ],
         };

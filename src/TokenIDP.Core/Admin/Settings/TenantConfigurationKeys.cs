@@ -12,6 +12,10 @@ internal static class TenantConfigurationKeys
 
     internal static readonly IReadOnlyList<Definition> Catalog = new List<Definition>
     {
+        new("dashboard.region", ValueTypes.String, ConfigurationScopes.System,
+            "Deployment region label shown on the dashboard."),
+        new("dashboard.version", ValueTypes.String, ConfigurationScopes.System,
+            "Application version label shown on the dashboard."),
         new("security.mfa.enabled", ValueTypes.Bool, ConfigurationScopes.Security,
             "Enable or disable multi-factor authentication."),
         new("security.mfa.code_expiry_seconds", ValueTypes.Int, ConfigurationScopes.Security,

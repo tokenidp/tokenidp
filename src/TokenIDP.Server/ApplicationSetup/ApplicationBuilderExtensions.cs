@@ -9,6 +9,7 @@ using TokenIDP.Infrastructure;
 using TokenIDP.Server.HealthChecks;
 using TokenIDP.Server.Middlewares;
 using TokenIDP.Server.Security;
+using TokenIDP.Server.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -19,9 +20,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.OAuth.RateLimiting;
+using TokenIDP.Core.Abstractions.Telemetry;
 using TokenIDP.Workers;
 
 namespace TokenIDP.Server.ApplicationSetup;
@@ -90,6 +94,7 @@ public static class ApplicationBuilderExtensions
         });
 
         AddHealthChecks(builder, connectionStringName);
+        AddOpenTelemetry(builder);
 
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, CustomAuthorizationPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, DynamicRolePolicyHandler>();
@@ -102,6 +107,7 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.UseMiddleware<CorrelationIdMiddleware>();
+        app.UseMiddleware<RequestLatencyTelemetryMiddleware>();
 
         app.RegisterIDPEndpoints();
 
@@ -127,6 +133,36 @@ public static class ApplicationBuilderExtensions
             .AddCheck<AuthorizationEndpointHealthCheck>("authorization")
             .AddCheck<TokenEndpointHealthCheck>("token")
             .AddCheck<DatabaseHealthCheck>("database");
+    }
+
+    private static void AddOpenTelemetry(WebApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IRequestLatencyTelemetryStore, RequestLatencyTelemetryStore>();
+        builder.Services.AddScoped<ClientTenantResolver>();
+
+        var serviceName = builder.Environment.ApplicationName;
+        var otlpEndpoint =
+            builder.Configuration["OpenTelemetry:OtlpEndpoint"]
+            ?? Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT");
+
+        builder.Services
+            .AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService(serviceName))
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddMeter(RequestLatencyMetrics.MeterName);
+
+                if (!string.IsNullOrWhiteSpace(otlpEndpoint))
+                {
+                    metrics.AddOtlpExporter(options =>
+                    {
+                        options.Endpoint = new Uri(otlpEndpoint, UriKind.Absolute);
+                    });
+                }
+            });
     }
 
     private static TokenOptions ResolveTokenOptions(

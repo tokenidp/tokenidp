@@ -6,6 +6,7 @@ using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Infrastructure.Bootstrap.SeedData;
 using TokenIDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
@@ -20,6 +21,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
     private readonly IConfigurationSeeder _configs;
     private readonly IAppLogger<SystemBootstrapper> _logger;
     private readonly BootstrapOption _bootstrapOptions;
+    private readonly IConfiguration _configuration;
 
     public SystemBootstrapper(ITenantProvisioningService tenants,
         IClientProvisioningService clients,
@@ -27,6 +29,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         IRoleProvisioningService roles,
         IPermissionSeeder permissions,
         IConfigurationSeeder configs,
+        IConfiguration configuration,
         IOptions<BootstrapOption> options,
         IAppLogger<SystemBootstrapper> logger)
     {
@@ -36,6 +39,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         _roles = roles;
         _permissions = permissions;
         _configs = configs;
+        _configuration = configuration;
         _logger = logger;
         _bootstrapOptions = options.Value;
     }
@@ -296,7 +300,10 @@ internal class SystemBootstrapper : ISystemBootstrapper
         int tenantId,
         CancellationToken ct)
     {
-        foreach (var cfg in DefaultConfigurations.Notification)
+        var defaults = DefaultConfigurations.Notification
+            .Concat(DefaultConfigurations.GetSystem(_configuration));
+
+        foreach (var cfg in defaults)
         {
             if (await _configs.ExistsAsync(db, tenantId, cfg.Key, cfg.Scope.ToString(), ct))
                 continue;

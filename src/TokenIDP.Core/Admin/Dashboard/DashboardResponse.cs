@@ -19,6 +19,8 @@ public class DashboardResponse
     public int RegisteredClients { get; set; }
     public int AverageTokenTtlSeconds { get; set; }
     public long UptimeSeconds { get; set; }
+    public double LatencyP95Ms { get; set; }
+    public double LatencyP99Ms { get; set; }
     public string Region { get; set; } = string.Empty;
     public string Version { get; set; } = string.Empty;
     public DateTime? LastKeyRotationUtc { get; set; }
@@ -29,6 +31,7 @@ public class DashboardResponse
     public IEnumerable<RankingItem> TopClients { get; set; } = [];
     public IEnumerable<MetricSummary> AuthSummary { get; set; } = [];
     public IEnumerable<DimensionValue> FailedLoginSpikes { get; set; } = [];
+    public IEnumerable<LatencyBreakdownItem> ClientLatencyBreakdowns { get; set; } = [];
 
 
     public DashboardResponse()
@@ -68,4 +71,12 @@ public sealed class DimensionValue
 {
     public string Dimension { get; set; } = default!;
     public long Value { get; set; }
+}
+
+public sealed class LatencyBreakdownItem
+{
+    public string ClientId { get; init; } = string.Empty;
+    public double P95Ms { get; init; }
+    public double P99Ms { get; init; }
+    public int SampleCount { get; init; }
 }

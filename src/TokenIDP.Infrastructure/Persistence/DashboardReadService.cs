@@ -1,5 +1,6 @@
 using TokenIDP.Core.Abstractions.Queries;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Abstractions.Telemetry;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Dashboard;
 using TokenIDP.Domain.AggregateRoots;
@@ -22,17 +23,20 @@ internal sealed class DashboardReadService : IDashboardReadService
     private readonly ApplicationDbContext _db;
     private readonly IClientRepository _clientRepository;
     private readonly ITenantConfigurationRepository _tenantConfigurationRepository;
+    private readonly IRequestLatencyTelemetryStore _requestLatencyTelemetryStore;
     private readonly IConfiguration _configuration;
 
     public DashboardReadService(
         ApplicationDbContext db,
         IClientRepository clientRepository,
         ITenantConfigurationRepository tenantConfigurationRepository,
+        IRequestLatencyTelemetryStore requestLatencyTelemetryStore,
         IConfiguration configuration)
     {
         _db = db;
         _clientRepository = clientRepository;
         _tenantConfigurationRepository = tenantConfigurationRepository;
+        _requestLatencyTelemetryStore = requestLatencyTelemetryStore;
         _configuration = configuration;
     }
 
@@ -357,6 +361,19 @@ internal sealed class DashboardReadService : IDashboardReadService
 
         var processStartUtc = Process.GetCurrentProcess().StartTime.ToUniversalTime();
         dashboard.UptimeSeconds = Math.Max(0, (long)(now - processStartUtc).TotalSeconds);
+
+        var latencySnapshot = _requestLatencyTelemetryStore.GetSnapshot(tenantId, window: TimeSpan.FromMinutes(15));
+        dashboard.LatencyP95Ms = latencySnapshot.P95Ms;
+        dashboard.LatencyP99Ms = latencySnapshot.P99Ms;
+        dashboard.ClientLatencyBreakdowns = latencySnapshot.ClientBreakdowns
+            .Select(item => new LatencyBreakdownItem
+            {
+                ClientId = item.ClientId,
+                P95Ms = item.P95Ms,
+                P99Ms = item.P99Ms,
+                SampleCount = item.SampleCount
+            })
+            .ToList();
 
         dashboard.Region = await ResolveTenantSettingAsync(
                 tenantId,
