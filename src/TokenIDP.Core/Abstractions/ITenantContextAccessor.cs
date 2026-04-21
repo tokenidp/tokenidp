@@ -6,6 +6,7 @@ public interface ITenantContextAccessor
     bool HasTenant { get; }
     bool IsSystemTenant { get; }
     string TenantKey { get; }
+    int? CurrentTenantId { get; }
     int TenantId { get; }
     int ClientId { get; }
     bool ShouldBypassFilters { get; }

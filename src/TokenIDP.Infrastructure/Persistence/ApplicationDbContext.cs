@@ -196,9 +196,9 @@ public partial class ApplicationDbContext : DbContext
     {
         builder.Entity<TEntity>()
             .HasQueryFilter(entity =>
-                !_tenantContextAccessor.HasTenant
+                _tenantContextAccessor.CurrentTenantId == null
                 || _tenantContextAccessor.ShouldBypassFilters
-                || entity.TenantId == _tenantContextAccessor.TenantId);
+                || entity.TenantId == _tenantContextAccessor.CurrentTenantId);
     }
 }
 

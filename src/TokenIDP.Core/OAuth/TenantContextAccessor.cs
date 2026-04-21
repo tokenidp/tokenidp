@@ -16,8 +16,10 @@ public sealed class TenantContextAccessor : ITenantContextAccessor
 
     public string TenantKey => _tenantContext.Value?.TenantKey ?? string.Empty;
 
+    public int? CurrentTenantId => _tenantContext.Value?.TenantId;
+
     public int TenantId =>
-        _tenantContext.Value?.TenantId
+        CurrentTenantId
         ?? throw new InvalidOperationException("TenantId is not set.");
 
     public int ClientId =>

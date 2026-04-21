@@ -36,6 +36,27 @@ public sealed class ApplicationDbContextTenantFilterTests
         users[0].TenantId.Should().Be(2);
     }
 
+    [Fact]
+    public async Task QueryFilter_ShouldNotThrow_WhenTenantContextIsMissing()
+    {
+        var databaseName = Guid.NewGuid().ToString("N");
+
+        await using (var seedContext = CreateDbContext(databaseName, new TenantContextAccessor(), userId: 1))
+        {
+            await SeedTenantAsync(seedContext, 1, "system", true);
+            await SeedTenantAsync(seedContext, 2, "acme", false);
+            await SeedUserAsync(seedContext, 1, 11, "system.user", "system@example.com");
+            await SeedUserAsync(seedContext, 2, 22, "acme.user", "acme@example.com");
+            await seedContext.SaveChangesAsync();
+        }
+
+        await using var queryContext = CreateDbContext(databaseName, new TenantContextAccessor(), userId: 99);
+        var users = await queryContext.Users.AsNoTracking().OrderBy(x => x.TenantId).ToListAsync();
+
+        users.Should().HaveCount(2);
+        users.Select(x => x.TenantId).Should().Equal(1, 2);
+    }
+
     private static ApplicationDbContext CreateDbContext(string databaseName, ITenantContextAccessor tenantContextAccessor, int userId)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
