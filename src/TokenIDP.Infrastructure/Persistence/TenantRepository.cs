@@ -2,6 +2,8 @@ using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Tenants;
+using TokenIDP.Core.Foundation.Options;
+using Microsoft.Extensions.Options;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
@@ -10,14 +12,18 @@ internal sealed class TenantRepository : ITenantRepository
     private readonly ApplicationDbContext _dbContext;
     private readonly ICache _cache;
     private readonly IAppLogger<TenantRepository> _logger;
+    private readonly TimeSpan _tenantLookupCacheDuration;
 
     public TenantRepository(ApplicationDbContext dbContext,
         IAppLogger<TenantRepository> logger,
-        ICache cache)
+        ICache cache,
+        IOptions<TenantResolutionOptions> tenantResolutionOptions)
     {
         _dbContext = dbContext;
         _logger = logger;
         _cache = cache;
+        var minutes = Math.Max(1, tenantResolutionOptions.Value.LookupCacheMinutes);
+        _tenantLookupCacheDuration = TimeSpan.FromMinutes(minutes);
     }
 
     public async Task<bool> CheckTwoFactorEnabled(int tenantId)
@@ -94,6 +100,27 @@ internal sealed class TenantRepository : ITenantRepository
             .AsNoTracking()
             .Include(t => t.TenantExternalProviders)
             .FirstOrDefaultAsync(t => t.Id == tenantId && !t.IsDeleted, ct);
+    }
+
+    public Task<TenantResolutionResult?> ResolveTenantAsync(string tenantKey, CancellationToken ct)
+    {
+        var normalizedTenantKey = tenantKey.Trim().ToLowerInvariant();
+        var cacheKey = CacheKeys.TENANT.FormatCacheKey("lookup", normalizedTenantKey);
+
+        return _cache.GetOrCreateAsync(cacheKey, async () =>
+        {
+            return await _dbContext.Tenants
+                .AsNoTracking()
+                .Where(t => t.TenantKey == normalizedTenantKey && !t.IsDeleted)
+                .Select(t => new TenantResolutionResult(
+                    new TenantContext(
+                        t.Id,
+                        t.TenantKey,
+                        t.IsSystemTenant,
+                        null),
+                    t.IsActive))
+                .FirstOrDefaultAsync(ct);
+        }, _tenantLookupCacheDuration);
     }
 
     public async Task<PaginatedList<TenantSearchResult>> SearchTenantsAsync(int? scopedTenantId, SearchData request, CancellationToken ct)

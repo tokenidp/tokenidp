@@ -13,23 +13,29 @@ internal sealed class ClientRepository : IClientRepository
     private readonly ICache _cache;
     private readonly IAppLogger<ClientRepository> _logger;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
     public ClientRepository(ApplicationDbContext dbContext,
         IAppLogger<ClientRepository> logger,
         ICache cache,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _dbContext = dbContext;
         _logger = logger;
         _cache = cache;
         _currentUserService = currentUserService;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<ClientValidationSnapshot> GetActiveByClientId(string clientId)
     {
         _logger.LogDebug("GetClient client: {ClientId}", clientId);
 
-        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("ACT", clientId);
+        var scopedTenantId = ResolveScopedTenantId();
+        var cacheKey = scopedTenantId.HasValue
+            ? CacheKeys.CLIENT.FormatCacheKey("ACT", scopedTenantId.Value, clientId)
+            : CacheKeys.CLIENT.FormatCacheKey("ACT", clientId);
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
@@ -39,7 +45,11 @@ internal sealed class ClientRepository : IClientRepository
                 .Include(x => x.ClientScopes)
                 .Include(x => x.ClientApiResources)
                 .Include(x => x.ClientSecrets)
-                .FirstOrDefaultAsync(x => x.ClientId == clientId && x.IsActive && !x.IsDeleted);
+                .FirstOrDefaultAsync(x =>
+                    x.ClientId == clientId &&
+                    x.IsActive &&
+                    !x.IsDeleted &&
+                    (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value));
 
             if (client == null)
             {
@@ -131,12 +141,18 @@ internal sealed class ClientRepository : IClientRepository
     {
         _logger.LogDebug("GetValidationClient: Checking is valid client for client: {ClientId}", clientId);
 
-        var cacheKey = CacheKeys.CLIENT.FormatCacheKey("VAL", clientId);
+        var scopedTenantId = ResolveScopedTenantId();
+        var cacheKey = scopedTenantId.HasValue
+            ? CacheKeys.CLIENT.FormatCacheKey("VAL", scopedTenantId.Value, clientId)
+            : CacheKeys.CLIENT.FormatCacheKey("VAL", clientId);
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
-                .Where(x => x.ClientId == clientId && !x.IsDeleted)
+                .Where(x =>
+                    x.ClientId == clientId &&
+                    !x.IsDeleted &&
+                    (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value))
                 .Select(ClientShortInfoProjection.Projection)
                 .FirstOrDefaultAsync();
 
@@ -152,9 +168,15 @@ internal sealed class ClientRepository : IClientRepository
 
     public Task<ClientRateLimitProfile?> FindRateLimitProfileAsync(string clientId, CancellationToken ct)
     {
+        var scopedTenantId = ResolveScopedTenantId();
+
         return _dbContext.Clients
             .AsNoTracking()
-            .Where(x => x.ClientId == clientId && x.IsActive && !x.IsDeleted)
+            .Where(x =>
+                x.ClientId == clientId &&
+                x.IsActive &&
+                !x.IsDeleted &&
+                (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value))
             .Select(x => new ClientRateLimitProfile(
                 x.ClientId,
                 x.TenantId,
@@ -162,6 +184,18 @@ internal sealed class ClientRepository : IClientRepository
                 x.QueueLimit,
                 x.TimeWindow))
             .FirstOrDefaultAsync(ct);
+    }
+
+    private int? ResolveScopedTenantId()
+    {
+        if (_tenantContextAccessor.HasTenant)
+        {
+            return _tenantContextAccessor.TenantId;
+        }
+
+        return _currentUserService.TenantId > 0
+            ? _currentUserService.TenantId
+            : null;
     }
 
     public async Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead,
@@ -429,8 +463,10 @@ internal sealed class ClientRepository : IClientRepository
         var rows = await _dbContext.SaveChangesAsync(ct);
 
         await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("ACT", client.ClientId));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("ACT", client.TenantId, client.ClientId));
         await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("SHT", client.Id));
         await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("VAL", client.ClientId));
+        await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("VAL", client.TenantId, client.ClientId));
         await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("EPRV", client.Id));
         await _cache.RemoveAsync(CacheKeys.CLIENT.FormatCacheKey("AUTH", client.Id));
 

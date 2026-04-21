@@ -1,7 +1,21 @@
+using TokenIDP.Domain.DomainEvents.Tenants;
+
 namespace TokenIDP.Domain.AggregateRoots.Tenants;
 
 public partial class Tenant : AggregateRoot<int>
 {
+    private static readonly HashSet<string> ReservedTenantKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "system",
+        "admin",
+        "api",
+        "auth",
+        "login",
+        "www",
+        "root",
+        "app"
+    };
+
     private readonly List<TenantExternalProvider> _tenantExternalProviders = new();
 
     public string TenantName { get; private set; } = default!;
@@ -10,6 +24,7 @@ public partial class Tenant : AggregateRoot<int>
     public string TenantKey { get; private set; } = default!;
     public string? Email { get; private set; } = default!;
     public bool IsActive { get; private set; }
+    public bool IsSystemTenant { get; private set; }
     public bool IsDeleted { get; private set; }
     public int EffectiveUserId { get; private set; }
 
@@ -23,6 +38,7 @@ public partial class Tenant : AggregateRoot<int>
         string tenantKey,
         string? email,
         bool isActive,
+        bool isSystemTenant,
         TenantAuthSetting authSetting,
         TenantUISetting tenantUISetting)
     {
@@ -30,6 +46,7 @@ public partial class Tenant : AggregateRoot<int>
         TenantKey = tenantKey;
         Email = email;
         IsActive = isActive;
+        IsSystemTenant = isSystemTenant;
         IsDeleted = false;
 
         TenantAuthSetting = authSetting;
@@ -43,11 +60,12 @@ public partial class Tenant : AggregateRoot<int>
         bool isActive,
         TenantAuthSetting authSetting,
         TenantUISetting tenantUISetting,
+        bool isSystemTenant,
         out Tenant? tenant)
     {
         tenant = null;
 
-        var validation = ValidateInput(tenantName);
+        var validation = ValidateInput(tenantName, tenantKey, isSystemTenant);
         if (!validation.IsSuccess)
             return validation;
 
@@ -56,9 +74,10 @@ public partial class Tenant : AggregateRoot<int>
 
         tenant = new Tenant(
             tenantName: tenantName,
-            tenantKey: tenantKey,
+            tenantKey: NormalizeTenantKey(tenantKey),
             email: email,
             isActive: isActive,
+            isSystemTenant: isSystemTenant,
             authSetting: authSetting,
             tenantUISetting);
 
@@ -75,13 +94,17 @@ public partial class Tenant : AggregateRoot<int>
             return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
         }
 
-        var validation = ValidateInput(tenantName);
+        var validation = ValidateName(tenantName);
         if (!validation.IsSuccess)
             return validation;
 
         TenantName = tenantName;
         Email = email;
-        IsActive = isActive;
+
+        if (isActive)
+            Activate();
+        else
+            Disable();
 
         return Result.Success(Id);
     }
@@ -91,9 +114,56 @@ public partial class Tenant : AggregateRoot<int>
         TenantCode = $"TEN-{DateTime.UtcNow:yyyy}-{value:D6}";
     }
 
+    public Result Activate()
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be activated.");
+        }
+
+        if (IsActive)
+        {
+            return Result.Success(Id);
+        }
+
+        IsActive = true;
+        AddDomainEvent(new TenantActivatedEvent(Id, TenantKey, IsSystemTenant));
+
+        return Result.Success(Id);
+    }
+
     public Result Disable()
     {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
+        if (!IsActive)
+        {
+            return Result.Success(Id);
+        }
+
         IsActive = false;
+        AddDomainEvent(new TenantInactivatedEvent(Id, TenantKey, IsSystemTenant));
+
+        return Result.Success(Id);
+    }
+
+    public Result Rename(string tenantName, string tenantKey)
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
+        var validation = ValidateInput(tenantName, tenantKey, IsSystemTenant);
+        if (!validation.IsSuccess)
+            return validation;
+
+        TenantName = tenantName.Trim();
+        TenantKey = NormalizeTenantKey(tenantKey);
+
         return Result.Success(Id);
     }
 
@@ -121,6 +191,34 @@ public partial class Tenant : AggregateRoot<int>
         configure(TenantAuthSetting);
 
         return Result.Success(Id);
+    }
+
+    public Result UpdateBranding(
+        string? theme,
+        string? logo,
+        string? primaryColor,
+        string? defaultLanguage,
+        string? loginText)
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
+        if (TenantUISetting is null)
+        {
+            return Result.Failure("tenant.ui.missing", "Tenant UI settings are missing.");
+        }
+
+        TenantUISetting.Update(theme, logo, primaryColor, defaultLanguage, loginText);
+        AddDomainEvent(new TenantBrandingChangedEvent(Id, TenantKey));
+
+        return Result.Success(Id);
+    }
+
+    public void MarkProvisioned()
+    {
+        AddDomainEvent(new TenantCreatedEvent(Id, TenantKey, IsSystemTenant));
     }
 
     public Result EnableTwoFactor(TimeSpan codeExpiry)
@@ -261,7 +359,13 @@ public partial class Tenant : AggregateRoot<int>
         return Result.Success(Id);
     }
 
-    private static Result ValidateInput(string tenantName)
+    private static Result ValidateInput(string tenantName, string tenantKey, bool isSystemTenant)
+    {
+        return ValidateName(tenantName)
+            .Combine(ValidateTenantKey(tenantKey, isSystemTenant));
+    }
+
+    private static Result ValidateName(string tenantName)
     {
         if (string.IsNullOrWhiteSpace(tenantName))
         {
@@ -270,4 +374,36 @@ public partial class Tenant : AggregateRoot<int>
 
         return Result.Success(0);
     }
+
+    private static Result ValidateTenantKey(string tenantKey, bool isSystemTenant)
+    {
+        var normalizedTenantKey = NormalizeTenantKey(tenantKey);
+
+        if (string.IsNullOrWhiteSpace(normalizedTenantKey))
+        {
+            return Result.Failure("tenant.key.invalid", "Tenant key is required.");
+        }
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(
+                normalizedTenantKey,
+                "^[a-z0-9]+(?:-[a-z0-9]+)*$"))
+        {
+            return Result.Failure("tenant.key.invalid", "Tenant key format is invalid.");
+        }
+
+        if (isSystemTenant && !string.Equals(normalizedTenantKey, "system", StringComparison.Ordinal))
+        {
+            return Result.Failure("tenant.key.invalid", "System tenant key must be 'system'.");
+        }
+
+        if (!isSystemTenant && ReservedTenantKeys.Contains(normalizedTenantKey))
+        {
+            return Result.Failure("tenant.key.reserved", "Tenant key is reserved.");
+        }
+
+        return Result.Success(0);
+    }
+
+    private static string NormalizeTenantKey(string tenantKey)
+        => tenantKey.Trim().ToLowerInvariant();
 }

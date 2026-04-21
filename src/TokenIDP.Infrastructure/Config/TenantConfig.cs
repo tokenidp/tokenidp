@@ -17,6 +17,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
         builder.Property(x => x.Email).HasMaxLength(100);
 
         builder.Property(x => x.IsActive).IsRequired();
+        builder.Property(x => x.IsSystemTenant).IsRequired();
         builder.Property(x => x.IsDeleted).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
 
@@ -45,7 +46,7 @@ internal class TenantConfig : IEntityTypeConfiguration<Tenant>
 
         builder.HasIndex(x => x.TenantKey)
             .IsUnique()
-            .HasDatabaseName("IX_Tenants_TenantKey");
+            .HasDatabaseName("UX_Tenants_TenantKey");
     }
 }
 

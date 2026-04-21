@@ -77,15 +77,15 @@ public sealed class RefreshTokenGrantHandlerTests
             Mock.Of<IAppLogger<TokenContextUseCase>>(),
             userRepository.Object);
 
+        var currentUserService = new Mock<ICurrentUserService>();
+        currentUserService.SetupGet(x => x.IpAddress).Returns((string?)"127.0.0.1");
+
         var jwtTokenGenerator = new JwtTokenGenerator(Options.Create(new TokenOptions
         {
             Issuer = "https://issuer.example",
             Audience = "tokenidp",
             Key = TokenKeyDefault.DevelopmentKey
-        }));
-
-        var currentUserService = new Mock<ICurrentUserService>();
-        currentUserService.SetupGet(x => x.IpAddress).Returns((string?)"127.0.0.1");
+        }), currentUserService.Object);
 
         var tokenIssuerUseCase = new TokenIssuerUseCase(
             jwtTokenGenerator,

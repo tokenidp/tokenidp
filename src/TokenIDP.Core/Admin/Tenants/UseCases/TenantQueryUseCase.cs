@@ -6,20 +6,22 @@ namespace TokenIDP.Core.Admin.Tenants.UseCases;
 
 internal sealed class TenantQueryUseCase
 {
-    private const int SystemTenantId = 1;
     private readonly ITenantRepository _tenantRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly IAppLogger<TenantQueryUseCase> _logger;
     private readonly ISecretProtector _secretProtector;
 
     public TenantQueryUseCase(
         ITenantRepository tenantRepository,
         ICurrentUserService currentUserService,
+        ITenantContextAccessor tenantContextAccessor,
         IAppLogger<TenantQueryUseCase> logger,
         ISecretProtector secretProtector)
     {
         _tenantRepository = tenantRepository;
         _currentUserService = currentUserService;
+        _tenantContextAccessor = tenantContextAccessor;
         _logger = logger;
         _secretProtector = secretProtector;
     }
@@ -181,7 +183,10 @@ internal sealed class TenantQueryUseCase
 
     private bool HasGlobalTenantAccess()
     {
-        return _currentUserService.TenantId <= 0 || _currentUserService.TenantId == SystemTenantId;
+        return _currentUserService.TenantId <= 0
+               || (_tenantContextAccessor.HasTenant
+                   && _tenantContextAccessor.IsSystemTenant
+                   && _tenantContextAccessor.TenantId == _currentUserService.TenantId);
     }
 }
 

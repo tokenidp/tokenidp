@@ -2,6 +2,7 @@ using NLog;
 using NLog.Extensions.Hosting;
 using TokenIDP.Server.ApplicationSetup;
 using TokenIDP.Server.Components;
+using TokenIDP.Server.Middlewares;
 
 // Bootstrap NLog early
 var logger = LogManager.Setup()
@@ -47,6 +48,7 @@ try
     app.UseStaticFiles();
 
     app.UseRouting();
+    app.UseMiddleware<TenantResolutionMiddleware>();
 
     app.UseCors(policy => policy
         .AllowAnyMethod()

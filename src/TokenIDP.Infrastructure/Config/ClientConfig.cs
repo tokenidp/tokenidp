@@ -79,12 +79,12 @@ internal class ClientConfig : IEntityTypeConfiguration<Client>
             .HasForeignKey(ur => ur.ClientId)
             .IsRequired();
 
-        builder.HasIndex(x => x.ClientId)
+        builder.HasIndex(x => new { x.TenantId, x.ClientId })
             .IsUnique()
-            .HasDatabaseName("IX_Clients_ClientId");
+            .HasDatabaseName("UX_Clients_Tenant_ClientId");
 
         // Token issuance hot-path
-        builder.HasIndex(x => new { x.ClientId, x.IsActive, x.IsDeleted })
+        builder.HasIndex(x => new { x.TenantId, x.ClientId, x.IsActive, x.IsDeleted })
             .HasDatabaseName("IX_Clients_ClientId_IsActive_IsDeleted");
 
         // Admin UI list

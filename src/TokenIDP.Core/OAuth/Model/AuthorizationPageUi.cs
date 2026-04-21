@@ -6,6 +6,7 @@ public sealed class AuthorizationPageUi
     public string? LogoUrl { get; set; }
     public string? Theme { get; set; }
     public string? AccentColor { get; set; }
+    public string? LoginText { get; set; }
 
     public bool AllowLocalLogin { get; set; } = true;
     public bool AllowStaySignedIn { get; set; } = true;

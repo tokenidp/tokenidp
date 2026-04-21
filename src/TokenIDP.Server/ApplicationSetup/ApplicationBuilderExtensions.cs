@@ -8,6 +8,7 @@ using TokenIDP.Core.Foundation.Security;
 using TokenIDP.Infrastructure;
 using TokenIDP.Server.HealthChecks;
 using TokenIDP.Server.Middlewares;
+using TokenIDP.Server.Multitenancy;
 using TokenIDP.Server.Security;
 using TokenIDP.Server.Telemetry;
 using Microsoft.AspNetCore.Authorization;
@@ -58,8 +59,11 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddSingleton<IOptions<TokenOptions>>(Options.Create(tokenOptions));
 
         builder.Services.AddHttpContextAccessor();
+        builder.Services.Configure<TenantResolutionOptions>(
+            builder.Configuration.GetSection(TenantResolutionOptions.SectionName));
 
         builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
+        builder.Services.AddScoped<ITenantResolver, HostTenantResolver>();
 
         builder.Services.AddScoped<LoadService>();
 
@@ -71,7 +75,16 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddProjectionServices(builder.Configuration);
 
-        builder.Services.AddAuthentication(tokenOptions, builder.Environment);
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy(SystemTenantRequirement.PolicyName, policy =>
+            {
+                policy.RequireAuthenticatedUser();
+                policy.AddRequirements(new SystemTenantRequirement());
+            });
+        });
+
+        builder.Services.AddAuthentication(tokenOptions, builder.Environment, builder.Configuration);
 
         builder.Services.AddRateLimiter(options =>
         {
@@ -98,6 +111,7 @@ public static class ApplicationBuilderExtensions
 
         builder.Services.AddSingleton<IAuthorizationPolicyProvider, CustomAuthorizationPolicyProvider>();
         builder.Services.AddScoped<IAuthorizationHandler, DynamicRolePolicyHandler>();
+        builder.Services.AddScoped<IAuthorizationHandler, SystemTenantAuthorizationHandler>();
 
         return builder;
     }

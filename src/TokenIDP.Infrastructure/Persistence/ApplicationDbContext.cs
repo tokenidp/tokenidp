@@ -1,4 +1,5 @@
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.OAuth;
 using TokenIDP.Domain.AggregateRoots;
 using TokenIDP.Domain.AggregateRoots.ApiResources;
 using TokenIDP.Domain.AggregateRoots.Authorization;
@@ -15,17 +16,20 @@ namespace TokenIDP.Infrastructure.Persistence;
 public partial class ApplicationDbContext : DbContext
 {
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly IAppLogger<ApplicationDbContext> _appLogger;
     private readonly IOutboxMapperResolver _resolver;
     private readonly IOutboxConsumerRouter _consumerRouter;
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
         ICurrentUserService currentUserService,
+        ITenantContextAccessor tenantContextAccessor,
         IAppLogger<ApplicationDbContext> appLogger,
         IOutboxMapperResolver resolver,
         IOutboxConsumerRouter consumerRouter) : base(options)
     {
         _currentUserService = currentUserService;
+        _tenantContextAccessor = tenantContextAccessor;
         _appLogger = appLogger;
         _resolver = resolver;
         _consumerRouter = consumerRouter;
@@ -35,6 +39,7 @@ public partial class ApplicationDbContext : DbContext
         ICurrentUserService currentUserService) : base(options)
     {
         _currentUserService = currentUserService;
+        _tenantContextAccessor = new TenantContextAccessor();
         _appLogger = NullAppLogger<ApplicationDbContext>.Instance;
         _resolver = NullOutboxMapperResolver.Instance;
         _consumerRouter = NullOutboxConsumerRouter.Instance;
@@ -93,6 +98,7 @@ public partial class ApplicationDbContext : DbContext
         base.OnModelCreating(builder);
 
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        ApplyTenantQueryFilters(builder);
     }
 
     /// <summary>
@@ -166,6 +172,33 @@ public partial class ApplicationDbContext : DbContext
                     break;
             }
         }
+    }
+
+    private void ApplyTenantQueryFilters(ModelBuilder builder)
+    {
+        var tenantEntityTypes = builder.Model
+            .GetEntityTypes()
+            .Where(entityType => typeof(ITenant).IsAssignableFrom(entityType.ClrType))
+            .ToList();
+
+        foreach (var entityType in tenantEntityTypes)
+        {
+            var method = typeof(ApplicationDbContext)
+                .GetMethod(nameof(ApplyTenantQueryFilter), BindingFlags.Instance | BindingFlags.NonPublic)!
+                .MakeGenericMethod(entityType.ClrType);
+
+            method.Invoke(this, new object[] { builder });
+        }
+    }
+
+    private void ApplyTenantQueryFilter<TEntity>(ModelBuilder builder)
+        where TEntity : class, ITenant
+    {
+        builder.Entity<TEntity>()
+            .HasQueryFilter(entity =>
+                !_tenantContextAccessor.HasTenant
+                || _tenantContextAccessor.ShouldBypassFilters
+                || entity.TenantId == _tenantContextAccessor.TenantId);
     }
 }
 

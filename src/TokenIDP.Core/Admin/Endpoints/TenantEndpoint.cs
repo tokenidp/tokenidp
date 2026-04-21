@@ -76,6 +76,7 @@ internal class TenantEndpoint : IEndpointDefinition
          {
              Policy = "tenants.add"
          })
+        .RequireSystemTenant()
         .WithName("CreateTenant")
         .WithTags("Tenants");
 
@@ -118,7 +119,50 @@ internal class TenantEndpoint : IEndpointDefinition
          {
              Policy = "tenants.delete"
          })
+        .RequireSystemTenant()
         .WithName("DeleteTenant")
+        .WithTags("Tenants");
+
+        authGroup.MapPost("/{id}/activate", async (int id,
+            TenantCommandUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.ActivateTenant(id, httpContext.RequestAborted);
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tenants.edit"
+        })
+        .RequireSystemTenant()
+        .WithName("ActivateTenant")
+        .WithTags("Tenants");
+
+        authGroup.MapPost("/{id}/suspend", async (int id,
+            TenantCommandUseCase useCase,
+            HttpContext httpContext) =>
+        {
+            if (id <= 0)
+            {
+                return Results.BadRequest(ApiResult<ApiError>.Failure(
+                    ApiError.Failure("Record Id should be greater than zero.")));
+            }
+
+            var response = await useCase.SuspendTenant(id, httpContext.RequestAborted);
+            return EndpointResultMapper.ToOkOrError(response);
+        })
+        .RequireAuthorization(new AuthorizeAttribute
+        {
+            Policy = "tenants.edit"
+        })
+        .RequireSystemTenant()
+        .WithName("SuspendTenant")
         .WithTags("Tenants");
 
         authGroup.MapPost("/{id}/reveal-secret", async (int id,

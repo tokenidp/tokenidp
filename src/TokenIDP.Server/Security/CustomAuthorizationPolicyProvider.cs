@@ -14,12 +14,7 @@ public class CustomAuthorizationPolicyProvider : IAuthorizationPolicyProvider
 
     public Task<AuthorizationPolicy> GetPolicyAsync(string policyName)
     {
-        // Dynamically create policies based on the policy name
-        var policy = new AuthorizationPolicyBuilder()
-                .AddRequirements(new DynamicPermissionRequirement(policyName))
-                .Build();
-
-        return Task.FromResult(policy);
+        return GetOrCreatePolicyAsync(policyName);
     }
 
     public Task<AuthorizationPolicy> GetDefaultPolicyAsync()
@@ -30,6 +25,19 @@ public class CustomAuthorizationPolicyProvider : IAuthorizationPolicyProvider
     public Task<AuthorizationPolicy> GetFallbackPolicyAsync()
     {
         return _fallbackPolicyProvider.GetFallbackPolicyAsync();
+    }
+
+    private async Task<AuthorizationPolicy> GetOrCreatePolicyAsync(string policyName)
+    {
+        var fallbackPolicy = await _fallbackPolicyProvider.GetPolicyAsync(policyName);
+        if (fallbackPolicy is not null)
+        {
+            return fallbackPolicy;
+        }
+
+        return new AuthorizationPolicyBuilder()
+            .AddRequirements(new DynamicPermissionRequirement(policyName))
+            .Build();
     }
 }
 

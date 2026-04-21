@@ -1,6 +1,7 @@
 using TokenIDP.Core.Foundation.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
@@ -13,11 +14,14 @@ internal static class AuthenticationDI
 {
     internal static void AddAuthentication(this IServiceCollection services,
         TokenOptions tokenOptions,
-        IHostEnvironment environment)
+        IHostEnvironment environment,
+        IConfiguration configuration)
     {
         var signingKey = ResolveSigningKey(tokenOptions, environment);
-        var issuer = TokenOptionsResolver.ResolveIssuer(tokenOptions);
         var audience = TokenOptionsResolver.ResolveAudience(tokenOptions);
+        var tenantResolutionOptions = configuration
+            .GetSection(TenantResolutionOptions.SectionName)
+            .Get<TenantResolutionOptions>() ?? new TenantResolutionOptions();
 
         services
             .AddAuthentication(options =>
@@ -34,7 +38,8 @@ internal static class AuthenticationDI
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = signingKey,
                     ValidateIssuer = true,
-                    ValidIssuer = issuer,
+                    IssuerValidator = (issuer, _, _) =>
+                        ValidateIssuer(issuer, tokenOptions, tenantResolutionOptions, environment),
                     ValidateAudience = true,
                     ValidAudience = audience,
                     ValidateLifetime = true,
@@ -109,6 +114,46 @@ internal static class AuthenticationDI
         {
             throw new InvalidOperationException("Token signing key must be PEM or base64-encoded RSA private key.", ex);
         }
+    }
+
+    private static string ValidateIssuer(
+        string issuer,
+        TokenOptions tokenOptions,
+        TenantResolutionOptions tenantResolutionOptions,
+        IHostEnvironment environment)
+    {
+        if (string.IsNullOrWhiteSpace(issuer))
+        {
+            throw new SecurityTokenInvalidIssuerException("Token issuer is missing.");
+        }
+
+        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var parsedIssuer))
+        {
+            throw new SecurityTokenInvalidIssuerException("Token issuer is invalid.");
+        }
+
+        var normalizedIssuer = parsedIssuer.AbsoluteUri.TrimEnd('/');
+        var configuredIssuer = TokenOptionsResolver.ResolveIssuer(tokenOptions);
+        if (string.Equals(normalizedIssuer, configuredIssuer, StringComparison.OrdinalIgnoreCase))
+        {
+            return normalizedIssuer;
+        }
+
+        if (environment.IsDevelopment() &&
+            tenantResolutionOptions.AllowedDevelopmentHosts.Any(host =>
+                string.Equals(parsedIssuer.Host, host, StringComparison.OrdinalIgnoreCase) ||
+                parsedIssuer.Host.EndsWith($".{host}", StringComparison.OrdinalIgnoreCase)))
+        {
+            return normalizedIssuer;
+        }
+
+        if (tenantResolutionOptions.AllowedRootDomains.Any(domain =>
+                parsedIssuer.Host.EndsWith($".{domain}", StringComparison.OrdinalIgnoreCase)))
+        {
+            return normalizedIssuer;
+        }
+
+        throw new SecurityTokenInvalidIssuerException("Token issuer is not allowed.");
     }
 
 }

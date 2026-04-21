@@ -21,9 +21,12 @@ internal class HttpCurrentUserService : ICurrentUserService
         IOptions<TokenOptions> tokenOptions)
     {
         _httpContextAccessor = httpContextAccessor;
-        _baseUrl = TokenOptionsResolver.ResolveIssuer(tokenOptions.Value);
+        var configuredIssuer = TokenOptionsResolver.ResolveIssuer(tokenOptions.Value);
 
         var ctx = _httpContextAccessor.HttpContext;
+        _baseUrl = ctx?.Request.Host.HasValue == true
+            ? $"{ctx.Request.Scheme}://{ctx.Request.Host.Value}".TrimEnd('/')
+            : configuredIssuer;
 
         IpAddress = ctx?.Request.Headers["X-Forwarded-For"]
             .FirstOrDefault()?.Split(',').FirstOrDefault()

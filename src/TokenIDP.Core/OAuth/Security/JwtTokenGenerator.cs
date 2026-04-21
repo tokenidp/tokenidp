@@ -11,12 +11,16 @@ namespace TokenIDP.Core.OAuth.Security;
 internal sealed class JwtTokenGenerator
 {
     private readonly TokenOptions _settings;
+    private readonly ICurrentUserService _currentUserService;
     private readonly JwtSecurityTokenHandler _tokenHandler = new();
     private readonly SecurityKey _signingKey;
     private readonly SigningCredentials _signingCredentials;
-    public JwtTokenGenerator(IOptions<TokenOptions> settings)
+    public JwtTokenGenerator(
+        IOptions<TokenOptions> settings,
+        ICurrentUserService currentUserService)
     {
         _settings = settings.Value;
+        _currentUserService = currentUserService;
 
         if (TokenSigningMaterialResolver.HasCertificateConfiguration(_settings))
         {
@@ -161,7 +165,7 @@ internal sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = TokenOptionsResolver.ResolveIssuer(_settings),
+            Issuer = ResolveIssuer(),
             Audience = audiences[0],
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
@@ -181,7 +185,7 @@ internal sealed class JwtTokenGenerator
 
         var descriptor = new SecurityTokenDescriptor
         {
-            Issuer = TokenOptionsResolver.ResolveIssuer(_settings),
+            Issuer = ResolveIssuer(),
             Subject = new ClaimsIdentity(claims),
             IssuedAt = now,
             NotBefore = now,
@@ -212,6 +216,13 @@ internal sealed class JwtTokenGenerator
         {
             claims.Add(new Claim(claimType, value));
         }
+    }
+
+    private string ResolveIssuer()
+    {
+        return !string.IsNullOrWhiteSpace(_currentUserService.BaseUrl)
+            ? _currentUserService.BaseUrl.TrimEnd('/')
+            : TokenOptionsResolver.ResolveIssuer(_settings);
     }
 
     private SecurityKey CreateSigningKey(string keyMaterial)

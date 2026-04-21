@@ -8,8 +8,10 @@ public sealed class TenantDetail
             Id = t.Id,
             TenantCode = t.TenantCode,
             TenantName = t.TenantName,
+            TenantKey = t.TenantKey,
             Email = t.Email,
             IsActive = t.IsActive,
+            IsSystemTenant = t.IsSystemTenant,
 
             AuthSettings = new TenantAuthSettingDetail
             {
@@ -45,8 +47,10 @@ public sealed class TenantDetail
     public int Id { get; set; }
     public string TenantCode { get; set; } = default!;
     public string TenantName { get; set; } = default!;
+    public string TenantKey { get; set; } = default!;
     public string? Email { get; set; }
     public bool IsActive { get; set; }
+    public bool IsSystemTenant { get; set; }
 
     public TenantAuthSettingDetail AuthSettings { get; set; } = default!;
     public TenantUISettingDetail UISetting { get; set; } = default!;

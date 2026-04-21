@@ -13,9 +13,31 @@ internal sealed class CreateUpdateTenantValidator : AbstractValidator<CreateUpda
             .NotEmpty()
             .MaximumLength(200);
 
+        RuleFor(x => x.TenantKey)
+            .NotEmpty()
+            .MaximumLength(64)
+            .Matches("^[a-z0-9]+(?:-[a-z0-9]+)*$")
+            .WithMessage("Tenant key must contain lowercase letters, numbers, and hyphens only.");
+
         RuleFor(x => x.Email)
             .Must(value => string.IsNullOrWhiteSpace(value) || EmailValidator.IsValid(value))
             .WithMessage("Email must be a valid email address.");
+
+        When(x => x.Id == 0, () =>
+        {
+            RuleFor(x => x.AdminEmail)
+                .NotEmpty()
+                .Must(EmailValidator.IsValid)
+                .WithMessage("Admin email must be a valid email address.");
+
+            RuleFor(x => x.AdminFirstName)
+                .NotEmpty()
+                .MaximumLength(50);
+
+            RuleFor(x => x.AdminLastName)
+                .NotEmpty()
+                .MaximumLength(50);
+        });
 
         RuleFor(x => x.AuthSettings)
             .NotNull();

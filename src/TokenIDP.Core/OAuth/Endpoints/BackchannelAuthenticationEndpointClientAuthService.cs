@@ -6,10 +6,14 @@ namespace TokenIDP.Core.OAuth.Endpoints;
 internal sealed class BackchannelAuthenticationEndpointClientAuthService
 {
     private readonly IClientRepository _clientStore;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
-    public BackchannelAuthenticationEndpointClientAuthService(IClientRepository clientStore)
+    public BackchannelAuthenticationEndpointClientAuthService(
+        IClientRepository clientStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _clientStore = clientStore;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<CibaBackchannelAuthenticationRequest> BuildValidatedRequestAsync(HttpContext httpContext)
@@ -132,6 +136,8 @@ internal sealed class BackchannelAuthenticationEndpointClientAuthService
                 "Client authentication is required.");
         }
 
+        EnsureTenantMatch(client.TenantId);
+
         if (!ClientSecretValidator.Matches(clientSecret, client.ActiveSecretHashes))
         {
             throw new BackchannelAuthenticationValidationException(
@@ -140,6 +146,17 @@ internal sealed class BackchannelAuthenticationEndpointClientAuthService
         }
 
         return client;
+    }
+
+    private void EnsureTenantMatch(int clientTenantId)
+    {
+        if (_tenantContextAccessor.HasTenant &&
+            clientTenantId != _tenantContextAccessor.TenantId)
+        {
+            throw new BackchannelAuthenticationValidationException(
+                "invalid_client",
+                "Client authentication failed.");
+        }
     }
 
     private static bool TryReadBasicCredentials(

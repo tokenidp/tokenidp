@@ -32,11 +32,12 @@ internal class TenantProvisioningService : ITenantProvisioningService
 
         var createResult = Tenant.Create(
             command.TenantName,
-            "system-admin",
+            "system",
             command.Email?.Trim(),
             command.IsActive,
             authSettings,
             uiSetting,
+            true,
             out var tenant);
 
         tenant?.GenerateTenantCode(1);

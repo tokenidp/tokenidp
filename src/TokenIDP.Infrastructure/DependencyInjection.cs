@@ -76,6 +76,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IOutboxMapper, TokenOutboxMapper>();
         services.AddScoped<IOutboxMapper, UserOutboxMapper>();
+        services.AddScoped<IOutboxMapper, TenantOutboxMapper>();
         services.AddScoped<IOutboxMapperResolver, OutboxMapperResolver>();
         services.AddScoped<IOutboxConsumerRouter, OutboxConsumerRouter>();
     }
@@ -150,6 +151,7 @@ public static class DependencyInjection
         services.AddScoped<IPermissionSeeder, PermissionSeeder>();
         services.AddScoped<IUserProvisioningService, UserProvisioningService>();
         services.AddScoped<IConfigurationSeeder, ConfigurationSeeder>();
+        services.AddScoped<ITenantBootstrapper, TenantBootstrapper>();
 
         services.AddScoped<ISystemBootstrapper, SystemBootstrapper>();
     }

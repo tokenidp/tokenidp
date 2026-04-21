@@ -44,10 +44,21 @@ else if (ui != null)
 
     <div class="card" data-theme="@ui.Theme" style="@GetAccentStyle(ui.AccentColor)">
         <div class="logo">
-            <img src="/_content/TokenIDP.Server/images/TokenIDP.svg" alt="tokeidp logo" width="250" />
+            @if (!string.IsNullOrWhiteSpace(ui.LogoUrl))
+            {
+                <img src="@ui.LogoUrl" alt="@ui.ProductName logo" width="250" />
+            }
+            else
+            {
+                <img src="/_content/TokenIDP.Server/images/TokenIDP.svg" alt="TokenIDP logo" width="250" />
+            }
         </div>
 
         <h1>Sign in to @ui.ProductName</h1>
+        @if (!string.IsNullOrWhiteSpace(ui.LoginText))
+        {
+            <p>@ui.LoginText</p>
+        }
 
         <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
         <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>

@@ -18,6 +18,7 @@ public interface ITenantRepository
     Task<Tenant?> GetTenantAggregateAsync(int tenantId, CancellationToken ct);
     Task<TenantDetail?> GetTenantDetailAsync(int tenantId, CancellationToken ct);
     Task<Tenant?> GetTenantWithProvidersAsync(int tenantId, CancellationToken ct);
+    Task<TenantResolutionResult?> ResolveTenantAsync(string tenantKey, CancellationToken ct);
     Task<PaginatedList<TenantSearchResult>> SearchTenantsAsync(int? scopedTenantId, SearchData request, CancellationToken ct);
     Task<bool> TenantNameExistsAsync(string tenantName, int? excludeTenantId, CancellationToken ct);
     Task<bool> TenantKeyExistsAsync(string tenantKey, CancellationToken ct);

@@ -25,6 +25,7 @@
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="FluentAssertions" Version="8.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
@@ -35,6 +36,8 @@
   <ItemGroup>
     <ProjectReference Include="..\TokenIDP.Core\TokenIDP.Core.csproj" />
     <ProjectReference Include="..\TokenIDP.Domain\TokenIDP.Domain.csproj" />
+    <ProjectReference Include="..\TokenIDP.Infrastructure\TokenIDP.Infrastructure.csproj" />
+    <ProjectReference Include="..\TokenIDP.Server\TokenIDP.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

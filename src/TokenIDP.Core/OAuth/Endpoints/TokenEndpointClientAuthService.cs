@@ -10,13 +10,16 @@ internal sealed class TokenEndpointClientAuthService
 {
     private readonly IClientRepository _clientStore;
     private readonly IAppLogger<TokenEndpointClientAuthService> _logger;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
     public TokenEndpointClientAuthService(
         IClientRepository clientStore,
-        IAppLogger<TokenEndpointClientAuthService> logger)
+        IAppLogger<TokenEndpointClientAuthService> logger,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _clientStore = clientStore;
         _logger = logger;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<TokenRequest> BuildValidatedRequestAsync(HttpContext httpContext)
@@ -152,6 +155,8 @@ internal sealed class TokenEndpointClientAuthService
             throw new TokenRequestValidationException("invalid_client", "Client authentication failed.");
         }
 
+        EnsureTenantMatch(client.TenantId);
+
         var requiresClientSecret = IsConfidentialClient(client.ClientType);
         var usesNoClientAuthentication = string.Equals(
             request.ClientAuthenticationMethod,
@@ -183,6 +188,15 @@ internal sealed class TokenEndpointClientAuthService
         if (!ClientSecretValidator.Matches(request.ClientSecret, client.ActiveSecretHashes))
         {
             throw new TokenRequestValidationException("invalid_client", "Client secret is invalid.");
+        }
+    }
+
+    private void EnsureTenantMatch(int clientTenantId)
+    {
+        if (_tenantContextAccessor.HasTenant &&
+            clientTenantId != _tenantContextAccessor.TenantId)
+        {
+            throw new TokenRequestValidationException("invalid_client", "Client authentication failed.");
         }
     }
 

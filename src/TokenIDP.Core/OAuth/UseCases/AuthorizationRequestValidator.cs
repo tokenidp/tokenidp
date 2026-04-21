@@ -5,10 +5,14 @@ namespace TokenIDP.Core.OAuth.UseCases;
 public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidator
 {
     private readonly IClientRepository _clientStore;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
-    public AuthorizationRequestValidator(IClientRepository clientStore)
+    public AuthorizationRequestValidator(
+        IClientRepository clientStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _clientStore = clientStore;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<ClientShortInfo> ValidateAsync(
@@ -24,6 +28,8 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 description: "Invalid client_id.",
                 allowRedirect: false);
         }
+
+        EnsureTenantMatch(client.TenantId);
 
         var redirectUri = request.RedirectUri?.Trim();
 
@@ -114,6 +120,8 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 allowRedirect: false);
         }
 
+        EnsureTenantMatch(client.TenantId);
+
         if (string.IsNullOrWhiteSpace(request.Scope))
         {
             throw new AuthorizationRequestException(
@@ -140,6 +148,18 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
         }
 
         return client;
+    }
+
+    private void EnsureTenantMatch(int clientTenantId)
+    {
+        if (_tenantContextAccessor.HasTenant &&
+            clientTenantId != _tenantContextAccessor.TenantId)
+        {
+            throw new AuthorizationRequestException(
+                "unauthorized_client",
+                "Invalid client_id.",
+                allowRedirect: false);
+        }
     }
 }
 

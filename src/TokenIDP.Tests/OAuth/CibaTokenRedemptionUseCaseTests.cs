@@ -195,11 +195,19 @@ public class CibaTokenRedemptionUseCaseTests
             Mock.Of<IAppLogger<TokenContextUseCase>>(),
             userRepository.Object);
 
+        var currentUserService = new TestCurrentUserService
+        {
+            UserId = cibaRequest.UserId!.Value,
+            TenantId = cibaRequest.TenantId
+        };
+
         var tokenIssuerUseCase = new TokenIssuerUseCase(
-            new JwtTokenGenerator(Options.Create(CibaTestData.CreateTokenOptions())),
+            new JwtTokenGenerator(
+                Options.Create(CibaTestData.CreateTokenOptions()),
+                currentUserService),
             Mock.Of<IAppLogger<TokenIssuerUseCase>>(),
             tokenRepository.Object,
-            new TestCurrentUserService { UserId = cibaRequest.UserId!.Value, TenantId = cibaRequest.TenantId },
+            currentUserService,
             new TokenSecretGenerator());
 
         return new CibaTokenRedemptionUseCase(

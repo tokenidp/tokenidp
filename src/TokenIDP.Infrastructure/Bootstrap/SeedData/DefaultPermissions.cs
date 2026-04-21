@@ -4,7 +4,9 @@ namespace TokenIDP.Infrastructure.Bootstrap.SeedData;
 
 internal class DefaultPermissions
 {
-    public static IReadOnlyCollection<CreateUpdatePermission> CreateDefaultPermissions(int tenantId)
+    public static IReadOnlyCollection<CreateUpdatePermission> CreateDefaultPermissions(
+        int tenantId,
+        bool includeSystemTenantPermissions = true)
     {
         List<CreateUpdatePermission> allPermissions = new();
 
@@ -22,7 +24,10 @@ internal class DefaultPermissions
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
-        allPermissions.Add(tenantsView);
+        if (includeSystemTenantPermissions)
+        {
+            allPermissions.Add(tenantsView);
+        }
         allPermissions.Add(usersView);
         allPermissions.Add(rolesView);
         allPermissions.Add(permissionsView);
@@ -107,31 +112,34 @@ internal class DefaultPermissions
             }
         }
 
-        tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
-
-        var socialSignInView = CreatePermission(
-            tenantId,
-            "tenants.socialsignin.view",
-            "Social Sign In",
-            "NavLink",
-            ++i,
-            "/tenants/social-sign-in",
-            "fa-globe");
-        socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
+        if (includeSystemTenantPermissions)
         {
-            CreateActionPermission(
+            tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
+
+            var socialSignInView = CreatePermission(
+                tenantId,
+                "tenants.socialsignin.view",
+                "Social Sign In",
+                "NavLink",
+                ++i,
+                "/tenants/social-sign-in",
+                "fa-globe");
+            socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
+            {
+                CreateActionPermission(
+                    tenantId,
+                    ++i,
+                    "tenants.socialsignin.edit",
+                    "Modify Social Sign In")
+            };
+            tenantsView.ChildPermissions.Add(socialSignInView);
+
+            tenantsView.ChildPermissions.Add(CreateActionPermission(
                 tenantId,
                 ++i,
-                "tenants.socialsignin.edit",
-                "Modify Social Sign In")
-        };
-        tenantsView.ChildPermissions.Add(socialSignInView);
-
-        tenantsView.ChildPermissions.Add(CreateActionPermission(
-            tenantId,
-            ++i,
-            "tenant.secret.reveal",
-            "Reveal Tenant Provider Secret"));
+                "tenant.secret.reveal",
+                "Reveal Tenant Provider Secret"));
+        }
 
         var apiResourcesPermission = allPermissions.FirstOrDefault(x => x.PermissionKey == "apiresources.view");
         if (apiResourcesPermission is not null)

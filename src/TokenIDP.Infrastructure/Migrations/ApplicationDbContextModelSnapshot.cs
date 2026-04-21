@@ -623,14 +623,14 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId")
+                    b.HasIndex("TenantId", "ClientId")
                         .IsUnique()
-                        .HasDatabaseName("IX_Clients_ClientId");
+                        .HasDatabaseName("UX_Clients_Tenant_ClientId");
 
                     b.HasIndex("TenantId", "IsDeleted")
                         .HasDatabaseName("IX_Clients_ByTenant");
 
-                    b.HasIndex("ClientId", "IsActive", "IsDeleted")
+                    b.HasIndex("TenantId", "ClientId", "IsActive", "IsDeleted")
                         .HasDatabaseName("IX_Clients_ClientId_IsActive_IsDeleted");
 
                     b.HasIndex("TenantId", "IsDeleted", "ClientType", "TokenType", "IsActive", "ClientName")
@@ -1452,6 +1452,9 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsSystemTenant")
+                        .HasColumnType("bit");
+
                     b.Property<string>("TenantCode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1488,7 +1491,7 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.HasIndex("TenantKey")
                         .IsUnique()
-                        .HasDatabaseName("IX_Tenants_TenantKey");
+                        .HasDatabaseName("UX_Tenants_TenantKey");
 
                     b.HasIndex("TenantName")
                         .IsUnique()

@@ -20,17 +20,25 @@ public sealed class AuthorizationPageUiUseCase : IAuthorizationPageUiUseCase
         int clientId,
         CancellationToken ct)
     {
+        var tenant = await _tenantStore.GetSummaryAsync(tenantId, ct);
         var tenantUISetting = await _tenantStore.GetTenantUISettings(tenantId);
         var clientPolicy = await _clientStore.GetClientAuthPolicy(clientId);
         var providers = await _clientStore.GetExternalProviders(clientId);
 
         AuthorizationPageUi authorizationPageUi = new();
+        if (tenant is not null)
+        {
+            authorizationPageUi.ProductName = string.IsNullOrWhiteSpace(tenant.TenantDisplayName)
+                ? tenant.TenantName
+                : tenant.TenantDisplayName;
+        }
 
         if (tenantUISetting != null)
         {
             authorizationPageUi.LogoUrl = tenantUISetting?.LogoUrl;
             authorizationPageUi.Theme = tenantUISetting?.Theme;
             authorizationPageUi.AccentColor = tenantUISetting?.PrimaryColor;
+            authorizationPageUi.LoginText = tenantUISetting?.LoginText;
         }
 
         if (clientPolicy != null)

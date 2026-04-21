@@ -24,7 +24,8 @@ internal class DiscoveryEndpoints : IEndpointDefinition
     {
         app.MapGet(DiscoveryPath, async (HttpContext http, IOptions<TokenOptions> tokenOptions) =>
         {
-            var metadata = BuildDiscoveryDocument(tokenOptions.Value);
+            var issuer = ResolveIssuer(http, tokenOptions.Value);
+            var metadata = BuildDiscoveryDocument(issuer);
             await WriteJsonAsync(http, metadata);
         });
 
@@ -35,10 +36,8 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         });
     }
 
-    private Dictionary<string, object?> BuildDiscoveryDocument(TokenOptions tokenOptions)
+    private Dictionary<string, object?> BuildDiscoveryDocument(string issuer)
     {
-        var issuer = TokenOptionsResolver.ResolveIssuer(tokenOptions);
-
         var jwksUri = $"{issuer}{JwksPath}";
 
         return new Dictionary<string, object?>
@@ -158,6 +157,13 @@ internal class DiscoveryEndpoints : IEndpointDefinition
         http.Response.ContentType = "application/json; charset=utf-8";
 
         await http.Response.WriteAsync(JsonSerializer.Serialize(payload, JsonOptions));
+    }
+
+    private static string ResolveIssuer(HttpContext httpContext, TokenOptions tokenOptions)
+    {
+        return httpContext.Request.Host.HasValue
+            ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host.Value}".TrimEnd('/')
+            : TokenOptionsResolver.ResolveIssuer(tokenOptions);
     }
 
 }
