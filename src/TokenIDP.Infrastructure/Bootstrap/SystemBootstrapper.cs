@@ -163,6 +163,45 @@ internal class SystemBootstrapper : ISystemBootstrapper
         {
             var clientUpdated = false;
 
+            if (!string.Equals(existing.RedirectUri, defaultAdminClient.RedirectUri, StringComparison.Ordinal) ||
+                !string.Equals(existing.LogoutRedirectUri, defaultAdminClient.LogoutRedirectUri, StringComparison.Ordinal))
+            {
+                var updateResult = existing.UpdateClient(
+                    existing.ClientName,
+                    existing.Description,
+                    existing.IconUrl,
+                    existing.ClientType,
+                    existing.TokenType,
+                    defaultAdminClient.RedirectUri,
+                    defaultAdminClient.LogoutRedirectUri,
+                    existing.IsActive,
+                    existing.ClientSecretExpiry,
+                    existing.AccessTokenLifetime,
+                    existing.AuthorizationCodeLifetime,
+                    existing.RefreshTokenExpiration,
+                    existing.RefreshTokenDeliveryMode,
+                    existing.PermitLimit,
+                    existing.TimeWindow,
+                    existing.QueueLimit,
+                    existing.EnableITracking,
+                    existing.CibaEnabled,
+                    existing.BackchannelTokenDeliveryMode,
+                    existing.CibaDefaultExpirySeconds,
+                    existing.CibaMinIntervalSeconds,
+                    existing.RequireCibaUserCode,
+                    existing.AllowCibaLoginHint,
+                    existing.AllowCibaLoginHintToken,
+                    existing.AllowCibaIdTokenHint);
+
+                if (!updateResult.IsSuccess)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to update admin client redirect settings: {FormatErrors(updateResult)}");
+                }
+
+                clientUpdated = true;
+            }
+
             var existingScopes = existing.ClientScopes
                 .Select(x => x.Scope)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);

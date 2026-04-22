@@ -44,13 +44,25 @@ jobs:
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
           AZURE_WEBAPP_RESOURCE_GROUP: ${{ vars.AZURE_WEBAPP_RESOURCE_GROUP }}
           ASPNETCORE_ENVIRONMENT_VALUE: ${{ vars.ASPNETCORE_ENVIRONMENT }}
+          BOOTSTRAP_REDIRECT_URI: ${{ vars.BOOTSTRAP_REDIRECT_URI }}
+          BOOTSTRAP_LOGOUT_REDIRECT_URI: ${{ vars.BOOTSTRAP_LOGOUT_REDIRECT_URI }}
         run: |
           APP_NAME="${AZURE_WEBAPP_NAME:-tresorauth}"
           ENV_NAME="${ASPNETCORE_ENVIRONMENT_VALUE:-Staging}"
+          SETTINGS=("ASPNETCORE_ENVIRONMENT=$ENV_NAME")
+
+          if [ -n "$BOOTSTRAP_REDIRECT_URI" ]; then
+            SETTINGS+=("Bootstrap__RedirectUri=$BOOTSTRAP_REDIRECT_URI")
+          fi
+
+          if [ -n "$BOOTSTRAP_LOGOUT_REDIRECT_URI" ]; then
+            SETTINGS+=("Bootstrap__LogoutRedirectUri=$BOOTSTRAP_LOGOUT_REDIRECT_URI")
+          fi
+
           az webapp config appsettings set \
             --name "$APP_NAME" \
             --resource-group "$AZURE_WEBAPP_RESOURCE_GROUP" \
-            --settings ASPNETCORE_ENVIRONMENT="$ENV_NAME"
+            --settings "${SETTINGS[@]}"
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
