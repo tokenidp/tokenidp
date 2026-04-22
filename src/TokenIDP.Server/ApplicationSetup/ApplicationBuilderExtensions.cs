@@ -192,7 +192,7 @@ public static class ApplicationBuilderExtensions
             });
     }
 
-    private static TokenOptions ResolveTokenOptions(
+    internal static TokenOptions ResolveTokenOptions(
         IConfiguration configuration,
         IHostEnvironment environment,
         string audience,
@@ -205,7 +205,7 @@ public static class ApplicationBuilderExtensions
         tokenOptions.Audience = audience;
         configureToken?.Invoke(tokenOptions);
 
-        if (environment.IsDevelopment())
+        if (!environment.IsProduction())
         {
             if (string.IsNullOrWhiteSpace(tokenOptions.Key) &&
                 string.IsNullOrWhiteSpace(tokenOptions.KeyPath) &&

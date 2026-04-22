@@ -46,7 +46,7 @@ jobs:
           CLIENT_ID="${REACT_APP_OAUTH_CLIENT_ID:-d654bf52-b28d-4ad4-b84b-3bcd795f2147}"
           REDIRECT_URI="${REACT_APP_OAUTH_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/auth/callback}"
           POST_LOGOUT_REDIRECT_URI="${REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/login}"
-          OAUTH_SCOPE="${REACT_APP_OAUTH_SCOPE:-openid profile email offline_access tokenidp.admin.write tokenidp.admin.read}"
+          OAUTH_SCOPE="${REACT_APP_OAUTH_SCOPE:-openid profile tokenidp.admin.write tokenidp.admin.read}"
           CODE_VERIFIER_KEY="${REACT_APP_OAUTH_CODE_VERIFIER_KEY:-pkce_code_verifier}"
           cat > .env.production <<EOF
           GENERATE_SOURCEMAP=false
