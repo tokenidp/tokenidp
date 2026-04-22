@@ -16,13 +16,21 @@ const useApiClient = (options = {}) => {
   useEffect(() => {
     const interceptorId = apiClient.interceptors.request.use((config) => {
       const token = user?.accessToken || user?.access_token;
+      const tenantKey = user?.tenantKey;
       console.log("accessToken:", token);
-      if (!skipAuth && token && !config.headers?.Authorization) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-        };
+      const nextHeaders = {
+        ...(config.headers || {}),
+      };
+
+      if (!skipAuth && token && !nextHeaders.Authorization) {
+        nextHeaders.Authorization = `Bearer ${token}`;
       }
+
+      if (tenantKey && !nextHeaders["X-Tenant-Key"]) {
+        nextHeaders["X-Tenant-Key"] = tenantKey;
+      }
+
+      config.headers = nextHeaders;
       return config;
     });
 
@@ -38,9 +46,13 @@ const useApiClient = (options = {}) => {
     async (method, endPoint, data, config) => {
       const headers = { ...(config?.headers || {}) };
       const token = user?.accessToken || user?.access_token;
+      const tenantKey = user?.tenantKey;
       console.log("accessToken:", token);
       if (!skipAuth && token && !headers.Authorization) {
         headers.Authorization = `Bearer ${token}`;
+      }
+      if (tenantKey && !headers["X-Tenant-Key"]) {
+        headers["X-Tenant-Key"] = tenantKey;
       }
       try {
         const response = await run(

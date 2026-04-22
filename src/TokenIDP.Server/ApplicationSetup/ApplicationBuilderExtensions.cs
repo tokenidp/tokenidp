@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,9 +62,21 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddHttpContextAccessor();
         builder.Services.Configure<TenantResolutionOptions>(
             builder.Configuration.GetSection(TenantResolutionOptions.SectionName));
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders =
+                ForwardedHeaders.XForwardedFor |
+                ForwardedHeaders.XForwardedHost |
+                ForwardedHeaders.XForwardedProto;
+
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+            options.RequireHeaderSymmetry = false;
+        });
 
         builder.Services.AddScoped<ICurrentUserService, HttpCurrentUserService>();
-        builder.Services.AddScoped<ITenantResolver, HostTenantResolver>();
+        builder.Services.AddScoped<ITenantRequestResolver, TenantRequestResolver>();
+        builder.Services.AddScoped<ITenantResolver, TenantResolver>();
 
         builder.Services.AddScoped<LoadService>();
 

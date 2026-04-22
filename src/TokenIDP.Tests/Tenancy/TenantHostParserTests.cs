@@ -10,7 +10,7 @@ public sealed class TenantHostParserTests
     {
         AllowedRootDomains = new[] { "tokenidp.com" },
         AllowedDevelopmentHosts = new[] { "localhost" },
-        FallbackTenantKey = "system"
+        DefaultTenant = "system"
     };
 
     [Theory]
@@ -18,20 +18,38 @@ public sealed class TenantHostParserTests
     [InlineData("system.tokenidp.com", "system")]
     [InlineData("acme.localhost:5001", "acme")]
     [InlineData("system.localhost:5001", "system")]
-    [InlineData("tokenidp.com", "system")]
-    public void TryResolveTenantKey_ShouldParseExpectedTenantKey(string host, string expectedTenantKey)
+    public void Resolve_ShouldParseTenantSubdomain(string host, string expectedTenantKey)
     {
-        var resolved = TenantHostParser.TryResolveTenantKey(host, Options, out var tenantKey);
+        var result = TenantHostParser.Resolve(host, Options);
 
-        resolved.Should().BeTrue();
-        tenantKey.Should().Be(expectedTenantKey);
+        result.Kind.Should().Be(TenantHostResolutionKind.Tenant);
+        result.TenantKey.Should().Be(expectedTenantKey);
+    }
+
+    [Theory]
+    [InlineData("tokenidp.com")]
+    [InlineData("localhost:5001")]
+    public void Resolve_ShouldRecognizeRootHost(string host)
+    {
+        var result = TenantHostParser.Resolve(host, Options);
+
+        result.Kind.Should().Be(TenantHostResolutionKind.Root);
+        result.TenantKey.Should().BeNull();
     }
 
     [Fact]
-    public void TryResolveTenantKey_ShouldRejectUnknownHost()
+    public void Resolve_ShouldRejectNestedSubdomains()
     {
-        var resolved = TenantHostParser.TryResolveTenantKey("evil.example.com", Options, out _);
+        var result = TenantHostParser.Resolve("a.b.tokenidp.com", Options);
 
-        resolved.Should().BeFalse();
+        result.Kind.Should().Be(TenantHostResolutionKind.Invalid);
+    }
+
+    [Fact]
+    public void Resolve_ShouldIgnoreUnknownHost()
+    {
+        var result = TenantHostParser.Resolve("evil.example.com", Options);
+
+        result.Kind.Should().Be(TenantHostResolutionKind.None);
     }
 }

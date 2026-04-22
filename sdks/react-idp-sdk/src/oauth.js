@@ -20,6 +20,12 @@ export function buildAuthorizeUrl(config, params) {
   if (params.state) url.searchParams.set("state", params.state);
   if (params.audience || config.audience)
     url.searchParams.set("audience", params.audience || config.audience);
+  if (params.tenantKey || config.tenantKey) {
+    url.searchParams.set(
+      config.tenantQueryParameter || "tenant",
+      params.tenantKey || config.tenantKey,
+    );
+  }
 
   // optional extras
   if (params.prompt) url.searchParams.set("prompt", params.prompt);

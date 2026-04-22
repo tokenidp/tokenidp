@@ -1,6 +1,10 @@
 export const defaultAuthConfig = {
   authority: "", // e.g. https://idp.tokentresor.com
   clientId: "",
+  tenantKey: "",
+  tenantQueryParameter: "tenant",
+  tenantHeaderName: "X-Tenant-Key",
+  tenantKeyStorageKey: "idp_tenant_key",
   redirectUri: "", // e.g. https://app.com/auth/callback
   postLoginRedirectUri: "/", // where to go after success
   postLogoutRedirectUri: "/login", // where to go after logout

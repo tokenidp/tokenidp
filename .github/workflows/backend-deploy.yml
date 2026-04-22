@@ -10,6 +10,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: staging
 
     steps:
       - name: Checkout repository
@@ -36,6 +37,20 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure App Service application settings
+        if: ${{ vars.AZURE_WEBAPP_RESOURCE_GROUP != '' }}
+        env:
+          AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
+          AZURE_WEBAPP_RESOURCE_GROUP: ${{ vars.AZURE_WEBAPP_RESOURCE_GROUP }}
+          ASPNETCORE_ENVIRONMENT_VALUE: ${{ vars.ASPNETCORE_ENVIRONMENT }}
+        run: |
+          APP_NAME="${AZURE_WEBAPP_NAME:-tresorauth}"
+          ENV_NAME="${ASPNETCORE_ENVIRONMENT_VALUE:-Staging}"
+          az webapp config appsettings set \
+            --name "$APP_NAME" \
+            --resource-group "$AZURE_WEBAPP_RESOURCE_GROUP" \
+            --settings ASPNETCORE_ENVIRONMENT="$ENV_NAME"
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3

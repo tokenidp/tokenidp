@@ -26,6 +26,7 @@ const initialState = {
   isAuthenticated: false,
   userId: 0,
   tenantId: 0,
+  tenantKey: "",
   userName: "",
   landingPage: "",
   accessToken: "",
@@ -57,18 +58,29 @@ function reducer(state, action) {
 }
 
 export function IdpAuthProvider({ children, config }) {
-  const mergedConfig = useMemo(
+  const baseConfig = useMemo(
     () => ({ ...defaultAuthConfig, ...(config || {}) }),
     [config],
   );
 
   const storage = useMemo(
-    () => createStorage(mergedConfig.storage),
-    [mergedConfig.storage],
+    () => createStorage(baseConfig.storage),
+    [baseConfig.storage],
   );
 
-  const persistedRaw = storage.getItem(mergedConfig.storageKey);
+  const persistedRaw = storage.getItem(baseConfig.storageKey);
   const persisted = persistedRaw ? safeJsonParse(persistedRaw) : null;
+
+  const mergedConfig = useMemo(() => {
+    const resolvedTenantKey =
+      resolveTenantKey(baseConfig) ||
+      String(persisted?.tenantKey || "").trim();
+
+    return {
+      ...baseConfig,
+      tenantKey: resolvedTenantKey,
+    };
+  }, [baseConfig, persisted?.tenantKey]);
 
   const [state, dispatch] = useReducer(reducer, persisted || initialState);
 
@@ -88,10 +100,11 @@ export function IdpAuthProvider({ children, config }) {
 
   function clearLocalSession() {
     storage.removeItem(mergedConfig.storageKey);
-    sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
-    sessionStorage.removeItem(mergedConfig.oauthStateKey);
-    dispatch({ type: "LOGOUT" });
-  }
+        sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
+        sessionStorage.removeItem(mergedConfig.oauthStateKey);
+        sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
+        dispatch({ type: "LOGOUT" });
+      }
 
   async function tryRefreshWithRetry(retries, retryDelayMs) {
     try {
@@ -162,9 +175,15 @@ export function IdpAuthProvider({ children, config }) {
         const verifier = generateCodeVerifier();
         const challenge = await generateCodeChallenge(verifier);
         const stateVal = randomState();
+        const tenantKey = resolveTenantKey(mergedConfig, options);
 
         sessionStorage.setItem(mergedConfig.pkceVerifierKey, verifier);
         sessionStorage.setItem(mergedConfig.oauthStateKey, stateVal);
+        if (tenantKey) {
+          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, tenantKey);
+        } else {
+          sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
+        }
 
         const authorizeUrl = buildAuthorizeUrl(mergedConfig, {
           codeChallenge: challenge,
@@ -172,6 +191,7 @@ export function IdpAuthProvider({ children, config }) {
           prompt: options.prompt,
           loginHint: options.loginHint,
           audience: options.audience,
+          tenantKey,
         });
 
         window.location.assign(authorizeUrl);
@@ -204,6 +224,7 @@ export function IdpAuthProvider({ children, config }) {
       handleCallback: async ({ code, state: returnedState }) => {
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
+        const tenantKey = resolveTenantKey(mergedConfig);
 
         const expectedState = sessionStorage.getItem(
           mergedConfig.oauthStateKey,
@@ -261,6 +282,7 @@ export function IdpAuthProvider({ children, config }) {
           payload: {
             userId,
             tenantId,
+            tenantKey,
             userName,
             permissions,
             accessToken,
@@ -278,6 +300,7 @@ export function IdpAuthProvider({ children, config }) {
         return {
           userId,
           tenantId,
+          tenantKey,
           userName,
           permissions,
           accessToken,
@@ -342,4 +365,31 @@ function safeJsonParse(raw) {
   } catch {
     return null;
   }
+}
+
+function resolveTenantKey(config, overrides = {}) {
+  const explicitTenantKey = String(overrides?.tenantKey || config?.tenantKey || "").trim();
+  if (explicitTenantKey) {
+    return explicitTenantKey;
+  }
+
+  if (typeof window !== "undefined") {
+    const tenantFromQuery = new URLSearchParams(window.location.search).get(
+      config?.tenantQueryParameter || "tenant",
+    );
+    if (tenantFromQuery) {
+      return tenantFromQuery.trim();
+    }
+  }
+
+  if (typeof sessionStorage !== "undefined") {
+    const tenantFromStorage = sessionStorage.getItem(
+      config?.tenantKeyStorageKey || "idp_tenant_key",
+    );
+    if (tenantFromStorage) {
+      return tenantFromStorage.trim();
+    }
+  }
+
+  return "";
 }

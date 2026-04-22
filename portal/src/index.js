@@ -11,6 +11,13 @@ import { IdpAuthProvider } from "tokenidp-react";
 
 const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);
+const tenantKey = new URLSearchParams(window.location.search).get("tenant") || "";
+const deploymentEnvironment =
+  process.env.REACT_APP_DEPLOYMENT_ENV || process.env.NODE_ENV || "development";
+
+if (process.env.NODE_ENV === "production" && deploymentEnvironment !== "production") {
+  console.info(`Running a production build for ${deploymentEnvironment}.`);
+}
 
 root.render(
   <React.StrictMode>
@@ -18,6 +25,7 @@ root.render(
       config={{
         authority: process.env.REACT_APP_AUTH_BASE_URL,
         clientId: process.env.REACT_APP_OAUTH_CLIENT_ID,
+        tenantKey,
         redirectUri: process.env.REACT_APP_OAUTH_REDIRECT_URI,
         postLoginRedirectUri: "/dashboard",
         postLogoutRedirectUri:

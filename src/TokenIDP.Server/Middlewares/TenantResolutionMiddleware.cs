@@ -5,6 +5,7 @@ using TokenIDP.Core.Foundation.Extensions;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Infrastructure;
 using TokenIDP.Server.Multitenancy;
+using Microsoft.Extensions.Hosting;
 
 namespace TokenIDP.Server.Middlewares;
 
@@ -14,21 +15,25 @@ public sealed class TenantResolutionMiddleware
     private readonly TenantResolutionOptions _options;
     private readonly ICache _cache;
     private readonly IAppLogger<TenantResolutionMiddleware> _logger;
+    private readonly IHostEnvironment _environment;
 
     public TenantResolutionMiddleware(
         RequestDelegate next,
         IOptions<TenantResolutionOptions> options,
         ICache cache,
-        IAppLogger<TenantResolutionMiddleware> logger)
+        IAppLogger<TenantResolutionMiddleware> logger,
+        IHostEnvironment environment)
     {
         _next = next;
         _options = options.Value;
         _cache = cache;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task InvokeAsync(
         HttpContext context,
+        ITenantRequestResolver tenantRequestResolver,
         ITenantResolver tenantResolver,
         ITenantContextAccessor tenantContextAccessor)
     {
@@ -38,15 +43,21 @@ public sealed class TenantResolutionMiddleware
             return;
         }
 
-        if (!TenantHostParser.TryResolveTenantKey(context.Request.Host.Host, _options, out var tenantKey))
+        var requestResolution = tenantRequestResolver.Resolve(context);
+        if (requestResolution.Status != TenantRequestResolutionStatus.Resolved ||
+            string.IsNullOrWhiteSpace(requestResolution.TenantKey) ||
+            requestResolution.Source is null)
         {
-            await RejectUnavailableTenantAsync(context, "invalid_host");
+            await RejectUnavailableTenantAsync(
+                context,
+                requestResolution.FailureReason ?? "tenant_unavailable");
             return;
         }
 
-        context.Items[HostTenantResolver.TenantKeyItemName] = tenantKey;
+        context.Items[TenantResolutionHttpContextItems.TenantKey] = requestResolution.TenantKey;
+        context.Items[TenantResolutionHttpContextItems.ResolutionSource] = requestResolution.Source.Value.ToString();
 
-        var tenantContext = await tenantResolver.ResolveAsync(context, context.RequestAborted);
+        var tenantContext = await tenantResolver.ResolveAsync(requestResolution.TenantKey, context.RequestAborted);
         if (tenantContext is null)
         {
             await RejectUnavailableTenantAsync(context, "tenant_unavailable");
@@ -54,6 +65,13 @@ public sealed class TenantResolutionMiddleware
         }
 
         tenantContextAccessor.SetTenant(tenantContext);
+        _logger.LogInfo(
+            "Tenant resolved. ResolvedTenant={TenantKey}, ResolutionSource={ResolutionSource}, Environment={Environment}, Host={Host}, Path={Path}",
+            tenantContext.TenantKey,
+            requestResolution.Source.Value.ToString(),
+            _environment.EnvironmentName,
+            context.Request.Host.Value,
+            context.Request.Path.Value ?? string.Empty);
 
         try
         {
@@ -62,7 +80,8 @@ public sealed class TenantResolutionMiddleware
         finally
         {
             tenantContextAccessor.Clear();
-            context.Items.Remove(HostTenantResolver.TenantKeyItemName);
+            context.Items.Remove(TenantResolutionHttpContextItems.TenantKey);
+            context.Items.Remove(TenantResolutionHttpContextItems.ResolutionSource);
         }
     }
 
@@ -77,12 +96,13 @@ public sealed class TenantResolutionMiddleware
         var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
         _logger.LogWarning(
-            "Tenant host rejected. Host={Host}, Path={Path}, Reason={Reason}, Count={Count}, RemoteIp={RemoteIp}",
+            "Tenant resolution rejected. Host={Host}, Path={Path}, Reason={Reason}, Count={Count}, RemoteIp={RemoteIp}, Environment={Environment}",
             context.Request.Host.Value,
             context.Request.Path.Value ?? string.Empty,
             reason,
             throttleCount,
-            remoteIp);
+            remoteIp,
+            _environment.EnvironmentName);
 
         context.Response.StatusCode = throttleCount >= _options.InvalidHostThrottleMaxAttempts
             ? StatusCodes.Status429TooManyRequests

@@ -45,6 +45,10 @@ var defaultAuthConfig = {
   authority: "",
   // e.g. https://idp.tokentresor.com
   clientId: "",
+  tenantKey: "",
+  tenantQueryParameter: "tenant",
+  tenantHeaderName: "X-Tenant-Key",
+  tenantKeyStorageKey: "idp_tenant_key",
   redirectUri: "",
   // e.g. https://app.com/auth/callback
   postLoginRedirectUri: "/",
@@ -57,6 +61,7 @@ var defaultAuthConfig = {
   // endpoints (default paths)
   authorizePath: "/authorize",
   tokenPath: "/token",
+  revokePath: "/revoke",
   logoutPath: "/logout",
   userPermissionsPath: "/admin/user/permissions",
   // storage: "memory" | "sessionStorage" | "localStorage"
@@ -132,6 +137,12 @@ function buildAuthorizeUrl(config, params) {
   if (params.state) url.searchParams.set("state", params.state);
   if (params.audience || config.audience)
     url.searchParams.set("audience", params.audience || config.audience);
+  if (params.tenantKey || config.tenantKey) {
+    url.searchParams.set(
+      config.tenantQueryParameter || "tenant",
+      params.tenantKey || config.tenantKey
+    );
+  }
   if (params.prompt) url.searchParams.set("prompt", params.prompt);
   if (params.loginHint) url.searchParams.set("login_hint", params.loginHint);
   return url.toString();
@@ -187,6 +198,25 @@ function getErrorMessage(data, status) {
   const wrappedError = data.error && typeof data.error === "object" ? data.error : ((_a = data.value) == null ? void 0 : _a.error) && typeof data.value.error === "object" ? data.value.error : null;
   return data.error_description || (wrappedError == null ? void 0 : wrappedError.error) || (wrappedError == null ? void 0 : wrappedError.Error) || (wrappedError == null ? void 0 : wrappedError.message) || (wrappedError == null ? void 0 : wrappedError.Message) || (typeof data.error === "string" ? data.error : "") || data.message || `HTTP ${status}`;
 }
+function withTenant(url, config) {
+  const tenantKey = String((config == null ? void 0 : config.tenantKey) || "").trim();
+  if (!tenantKey) {
+    return url;
+  }
+  const tenantUrl = new URL(url, typeof window !== "undefined" ? window.location.origin : void 0);
+  tenantUrl.searchParams.set(config.tenantQueryParameter || "tenant", tenantKey);
+  return tenantUrl.toString();
+}
+function withTenantHeaders(config, extraHeaders = {}) {
+  const tenantKey = String((config == null ? void 0 : config.tenantKey) || "").trim();
+  if (!tenantKey) {
+    return extraHeaders;
+  }
+  return {
+    ...extraHeaders,
+    [config.tenantHeaderName || "X-Tenant-Key"]: tenantKey
+  };
+}
 function extractToken(tokenPayload) {
   if (!tokenPayload)
     return { accessToken: "", refreshToken: "", expiresIn: 0, idToken: "" };
@@ -205,20 +235,52 @@ function extractPermissions(userInfo) {
   return [];
 }
 async function exchangeAuthorizationCode(config, payload) {
-  const url = config.authority + config.tokenPath;
-  return await httpPostJson(url, payload);
+  const url = withTenant(config.authority + config.tokenPath, config);
+  return await httpPostJson(url, payload, withTenantHeaders(config));
 }
 async function refreshWithToken(config, payload) {
-  const url = config.authority + config.tokenPath;
-  return await httpPostJson(url, payload);
+  const url = withTenant(config.authority + config.tokenPath, config);
+  return await httpPostJson(url, payload, withTenantHeaders(config));
+}
+async function revokeToken(config, { accessToken, token, reasonRevoked }) {
+  if (!(config == null ? void 0 : config.authority) || !accessToken || !token) {
+    return null;
+  }
+  const url = withTenant(new URL(config.revokePath || "/revoke", config.authority).toString(), config);
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: withTenantHeaders(config, {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    }),
+    body: JSON.stringify({
+      token,
+      reasonRevoked: reasonRevoked || "logout"
+    })
+  });
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = text;
+  }
+  if (!res.ok) {
+    const msg = getErrorMessage(data, res.status);
+    const err = new Error(msg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
 }
 async function loadUserPermissions(config, accessToken) {
-  const url = config.authority + config.userPermissionsPath;
-  return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
+  const url = withTenant(config.authority + config.userPermissionsPath, config);
+  return await httpGetJson(url, withTenantHeaders(config, { Authorization: `Bearer ${accessToken}` }));
 }
 function buildLogoutUrl(config) {
   if (!(config == null ? void 0 : config.authority)) return "";
-  const url = new URL(config.logoutPath || "/logout", config.authority);
+  const url = new URL(withTenant(new URL(config.logoutPath || "/logout", config.authority).toString(), config));
   if (config.clientId) {
     url.searchParams.set("client_id", config.clientId);
   }
@@ -249,6 +311,7 @@ var initialState = {
   isAuthenticated: false,
   userId: 0,
   tenantId: 0,
+  tenantKey: "",
   userName: "",
   landingPage: "",
   accessToken: "",
@@ -278,16 +341,23 @@ function reducer(state, action) {
   }
 }
 function IdpAuthProvider({ children, config }) {
-  const mergedConfig = (0, import_react.useMemo)(
+  const baseConfig = (0, import_react.useMemo)(
     () => ({ ...defaultAuthConfig, ...config || {} }),
     [config]
   );
   const storage = (0, import_react.useMemo)(
-    () => createStorage(mergedConfig.storage),
-    [mergedConfig.storage]
+    () => createStorage(baseConfig.storage),
+    [baseConfig.storage]
   );
-  const persistedRaw = storage.getItem(mergedConfig.storageKey);
+  const persistedRaw = storage.getItem(baseConfig.storageKey);
   const persisted = persistedRaw ? safeJsonParse(persistedRaw) : null;
+  const mergedConfig = (0, import_react.useMemo)(() => {
+    const resolvedTenantKey = resolveTenantKey(baseConfig) || String((persisted == null ? void 0 : persisted.tenantKey) || "").trim();
+    return {
+      ...baseConfig,
+      tenantKey: resolvedTenantKey
+    };
+  }, [baseConfig, persisted == null ? void 0 : persisted.tenantKey]);
   const [state, dispatch] = (0, import_react.useReducer)(reducer, persisted || initialState);
   (0, import_react.useEffect)(() => {
     storage.setItem(mergedConfig.storageKey, JSON.stringify(state));
@@ -304,6 +374,7 @@ function IdpAuthProvider({ children, config }) {
     storage.removeItem(mergedConfig.storageKey);
     sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
     sessionStorage.removeItem(mergedConfig.oauthStateKey);
+    sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
     dispatch({ type: "LOGOUT" });
   }
   async function tryRefreshWithRetry(retries, retryDelayMs) {
@@ -361,20 +432,36 @@ function IdpAuthProvider({ children, config }) {
         const verifier = generateCodeVerifier();
         const challenge = await generateCodeChallenge(verifier);
         const stateVal = randomState();
+        const tenantKey = resolveTenantKey(mergedConfig, options);
         sessionStorage.setItem(mergedConfig.pkceVerifierKey, verifier);
         sessionStorage.setItem(mergedConfig.oauthStateKey, stateVal);
+        if (tenantKey) {
+          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, tenantKey);
+        } else {
+          sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
+        }
         const authorizeUrl = buildAuthorizeUrl(mergedConfig, {
           codeChallenge: challenge,
           state: stateVal,
           prompt: options.prompt,
           loginHint: options.loginHint,
-          audience: options.audience
+          audience: options.audience,
+          tenantKey
         });
         window.location.assign(authorizeUrl);
       },
-      logout: () => {
+      logout: async () => {
         const logoutUrl = buildLogoutUrl(mergedConfig);
         clearRefreshTimer();
+        try {
+          await revokeToken(mergedConfig, {
+            accessToken: state.accessToken,
+            token: state.refreshToken,
+            reasonRevoked: "logout"
+          });
+        } catch (error) {
+          console.warn("Token revocation during logout failed.", error);
+        }
         if (typeof window !== "undefined" && logoutUrl) {
           window.addEventListener("pagehide", clearLocalSession, { once: true });
           window.location.assign(logoutUrl);
@@ -387,6 +474,7 @@ function IdpAuthProvider({ children, config }) {
         var _a;
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
+        const tenantKey = resolveTenantKey(mergedConfig);
         const expectedState = sessionStorage.getItem(
           mergedConfig.oauthStateKey
         );
@@ -432,6 +520,7 @@ function IdpAuthProvider({ children, config }) {
           payload: {
             userId,
             tenantId,
+            tenantKey,
             userName,
             permissions,
             accessToken,
@@ -446,6 +535,7 @@ function IdpAuthProvider({ children, config }) {
         return {
           userId,
           tenantId,
+          tenantKey,
           userName,
           permissions,
           accessToken,
@@ -499,6 +589,29 @@ function safeJsonParse(raw) {
   } catch {
     return null;
   }
+}
+function resolveTenantKey(config, overrides = {}) {
+  const explicitTenantKey = String((overrides == null ? void 0 : overrides.tenantKey) || (config == null ? void 0 : config.tenantKey) || "").trim();
+  if (explicitTenantKey) {
+    return explicitTenantKey;
+  }
+  if (typeof window !== "undefined") {
+    const tenantFromQuery = new URLSearchParams(window.location.search).get(
+      (config == null ? void 0 : config.tenantQueryParameter) || "tenant"
+    );
+    if (tenantFromQuery) {
+      return tenantFromQuery.trim();
+    }
+  }
+  if (typeof sessionStorage !== "undefined") {
+    const tenantFromStorage = sessionStorage.getItem(
+      (config == null ? void 0 : config.tenantKeyStorageKey) || "idp_tenant_key"
+    );
+    if (tenantFromStorage) {
+      return tenantFromStorage.trim();
+    }
+  }
+  return "";
 }
 
 // src/AuthCallback.jsx

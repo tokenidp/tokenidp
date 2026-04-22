@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using NLog;
 using NLog.Extensions.Hosting;
+using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Server.ApplicationSetup;
 using TokenIDP.Server.Components;
 
@@ -21,6 +22,9 @@ try
     builder.Host.UseNLog();
 
     builder.AddTokenIDPServices("Identity_DB", "tokenidp.admin.api");
+    var corsOptions = builder.Configuration
+        .GetSection(CorsOptions.SectionName)
+        .Get<CorsOptions>() ?? new CorsOptions();
 
     //builder.AddTokenIDPServices(
     //    connectionStringName: "DefaultConnection",
@@ -38,6 +42,7 @@ try
     var app = builder.Build();
 
     app.UseExceptionHandler("/error");
+    app.UseForwardedHeaders();
     app.UseHttpsRedirection();
 
     app.UseStaticFiles();
@@ -47,7 +52,7 @@ try
     app.UseCors(policy => policy
         .AllowAnyMethod()
         .AllowAnyHeader()
-        .WithOrigins("http://localhost:3000", "https://tresorauth-admin-cpdyhza4cadhbsfq.canadacentral-01.azurewebsites.net") // replace with your actual client URL
+        .WithOrigins(corsOptions.AllowedOrigins)
         .AllowCredentials()
     );
 

@@ -4,48 +4,52 @@ namespace TokenIDP.Server.Multitenancy;
 
 public static class TenantHostParser
 {
+    public static TenantHostResolutionResult Resolve(
+        string host,
+        TenantResolutionOptions options)
+    {
+        var normalizedHost = NormalizeHost(host);
+        if (string.IsNullOrWhiteSpace(normalizedHost))
+        {
+            return new TenantHostResolutionResult(TenantHostResolutionKind.Invalid);
+        }
+
+        var developmentResolution = ResolveFromDomains(normalizedHost, options.AllowedDevelopmentHosts);
+        if (developmentResolution.Kind != TenantHostResolutionKind.None)
+        {
+            return developmentResolution;
+        }
+
+        var rootDomainResolution = ResolveFromDomains(normalizedHost, options.AllowedRootDomains);
+        if (rootDomainResolution.Kind != TenantHostResolutionKind.None)
+        {
+            return rootDomainResolution;
+        }
+
+        return new TenantHostResolutionResult(TenantHostResolutionKind.None);
+    }
+
     public static bool TryResolveTenantKey(
         string host,
         TenantResolutionOptions options,
         out string tenantKey)
     {
-        tenantKey = string.Empty;
-
-        var normalizedHost = NormalizeHost(host);
-        if (string.IsNullOrWhiteSpace(normalizedHost))
-        {
-            return false;
-        }
-
-        if (TryResolveFromDomains(normalizedHost, options.AllowedDevelopmentHosts, options.FallbackTenantKey, out tenantKey))
-        {
-            return true;
-        }
-
-        if (TryResolveFromDomains(normalizedHost, options.AllowedRootDomains, options.FallbackTenantKey, out tenantKey))
-        {
-            return true;
-        }
-
-        return false;
+        var result = Resolve(host, options);
+        tenantKey = result.TenantKey ?? string.Empty;
+        return result.Kind == TenantHostResolutionKind.Tenant;
     }
 
-    private static bool TryResolveFromDomains(
+    private static TenantHostResolutionResult ResolveFromDomains(
         string host,
-        IEnumerable<string> allowedDomains,
-        string? fallbackTenantKey,
-        out string tenantKey)
+        IEnumerable<string> allowedDomains)
     {
-        tenantKey = string.Empty;
-
         foreach (var domain in allowedDomains
                      .Select(NormalizeHost)
                      .Where(x => !string.IsNullOrWhiteSpace(x)))
         {
             if (string.Equals(host, domain, StringComparison.OrdinalIgnoreCase))
             {
-                tenantKey = NormalizeTenantKey(fallbackTenantKey);
-                return !string.IsNullOrWhiteSpace(tenantKey);
+                return new TenantHostResolutionResult(TenantHostResolutionKind.Root);
             }
 
             var suffix = $".{domain}";
@@ -57,14 +61,16 @@ public static class TenantHostParser
             var subdomain = host[..^suffix.Length];
             if (string.IsNullOrWhiteSpace(subdomain) || subdomain.Contains('.', StringComparison.Ordinal))
             {
-                return false;
+                return new TenantHostResolutionResult(TenantHostResolutionKind.Invalid);
             }
 
-            tenantKey = NormalizeTenantKey(subdomain);
-            return !string.IsNullOrWhiteSpace(tenantKey);
+            var normalizedTenantKey = NormalizeTenantKey(subdomain);
+            return string.IsNullOrWhiteSpace(normalizedTenantKey)
+                ? new TenantHostResolutionResult(TenantHostResolutionKind.Invalid)
+                : new TenantHostResolutionResult(TenantHostResolutionKind.Tenant, normalizedTenantKey);
         }
 
-        return false;
+        return new TenantHostResolutionResult(TenantHostResolutionKind.None);
     }
 
     private static string NormalizeHost(string? host)

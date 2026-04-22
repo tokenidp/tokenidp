@@ -71,6 +71,29 @@ function getErrorMessage(data, status) {
   );
 }
 
+function withTenant(url, config) {
+  const tenantKey = String(config?.tenantKey || "").trim();
+  if (!tenantKey) {
+    return url;
+  }
+
+  const tenantUrl = new URL(url, typeof window !== "undefined" ? window.location.origin : undefined);
+  tenantUrl.searchParams.set(config.tenantQueryParameter || "tenant", tenantKey);
+  return tenantUrl.toString();
+}
+
+function withTenantHeaders(config, extraHeaders = {}) {
+  const tenantKey = String(config?.tenantKey || "").trim();
+  if (!tenantKey) {
+    return extraHeaders;
+  }
+
+  return {
+    ...extraHeaders,
+    [config.tenantHeaderName || "X-Tenant-Key"]: tenantKey,
+  };
+}
+
 export function extractToken(tokenPayload) {
   if (!tokenPayload)
     return { accessToken: "", refreshToken: "", expiresIn: 0, idToken: "" };
@@ -103,13 +126,13 @@ export function extractPermissions(userInfo) {
 }
 
 export async function exchangeAuthorizationCode(config, payload) {
-  const url = config.authority + config.tokenPath;
-  return await httpPostJson(url, payload);
+  const url = withTenant(config.authority + config.tokenPath, config);
+  return await httpPostJson(url, payload, withTenantHeaders(config));
 }
 
 export async function refreshWithToken(config, payload) {
-  const url = config.authority + config.tokenPath;
-  return await httpPostJson(url, payload);
+  const url = withTenant(config.authority + config.tokenPath, config);
+  return await httpPostJson(url, payload, withTenantHeaders(config));
 }
 
 export async function revokeToken(config, { accessToken, token, reasonRevoked }) {
@@ -117,14 +140,14 @@ export async function revokeToken(config, { accessToken, token, reasonRevoked })
     return null;
   }
 
-  const url = new URL(config.revokePath || "/revoke", config.authority).toString();
+  const url = withTenant(new URL(config.revokePath || "/revoke", config.authority).toString(), config);
 
   const res = await fetch(url, {
     method: "DELETE",
-    headers: {
+    headers: withTenantHeaders(config, {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({
       token,
       reasonRevoked: reasonRevoked || "logout",
@@ -151,14 +174,14 @@ export async function revokeToken(config, { accessToken, token, reasonRevoked })
 }
 
 export async function loadUserPermissions(config, accessToken) {
-  const url = config.authority + config.userPermissionsPath;
-  return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
+  const url = withTenant(config.authority + config.userPermissionsPath, config);
+  return await httpGetJson(url, withTenantHeaders(config, { Authorization: `Bearer ${accessToken}` }));
 }
 
 export function buildLogoutUrl(config) {
   if (!config?.authority) return "";
 
-  const url = new URL(config.logoutPath || "/logout", config.authority);
+  const url = new URL(withTenant(new URL(config.logoutPath || "/logout", config.authority).toString(), config));
   if (config.clientId) {
     url.searchParams.set("client_id", config.clientId);
   }
