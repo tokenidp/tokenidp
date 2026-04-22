@@ -46,10 +46,17 @@ jobs:
           ASPNETCORE_ENVIRONMENT_VALUE: ${{ vars.ASPNETCORE_ENVIRONMENT }}
           BOOTSTRAP_REDIRECT_URI: ${{ vars.BOOTSTRAP_REDIRECT_URI }}
           BOOTSTRAP_LOGOUT_REDIRECT_URI: ${{ vars.BOOTSTRAP_LOGOUT_REDIRECT_URI }}
+          BUILD_COMMIT_SHA: ${{ github.sha }}
+          BUILD_RUN_ID: ${{ github.run_id }}
         run: |
           APP_NAME="${AZURE_WEBAPP_NAME:-tresorauth}"
           ENV_NAME="${ASPNETCORE_ENVIRONMENT_VALUE:-Staging}"
-          SETTINGS=("ASPNETCORE_ENVIRONMENT=$ENV_NAME")
+          SETTINGS=(
+            "ASPNETCORE_ENVIRONMENT=$ENV_NAME"
+            "DOTNET_ENVIRONMENT=$ENV_NAME"
+            "Build__CommitSha=$BUILD_COMMIT_SHA"
+            "Build__RunId=$BUILD_RUN_ID"
+          )
 
           if [ -n "$BOOTSTRAP_REDIRECT_URI" ]; then
             SETTINGS+=("Bootstrap__RedirectUri=$BOOTSTRAP_REDIRECT_URI")

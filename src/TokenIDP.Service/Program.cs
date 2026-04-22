@@ -4,6 +4,7 @@ using TokenIDP.Server.ApplicationSetup;
 using TokenIDP.Server.Components;
 using TokenIDP.Server.Middlewares;
 using TokenIDP.Core.Foundation.Options;
+using System.Reflection;
 
 // Bootstrap NLog early
 var logger = LogManager.Setup()
@@ -45,6 +46,20 @@ try
     //builder.WebHost.UseUrls($"http://*:{port}");
 
     var app = builder.Build();
+    var entryAssembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+    var informationalVersion =
+        entryAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? entryAssembly.GetName().Version?.ToString()
+        ?? "unknown";
+    var buildCommitSha = builder.Configuration["Build:CommitSha"] ?? "unknown";
+    var buildRunId = builder.Configuration["Build:RunId"] ?? "unknown";
+
+    logger.Info(
+        "Application startup. Environment={Environment}, Version={Version}, CommitSha={CommitSha}, RunId={RunId}",
+        app.Environment.EnvironmentName,
+        informationalVersion,
+        buildCommitSha,
+        buildRunId);
 
     app.UseExceptionHandler("/error");
     app.UseForwardedHeaders();
@@ -73,6 +88,13 @@ try
     await app.UseTokenIDPAsync("Identity_DB");
 
     app.MapGet("/", () => "TokenIDP is running.");
+    app.MapGet("/health/version", () => Results.Ok(new
+    {
+        environment = app.Environment.EnvironmentName,
+        version = informationalVersion,
+        commitSha = buildCommitSha,
+        runId = buildRunId
+    }));
 
     await app.RunAsync();
 }
