@@ -14,7 +14,8 @@ internal class TenantEndpoint : IEndpointDefinition
             {
                 AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
             })
-            .AddEndpointFilter<EndpointValidationFilter>();
+            .AddEndpointFilter<EndpointValidationFilter>()
+            .DisableAntiforgery();
 
         authGroup.MapPost("/list", async (SearchData data,
             TenantQueryUseCase useCase,

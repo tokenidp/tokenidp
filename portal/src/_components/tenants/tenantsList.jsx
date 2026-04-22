@@ -4,6 +4,7 @@ import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import { useTenants } from "../../_hooks/useTenants";
+import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 import { downloadCsv } from "../../_utils/csvExport";
 
 const defaultSearch = {
@@ -33,7 +34,16 @@ const getLookupLabel = (options, value) => {
 
 function TenantsList() {
   const navigate = useNavigate();
-  const { state, loadTenants, loadLookups, deleteTenant } = useTenants();
+  const {
+    state,
+    loadTenants,
+    loadLookups,
+    deleteTenant,
+    activateTenant,
+    suspendTenant,
+    clearStatus,
+  } = useTenants();
+  const { setSuccess } = useGlobalSuccess();
   const isFirstTenantsLoad = React.useRef(true);
   const selectAllRef = React.useRef(null);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
@@ -169,6 +179,30 @@ function TenantsList() {
         SearchCriterias: buildSearchCriterias(),
       });
     }
+  };
+
+  const reloadTenants = () =>
+    loadTenants({
+      ...defaultSearch,
+      pageNumber,
+      pageSize,
+      SearchCriterias: buildSearchCriterias(),
+    });
+
+  const handleToggleStatus = async (id, isActive) => {
+    const result = isActive ? await suspendTenant(id) : await activateTenant(id);
+    if (!result.ok) {
+      return;
+    }
+
+    clearStatus();
+    setSuccess({
+      title: isActive ? "Tenant suspended" : "Tenant activated",
+      message: isActive
+        ? "Tenant suspended successfully."
+        : "Tenant activated successfully.",
+    });
+    reloadTenants();
   };
 
   const resolveStatus = (item) => {
@@ -361,6 +395,10 @@ function TenantsList() {
                     String(
                       getField(item, "isActive", "IsActive"),
                     ).toLowerCase() === "true";
+                  const isSystemTenant =
+                    String(
+                      getField(item, "isSystemTenant", "IsSystemTenant"),
+                    ).toLowerCase() === "true";
                   return (
                     <tr key={getField(item, "id", "Id")}>
                       <td className="table-checkbox">
@@ -417,6 +455,28 @@ function TenantsList() {
                         <button
                           className="btn btn-link p-0 text-primary ButtonLink"
                           type="button"
+                          onClick={() =>
+                            handleToggleStatus(
+                              getField(item, "id", "Id"),
+                              isActive,
+                            )
+                          }
+                          title={
+                            isSystemTenant
+                              ? "System tenant status cannot be changed here"
+                              : isActive
+                                ? "Suspend"
+                                : "Activate"
+                          }
+                          disabled={isSystemTenant}
+                        >
+                          <i
+                            className={`fa ${isActive ? "fa-ban" : "fa-check"}`}
+                          ></i>
+                        </button>
+                        <button
+                          className="btn btn-link p-0 text-primary ButtonLink"
+                          type="button"
                           onClick={() => {
                             const id = getField(item, "id", "Id");
                             const tenantCode = getField(
@@ -469,9 +529,13 @@ function TenantsList() {
                             requestDelete(getField(item, "id", "Id"))
                           }
                           title={
-                            isActive ? "Deactivate before deleting" : "Delete"
+                            isSystemTenant
+                              ? "System tenant cannot be deleted"
+                              : isActive
+                                ? "Suspend before deleting"
+                                : "Delete"
                           }
-                          disabled={isActive}
+                          disabled={isActive || isSystemTenant}
                         >
                           <i className="fa fa-trash"></i>
                         </button>

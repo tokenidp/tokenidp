@@ -349,6 +349,42 @@ export const TenantsProvider = ({ children }) => {
     [deleteRequest]
   );
 
+  const activateTenant = useCallback(
+    async (id) => {
+      dispatch({ type: actions.CREATE_START });
+      try {
+        await post(`admin/tenant/${id}/activate`);
+        dispatch({ type: actions.CREATE_SUCCESS, payload: id });
+        return { ok: true };
+      } catch (error) {
+        dispatch({
+          type: actions.CREATE_ERROR,
+          payload: error?.message || "Failed to activate tenant.",
+        });
+        return { ok: false, error };
+      }
+    },
+    [post]
+  );
+
+  const suspendTenant = useCallback(
+    async (id) => {
+      dispatch({ type: actions.CREATE_START });
+      try {
+        await post(`admin/tenant/${id}/suspend`);
+        dispatch({ type: actions.CREATE_SUCCESS, payload: id });
+        return { ok: true };
+      } catch (error) {
+        dispatch({
+          type: actions.CREATE_ERROR,
+          payload: error?.message || "Failed to suspend tenant.",
+        });
+        return { ok: false, error };
+      }
+    },
+    [post]
+  );
+
   const clearStatus = useCallback(() => {
     dispatch({ type: actions.CLEAR_STATUS });
   }, []);
@@ -367,6 +403,8 @@ export const TenantsProvider = ({ children }) => {
         updateTenantSocialProvider,
         revealTenantProviderSecret,
         revealTenantSocialProviderSecret,
+        activateTenant,
+        suspendTenant,
         deleteTenant,
         clearStatus,
       }}

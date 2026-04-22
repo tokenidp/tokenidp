@@ -8,7 +8,8 @@ public class TenantSearchResult
         string tenantKey,
         string? email,
         AuthenticationModes? authenticationMode,
-        bool? isActive)
+        bool? isActive,
+        bool isSystemTenant)
     {
         Id = id;
         TenantName = tenantName;
@@ -17,6 +18,7 @@ public class TenantSearchResult
         Email = email ?? string.Empty;
         AuthenticationMode = authenticationMode;
         IsActive = isActive ?? false;
+        IsSystemTenant = isSystemTenant;
     }
 
     public static Expression<Func<Tenant, TenantSearchResult>> Projection =>
@@ -27,7 +29,8 @@ public class TenantSearchResult
            t.TenantKey,
            t.Email,
            t.TenantAuthSetting.AuthenticationMode,
-           t.IsActive);
+           t.IsActive,
+           t.IsSystemTenant);
 
     public int Id { get; set; }
     public string TenantName { get; set; }
@@ -36,4 +39,5 @@ public class TenantSearchResult
     public string Email { get; set; }
     public AuthenticationModes? AuthenticationMode { get; set; }
     public bool IsActive { get; set; }
+    public bool IsSystemTenant { get; set; }
 }
