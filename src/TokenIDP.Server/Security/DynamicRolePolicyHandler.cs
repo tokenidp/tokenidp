@@ -5,24 +5,21 @@ using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Server.Security;
 
-public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequirement>
+public sealed class DynamicRolePolicyHandler : AuthorizationHandler<DynamicPermissionRequirement>
 {
-    private readonly IAuthorizationPolicyProvider _policyProvider;
     private readonly ICurrentUserService _currentUserService;
     private readonly IRoleRepository _roleStore;
 
-    public DynamicRolePolicyHandler(IAuthorizationPolicyProvider policyProvider,
-        ICurrentUserService currentUserService,
+    public DynamicRolePolicyHandler(ICurrentUserService currentUserService,
         IRoleRepository roleStore)
     {
-        _policyProvider = policyProvider;
         _currentUserService = currentUserService;
         _roleStore = roleStore;
     }
 
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
-        IAuthorizationRequirement requirement)
+        DynamicPermissionRequirement requirement)
     {
         if (context.Resource is not HttpContext httpContext)
             return;
@@ -32,75 +29,14 @@ public class DynamicRolePolicyHandler : AuthorizationHandler<IAuthorizationRequi
             return;
         }
 
-        // Get the Authorize attribute on the current action
-        var endpoint = httpContext.GetEndpoint();
-        var authorizeAttributes = endpoint.Metadata.GetOrderedMetadata<AuthorizeAttribute>();
-
-        if (!authorizeAttributes.Any())
-        {
-            context.Succeed(requirement);
-            return;
-        }
-
-        foreach (var authorizeAttribute in authorizeAttributes)
-        {
-            if (!await CheckPolicyRequirementsAsync(authorizeAttribute, context))
-            {
-                return;
-            }
-
-            //Check Role Requirements
-            if (!string.IsNullOrEmpty(authorizeAttribute.Roles))
-            {
-                var roles = authorizeAttribute.Roles.Split(',').ToList();
-                if (!roles.Exists(role => context.User.IsInRole(role.Trim())))
-                {
-                    context.Fail();
-                    return;
-                }
-            }
-        }
-
-        context.Succeed(requirement);
-    }
-
-    private async Task<bool> CheckPolicyRequirementsAsync(
-        AuthorizeAttribute authorizeAttribute,
-        AuthorizationHandlerContext context)
-    {
-        if (string.IsNullOrEmpty(authorizeAttribute.Policy))
-        {
-            return true;
-        }
-
-        var policy = await _policyProvider.GetPolicyAsync(authorizeAttribute.Policy);
-        if (policy == null)
-        {
-            return true;
-        }
-
-        foreach (var policyRequirement in policy.Requirements)
-        {
-            if (!await PolicyRequirementSatisfied(policyRequirement))
-            {
-                context.Fail();
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private async Task<bool> PolicyRequirementSatisfied(IAuthorizationRequirement requirement)
-    {
-        if (requirement is not DynamicPermissionRequirement dynamicRequirement)
-            return false;
-
         var result = await _roleStore.HasPermission(
             _currentUserService.UserId,
-            dynamicRequirement.Permission);
+            requirement.Permission);
 
-        return result.Value;
+        if (result.Value)
+        {
+            context.Succeed(requirement);
+        }
     }
 }
 
