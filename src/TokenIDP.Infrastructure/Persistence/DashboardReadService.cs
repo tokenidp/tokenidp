@@ -19,6 +19,8 @@ internal sealed class DashboardReadService : IDashboardReadService
     private const string DashboardRegionConfigKey = "dashboard.region";
     private const string DashboardVersionConfigKey = "dashboard.version";
     private const string DashboardLastKeyRotationConfigKey = "dashboard.last_key_rotation_utc";
+    private const string RevokedTokenStatus = "Revoked";
+    private const string ExpiredTokenStatus = "Expired";
 
     private readonly ApplicationDbContext _db;
     private readonly IClientRepository _clientRepository;
@@ -338,8 +340,8 @@ internal sealed class DashboardReadService : IDashboardReadService
                 t.TenantId == tenantId &&
                 (t.SourceType == "JWT" || t.SourceType == "Reference") &&
                 t.ExpiresAt > now &&
-                !string.Equals(t.Status, "Revoked", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(t.Status, "Expired", StringComparison.OrdinalIgnoreCase))
+                t.Status != RevokedTokenStatus &&
+                t.Status != ExpiredTokenStatus)
             .CountAsync(ct);
 
         var activeClientsQuery = _db.Clients
