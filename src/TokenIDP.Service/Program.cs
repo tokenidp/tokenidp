@@ -51,12 +51,14 @@ try
         entryAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? entryAssembly.GetName().Version?.ToString()
         ?? "unknown";
+    var productVersion = informationalVersion.Split('+', 2)[0];
     var buildCommitSha = builder.Configuration["Build:CommitSha"] ?? "unknown";
     var buildRunId = builder.Configuration["Build:RunId"] ?? "unknown";
 
     logger.Info(
-        "Application startup. Environment={Environment}, Version={Version}, CommitSha={CommitSha}, RunId={RunId}",
+        "Application startup. Environment={Environment}, Version={Version}, InformationalVersion={InformationalVersion}, CommitSha={CommitSha}, RunId={RunId}",
         app.Environment.EnvironmentName,
+        productVersion,
         informationalVersion,
         buildCommitSha,
         buildRunId);
@@ -91,7 +93,8 @@ try
     app.MapGet("/health/version", () => Results.Ok(new
     {
         environment = app.Environment.EnvironmentName,
-        version = informationalVersion,
+        version = productVersion,
+        informationalVersion,
         commitSha = buildCommitSha,
         runId = buildRunId
     }));
