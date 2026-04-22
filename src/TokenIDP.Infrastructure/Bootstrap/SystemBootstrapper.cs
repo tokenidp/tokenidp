@@ -84,18 +84,55 @@ internal class SystemBootstrapper : ISystemBootstrapper
         }
     }
 
-    private async Task<Tenant> EnsureSystemTenantAsync(ApplicationDbContext db,
+    internal async Task<Tenant> EnsureSystemTenantAsync(ApplicationDbContext db,
         CancellationToken ct)
     {
         var defaultTenant = DefaultTenants.SystemTenant;
-
-        var tenantCode = defaultTenant.GenerateTenantCode(1);
-
-        var existing = await _tenants.ExistsAsync(db, tenantCode, ct);
+        var existing = await _tenants.FindSystemTenantAsync(db, ct);
 
         if (existing != null)
         {
-            _logger.LogInfo("System tenant already exists.");
+            var normalized = false;
+
+            if (!existing.IsSystemTenant ||
+                !string.Equals(existing.TenantKey, defaultTenant.TenantKey, StringComparison.Ordinal) ||
+                !string.Equals(existing.TenantName, defaultTenant.TenantName, StringComparison.OrdinalIgnoreCase))
+            {
+                var ensureIdentityResult = existing.EnsureSystemIdentity(
+                    defaultTenant.TenantName,
+                    defaultTenant.TenantKey);
+
+                if (!ensureIdentityResult.IsSuccess)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to normalize system tenant identity: {FormatErrors(ensureIdentityResult)}");
+                }
+
+                normalized = true;
+            }
+
+            if (!existing.IsActive)
+            {
+                var activateResult = existing.Activate();
+                if (!activateResult.IsSuccess)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to activate system tenant: {FormatErrors(activateResult)}");
+                }
+
+                normalized = true;
+            }
+
+            if (normalized)
+            {
+                await db.SaveChangesAsync(ct);
+                _logger.LogInfo("System tenant normalized for host-based tenant resolution.");
+            }
+            else
+            {
+                _logger.LogInfo("System tenant already exists.");
+            }
+
             return existing;
         }
 

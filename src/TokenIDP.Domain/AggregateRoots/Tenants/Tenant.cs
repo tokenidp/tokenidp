@@ -167,6 +167,26 @@ public partial class Tenant : AggregateRoot<int>
         return Result.Success(Id);
     }
 
+    public Result EnsureSystemIdentity(string tenantName, string tenantKey)
+    {
+        if (IsDeleted)
+        {
+            return Result.Failure("tenant.deleted", "Deleted tenant cannot be modified.");
+        }
+
+        var validation = ValidateInput(tenantName, tenantKey, true);
+        if (!validation.IsSuccess)
+        {
+            return validation;
+        }
+
+        TenantName = tenantName.Trim();
+        TenantKey = NormalizeTenantKey(tenantKey);
+        IsSystemTenant = true;
+
+        return Result.Success(Id);
+    }
+
     public Result SoftDelete()
     {
         if (IsDeleted)

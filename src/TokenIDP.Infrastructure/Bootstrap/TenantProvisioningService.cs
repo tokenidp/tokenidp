@@ -49,13 +49,18 @@ internal class TenantProvisioningService : ITenantProvisioningService
         return tenant!;
     }
 
-    public async Task<Tenant?> ExistsAsync(ApplicationDbContext db,
-        string tenantCode,
+    public async Task<Tenant?> FindSystemTenantAsync(
+        ApplicationDbContext db,
         CancellationToken ct)
     {
         var existingTenant = await db.Tenants
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.TenantCode == tenantCode, ct);
+            .Where(t => !t.IsDeleted &&
+                        (t.IsSystemTenant ||
+                         t.TenantKey == "system" ||
+                         t.TenantName == "system"))
+            .OrderByDescending(t => t.IsSystemTenant)
+            .ThenBy(t => t.Id)
+            .FirstOrDefaultAsync(ct);
 
         return existingTenant;
     }
