@@ -24,10 +24,7 @@ internal class DefaultPermissions
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
-        if (includeSystemTenantPermissions)
-        {
-            allPermissions.Add(tenantsView);
-        }
+        allPermissions.Add(tenantsView);
         allPermissions.Add(usersView);
         allPermissions.Add(rolesView);
         allPermissions.Add(permissionsView);
@@ -112,33 +109,37 @@ internal class DefaultPermissions
             }
         }
 
-        if (includeSystemTenantPermissions)
+        tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
+
+        var socialSignInView = CreatePermission(
+            tenantId,
+            "tenants.socialsignin.view",
+            "Social Sign In",
+            "NavLink",
+            ++i,
+            "/tenants/social-sign-in",
+            "fa-globe");
+        socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
         {
-            tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
-
-            var socialSignInView = CreatePermission(
-                tenantId,
-                "tenants.socialsignin.view",
-                "Social Sign In",
-                "NavLink",
-                ++i,
-                "/tenants/social-sign-in",
-                "fa-globe");
-            socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
-            {
-                CreateActionPermission(
-                    tenantId,
-                    ++i,
-                    "tenants.socialsignin.edit",
-                    "Modify Social Sign In")
-            };
-            tenantsView.ChildPermissions.Add(socialSignInView);
-
-            tenantsView.ChildPermissions.Add(CreateActionPermission(
+            CreateActionPermission(
                 tenantId,
                 ++i,
-                "tenant.secret.reveal",
-                "Reveal Tenant Provider Secret"));
+                "tenants.socialsignin.edit",
+                "Modify Social Sign In")
+        };
+        tenantsView.ChildPermissions.Add(socialSignInView);
+
+        tenantsView.ChildPermissions.Add(CreateActionPermission(
+            tenantId,
+            ++i,
+            "tenant.secret.reveal",
+            "Reveal Tenant Provider Secret"));
+
+        if (!includeSystemTenantPermissions)
+        {
+            tenantsView.ChildPermissions = tenantsView.ChildPermissions
+                .Where(permission => !IsSystemOnlyTenantPermission(permission.PermissionKey))
+                .ToList();
         }
 
         var apiResourcesPermission = allPermissions.FirstOrDefault(x => x.PermissionKey == "apiresources.view");
@@ -225,5 +226,11 @@ internal class DefaultPermissions
             || permissionKey.Equals("permissions.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("tenants.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("settings.view", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSystemOnlyTenantPermission(string permissionKey)
+    {
+        return permissionKey.Equals("tenants.add", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("tenants.delete", StringComparison.OrdinalIgnoreCase);
     }
 }

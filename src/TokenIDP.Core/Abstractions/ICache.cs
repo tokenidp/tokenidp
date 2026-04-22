@@ -35,4 +35,10 @@ public interface ICache
     /// </summary>
     /// <param name="key">Cache Key</param>
     Task RemoveAsync(string key);
+
+    /// <summary>
+    /// Delete cache entries matching the provided prefix.
+    /// </summary>
+    /// <param name="prefix">Cache key prefix</param>
+    Task RemoveByPrefixAsync(string prefix);
 }

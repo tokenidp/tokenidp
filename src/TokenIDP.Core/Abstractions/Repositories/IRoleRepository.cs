@@ -21,6 +21,7 @@ public interface IRoleRepository
         CancellationToken ct);
     Task<bool> RoleNameExistsAsync(int tenantId, string roleName, int? excludeRoleId, CancellationToken ct);
     Task<RoleAssignmentValidation?> GetRoleAssignmentValidationAsync(int tenantId, int roleId, CancellationToken ct);
+    Task<IReadOnlyList<int>> GetAssignedUserIdsAsync(int tenantId, int roleId, CancellationToken ct);
     Task<int> AddAsync(Role role, CancellationToken ct);
     Task<int> SaveChangesAsync(CancellationToken ct);
 }

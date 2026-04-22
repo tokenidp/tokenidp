@@ -68,6 +68,20 @@ public sealed class ClientRateLimitPolicyStoreTests
             return Task.CompletedTask;
         }
 
+        public Task RemoveByPrefixAsync(string prefix)
+        {
+            var keys = _entries.Keys
+                .Where(key => key.StartsWith(prefix, StringComparison.Ordinal))
+                .ToList();
+
+            foreach (var key in keys)
+            {
+                _entries.Remove(key);
+            }
+
+            return Task.CompletedTask;
+        }
+
         private async Task<T> CreateAsync<T>(string key, Func<Task<T>> factory)
         {
             var created = await factory();

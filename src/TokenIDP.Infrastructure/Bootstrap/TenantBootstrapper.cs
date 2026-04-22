@@ -220,12 +220,12 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
             templatePermissions = DefaultRoles
                 .CreateRole(tenantPermissions.ToList())
                 .RolePermissions
-                .Where(permission => !IsTenantAdministrationPermission(permission.PermissionKey))
+                .Where(permission => !IsSystemOnlyTenantPermission(permission.PermissionKey))
                 .ToList();
         }
 
         var rolePermissions = templatePermissions
-            .Where(permission => !IsTenantAdministrationPermission(permission.PermissionKey))
+            .Where(permission => !IsSystemOnlyTenantPermission(permission.PermissionKey))
             .Where(permission => tenantPermissionLookup.ContainsKey(permission.PermissionKey))
             .Select(permission => new CreateUpdateRolePermission
             {
@@ -368,9 +368,9 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
         }
     }
 
-    private static bool IsTenantAdministrationPermission(string permissionKey)
+    private static bool IsSystemOnlyTenantPermission(string permissionKey)
     {
-        return permissionKey.StartsWith("tenants.", StringComparison.OrdinalIgnoreCase)
-            || permissionKey.StartsWith("tenant.", StringComparison.OrdinalIgnoreCase);
+        return permissionKey.Equals("tenants.add", StringComparison.OrdinalIgnoreCase)
+            || permissionKey.Equals("tenants.delete", StringComparison.OrdinalIgnoreCase);
     }
 }

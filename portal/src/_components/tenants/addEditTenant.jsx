@@ -8,6 +8,7 @@ import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
 
 const defaultValues = {
   tenantName: "",
+  tenantKey: "",
   tenantCode: "",
   email: "",
   isActive: "true",
@@ -303,6 +304,7 @@ function AddEditTenant({ mode }) {
 
       reset({
         tenantName: data.tenantName ?? data.TenantName ?? "",
+        tenantKey: data.tenantKey ?? data.TenantKey ?? "",
         tenantCode: data.tenantCode ?? data.TenantCode ?? "",
         email: data.email ?? data.Email ?? "",
         isActive: String(data.isActive ?? data.IsActive ?? true).toLowerCase(),
@@ -440,12 +442,12 @@ function AddEditTenant({ mode }) {
       return;
     }
 
-    const payload = {
-      id: mode === "edit" ? Number(tenantId) : 0,
-      tenantName: data.tenantName.trim(),
-      tenantCode: data.tenantCode.trim() || "",
-      email: data.email.trim() || null,
-      isActive: String(data.isActive).toLowerCase() === "true",
+      const payload = {
+        id: mode === "edit" ? Number(tenantId) : 0,
+        tenantName: data.tenantName.trim(),
+        tenantKey: (data.tenantKey ?? "").trim().toLowerCase(),
+        email: data.email.trim() || null,
+        isActive: String(data.isActive).toLowerCase() === "true",
       authSettings: {
         authenticationMode: Number(data.authenticationMode),
         allowLocalLogin: data.allowLocalLogin ?? true,
@@ -543,6 +545,30 @@ function AddEditTenant({ mode }) {
                     </div>
                     {errors.tenantName && (
                       <div className="error-msg">Tenant name is required.</div>
+                    )}
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="form-label">Tenant Key *</label>
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <i className="fa fa-link"></i>
+                      </span>
+                      <input
+                        className={`form-control${errors.tenantKey ? " is-invalid" : ""}`}
+                        placeholder="acme"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        {...register("tenantKey", {
+                          required: true,
+                          pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+                        })}
+                      />
+                    </div>
+                    {errors.tenantKey && (
+                      <div className="error-msg">
+                        Tenant key must use lowercase letters, numbers, and hyphens only.
+                      </div>
                     )}
                   </div>
                   <div className="col-12 col-md-6">

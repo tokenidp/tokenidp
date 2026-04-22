@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Caching.Memory;
 using TokenIDP.Core.Abstractions;
+using System.Collections.Concurrent;
 
 namespace TokenIDP.Infrastructure;
 
 internal sealed class MemoryCache : ICache
 {
+    private readonly ConcurrentDictionary<string, byte> _knownKeys = new(StringComparer.Ordinal);
     private readonly IMemoryCache _cache;
     private readonly IAppLogger<MemoryCache> _logger;
     private readonly TimeSpan defaultExpiration;
@@ -20,6 +22,7 @@ internal sealed class MemoryCache : ICache
     public Task<T?> GetOrCreateAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
     {
         _logger.LogTrace("Getting or creating cache entry for key {Key}", key);
+        TrackKey(key);
 
         return _cache.GetOrCreateAsync(key, async entry =>
         {
@@ -52,6 +55,7 @@ internal sealed class MemoryCache : ICache
     public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
     {
         _logger.LogTrace("Setting cache entry for key {Key}", key);
+        TrackKey(key);
 
         var options = new MemoryCacheEntryOptions()
         {
@@ -116,6 +120,25 @@ internal sealed class MemoryCache : ICache
         }
     }
 
+    public async Task RemoveByPrefixAsync(string prefix)
+    {
+        _logger.LogTrace("Attempting to remove cache entries for prefix {Prefix}", prefix);
+
+        var keysToRemove = _knownKeys.Keys
+            .Where(key => key.StartsWith(prefix, StringComparison.Ordinal))
+            .ToList();
+
+        foreach (var key in keysToRemove)
+        {
+            await RemoveAsync(key);
+        }
+    }
+
+    private void TrackKey(string key)
+    {
+        _knownKeys.TryAdd(key, 0);
+    }
+
     /// <summary>
     /// Thie would trigger when cache expire
     /// </summary>
@@ -128,6 +151,7 @@ internal sealed class MemoryCache : ICache
         EvictionReason reason,
         object state)
     {
+        _knownKeys.TryRemove(key.ToString() ?? string.Empty, out _);
         _logger.LogDebug("Cache entry evicted. Key: {Key}, Reason: {EvictionReason}",
             key.ToString(),
             reason.ToString());

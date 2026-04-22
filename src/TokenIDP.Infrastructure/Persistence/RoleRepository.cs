@@ -175,6 +175,21 @@ internal sealed class RoleRepository : IRoleRepository
             .FirstOrDefaultAsync(ct);
     }
 
+    public async Task<IReadOnlyList<int>> GetAssignedUserIdsAsync(int tenantId, int roleId, CancellationToken ct)
+    {
+        return await (from ur in _dbContext.UserRoles.AsNoTracking()
+                      join u in _dbContext.Users.AsNoTracking() on ur.UserId equals u.Id
+                      join r in _dbContext.Roles.AsNoTracking() on ur.RoleId equals r.Id
+                      where ur.RoleId == roleId
+                            && u.TenantId == tenantId
+                            && r.TenantId == tenantId
+                            && !u.IsDeleted
+                            && !r.IsDeleted
+                      select u.Id)
+            .Distinct()
+            .ToListAsync(ct);
+    }
+
     public async Task<int> AddAsync(Role role, CancellationToken ct)
     {
         _dbContext.Roles.Add(role);

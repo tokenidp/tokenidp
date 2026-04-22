@@ -1,20 +1,24 @@
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Extensions;
 
 namespace TokenIDP.Core.Admin.Roles.UseCases;
 
 internal class RoleCommandUseCase
 {
+    private readonly ICache _cache;
     private readonly IRoleRepository _roleRepository;
     private readonly IAppLogger<RoleCommandUseCase> _logger;
     private readonly ICurrentUserService _currentUserService;
 
     public RoleCommandUseCase(IAppLogger<RoleCommandUseCase> logger,
         IRoleRepository roleRepository,
+        ICache cache,
         ICurrentUserService currentUserService)
     {
         _logger = logger;
         _roleRepository = roleRepository;
+        _cache = cache;
         _currentUserService = currentUserService;
     }
 
@@ -207,6 +211,7 @@ internal class RoleCommandUseCase
         }
 
         await _roleRepository.SaveChangesAsync(cancellationToken);
+        await InvalidateAuthorizationCacheAsync(role.Id, cancellationToken);
 
         _logger.LogDebug("Role updated successfully with Id {RoleId} in tenant {TenantId}",
             role.Id, _currentUserService.TenantId);
@@ -243,6 +248,7 @@ internal class RoleCommandUseCase
         }
 
         await _roleRepository.SaveChangesAsync(CancellationToken.None);
+        await InvalidateAuthorizationCacheAsync(role.Id, CancellationToken.None);
 
         _logger.LogDebug("Role deleted successfully with Id {RoleId} in tenant {TenantId}",
             role.Id, _currentUserService.TenantId);
@@ -254,5 +260,19 @@ internal class RoleCommandUseCase
     {
         var normalized = (roleName ?? string.Empty).Trim().ToLowerInvariant();
         return normalized is "admin" or "administrator" or "owner";
+    }
+
+    private async Task InvalidateAuthorizationCacheAsync(int roleId, CancellationToken cancellationToken)
+    {
+        var userIds = await _roleRepository.GetAssignedUserIdsAsync(
+            _currentUserService.TenantId,
+            roleId,
+            cancellationToken);
+
+        foreach (var userId in userIds)
+        {
+            await _cache.RemoveByPrefixAsync("USC".FormatCacheKey(userId));
+            await _cache.RemoveByPrefixAsync("USR".FormatCacheKey(userId));
+        }
     }
 }
