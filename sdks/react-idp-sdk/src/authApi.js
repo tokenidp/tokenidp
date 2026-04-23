@@ -1,3 +1,5 @@
+import { getApiTenantKey, getAuthTenantKey } from "./tenant";
+
 async function httpPostJson(url, body, extraHeaders = {}) {
   const res = await fetch(url, {
     method: "POST",

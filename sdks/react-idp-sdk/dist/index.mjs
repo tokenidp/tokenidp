@@ -98,10 +98,10 @@ function normalizeTenantPropagationMode(value) {
   }
   return "all";
 }
-function getAuthTenantKey2(config) {
+function getAuthTenantKey(config) {
   return normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode) === "all" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
 }
-function getApiTenantKey2(config) {
+function getApiTenantKey(config) {
   const mode = normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode);
   return mode === "all" || mode === "api" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
 }
@@ -146,7 +146,7 @@ function randomState(length = 32) {
 }
 function buildAuthorizeUrl(config, params) {
   const url = new URL(config.authority + config.authorizePath);
-  const tenantKey = getAuthTenantKey2({
+  const tenantKey = getAuthTenantKey({
     ...config,
     tenantPropagationMode: normalizeTenantPropagationMode(
       config == null ? void 0 : config.tenantPropagationMode
@@ -383,7 +383,7 @@ function IdpAuthProvider({ children, config }) {
         baseConfig == null ? void 0 : baseConfig.tenantPropagationMode
       )
     };
-    const resolvedTenantKey = resolveApiTenantKey(normalizedConfig) || getApiTenantKey2({
+    const resolvedTenantKey = resolveApiTenantKey(normalizedConfig) || getApiTenantKey({
       ...normalizedConfig,
       tenantKey: persisted == null ? void 0 : persisted.tenantKey
     });
