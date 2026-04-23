@@ -27,7 +27,7 @@
     "react-promise-tracker": "^2.1.0",
     "react-router-dom": "^6.26.2",
     "react-scripts": "^5.0.1",
-    "tokenidp-react": "file:../sdks/react-idp-sdk/tokenidp-react-0.3.2.tgz",
+    "tokenidp-react": "file:../sdks/react-idp-sdk/tokenidp-react-0.3.3.tgz",
     "web-vitals": "^2.1.4"
   },
   "overrides": {

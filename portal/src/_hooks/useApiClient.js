@@ -17,7 +17,6 @@ const useApiClient = (options = {}) => {
     const interceptorId = apiClient.interceptors.request.use((config) => {
       const token = user?.accessToken || user?.access_token;
       const tenantKey = user?.tenantKey;
-      console.log("accessToken:", token);
       const nextHeaders = {
         ...(config.headers || {}),
       };
@@ -47,7 +46,6 @@ const useApiClient = (options = {}) => {
       const headers = { ...(config?.headers || {}) };
       const token = user?.accessToken || user?.access_token;
       const tenantKey = user?.tenantKey;
-      console.log("accessToken:", token);
       if (!skipAuth && token && !headers.Authorization) {
         headers.Authorization = `Bearer ${token}`;
       }

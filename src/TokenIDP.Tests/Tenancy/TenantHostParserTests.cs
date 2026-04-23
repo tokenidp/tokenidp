@@ -9,6 +9,7 @@ public sealed class TenantHostParserTests
     private static readonly TenantResolutionOptions Options = new()
     {
         AllowedRootDomains = new[] { "tokenidp.com" },
+        SystemHostAliases = new[] { "admin.tokenidp.com" },
         AllowedDevelopmentHosts = new[] { "localhost" },
         DefaultTenant = "system"
     };
@@ -28,6 +29,7 @@ public sealed class TenantHostParserTests
 
     [Theory]
     [InlineData("tokenidp.com")]
+    [InlineData("admin.tokenidp.com")]
     [InlineData("localhost:5001")]
     public void Resolve_ShouldRecognizeRootHost(string host)
     {

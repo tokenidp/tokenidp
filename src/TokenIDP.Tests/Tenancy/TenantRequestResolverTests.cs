@@ -12,6 +12,7 @@ public sealed class TenantRequestResolverTests
     private static readonly TenantResolutionOptions TenantOptions = new()
     {
         AllowedRootDomains = new[] { "idp.domain.com" },
+        SystemHostAliases = new[] { "admin.idp.domain.com" },
         AllowedDevelopmentHosts = new[] { "localhost" },
         DefaultTenant = "system",
         AllowHeaderInStaging = true,
@@ -36,6 +37,19 @@ public sealed class TenantRequestResolverTests
     {
         var resolver = CreateResolver(Environments.Production);
         var httpContext = CreateHttpContext("idp.domain.com");
+
+        var result = resolver.Resolve(httpContext);
+
+        result.Status.Should().Be(TenantRequestResolutionStatus.Resolved);
+        result.TenantKey.Should().Be("system");
+        result.Source.Should().Be(TenantResolutionSource.Default);
+    }
+
+    [Fact]
+    public void Production_ShouldUseDefaultTenantForSystemHostAlias()
+    {
+        var resolver = CreateResolver(Environments.Production);
+        var httpContext = CreateHttpContext("admin.idp.domain.com");
 
         var result = resolver.Resolve(httpContext);
 

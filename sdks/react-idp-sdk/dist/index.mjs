@@ -14,6 +14,8 @@ var defaultAuthConfig = {
   // e.g. https://idp.tokentresor.com
   clientId: "",
   tenantKey: "",
+  tenantPropagationMode: "all",
+  // all | api | none
   tenantQueryParameter: "tenant",
   tenantHeaderName: "X-Tenant-Key",
   tenantKeyStorageKey: "idp_tenant_key",
@@ -88,6 +90,54 @@ async function generateCodeChallenge(verifier) {
   return base64UrlEncode(digest);
 }
 
+// src/tenant.js
+function normalizeTenantPropagationMode(value) {
+  const normalized = String(value || "all").trim().toLowerCase();
+  if (normalized === "none" || normalized === "api") {
+    return normalized;
+  }
+  return "all";
+}
+function getAuthTenantKey(config) {
+  return normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode) === "all" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
+}
+function getApiTenantKey(config) {
+  const mode = normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode);
+  return mode === "all" || mode === "api" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
+}
+function resolveRawTenantKey(config, overrides = {}) {
+  const explicitTenantKey = String(
+    (overrides == null ? void 0 : overrides.tenantKey) || (config == null ? void 0 : config.tenantKey) || ""
+  ).trim();
+  if (explicitTenantKey) {
+    return explicitTenantKey;
+  }
+  if (typeof window !== "undefined") {
+    const tenantFromQuery = new URLSearchParams(window.location.search).get(
+      (config == null ? void 0 : config.tenantQueryParameter) || "tenant"
+    );
+    if (tenantFromQuery) {
+      return tenantFromQuery.trim();
+    }
+  }
+  if (typeof sessionStorage !== "undefined") {
+    const tenantFromStorage = sessionStorage.getItem(
+      (config == null ? void 0 : config.tenantKeyStorageKey) || "idp_tenant_key"
+    );
+    if (tenantFromStorage) {
+      return tenantFromStorage.trim();
+    }
+  }
+  return "";
+}
+function resolveAuthTenantKey(config, overrides = {}) {
+  return normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode) === "all" ? resolveRawTenantKey(config, overrides) : "";
+}
+function resolveApiTenantKey(config, overrides = {}) {
+  const mode = normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode);
+  return mode === "all" || mode === "api" ? resolveRawTenantKey(config, overrides) : "";
+}
+
 // src/oauth.js
 function randomState(length = 32) {
   const bytes = new Uint8Array(length);
@@ -96,6 +146,13 @@ function randomState(length = 32) {
 }
 function buildAuthorizeUrl(config, params) {
   const url = new URL(config.authority + config.authorizePath);
+  const tenantKey = getAuthTenantKey({
+    ...config,
+    tenantPropagationMode: normalizeTenantPropagationMode(
+      config == null ? void 0 : config.tenantPropagationMode
+    ),
+    tenantKey: params.tenantKey || config.tenantKey
+  });
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", config.clientId);
   url.searchParams.set("redirect_uri", config.redirectUri);
@@ -105,10 +162,10 @@ function buildAuthorizeUrl(config, params) {
   if (params.state) url.searchParams.set("state", params.state);
   if (params.audience || config.audience)
     url.searchParams.set("audience", params.audience || config.audience);
-  if (params.tenantKey || config.tenantKey) {
+  if (tenantKey) {
     url.searchParams.set(
       config.tenantQueryParameter || "tenant",
-      params.tenantKey || config.tenantKey
+      tenantKey
     );
   }
   if (params.prompt) url.searchParams.set("prompt", params.prompt);
@@ -166,8 +223,8 @@ function getErrorMessage(data, status) {
   const wrappedError = data.error && typeof data.error === "object" ? data.error : ((_a = data.value) == null ? void 0 : _a.error) && typeof data.value.error === "object" ? data.value.error : null;
   return data.error_description || (wrappedError == null ? void 0 : wrappedError.error) || (wrappedError == null ? void 0 : wrappedError.Error) || (wrappedError == null ? void 0 : wrappedError.message) || (wrappedError == null ? void 0 : wrappedError.Message) || (typeof data.error === "string" ? data.error : "") || data.message || `HTTP ${status}`;
 }
-function withTenant(url, config) {
-  const tenantKey = String((config == null ? void 0 : config.tenantKey) || "").trim();
+function withTenant(url, config, target = "api") {
+  const tenantKey = target === "auth" ? getAuthTenantKey(config) : getApiTenantKey(config);
   if (!tenantKey) {
     return url;
   }
@@ -175,8 +232,8 @@ function withTenant(url, config) {
   tenantUrl.searchParams.set(config.tenantQueryParameter || "tenant", tenantKey);
   return tenantUrl.toString();
 }
-function withTenantHeaders(config, extraHeaders = {}) {
-  const tenantKey = String((config == null ? void 0 : config.tenantKey) || "").trim();
+function withTenantHeaders(config, extraHeaders = {}, target = "api") {
+  const tenantKey = target === "auth" ? getAuthTenantKey(config) : getApiTenantKey(config);
   if (!tenantKey) {
     return extraHeaders;
   }
@@ -203,24 +260,28 @@ function extractPermissions(userInfo) {
   return [];
 }
 async function exchangeAuthorizationCode(config, payload) {
-  const url = withTenant(config.authority + config.tokenPath, config);
-  return await httpPostJson(url, payload, withTenantHeaders(config));
+  const url = withTenant(config.authority + config.tokenPath, config, "auth");
+  return await httpPostJson(url, payload, withTenantHeaders(config, {}, "auth"));
 }
 async function refreshWithToken(config, payload) {
-  const url = withTenant(config.authority + config.tokenPath, config);
-  return await httpPostJson(url, payload, withTenantHeaders(config));
+  const url = withTenant(config.authority + config.tokenPath, config, "auth");
+  return await httpPostJson(url, payload, withTenantHeaders(config, {}, "auth"));
 }
 async function revokeToken(config, { accessToken, token, reasonRevoked }) {
   if (!(config == null ? void 0 : config.authority) || !accessToken || !token) {
     return null;
   }
-  const url = withTenant(new URL(config.revokePath || "/revoke", config.authority).toString(), config);
+  const url = withTenant(
+    new URL(config.revokePath || "/revoke", config.authority).toString(),
+    config,
+    "auth"
+  );
   const res = await fetch(url, {
     method: "DELETE",
     headers: withTenantHeaders(config, {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json"
-    }),
+    }, "auth"),
     body: JSON.stringify({
       token,
       reasonRevoked: reasonRevoked || "logout"
@@ -243,12 +304,21 @@ async function revokeToken(config, { accessToken, token, reasonRevoked }) {
   return data;
 }
 async function loadUserPermissions(config, accessToken) {
-  const url = withTenant(config.authority + config.userPermissionsPath, config);
-  return await httpGetJson(url, withTenantHeaders(config, { Authorization: `Bearer ${accessToken}` }));
+  const url = withTenant(config.authority + config.userPermissionsPath, config, "api");
+  return await httpGetJson(
+    url,
+    withTenantHeaders(config, { Authorization: `Bearer ${accessToken}` }, "api")
+  );
 }
 function buildLogoutUrl(config) {
   if (!(config == null ? void 0 : config.authority)) return "";
-  const url = new URL(withTenant(new URL(config.logoutPath || "/logout", config.authority).toString(), config));
+  const url = new URL(
+    withTenant(
+      new URL(config.logoutPath || "/logout", config.authority).toString(),
+      config,
+      "auth"
+    )
+  );
   if (config.clientId) {
     url.searchParams.set("client_id", config.clientId);
   }
@@ -320,13 +390,25 @@ function IdpAuthProvider({ children, config }) {
   const persistedRaw = storage.getItem(baseConfig.storageKey);
   const persisted = persistedRaw ? safeJsonParse(persistedRaw) : null;
   const mergedConfig = useMemo(() => {
-    const resolvedTenantKey = resolveTenantKey(baseConfig) || String((persisted == null ? void 0 : persisted.tenantKey) || "").trim();
-    return {
+    const normalizedConfig = {
       ...baseConfig,
+      tenantPropagationMode: normalizeTenantPropagationMode(
+        baseConfig == null ? void 0 : baseConfig.tenantPropagationMode
+      )
+    };
+    const resolvedTenantKey = resolveApiTenantKey(normalizedConfig) || getApiTenantKey({
+      ...normalizedConfig,
+      tenantKey: persisted == null ? void 0 : persisted.tenantKey
+    });
+    return {
+      ...normalizedConfig,
       tenantKey: resolvedTenantKey
     };
   }, [baseConfig, persisted == null ? void 0 : persisted.tenantKey]);
-  const [state, dispatch] = useReducer(reducer, persisted || initialState);
+  const [state, dispatch] = useReducer(
+    reducer,
+    buildInitialState(persisted, mergedConfig)
+  );
   useEffect(() => {
     storage.setItem(mergedConfig.storageKey, JSON.stringify(state));
   }, [state, storage, mergedConfig.storageKey]);
@@ -400,11 +482,12 @@ function IdpAuthProvider({ children, config }) {
         const verifier = generateCodeVerifier();
         const challenge = await generateCodeChallenge(verifier);
         const stateVal = randomState();
-        const tenantKey = resolveTenantKey(mergedConfig, options);
+        const authorizeTenantKey = resolveAuthTenantKey(mergedConfig, options);
+        const apiTenantKey = resolveApiTenantKey(mergedConfig, options);
         sessionStorage.setItem(mergedConfig.pkceVerifierKey, verifier);
         sessionStorage.setItem(mergedConfig.oauthStateKey, stateVal);
-        if (tenantKey) {
-          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, tenantKey);
+        if (apiTenantKey) {
+          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, apiTenantKey);
         } else {
           sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
         }
@@ -414,7 +497,7 @@ function IdpAuthProvider({ children, config }) {
           prompt: options.prompt,
           loginHint: options.loginHint,
           audience: options.audience,
-          tenantKey
+          tenantKey: authorizeTenantKey
         });
         window.location.assign(authorizeUrl);
       },
@@ -442,7 +525,7 @@ function IdpAuthProvider({ children, config }) {
         var _a;
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
-        const tenantKey = resolveTenantKey(mergedConfig);
+        const tenantKey = resolveApiTenantKey(mergedConfig);
         const expectedState = sessionStorage.getItem(
           mergedConfig.oauthStateKey
         );
@@ -558,28 +641,18 @@ function safeJsonParse(raw) {
     return null;
   }
 }
-function resolveTenantKey(config, overrides = {}) {
-  const explicitTenantKey = String((overrides == null ? void 0 : overrides.tenantKey) || (config == null ? void 0 : config.tenantKey) || "").trim();
-  if (explicitTenantKey) {
-    return explicitTenantKey;
+function buildInitialState(persistedState, config) {
+  if (!persistedState) {
+    return {
+      ...initialState,
+      tenantKey: config.tenantKey
+    };
   }
-  if (typeof window !== "undefined") {
-    const tenantFromQuery = new URLSearchParams(window.location.search).get(
-      (config == null ? void 0 : config.tenantQueryParameter) || "tenant"
-    );
-    if (tenantFromQuery) {
-      return tenantFromQuery.trim();
-    }
-  }
-  if (typeof sessionStorage !== "undefined") {
-    const tenantFromStorage = sessionStorage.getItem(
-      (config == null ? void 0 : config.tenantKeyStorageKey) || "idp_tenant_key"
-    );
-    if (tenantFromStorage) {
-      return tenantFromStorage.trim();
-    }
-  }
-  return "";
+  return {
+    ...initialState,
+    ...persistedState,
+    tenantKey: config.tenantKey
+  };
 }
 
 // src/AuthCallback.jsx

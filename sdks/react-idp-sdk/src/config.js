@@ -2,6 +2,7 @@ export const defaultAuthConfig = {
   authority: "", // e.g. https://idp.tokentresor.com
   clientId: "",
   tenantKey: "",
+  tenantPropagationMode: "all", // all | api | none
   tenantQueryParameter: "tenant",
   tenantHeaderName: "X-Tenant-Key",
   tenantKeyStorageKey: "idp_tenant_key",

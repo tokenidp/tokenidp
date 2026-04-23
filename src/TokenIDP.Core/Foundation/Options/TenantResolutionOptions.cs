@@ -5,6 +5,7 @@ public sealed class TenantResolutionOptions
     public const string SectionName = "TenantResolution";
 
     public string[] AllowedRootDomains { get; set; } = Array.Empty<string>();
+    public string[] SystemHostAliases { get; set; } = Array.Empty<string>();
     public string[] AllowedDevelopmentHosts { get; set; } = new[] { "localhost" };
     public string? DefaultTenant { get; set; }
     public string? FallbackTenantKey

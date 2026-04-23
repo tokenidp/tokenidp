@@ -11,6 +11,12 @@ import { createStorage } from "./storage";
 import { generateCodeVerifier, generateCodeChallenge } from "./pkce";
 import { buildAuthorizeUrl, randomState } from "./oauth";
 import {
+  getApiTenantKey,
+  normalizeTenantPropagationMode,
+  resolveApiTenantKey,
+  resolveAuthTenantKey,
+} from "./tenant";
+import {
   exchangeAuthorizationCode,
   refreshWithToken,
   revokeToken,
@@ -72,17 +78,29 @@ export function IdpAuthProvider({ children, config }) {
   const persisted = persistedRaw ? safeJsonParse(persistedRaw) : null;
 
   const mergedConfig = useMemo(() => {
+    const normalizedConfig = {
+      ...baseConfig,
+      tenantPropagationMode: normalizeTenantPropagationMode(
+        baseConfig?.tenantPropagationMode,
+      ),
+    };
     const resolvedTenantKey =
-      resolveTenantKey(baseConfig) ||
-      String(persisted?.tenantKey || "").trim();
+      resolveApiTenantKey(normalizedConfig) ||
+      getApiTenantKey({
+        ...normalizedConfig,
+        tenantKey: persisted?.tenantKey,
+      });
 
     return {
-      ...baseConfig,
+      ...normalizedConfig,
       tenantKey: resolvedTenantKey,
     };
   }, [baseConfig, persisted?.tenantKey]);
 
-  const [state, dispatch] = useReducer(reducer, persisted || initialState);
+  const [state, dispatch] = useReducer(
+    reducer,
+    buildInitialState(persisted, mergedConfig),
+  );
 
   useEffect(() => {
     storage.setItem(mergedConfig.storageKey, JSON.stringify(state));
@@ -100,11 +118,11 @@ export function IdpAuthProvider({ children, config }) {
 
   function clearLocalSession() {
     storage.removeItem(mergedConfig.storageKey);
-        sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
-        sessionStorage.removeItem(mergedConfig.oauthStateKey);
-        sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
-        dispatch({ type: "LOGOUT" });
-      }
+    sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
+    sessionStorage.removeItem(mergedConfig.oauthStateKey);
+    sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
+    dispatch({ type: "LOGOUT" });
+  }
 
   async function tryRefreshWithRetry(retries, retryDelayMs) {
     try {
@@ -175,12 +193,13 @@ export function IdpAuthProvider({ children, config }) {
         const verifier = generateCodeVerifier();
         const challenge = await generateCodeChallenge(verifier);
         const stateVal = randomState();
-        const tenantKey = resolveTenantKey(mergedConfig, options);
+        const authorizeTenantKey = resolveAuthTenantKey(mergedConfig, options);
+        const apiTenantKey = resolveApiTenantKey(mergedConfig, options);
 
         sessionStorage.setItem(mergedConfig.pkceVerifierKey, verifier);
         sessionStorage.setItem(mergedConfig.oauthStateKey, stateVal);
-        if (tenantKey) {
-          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, tenantKey);
+        if (apiTenantKey) {
+          sessionStorage.setItem(mergedConfig.tenantKeyStorageKey, apiTenantKey);
         } else {
           sessionStorage.removeItem(mergedConfig.tenantKeyStorageKey);
         }
@@ -191,7 +210,7 @@ export function IdpAuthProvider({ children, config }) {
           prompt: options.prompt,
           loginHint: options.loginHint,
           audience: options.audience,
-          tenantKey,
+          tenantKey: authorizeTenantKey,
         });
 
         window.location.assign(authorizeUrl);
@@ -224,7 +243,7 @@ export function IdpAuthProvider({ children, config }) {
       handleCallback: async ({ code, state: returnedState }) => {
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
-        const tenantKey = resolveTenantKey(mergedConfig);
+        const tenantKey = resolveApiTenantKey(mergedConfig);
 
         const expectedState = sessionStorage.getItem(
           mergedConfig.oauthStateKey,
@@ -367,29 +386,17 @@ function safeJsonParse(raw) {
   }
 }
 
-function resolveTenantKey(config, overrides = {}) {
-  const explicitTenantKey = String(overrides?.tenantKey || config?.tenantKey || "").trim();
-  if (explicitTenantKey) {
-    return explicitTenantKey;
+function buildInitialState(persistedState, config) {
+  if (!persistedState) {
+    return {
+      ...initialState,
+      tenantKey: config.tenantKey,
+    };
   }
 
-  if (typeof window !== "undefined") {
-    const tenantFromQuery = new URLSearchParams(window.location.search).get(
-      config?.tenantQueryParameter || "tenant",
-    );
-    if (tenantFromQuery) {
-      return tenantFromQuery.trim();
-    }
-  }
-
-  if (typeof sessionStorage !== "undefined") {
-    const tenantFromStorage = sessionStorage.getItem(
-      config?.tenantKeyStorageKey || "idp_tenant_key",
-    );
-    if (tenantFromStorage) {
-      return tenantFromStorage.trim();
-    }
-  }
-
-  return "";
+  return {
+    ...initialState,
+    ...persistedState,
+    tenantKey: config.tenantKey,
+  };
 }

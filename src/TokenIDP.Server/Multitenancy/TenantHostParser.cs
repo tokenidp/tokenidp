@@ -14,6 +14,11 @@ public static class TenantHostParser
             return new TenantHostResolutionResult(TenantHostResolutionKind.Invalid);
         }
 
+        if (IsSystemHostAlias(normalizedHost, options.SystemHostAliases))
+        {
+            return new TenantHostResolutionResult(TenantHostResolutionKind.Root);
+        }
+
         var developmentResolution = ResolveFromDomains(normalizedHost, options.AllowedDevelopmentHosts);
         if (developmentResolution.Kind != TenantHostResolutionKind.None)
         {
@@ -71,6 +76,14 @@ public static class TenantHostParser
         }
 
         return new TenantHostResolutionResult(TenantHostResolutionKind.None);
+    }
+
+    private static bool IsSystemHostAlias(string host, IEnumerable<string> systemHostAliases)
+    {
+        return systemHostAliases
+            .Select(NormalizeHost)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Any(alias => string.Equals(host, alias, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string NormalizeHost(string? host)

@@ -1,3 +1,8 @@
+import {
+  getAuthTenantKey,
+  normalizeTenantPropagationMode,
+} from "./tenant";
+
 export function randomState(length = 32) {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
@@ -8,6 +13,13 @@ export function randomState(length = 32) {
 
 export function buildAuthorizeUrl(config, params) {
   const url = new URL(config.authority + config.authorizePath);
+  const tenantKey = getAuthTenantKey({
+    ...config,
+    tenantPropagationMode: normalizeTenantPropagationMode(
+      config?.tenantPropagationMode,
+    ),
+    tenantKey: params.tenantKey || config.tenantKey,
+  });
 
   url.searchParams.set("response_type", "code");
   url.searchParams.set("client_id", config.clientId);
@@ -20,10 +32,10 @@ export function buildAuthorizeUrl(config, params) {
   if (params.state) url.searchParams.set("state", params.state);
   if (params.audience || config.audience)
     url.searchParams.set("audience", params.audience || config.audience);
-  if (params.tenantKey || config.tenantKey) {
+  if (tenantKey) {
     url.searchParams.set(
       config.tenantQueryParameter || "tenant",
-      params.tenantKey || config.tenantKey,
+      tenantKey,
     );
   }
 

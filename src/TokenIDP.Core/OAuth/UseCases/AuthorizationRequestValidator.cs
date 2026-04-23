@@ -1,4 +1,5 @@
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Exceptions;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
@@ -19,7 +20,7 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
         AuthorizationRequest request,
         CancellationToken ct)
     {
-        var client = await _clientStore.GetClientShortInfo(request.ClientId);
+        var client = await GetClientOrThrowAsync(request.ClientId);
 
         if (client == null || !client.IsValidClient)
         {
@@ -110,7 +111,7 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
         DeviceAuthorizationRequest request,
         CancellationToken ct)
     {
-        var client = await _clientStore.GetClientShortInfo(request.ClientId);
+        var client = await GetClientOrThrowAsync(request.ClientId);
 
         if (client == null || !client.IsValidClient)
         {
@@ -158,6 +159,21 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
             throw new AuthorizationRequestException(
                 "unauthorized_client",
                 "Invalid client_id.",
+                allowRedirect: false);
+        }
+    }
+
+    private async Task<ClientShortInfo> GetClientOrThrowAsync(string clientId)
+    {
+        try
+        {
+            return await _clientStore.GetClientShortInfo(clientId);
+        }
+        catch (NotFoundException)
+        {
+            throw new AuthorizationRequestException(
+                error: "unauthorized_client",
+                description: "Invalid client_id.",
                 allowRedirect: false);
         }
     }
