@@ -154,7 +154,10 @@ internal sealed class TokenIssuerUseCase
             tokenInfo.ClientId,
             tokenInfo.UserId,
             tokenInfo.UserName,
-            tokenInfo.TenantId.ToString(),
+            tokenInfo.TenantId,
+            tokenInfo.TenantKey,
+            tokenInfo.AuthTenantId,
+            tokenInfo.AuthTenantKey,
             tokenInfo.Audiences,
             tokenInfo.Scopes,
             tokenInfo.Roles);
@@ -201,6 +204,10 @@ internal sealed class TokenIssuerUseCase
             context.ClientId,
             context.UserId,
             context.UserName,
+            context.TenantId,
+            context.TenantKey,
+            context.AuthTenantId,
+            context.AuthTenantKey,
             new[] { context.ClientId });
 
         _logger.LogDebug("Token will expire at {ExpirationTime}", expiresAt);

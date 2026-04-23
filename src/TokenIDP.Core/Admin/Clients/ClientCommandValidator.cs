@@ -1,4 +1,5 @@
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Domain;
 
 namespace TokenIDP.Core.Admin.Clients;
 
@@ -26,6 +27,27 @@ internal sealed class ClientCommandValidator
         string clientId,
         CancellationToken cancellationToken)
     {
+        var tenant = await _tenantRepository.GetTenantDetailAsync(tenantId, cancellationToken);
+        var isSystemTenant = tenant?.IsSystemTenant == true;
+
+        if (SystemIdentity.IsReservedSystemClientId(clientId) && !isSystemTenant)
+        {
+            return Result.Failure(
+                "client.id.reserved",
+                "Client Id is reserved for the system tenant.");
+        }
+
+        if (SystemIdentity.IsReservedSystemClientId(clientId))
+        {
+            var existsGlobally = await _clientRepository.ClientIdExistsGloballyAsync(
+                clientId,
+                cancellationToken);
+
+            return existsGlobally
+                ? Result.Failure("client.id.duplicate", "Client Id already exists.")
+                : Result.Success(0);
+        }
+
         var exists = await _clientRepository.ClientIdExistsAsync(
             tenantId,
             clientId,

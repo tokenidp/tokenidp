@@ -4,6 +4,9 @@ public class TokenContext
 {
     public int? UserId { get; private set; }
     public int TenantId { get; private set; }
+    public string TenantKey { get; private set; } = string.Empty;
+    public int AuthTenantId { get; private set; }
+    public string AuthTenantKey { get; private set; } = string.Empty;
     public string ClientName { get; private set; } = string.Empty;
     public string UserName { get; private set; } = string.Empty;
     public string ClientId { get; private set; } = string.Empty;
@@ -26,6 +29,9 @@ public class TokenContext
     public static TokenContext Create(
         int userId,
         int tenantId,
+        string tenantKey,
+        int authTenantId,
+        string authTenantKey,
         string clientName,
         string userName,
         string clientId,
@@ -45,6 +51,9 @@ public class TokenContext
         {
             UserId = userId,
             TenantId = tenantId,
+            TenantKey = tenantKey,
+            AuthTenantId = authTenantId,
+            AuthTenantKey = authTenantKey,
             ClientName = clientName,
             UserName = userName,
             ClientId = clientId,
@@ -63,7 +72,48 @@ public class TokenContext
     }
 
     public static TokenContext Create(
+        int userId,
         int tenantId,
+        string clientName,
+        string userName,
+        string clientId,
+        GrantTypes grantType,
+        TokenTypes tokenType,
+        int clientSecretExpiry,
+        int accessTokenLifetime,
+        int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
+        bool rememberMe,
+        string[] roles,
+        string[] scopes,
+        string[] audiences,
+        string ipAddress = "")
+    {
+        return Create(
+            userId,
+            tenantId,
+            tenantKey: string.Empty,
+            authTenantId: tenantId,
+            authTenantKey: string.Empty,
+            clientName,
+            userName,
+            clientId,
+            grantType,
+            tokenType,
+            clientSecretExpiry,
+            accessTokenLifetime,
+            refreshTokenExpiration,
+            refreshTokenDeliveryMode,
+            rememberMe,
+            roles,
+            scopes,
+            audiences,
+            ipAddress);
+    }
+
+    public static TokenContext Create(
+        int tenantId,
+        string tenantKey,
         string clientName,
         string clientId,
         GrantTypes grantType,
@@ -80,6 +130,9 @@ public class TokenContext
         return new TokenContext()
         {
             TenantId = tenantId,
+            TenantKey = tenantKey,
+            AuthTenantId = tenantId,
+            AuthTenantKey = tenantKey,
             ClientName = clientName,
             ClientId = clientId,
             GrantType = grantType,
@@ -93,6 +146,38 @@ public class TokenContext
             IpAddress = ipAddress,
             ActiveSecretHashes = secrets,
         };
+    }
+
+    public static TokenContext Create(
+        int tenantId,
+        string clientName,
+        string clientId,
+        GrantTypes grantType,
+        TokenTypes tokenType,
+        int clientSecretExpiry,
+        int accessTokenLifetime,
+        int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
+        string[] scopes,
+        string[] audiences,
+        IReadOnlySet<string> secrets,
+        string ipAddress = "")
+    {
+        return Create(
+            tenantId,
+            tenantKey: string.Empty,
+            clientName,
+            clientId,
+            grantType,
+            tokenType,
+            clientSecretExpiry,
+            accessTokenLifetime,
+            refreshTokenExpiration,
+            refreshTokenDeliveryMode,
+            scopes,
+            audiences,
+            secrets,
+            ipAddress);
     }
 
     public void SetTokenDates()

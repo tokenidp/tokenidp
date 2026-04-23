@@ -9,14 +9,17 @@ internal class TokenContextUseCase
     private readonly IRoleRepository _roleService;
     private readonly IAppLogger<TokenContextUseCase> _logger;
     private readonly IClientRepository _clientStore;
+    private readonly ITenantRepository _tenantStore;
 
     public TokenContextUseCase(IRoleRepository roleService,
         IClientRepository clientStore,
+        ITenantRepository tenantStore,
         IAppLogger<TokenContextUseCase> logger,
         IUserRepository identityStore)
     {
         _roleService = roleService;
         _clientStore = clientStore;
+        _tenantStore = tenantStore;
         _logger = logger;
         _identityStore = identityStore;
     }
@@ -49,10 +52,15 @@ internal class TokenContextUseCase
         var distinctRoles = userRoles.Distinct().ToArray();
         var client = await _clientStore.GetActiveByClientId(clientId);
         var scopeSelection = ResolveScopeSelection(client, requestedScope);
+        var activeTenant = await GetTenantSummaryAsync(user.TenantId);
+        var authTenant = await GetTenantSummaryAsync(client.TenantId);
 
         var tokenContext = TokenContext.Create(
             userId,
-            user.TenantId,
+            activeTenant.Id,
+            activeTenant.TenantKey,
+            authTenant.Id,
+            authTenant.TenantKey,
             client.ClientName,
             user.UserName ?? string.Empty,
             clientId,
@@ -78,9 +86,11 @@ internal class TokenContextUseCase
 
         var client = await _clientStore.GetActiveByClientId(clientId);
         var scopeSelection = ResolveScopeSelection(client, requestedScope);
+        var tenant = await GetTenantSummaryAsync(client.TenantId);
 
         return TokenContext.Create(
-            client.TenantId,
+            tenant.Id,
+            tenant.TenantKey,
             client.ClientName,
             clientId,
             GrantTypes.client_credentials,
@@ -92,6 +102,18 @@ internal class TokenContextUseCase
             scopeSelection.Scopes,
             scopeSelection.Audiences,
             client.ActiveSecretHashes);
+    }
+
+    private async Task<TenantSummary> GetTenantSummaryAsync(int tenantId)
+    {
+        var tenant = await _tenantStore.GetSummaryAsync(tenantId, CancellationToken.None);
+
+        if (tenant is null)
+        {
+            throw new NotFoundException($"Tenant {tenantId} not found.");
+        }
+
+        return tenant;
     }
 
     internal (string[] Scopes, string[] Audiences) ResolveScopeSelection(

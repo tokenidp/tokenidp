@@ -7,6 +7,9 @@ internal sealed class SystemCurrentUserService : ICurrentUserService
 
     public int UserId { get; set; }
     public int TenantId { get; set; }
+    public string TenantKey { get; set; } = string.Empty;
+    public int AuthTenantId => TenantId;
+    public string AuthTenantKey => TenantKey;
     public string ClientId => string.Empty;
     public string UserName => "system";
     public Guid CorrelationId { get; } = Guid.NewGuid();

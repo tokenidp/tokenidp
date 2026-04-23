@@ -8,6 +8,7 @@ using TokenIDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Domain;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 
@@ -149,7 +150,7 @@ internal class SystemBootstrapper : ISystemBootstrapper
         int tenantId,
         CancellationToken ct)
     {
-        const string adminClientId = "idp-admin";
+        var adminClientId = SystemIdentity.SystemAdminClientId;
         var defaultAdminClient = DefaultClients.GetDefaultClient(
             _bootstrapOptions.RedirectUri,
             _bootstrapOptions.LogoutRedirectUri);

@@ -51,7 +51,9 @@ internal sealed class BackchannelAuthenticationEndpointClientAuthService
             clientAuthentication.ClientId,
             clientAuthentication.ClientSecret,
             clientAuthentication.Method);
-        request.SetTenantId(client.TenantId);
+        request.SetTenantId(_tenantContextAccessor.HasTenant
+            ? _tenantContextAccessor.TenantId
+            : client.TenantId);
 
         return request;
     }
@@ -136,7 +138,7 @@ internal sealed class BackchannelAuthenticationEndpointClientAuthService
                 "Client authentication is required.");
         }
 
-        EnsureTenantMatch(client.TenantId);
+        EnsureTenantMatch(client);
 
         if (!ClientSecretValidator.Matches(clientSecret, client.ActiveSecretHashes))
         {
@@ -148,10 +150,11 @@ internal sealed class BackchannelAuthenticationEndpointClientAuthService
         return client;
     }
 
-    private void EnsureTenantMatch(int clientTenantId)
+    private void EnsureTenantMatch(ClientValidationSnapshot client)
     {
         if (_tenantContextAccessor.HasTenant &&
-            clientTenantId != _tenantContextAccessor.TenantId)
+            client.TenantId != _tenantContextAccessor.TenantId &&
+            !client.IsSystemTenant)
         {
             throw new BackchannelAuthenticationValidationException(
                 "invalid_client",

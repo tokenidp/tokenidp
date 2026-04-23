@@ -155,7 +155,7 @@ internal sealed class TokenEndpointClientAuthService
             throw new TokenRequestValidationException("invalid_client", "Client authentication failed.");
         }
 
-        EnsureTenantMatch(client.TenantId);
+        EnsureTenantMatch(client);
 
         var requiresClientSecret = IsConfidentialClient(client.ClientType);
         var usesNoClientAuthentication = string.Equals(
@@ -191,10 +191,11 @@ internal sealed class TokenEndpointClientAuthService
         }
     }
 
-    private void EnsureTenantMatch(int clientTenantId)
+    private void EnsureTenantMatch(ClientValidationSnapshot client)
     {
         if (_tenantContextAccessor.HasTenant &&
-            clientTenantId != _tenantContextAccessor.TenantId)
+            client.TenantId != _tenantContextAccessor.TenantId &&
+            !client.IsSystemTenant)
         {
             throw new TokenRequestValidationException("invalid_client", "Client authentication failed.");
         }

@@ -14,7 +14,7 @@ const root = ReactDOM.createRoot(container);
 const deploymentEnvironment =
   process.env.REACT_APP_DEPLOYMENT_ENV || process.env.NODE_ENV || "development";
 const tenantPropagationMode =
-  process.env.REACT_APP_TENANT_PROPAGATION_MODE || "none";
+  process.env.REACT_APP_TENANT_PROPAGATION_MODE || "all";
 
 if (process.env.NODE_ENV === "production" && deploymentEnvironment !== "production") {
   console.info(`Running a production build for ${deploymentEnvironment}.`);

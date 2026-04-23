@@ -98,10 +98,10 @@ function normalizeTenantPropagationMode(value) {
   }
   return "all";
 }
-function getAuthTenantKey(config) {
+function getAuthTenantKey2(config) {
   return normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode) === "all" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
 }
-function getApiTenantKey(config) {
+function getApiTenantKey2(config) {
   const mode = normalizeTenantPropagationMode(config == null ? void 0 : config.tenantPropagationMode);
   return mode === "all" || mode === "api" ? String((config == null ? void 0 : config.tenantKey) || "").trim() : "";
 }
@@ -146,7 +146,7 @@ function randomState(length = 32) {
 }
 function buildAuthorizeUrl(config, params) {
   const url = new URL(config.authority + config.authorizePath);
-  const tenantKey = getAuthTenantKey({
+  const tenantKey = getAuthTenantKey2({
     ...config,
     tenantPropagationMode: normalizeTenantPropagationMode(
       config == null ? void 0 : config.tenantPropagationMode
@@ -232,16 +232,6 @@ function withTenant(url, config, target = "api") {
   tenantUrl.searchParams.set(config.tenantQueryParameter || "tenant", tenantKey);
   return tenantUrl.toString();
 }
-function withTenantHeaders(config, extraHeaders = {}, target = "api") {
-  const tenantKey = target === "auth" ? getAuthTenantKey(config) : getApiTenantKey(config);
-  if (!tenantKey) {
-    return extraHeaders;
-  }
-  return {
-    ...extraHeaders,
-    [config.tenantHeaderName || "X-Tenant-Key"]: tenantKey
-  };
-}
 function extractToken(tokenPayload) {
   if (!tokenPayload)
     return { accessToken: "", refreshToken: "", expiresIn: 0, idToken: "" };
@@ -261,11 +251,11 @@ function extractPermissions(userInfo) {
 }
 async function exchangeAuthorizationCode(config, payload) {
   const url = withTenant(config.authority + config.tokenPath, config, "auth");
-  return await httpPostJson(url, payload, withTenantHeaders(config, {}, "auth"));
+  return await httpPostJson(url, payload);
 }
 async function refreshWithToken(config, payload) {
   const url = withTenant(config.authority + config.tokenPath, config, "auth");
-  return await httpPostJson(url, payload, withTenantHeaders(config, {}, "auth"));
+  return await httpPostJson(url, payload);
 }
 async function revokeToken(config, { accessToken, token, reasonRevoked }) {
   if (!(config == null ? void 0 : config.authority) || !accessToken || !token) {
@@ -278,10 +268,10 @@ async function revokeToken(config, { accessToken, token, reasonRevoked }) {
   );
   const res = await fetch(url, {
     method: "DELETE",
-    headers: withTenantHeaders(config, {
+    headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json"
-    }, "auth"),
+    },
     body: JSON.stringify({
       token,
       reasonRevoked: reasonRevoked || "logout"
@@ -305,10 +295,7 @@ async function revokeToken(config, { accessToken, token, reasonRevoked }) {
 }
 async function loadUserPermissions(config, accessToken) {
   const url = withTenant(config.authority + config.userPermissionsPath, config, "api");
-  return await httpGetJson(
-    url,
-    withTenantHeaders(config, { Authorization: `Bearer ${accessToken}` }, "api")
-  );
+  return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
 }
 function buildLogoutUrl(config) {
   if (!(config == null ? void 0 : config.authority)) return "";
@@ -396,7 +383,7 @@ function IdpAuthProvider({ children, config }) {
         baseConfig == null ? void 0 : baseConfig.tenantPropagationMode
       )
     };
-    const resolvedTenantKey = resolveApiTenantKey(normalizedConfig) || getApiTenantKey({
+    const resolvedTenantKey = resolveApiTenantKey(normalizedConfig) || getApiTenantKey2({
       ...normalizedConfig,
       tenantKey: persisted == null ? void 0 : persisted.tenantKey
     });

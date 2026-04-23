@@ -23,6 +23,9 @@ internal sealed class TestCurrentUserService : ICurrentUserService
 {
     public int UserId { get; init; }
     public int TenantId { get; init; }
+    public string TenantKey { get; init; } = string.Empty;
+    public int AuthTenantId { get; init; }
+    public string AuthTenantKey { get; init; } = string.Empty;
     public string ClientId { get; init; } = string.Empty;
     public Guid CorrelationId { get; init; } = Guid.NewGuid();
     public string UserName { get; init; } = "tester";

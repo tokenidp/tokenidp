@@ -7,6 +7,7 @@ public class ClientValidationSnapshot
     public string ClientId { get; }
     public string ClientName { get; }
     public int TenantId { get; }
+    public bool IsSystemTenant { get; }
     public bool IsActive { get; }
     public string RedirectUri { get; } = string.Empty;
     public string? LogoutRedirectUri { get; }
@@ -29,6 +30,67 @@ public class ClientValidationSnapshot
     public bool AllowCibaLoginHint { get; }
     public bool AllowCibaLoginHintToken { get; }
     public bool AllowCibaIdTokenHint { get; }
+
+    public ClientValidationSnapshot(
+        string clientId,
+        string clientName,
+        int tenantId,
+        bool isSystemTenant,
+        bool isActive,
+        string redirectUri,
+        string? logoutRedirectUri,
+        ClientTypes clientType,
+        TokenTypes tokenType,
+        IEnumerable<GrantTypes> grantTypes,
+        IEnumerable<string> scopes,
+        IEnumerable<string> apiResources,
+        IEnumerable<ClientApiScopeAssignment> apiScopeAssignments,
+        IEnumerable<string> activeSecretHashes,
+        int accessTokenLifetime,
+        int authorizationCodeLifetime,
+        int refreshTokenExpiration,
+        RefreshTokenDeliveryMode refreshTokenDeliveryMode,
+        int? clientSecretExpiry,
+        bool cibaEnabled,
+        CibaTokenDeliveryModes backchannelTokenDeliveryMode,
+        int cibaDefaultExpirySeconds,
+        int cibaMinIntervalSeconds,
+        bool requireCibaUserCode,
+        bool allowCibaLoginHint,
+        bool allowCibaLoginHintToken,
+        bool allowCibaIdTokenHint)
+    {
+        ClientId = clientId;
+        ClientName = clientName;
+        TenantId = tenantId;
+        IsSystemTenant = isSystemTenant;
+        IsActive = isActive;
+        RedirectUri = redirectUri;
+        LogoutRedirectUri = logoutRedirectUri;
+        ClientType = clientType;
+        TokenType = tokenType;
+        GrantTypes = grantTypes.ToHashSet();
+        Scopes = scopes.ToHashSet();
+        ApiResources = apiResources.ToHashSet();
+        _scopeResourceMap = apiScopeAssignments.ToDictionary(
+            x => x.ScopeName,
+            x => x.ApiResourceName,
+            StringComparer.Ordinal);
+        ActiveSecretHashes = activeSecretHashes.ToHashSet();
+        AccessTokenLifetime = accessTokenLifetime;
+        AuthorizationCodeLifetime = authorizationCodeLifetime;
+        RefreshTokenExpiration = refreshTokenExpiration;
+        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
+        ClientSecretExpiry = clientSecretExpiry;
+        CibaEnabled = cibaEnabled;
+        BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
+        CibaDefaultExpirySeconds = cibaDefaultExpirySeconds;
+        CibaMinIntervalSeconds = cibaMinIntervalSeconds;
+        RequireCibaUserCode = requireCibaUserCode;
+        AllowCibaLoginHint = allowCibaLoginHint;
+        AllowCibaLoginHintToken = allowCibaLoginHintToken;
+        AllowCibaIdTokenHint = allowCibaIdTokenHint;
+    }
 
     public ClientValidationSnapshot(
         string clientId,
@@ -57,36 +119,35 @@ public class ClientValidationSnapshot
         bool allowCibaLoginHint,
         bool allowCibaLoginHintToken,
         bool allowCibaIdTokenHint)
+        : this(
+            clientId,
+            clientName,
+            tenantId,
+            isSystemTenant: false,
+            isActive,
+            redirectUri,
+            logoutRedirectUri,
+            clientType,
+            tokenType,
+            grantTypes,
+            scopes,
+            apiResources,
+            apiScopeAssignments,
+            activeSecretHashes,
+            accessTokenLifetime,
+            authorizationCodeLifetime,
+            refreshTokenExpiration,
+            refreshTokenDeliveryMode,
+            clientSecretExpiry,
+            cibaEnabled,
+            backchannelTokenDeliveryMode,
+            cibaDefaultExpirySeconds,
+            cibaMinIntervalSeconds,
+            requireCibaUserCode,
+            allowCibaLoginHint,
+            allowCibaLoginHintToken,
+            allowCibaIdTokenHint)
     {
-        ClientId = clientId;
-        ClientName = clientName;
-        TenantId = tenantId;
-        IsActive = isActive;
-        RedirectUri = redirectUri;
-        LogoutRedirectUri = logoutRedirectUri;
-        ClientType = clientType;
-        TokenType = tokenType;
-        GrantTypes = grantTypes.ToHashSet();
-        Scopes = scopes.ToHashSet();
-        ApiResources = apiResources.ToHashSet();
-        _scopeResourceMap = apiScopeAssignments.ToDictionary(
-            x => x.ScopeName,
-            x => x.ApiResourceName,
-            StringComparer.Ordinal);
-        ActiveSecretHashes = activeSecretHashes.ToHashSet();
-        AccessTokenLifetime = accessTokenLifetime;
-        AuthorizationCodeLifetime = authorizationCodeLifetime;
-        RefreshTokenExpiration = refreshTokenExpiration;
-        RefreshTokenDeliveryMode = refreshTokenDeliveryMode;
-        ClientSecretExpiry = clientSecretExpiry;
-        CibaEnabled = cibaEnabled;
-        BackchannelTokenDeliveryMode = backchannelTokenDeliveryMode;
-        CibaDefaultExpirySeconds = cibaDefaultExpirySeconds;
-        CibaMinIntervalSeconds = cibaMinIntervalSeconds;
-        RequireCibaUserCode = requireCibaUserCode;
-        AllowCibaLoginHint = allowCibaLoginHint;
-        AllowCibaLoginHintToken = allowCibaLoginHintToken;
-        AllowCibaIdTokenHint = allowCibaIdTokenHint;
     }
 
     public bool TryGetApiResourceForScope(string scopeName, out string apiResourceName)

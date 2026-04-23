@@ -45,11 +45,16 @@ internal sealed class ClientRepository : IClientRepository
                 .Include(x => x.ClientScopes)
                 .Include(x => x.ClientApiResources)
                 .Include(x => x.ClientSecrets)
-                .FirstOrDefaultAsync(x =>
+                .Where(x =>
                     x.ClientId == clientId &&
                     x.IsActive &&
                     !x.IsDeleted &&
-                    (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value));
+                    (!scopedTenantId.HasValue ||
+                     x.TenantId == scopedTenantId.Value ||
+                     x.Tenant.IsSystemTenant))
+                .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
+                .ThenByDescending(x => x.Tenant.IsSystemTenant)
+                .FirstOrDefaultAsync();
 
             if (client == null)
             {
@@ -82,6 +87,7 @@ internal sealed class ClientRepository : IClientRepository
                 client.ClientId,
                 client.ClientName,
                 client.TenantId,
+                client.Tenant.IsSystemTenant,
                 client.IsActive,
                 client.RedirectUri,
                 client.LogoutRedirectUri,
@@ -152,7 +158,11 @@ internal sealed class ClientRepository : IClientRepository
                 .Where(x =>
                     x.ClientId == clientId &&
                     !x.IsDeleted &&
-                    (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value))
+                    (!scopedTenantId.HasValue ||
+                     x.TenantId == scopedTenantId.Value ||
+                     x.Tenant.IsSystemTenant))
+                .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
+                .ThenByDescending(x => x.Tenant.IsSystemTenant)
                 .Select(ClientShortInfoProjection.Projection)
                 .FirstOrDefaultAsync();
 
@@ -176,7 +186,11 @@ internal sealed class ClientRepository : IClientRepository
                 x.ClientId == clientId &&
                 x.IsActive &&
                 !x.IsDeleted &&
-                (!scopedTenantId.HasValue || x.TenantId == scopedTenantId.Value))
+                (!scopedTenantId.HasValue ||
+                 x.TenantId == scopedTenantId.Value ||
+                 x.Tenant.IsSystemTenant))
+            .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
+            .ThenByDescending(x => x.Tenant.IsSystemTenant)
             .Select(x => new ClientRateLimitProfile(
                 x.ClientId,
                 x.TenantId,
@@ -363,6 +377,15 @@ internal sealed class ClientRepository : IClientRepository
                 c => c.TenantId == tenantId &&
                      c.ClientId.ToLower() == clientId.ToLower(),
                 ct);
+    }
+
+    public Task<bool> ClientIdExistsGloballyAsync(string clientId, CancellationToken ct)
+    {
+        var normalizedClientId = clientId.Trim().ToLowerInvariant();
+
+        return _dbContext.Clients
+            .AsNoTracking()
+            .AnyAsync(c => !c.IsDeleted && c.ClientId.ToLower() == normalizedClientId, ct);
     }
 
     public async Task<IReadOnlyList<int>> GetTenantClientIdsAsync(int tenantId, CancellationToken ct)

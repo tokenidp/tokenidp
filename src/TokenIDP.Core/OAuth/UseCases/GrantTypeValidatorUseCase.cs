@@ -1,6 +1,7 @@
 using TokenIDP.Domain.AggregateRoots.Clients;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.OAuth.Model;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
@@ -8,12 +9,15 @@ internal sealed class GrantTypeValidatorUseCase
 {
     private readonly IAppLogger<GrantTypeValidatorUseCase> _logger;
     private readonly IClientRepository _clientStore;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
     public GrantTypeValidatorUseCase(IAppLogger<GrantTypeValidatorUseCase> logger,
-        IClientRepository clientStore)
+        IClientRepository clientStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _logger = logger;
         _clientStore = clientStore;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<(GrantTypes, int)> ValidateGrantType(string grantType, string clientId)
@@ -48,13 +52,20 @@ internal sealed class GrantTypeValidatorUseCase
 
         if (client.GrantTypes.Contains(parsedGrantType))
         {
-            return (parsedGrantType, client.TenantId);
+            return (parsedGrantType, ResolveRequestTenantId(client));
         }
 
         _logger.LogWarning("Grant type {GrantType} is not allowed for Client: {ClientId}", grantType, clientId);
 
         throw new TokenRequestValidationException("unauthorized_client",
             "The client is not allowed to use the requested grant_type.");
+    }
+
+    private int ResolveRequestTenantId(ClientShortInfo client)
+    {
+        return _tenantContextAccessor.HasTenant
+            ? _tenantContextAccessor.TenantId
+            : client.TenantId;
     }
 }
 

@@ -53,18 +53,33 @@ internal sealed class JwtTokenGenerator
         string clientId,
         int? userId,
         string userName,
-        string tenantId,
+        int activeTenantId,
+        string activeTenantKey,
+        int authTenantId,
+        string authTenantKey,
         string[] audiences,
         string[]? scopes,
         IEnumerable<string>? roles)
     {
         var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, userId == null ? clientId : userId.Value.ToString()),
+            new(
+                JwtRegisteredClaimNames.Sub,
+                userId == null
+                    ? $"cli:{clientId}"
+                    : $"usr:{userId.Value}"),
             new(JwtRegisteredClaimNames.Jti, tokenId),
-            new("uid", tenantId),
             new("client_id", clientId),
+            new("tenant_id", activeTenantId.ToString()),
+            new("tenant_key", activeTenantKey),
+            new("auth_tenant_id", authTenantId.ToString()),
+            new("auth_tenant_key", authTenantKey),
         };
+
+        if (userId != null)
+        {
+            claims.Add(new Claim("user_id", userId.Value.ToString()));
+        }
 
         if (scopes != null)
         {
@@ -103,6 +118,10 @@ internal sealed class JwtTokenGenerator
         string clientId,
         int? userId,
         string userName,
+        int activeTenantId,
+        string activeTenantKey,
+        int authTenantId,
+        string authTenantKey,
         string[] audiences)
     {
         return CreateIDToken(
@@ -110,6 +129,10 @@ internal sealed class JwtTokenGenerator
             tokenId,
             clientId,
             userId,
+            activeTenantId,
+            activeTenantKey,
+            authTenantId,
+            authTenantKey,
             audiences,
             name: userName,
             email: null,
@@ -135,6 +158,10 @@ internal sealed class JwtTokenGenerator
         string? tokenId,
         string clientId,
         int? userId,
+        int activeTenantId,
+        string activeTenantKey,
+        int authTenantId,
+        string authTenantKey,
         string[] audiences,
         string? name,
         string? email,
@@ -143,12 +170,26 @@ internal sealed class JwtTokenGenerator
     {
         var claims = new List<Claim>()
         {
-            new(JwtRegisteredClaimNames.Sub, userId == null ? clientId : userId.Value.ToString())
+            new(
+                JwtRegisteredClaimNames.Sub,
+                userId == null
+                    ? $"cli:{clientId}"
+                    : $"usr:{userId.Value}"),
+            new("client_id", clientId),
+            new("tenant_id", activeTenantId.ToString()),
+            new("tenant_key", activeTenantKey),
+            new("auth_tenant_id", authTenantId.ToString()),
+            new("auth_tenant_key", authTenantKey)
         };
 
         if (!string.IsNullOrWhiteSpace(tokenId))
         {
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, tokenId));
+        }
+
+        if (userId != null)
+        {
+            claims.Add(new Claim("user_id", userId.Value.ToString()));
         }
 
         AddIfPresent(claims, JwtRegisteredClaimNames.Name, name);

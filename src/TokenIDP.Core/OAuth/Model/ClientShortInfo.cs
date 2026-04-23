@@ -6,6 +6,7 @@ public class ClientShortInfo
 {
     public int Id { get; private set; }
     public int TenantId { get; private set; }
+    public bool IsSystemTenant { get; private set; }
     public string ClientName { get; private set; }
     public bool IsValidClient { get; private set; }
     public bool RequiredPkce { get; private set; }
@@ -16,6 +17,7 @@ public class ClientShortInfo
 
     public ClientShortInfo(int id,
         int tenantId,
+        bool isSystemTenant,
         bool allowForgotPassword,
         string clientName,
         string redirectUri,
@@ -25,6 +27,7 @@ public class ClientShortInfo
     {
         Id = id;
         TenantId = tenantId;
+        IsSystemTenant = isSystemTenant;
         ClientName = clientName;
         IsValidClient = true;
         Scopes = scopes.ToHashSet();
@@ -32,5 +35,26 @@ public class ClientShortInfo
         GrantTypes = grantTypes.ToHashSet();
         AllowForgotPassword = allowForgotPassword;
         RequiredPkce = requiredPkce;
+    }
+
+    public ClientShortInfo(int id,
+        int tenantId,
+        bool allowForgotPassword,
+        string clientName,
+        string redirectUri,
+        bool requiredPkce,
+        IEnumerable<string> scopes,
+        IEnumerable<GrantTypes> grantTypes)
+        : this(
+            id,
+            tenantId,
+            isSystemTenant: false,
+            allowForgotPassword,
+            clientName,
+            redirectUri,
+            requiredPkce,
+            scopes,
+            grantTypes)
+    {
     }
 }

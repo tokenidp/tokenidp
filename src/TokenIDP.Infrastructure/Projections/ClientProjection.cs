@@ -10,6 +10,7 @@ internal static class ClientShortInfoProjection
         (
             client.Id,
             client.TenantId,
+            client.Tenant.IsSystemTenant,
             client.ClientAuthPolicy.AllowForgotPassword,
             client.ClientName,
             client.RedirectUri,

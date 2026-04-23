@@ -14,7 +14,8 @@ internal class AuthorizeEndpoint : IEndpointDefinition
             HttpContext httpContext,
             IAuthorizationRequestValidator authorizationValidator,
             IAuthorizationCodeUseCase authorizationCodeUseCase,
-            IAuthorizationRepository authorizationStore) =>
+            IAuthorizationRepository authorizationStore,
+            ITenantContextAccessor tenantContextAccessor) =>
         {
             var ctx = httpContext.Request.Query["ctx"].ToString();
 
@@ -27,11 +28,12 @@ internal class AuthorizeEndpoint : IEndpointDefinition
                     authorizationStore);
             }
 
-            return await StartAuthorization(
-                httpContext,
-                authorizationValidator,
-                authorizationCodeUseCase,
-                authorizationStore);
+                return await StartAuthorization(
+                    httpContext,
+                    authorizationValidator,
+                    authorizationCodeUseCase,
+                    authorizationStore,
+                    tenantContextAccessor);
         });
     }
 
@@ -51,7 +53,8 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         if (!authResult.Succeeded || authResult.Principal?.Identity?.IsAuthenticated != true)
             return Results.Redirect(QueryHelpers.AddQueryString("/login", "ctx", ctx));
 
-        var tenantClaim = authResult.Principal.FindFirst("uid")?.Value;
+        var tenantClaim = authResult.Principal.FindFirst("tenant_id")?.Value
+            ?? authResult.Principal.FindFirst("uid")?.Value;
 
         if (!int.TryParse(tenantClaim, out var userTenantId))
             return Results.BadRequest("Invalid tenant claim.");
@@ -85,7 +88,8 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         HttpContext httpContext,
         IAuthorizationRequestValidator authorizationValidator,
         IAuthorizationCodeUseCase authorizationCodeUseCase,
-        IAuthorizationRepository authorizationStore)
+        IAuthorizationRepository authorizationStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         var query = httpContext.Request.Query;
 
@@ -151,7 +155,8 @@ internal class AuthorizeEndpoint : IEndpointDefinition
             authorizationRequest,
             state,
             clientShortInfo,
-            authorizationStore);
+            authorizationStore,
+            tenantContextAccessor);
     }
 
     private static async Task<IResult> IssueAuthorizationCodeForSession(
@@ -188,12 +193,16 @@ internal class AuthorizeEndpoint : IEndpointDefinition
         AuthorizationRequest authorizationRequest,
         string state,
         ClientShortInfo clientShortInfo,
-        IAuthorizationRepository authorizationStore)
+        IAuthorizationRepository authorizationStore,
+        ITenantContextAccessor tenantContextAccessor)
     {
         var correlationId = Guid.NewGuid().ToString("N");
+        var activeTenantId = tenantContextAccessor.HasTenant
+            ? tenantContextAccessor.TenantId
+            : clientShortInfo.TenantId;
 
         var preAuthorization = new PreAuthorization(
-            clientShortInfo.TenantId,
+            activeTenantId,
             correlationId,
             clientShortInfo.Id,
             authorizationRequest.ClientId!,

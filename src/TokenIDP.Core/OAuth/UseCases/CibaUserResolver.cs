@@ -147,16 +147,18 @@ internal sealed class CibaUserResolver
         CancellationToken ct)
     {
         var principal = ValidateIdTokenHint(clientId, idTokenHint);
+        var userIdClaim = principal.FindFirstValue("user_id");
         var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
-        if (!int.TryParse(sub, out var userId))
+        var userId = TryParseUserId(userIdClaim) ?? TryParseUserId(sub);
+        if (!userId.HasValue)
         {
             throw new BackchannelAuthenticationValidationException(
                 "unknown_user_id",
                 "The provided id_token_hint could not be resolved to a user.");
         }
 
-        var user = await _userRepository.GetByTenantAsync(userId, tenantId, ct);
+        var user = await _userRepository.GetByTenantAsync(userId.Value, tenantId, ct);
         return CreateResolvedUser(user, CibaUserHintType.IdTokenHint, idTokenHint);
     }
 
@@ -340,6 +342,22 @@ internal sealed class CibaUserResolver
         }
 
         return string.Empty;
+    }
+
+    private static int? TryParseUserId(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var candidate = value.StartsWith("usr:", StringComparison.OrdinalIgnoreCase)
+            ? value["usr:".Length..]
+            : value;
+
+        return int.TryParse(candidate, out var parsedValue)
+            ? parsedValue
+            : null;
     }
 
     internal sealed record CibaResolvedUser(

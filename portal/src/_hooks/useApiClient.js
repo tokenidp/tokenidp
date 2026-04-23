@@ -5,6 +5,7 @@ import { useAuth } from "tokenidp-react";
 import { useGlobalError } from "./useGlobalError";
 
 const defaultBaseURL = process.env.REACT_APP_BASE_URL;
+const tenantQueryParameter = process.env.REACT_APP_TENANT_QUERY_PARAMETER || "tenant";
 
 const useApiClient = (options = {}) => {
   const user = useAuth();
@@ -12,6 +13,29 @@ const useApiClient = (options = {}) => {
   const { baseURL = defaultBaseURL, skipAuth = false, track = true } = options;
 
   const apiClient = useMemo(() => axios.create({ baseURL }), [baseURL]);
+
+  const applyTenantQuery = useCallback((config = {}, tenantKey) => {
+    if (!tenantKey) {
+      return config;
+    }
+
+    const params = config.params instanceof URLSearchParams
+      ? new URLSearchParams(config.params)
+      : { ...(config.params || {}) };
+
+    if (params instanceof URLSearchParams) {
+      if (!params.has(tenantQueryParameter)) {
+        params.set(tenantQueryParameter, tenantKey);
+      }
+    } else if (!params[tenantQueryParameter]) {
+      params[tenantQueryParameter] = tenantKey;
+    }
+
+    return {
+      ...config,
+      params,
+    };
+  }, []);
 
   useEffect(() => {
     const interceptorId = apiClient.interceptors.request.use((config) => {
@@ -25,16 +49,12 @@ const useApiClient = (options = {}) => {
         nextHeaders.Authorization = `Bearer ${token}`;
       }
 
-      if (tenantKey && !nextHeaders["X-Tenant-Key"]) {
-        nextHeaders["X-Tenant-Key"] = tenantKey;
-      }
-
       config.headers = nextHeaders;
-      return config;
+      return applyTenantQuery(config, tenantKey);
     });
 
     return () => apiClient.interceptors.request.eject(interceptorId);
-  }, [apiClient, skipAuth, user?.accessToken]);
+  }, [apiClient, applyTenantQuery, skipAuth, user?.accessToken, user?.tenantKey]);
 
   const run = useCallback(
     (promise) => (track ? trackPromise(promise) : promise),
@@ -49,16 +69,14 @@ const useApiClient = (options = {}) => {
       if (!skipAuth && token && !headers.Authorization) {
         headers.Authorization = `Bearer ${token}`;
       }
-      if (tenantKey && !headers["X-Tenant-Key"]) {
-        headers["X-Tenant-Key"] = tenantKey;
-      }
       try {
+        const requestConfig = applyTenantQuery(config || {}, tenantKey);
         const response = await run(
           apiClient.request({
             method,
             url: endPoint,
             data,
-            ...config,
+            ...requestConfig,
             headers,
           }),
         );
@@ -140,7 +158,7 @@ const useApiClient = (options = {}) => {
         throw error;
       }
     },
-    [apiClient, run, setError, skipAuth, user?.token],
+    [apiClient, applyTenantQuery, run, setError, skipAuth, user?.accessToken, user?.tenantKey],
   );
 
   const get = useCallback(

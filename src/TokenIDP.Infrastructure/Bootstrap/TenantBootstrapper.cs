@@ -6,6 +6,7 @@ using TokenIDP.Core.Admin.Tenants;
 using TokenIDP.Core.Admin.Users;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Domain;
 using TokenIDP.Domain.AggregateRoots.Permissions;
 using TokenIDP.Infrastructure.Bootstrap.SeedData;
 using TokenIDP.Infrastructure.Persistence;
@@ -77,9 +78,7 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
         var tenantPermissions = await SeedPermissionsAsync(tenant.Id, cancellationToken);
         var adminRole = await CreateAdministratorRoleAsync(tenant.Id, tenantPermissions, cancellationToken);
 
-        var defaultClientId = string.IsNullOrWhiteSpace(_bootstrapOptions.ClientId)
-            ? "idp-admin"
-            : _bootstrapOptions.ClientId.Trim();
+        var defaultClientId = ResolveDefaultClientId(normalizedTenantKey);
 
         await CreateDefaultClientAsync(tenant.Id, defaultClientId, cancellationToken);
 
@@ -296,6 +295,18 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
             clientId,
             clientCommand,
             cancellationToken);
+    }
+
+    private string ResolveDefaultClientId(string tenantKey)
+    {
+        var configuredClientId = _bootstrapOptions.ClientId?.Trim();
+        if (!string.IsNullOrWhiteSpace(configuredClientId) &&
+            !SystemIdentity.IsReservedSystemClientId(configuredClientId))
+        {
+            return configuredClientId;
+        }
+
+        return SystemIdentity.GetDefaultOperationalAdminClientId(tenantKey);
     }
 
     private async Task<User> CreateAdminUserAsync(

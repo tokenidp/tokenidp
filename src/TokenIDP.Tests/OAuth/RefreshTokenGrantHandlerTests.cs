@@ -55,6 +55,7 @@ public sealed class RefreshTokenGrantHandlerTests
             .ReturnsAsync(["admin"]);
 
         var userRepository = new Mock<IUserRepository>();
+        var tenantRepository = new Mock<ITenantRepository>();
         userRepository
             .Setup(x => x.GetUserShortInfo(42))
             .ReturnsAsync(new UserShortInfo(
@@ -70,10 +71,19 @@ public sealed class RefreshTokenGrantHandlerTests
                 phoneNumberVerified: true,
                 createdOn: DateTime.UtcNow.AddDays(-30),
                 updatedOn: null));
+        tenantRepository
+            .Setup(x => x.GetSummaryAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new TenantSummary
+            {
+                Id = 1,
+                TenantKey = "system",
+                TenantName = "System"
+            });
 
         var tokenContextUseCase = new TokenContextUseCase(
             roleRepository.Object,
             clientRepository.Object,
+            tenantRepository.Object,
             Mock.Of<IAppLogger<TokenContextUseCase>>(),
             userRepository.Object);
 

@@ -31,7 +31,9 @@ internal sealed class UserSignInService : IUserSignInService
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, userId.ToString()),
+            new("user_id", userId.ToString()),
             new(ClaimTypes.Name, userName),
+            new("tenant_id", tenantId.ToString()),
             new("uid", tenantId.ToString())
         };
 

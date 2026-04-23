@@ -35,9 +35,15 @@ internal class HttpCurrentUserService : ICurrentUserService
         UserAgent = ctx?.Request.Headers["User-Agent"].ToString();
     }
 
-    public int UserId => TryGetIntClaim(ClaimTypes.NameIdentifier, JwtRegisteredClaimNames.Sub) ?? 0;
+    public int UserId => TryGetIntClaim("user_id", ClaimTypes.NameIdentifier) ?? TryParseUserIdFromSubject() ?? 0;
 
-    public int TenantId => TryGetIntClaim("uid") ?? 0;
+    public int TenantId => TryGetIntClaim("tenant_id", "uid") ?? 0;
+
+    public string TenantKey => GetClaimValue("tenant_key") ?? string.Empty;
+
+    public int AuthTenantId => TryGetIntClaim("auth_tenant_id") ?? TenantId;
+
+    public string AuthTenantKey => GetClaimValue("auth_tenant_key") ?? TenantKey;
 
     public string ClientId => GetClaimValue("client_id") ?? string.Empty;
 
@@ -99,6 +105,24 @@ internal class HttpCurrentUserService : ICurrentUserService
 
         return int.TryParse(value, out var parsedValue)
             ? parsedValue
+            : null;
+    }
+
+    private int? TryParseUserIdFromSubject()
+    {
+        var subject = GetClaimValue(JwtRegisteredClaimNames.Sub);
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            return null;
+        }
+
+        if (subject.StartsWith("usr:", StringComparison.OrdinalIgnoreCase))
+        {
+            subject = subject["usr:".Length..];
+        }
+
+        return int.TryParse(subject, out var userId)
+            ? userId
             : null;
     }
 }

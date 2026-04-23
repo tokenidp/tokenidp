@@ -4,18 +4,6 @@ namespace TokenIDP.Domain.AggregateRoots.Tenants;
 
 public partial class Tenant : AggregateRoot<int>
 {
-    private static readonly HashSet<string> ReservedTenantKeys = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "system",
-        "admin",
-        "api",
-        "auth",
-        "login",
-        "www",
-        "root",
-        "app"
-    };
-
     private readonly List<TenantExternalProvider> _tenantExternalProviders = new();
 
     public string TenantName { get; private set; } = default!;
@@ -411,12 +399,15 @@ public partial class Tenant : AggregateRoot<int>
             return Result.Failure("tenant.key.invalid", "Tenant key format is invalid.");
         }
 
-        if (isSystemTenant && !string.Equals(normalizedTenantKey, "system", StringComparison.Ordinal))
+        if (isSystemTenant &&
+            !string.Equals(normalizedTenantKey, SystemIdentity.SystemTenantKey, StringComparison.Ordinal))
         {
-            return Result.Failure("tenant.key.invalid", "System tenant key must be 'system'.");
+            return Result.Failure(
+                "tenant.key.invalid",
+                $"System tenant key must be '{SystemIdentity.SystemTenantKey}'.");
         }
 
-        if (!isSystemTenant && ReservedTenantKeys.Contains(normalizedTenantKey))
+        if (!isSystemTenant && SystemIdentity.IsReservedTenantKey(normalizedTenantKey))
         {
             return Result.Failure("tenant.key.reserved", "Tenant key is reserved.");
         }

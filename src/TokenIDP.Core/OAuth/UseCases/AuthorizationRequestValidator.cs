@@ -30,7 +30,7 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 allowRedirect: false);
         }
 
-        EnsureTenantMatch(client.TenantId);
+        EnsureTenantMatch(client);
 
         var redirectUri = request.RedirectUri?.Trim();
 
@@ -121,7 +121,7 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 allowRedirect: false);
         }
 
-        EnsureTenantMatch(client.TenantId);
+        EnsureTenantMatch(client);
 
         if (string.IsNullOrWhiteSpace(request.Scope))
         {
@@ -151,10 +151,11 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
         return client;
     }
 
-    private void EnsureTenantMatch(int clientTenantId)
+    private void EnsureTenantMatch(ClientShortInfo client)
     {
         if (_tenantContextAccessor.HasTenant &&
-            clientTenantId != _tenantContextAccessor.TenantId)
+            client.TenantId != _tenantContextAccessor.TenantId &&
+            !client.IsSystemTenant)
         {
             throw new AuthorizationRequestException(
                 "unauthorized_client",

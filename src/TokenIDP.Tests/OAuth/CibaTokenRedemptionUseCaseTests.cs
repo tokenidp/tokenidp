@@ -162,6 +162,7 @@ public class CibaTokenRedemptionUseCaseTests
         clientRepository = new Mock<IClientRepository>();
         var userRepository = new Mock<IUserRepository>();
         var roleRepository = new Mock<IRoleRepository>();
+        var tenantRepository = new Mock<ITenantRepository>();
 
         authorizationRepository
             .Setup(x => x.GetBackchannelAuthenticationRequestByHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -181,6 +182,14 @@ public class CibaTokenRedemptionUseCaseTests
         roleRepository
             .Setup(x => x.GetUserRoles(cibaRequest.UserId!.Value))
             .ReturnsAsync(new[] { "admin" });
+        tenantRepository
+            .Setup(x => x.GetSummaryAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((int tenantId, CancellationToken _) => new TenantSummary
+            {
+                Id = tenantId,
+                TenantKey = tenantId == 1 ? "system" : $"tenant-{tenantId}",
+                TenantName = $"Tenant {tenantId}"
+            });
 
         tokenRepository
             .Setup(x => x.CreateToken(It.IsAny<Token>()))
@@ -192,6 +201,7 @@ public class CibaTokenRedemptionUseCaseTests
         var tokenContextUseCase = new TokenContextUseCase(
             roleRepository.Object,
             clientRepository.Object,
+            tenantRepository.Object,
             Mock.Of<IAppLogger<TokenContextUseCase>>(),
             userRepository.Object);
 
