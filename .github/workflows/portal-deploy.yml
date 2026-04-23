@@ -34,6 +34,7 @@ jobs:
           REACT_APP_DEPLOYMENT_ENV: ${{ vars.REACT_APP_DEPLOYMENT_ENV }}
           REACT_APP_BASE_URL: ${{ vars.REACT_APP_BASE_URL }}
           REACT_APP_AUTH_BASE_URL: ${{ vars.REACT_APP_AUTH_BASE_URL }}
+          REACT_APP_TENANT_PROPAGATION_MODE: ${{ vars.REACT_APP_TENANT_PROPAGATION_MODE }}
           REACT_APP_OAUTH_CLIENT_ID: ${{ vars.REACT_APP_OAUTH_CLIENT_ID }}
           REACT_APP_OAUTH_REDIRECT_URI: ${{ vars.REACT_APP_OAUTH_REDIRECT_URI }}
           REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI: ${{ vars.REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI }}
@@ -43,7 +44,8 @@ jobs:
           DEPLOYMENT_ENV="${REACT_APP_DEPLOYMENT_ENV:-staging}"
           BASE_URL="${REACT_APP_BASE_URL:-https://tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net}"
           AUTH_BASE_URL="${REACT_APP_AUTH_BASE_URL:-https://tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net}"
-          CLIENT_ID="${REACT_APP_OAUTH_CLIENT_ID:-d654bf52-b28d-4ad4-b84b-3bcd795f2147}"
+          TENANT_PROPAGATION_MODE="${REACT_APP_TENANT_PROPAGATION_MODE:-none}"
+          CLIENT_ID="${REACT_APP_OAUTH_CLIENT_ID:-idp-admin}"
           REDIRECT_URI="${REACT_APP_OAUTH_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/auth/callback}"
           POST_LOGOUT_REDIRECT_URI="${REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/login}"
           OAUTH_SCOPE="${REACT_APP_OAUTH_SCOPE:-openid profile tokenidp.admin.write tokenidp.admin.read}"
@@ -53,6 +55,7 @@ jobs:
           REACT_APP_DEPLOYMENT_ENV=${DEPLOYMENT_ENV}
           REACT_APP_BASE_URL=${BASE_URL}
           REACT_APP_AUTH_BASE_URL=${AUTH_BASE_URL}
+          REACT_APP_TENANT_PROPAGATION_MODE=${TENANT_PROPAGATION_MODE}
           REACT_APP_OAUTH_CLIENT_ID=${CLIENT_ID}
           REACT_APP_OAUTH_REDIRECT_URI=${REDIRECT_URI}
           REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI=${POST_LOGOUT_REDIRECT_URI}
