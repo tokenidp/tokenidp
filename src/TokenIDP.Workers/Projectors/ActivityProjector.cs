@@ -1,5 +1,6 @@
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.ReadModels.Enums;
+using System.Text.Json;
 
 namespace TokenIDP.Workers.Projectors;
 
@@ -30,10 +31,20 @@ internal class ActivityProjector
         {
             case ActivityEventType.LoginSucceeded:
             case ActivityEventType.LoginFailed:
+            case ActivityEventType.Logout:
             case ActivityEventType.MfaChallengeSent:
             case ActivityEventType.MfaValidated:
             case ActivityEventType.MfaFailed:
+            case ActivityEventType.PasswordResetRequested:
+            case ActivityEventType.PasswordResetCompleted:
+            case ActivityEventType.AccountLocked:
+            case ActivityEventType.AccountUnlocked:
                 activity = ProjectAuthActivity<AuthenticationFlowEvent>(evt, ct);
+                break;
+            case ActivityEventType.TenantCreated:
+            case ActivityEventType.TenantUpdated:
+            case ActivityEventType.TenantDisabled:
+                activity = ProjectTenantActivity(evt, activityType);
                 break;
 
             default:
@@ -52,10 +63,19 @@ internal class ActivityProjector
                 activity = OnRefreshIssued(evt, ct);
                 break;
             case nameof(TokenRevokedEvent):
+                activity = OnTokenRevoked(evt, ct);
+                break;
             case nameof(TokenExpiredEvent):
+                activity = OnTokenExpired(evt, ct);
                 break;
             default:
                 break;
+        }
+
+        if (activity is null)
+        {
+            throw new InvalidOperationException(
+                $"No activity projection defined for outbox event {evt.EventType}");
         }
 
         _db.Activities.Add(activity);
@@ -71,6 +91,12 @@ internal class ActivityProjector
 
     private Activity OnReferenceIssued(OutboxEvent evt, CancellationToken ct) =>
         ProjectTokenActivity<ReferenceTokenIssuedEvent>(evt, ActivityEventType.TokenReferenceIssue, ct);
+
+    private Activity OnTokenRevoked(OutboxEvent evt, CancellationToken ct) =>
+        ProjectTokenLifecycleActivity<TokenRevokedEvent>(evt, ActivityEventType.TokenRevoked, "Revoked", "Token revoked", ct);
+
+    private Activity OnTokenExpired(OutboxEvent evt, CancellationToken ct) =>
+        ProjectTokenLifecycleActivity<TokenExpiredEvent>(evt, ActivityEventType.TokenExpired, "Expired", "Token expired", ct);
 
     private Activity ProjectAuthActivity<TEvent>(OutboxEvent outboxEvent, CancellationToken ct)
         where TEvent : class
@@ -134,11 +160,101 @@ internal class ActivityProjector
         return activity;
     }
 
+    private Activity ProjectTokenLifecycleActivity<TEvent>(
+        OutboxEvent outboxEvent,
+        ActivityEventType eventType,
+        string status,
+        string description,
+        CancellationToken ct)
+        where TEvent : class
+    {
+        var evt = JsonSerializer.Deserialize<TEvent>(outboxEvent.PayloadJson)
+            ?? throw new InvalidOperationException(
+                $"Failed to deserialize {typeof(TEvent).Name}");
+
+        return Activity.Create(
+            tenantId: outboxEvent.TenantId,
+            category: ActivityCategory.Authentication,
+            eventType: eventType,
+            severity: ActivitySeverity.Info,
+            actorType: ActivityActorType.User,
+            actorId: GetActorId(evt)?.ToString(),
+            actorDisplayName: null,
+            targetType: ActivityTargetType.Token,
+            targetId: GetTargetId(evt).ToString(),
+            targetDescription: description,
+            status: status,
+            description: description,
+            correlationId: null,
+            ipAddress: null,
+            userAgent: null,
+            outboxEventId: outboxEvent.Id);
+    }
+
+    private static Activity ProjectTenantActivity(OutboxEvent outboxEvent, ActivityEventType eventType)
+    {
+        using var payload = JsonDocument.Parse(outboxEvent.PayloadJson);
+        var tenantKey = GetStringProperty(payload.RootElement, "TenantKey");
+
+        return Activity.Create(
+            tenantId: outboxEvent.TenantId,
+            category: ActivityCategory.TenantManagement,
+            eventType: eventType,
+            severity: ActivitySeverity.Info,
+            actorType: ActivityActorType.System,
+            actorId: null,
+            actorDisplayName: null,
+            targetType: ActivityTargetType.Tenant,
+            targetId: outboxEvent.AggregateId,
+            targetDescription: tenantKey,
+            status: ResolveTenantStatus(eventType),
+            description: ResolveTenantDescription(payload.RootElement, tenantKey, eventType),
+            correlationId: null,
+            ipAddress: null,
+            userAgent: null,
+            outboxEventId: outboxEvent.Id);
+    }
+
+    private static string ResolveTenantStatus(ActivityEventType eventType)
+        => eventType switch
+        {
+            ActivityEventType.TenantCreated => "Created",
+            ActivityEventType.TenantDisabled => "Disabled",
+            ActivityEventType.TenantUpdated => "Updated",
+            _ => "Updated"
+        };
+
+    private static string ResolveTenantDescription(JsonElement payload, string? tenantKey, ActivityEventType eventType)
+    {
+        var tenantLabel = string.IsNullOrWhiteSpace(tenantKey)
+            ? "Tenant"
+            : $"Tenant '{tenantKey}'";
+
+        return eventType switch
+        {
+            ActivityEventType.TenantCreated => $"{tenantLabel} created.",
+            ActivityEventType.TenantDisabled => $"{tenantLabel} disabled.",
+            ActivityEventType.TenantUpdated when payload.TryGetProperty("PlanCode", out var planCode)
+                => $"{tenantLabel} plan changed to '{planCode.GetString()}'.",
+            ActivityEventType.TenantUpdated when payload.TryGetProperty("IsSystemTenant", out _)
+                => $"{tenantLabel} activated.",
+            ActivityEventType.TenantUpdated => $"{tenantLabel} branding updated.",
+            _ => $"{tenantLabel} updated."
+        };
+    }
+
+    private static string? GetStringProperty(JsonElement payload, string propertyName)
+        => payload.TryGetProperty(propertyName, out var value)
+            ? value.GetString()
+            : null;
+
     private static Guid GetTargetId(object evt) => evt switch
     {
         JwtTokenIssuedEvent e => e.TokenId,
         RefreshTokenIssuedEvent e => e.TokenId,
         ReferenceTokenIssuedEvent e => e.TokenId,
+        TokenRevokedEvent e => e.TokenId,
+        TokenExpiredEvent e => e.TokenId,
         _ => throw new InvalidOperationException(
             $"Unsupported event type {evt.GetType().Name}")
     };
@@ -148,6 +264,8 @@ internal class ActivityProjector
         JwtTokenIssuedEvent e => e.UserId,
         RefreshTokenIssuedEvent e => e.UserId,
         ReferenceTokenIssuedEvent e => e.UserId,
+        TokenRevokedEvent e => e.UserId,
+        TokenExpiredEvent e => e.UserId,
         _ => throw new InvalidOperationException(
             $"Unsupported event type {evt.GetType().Name}")
     };

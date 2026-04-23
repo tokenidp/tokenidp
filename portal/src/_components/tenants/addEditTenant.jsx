@@ -442,11 +442,14 @@ function AddEditTenant({ mode }) {
       return;
     }
 
-      const payload = {
+    const normalizedEmail = data.email.trim();
+
+    const payload = {
         id: mode === "edit" ? Number(tenantId) : 0,
         tenantName: data.tenantName.trim(),
         tenantKey: (data.tenantKey ?? "").trim().toLowerCase(),
-        email: data.email.trim() || null,
+        email: normalizedEmail || null,
+        adminEmail: mode === "add" ? normalizedEmail : undefined,
         isActive: String(data.isActive).toLowerCase() === "true",
       authSettings: {
         authenticationMode: Number(data.authenticationMode),
@@ -588,7 +591,7 @@ function AddEditTenant({ mode }) {
                     </div>
                   </div>
                   <div className="col-12 col-md-6">
-                    <label className="form-label">Primary Email</label>
+                    <label className="form-label">Primary / Admin Email</label>
                     <div className="input-group">
                       <span className="input-group-text">
                         <i className="fa fa-envelope"></i>
@@ -600,6 +603,11 @@ function AddEditTenant({ mode }) {
                         {...register("email")}
                       />
                     </div>
+                    {mode === "add" && (
+                      <div className="form-text">
+                        This email is used for the tenant profile and the initial administrator account.
+                      </div>
+                    )}
                     {errors.email && (
                       <div className="error-msg">Enter a valid email.</div>
                     )}

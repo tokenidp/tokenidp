@@ -1,5 +1,6 @@
 global using TokenIDP.Domain.AggregateRoots.Outbox;
 global using TokenIDP.Domain.Base;
+global using TokenIDP.Domain.DomainEvents.Tenants;
 global using TokenIDP.Domain.DomainEvents.Tokens;
 global using TokenIDP.Domain.DomainEvents.Users;
 global using TokenIDP.Domain.ReadModels;

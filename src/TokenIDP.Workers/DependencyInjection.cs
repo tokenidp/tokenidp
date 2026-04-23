@@ -16,6 +16,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IOutboxMapper, TokenOutboxMapper>();
         services.AddScoped<IOutboxMapper, UserOutboxMapper>();
+        services.AddScoped<IOutboxMapper, TenantOutboxMapper>();
         services.AddScoped<IOutboxMapperResolver, OutboxMapperResolver>();
         services.AddScoped<IOutboxConsumerRouter, OutboxConsumerRouter>();
 

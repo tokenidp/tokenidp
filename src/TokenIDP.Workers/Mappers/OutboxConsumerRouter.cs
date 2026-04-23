@@ -27,6 +27,16 @@ public class OutboxConsumerRouter : IOutboxConsumerRouter
                     OutboxConsumers.Activity
                 },
 
+            TenantCreatedEvent or
+            TenantActivatedEvent or
+            TenantInactivatedEvent or
+            TenantBrandingChangedEvent or
+            TenantPlanChangedEvent
+                => new[]
+                {
+                    OutboxConsumers.Activity
+                },
+
             _ => Array.Empty<string>()
         };
     }

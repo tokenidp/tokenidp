@@ -25,7 +25,7 @@ internal sealed class CreateUpdateTenantValidator : AbstractValidator<CreateUpda
 
         When(x => x.Id == 0, () =>
         {
-            RuleFor(x => x.AdminEmail)
+            RuleFor(x => ResolveAdminEmail(x))
                 .NotEmpty()
                 .Must(EmailValidator.IsValid)
                 .WithMessage("Admin email must be a valid email address.");
@@ -51,6 +51,16 @@ internal sealed class CreateUpdateTenantValidator : AbstractValidator<CreateUpda
 
         RuleForEach(x => x.Providers)
             .SetValidator(new TenantExternalProviderDetailValidator());
+    }
+
+    private static string? ResolveAdminEmail(CreateUpdateTenant tenant)
+    {
+        if (!string.IsNullOrWhiteSpace(tenant.AdminEmail))
+        {
+            return tenant.AdminEmail;
+        }
+
+        return tenant.Email;
     }
 }
 

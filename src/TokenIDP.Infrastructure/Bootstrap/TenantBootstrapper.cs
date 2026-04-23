@@ -305,11 +305,13 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
         string temporaryPassword,
         CancellationToken cancellationToken)
     {
+        var adminEmail = ResolveAdminEmail(command);
+
         var adminUser = new UserDetail
         {
-            UserName = command.AdminEmail.Trim(),
-            NormalizedUserName = command.AdminEmail.Trim().ToUpperInvariant(),
-            Email = command.AdminEmail.Trim(),
+            UserName = adminEmail,
+            NormalizedUserName = adminEmail.ToUpperInvariant(),
+            Email = adminEmail,
             FirstName = command.AdminFirstName.Trim(),
             LastName = command.AdminLastName.Trim(),
             Phone = "0000000000",
@@ -328,6 +330,20 @@ internal sealed class TenantBootstrapper : ITenantBootstrapper
             tenantId,
             adminUser,
             cancellationToken);
+    }
+
+    private static string ResolveAdminEmail(CreateUpdateTenant command)
+    {
+        var adminEmail = !string.IsNullOrWhiteSpace(command.AdminEmail)
+            ? command.AdminEmail
+            : command.Email;
+
+        if (string.IsNullOrWhiteSpace(adminEmail))
+        {
+            throw new InvalidOperationException("Admin email must not be empty.");
+        }
+
+        return adminEmail.Trim();
     }
 
     private async Task SeedDefaultConfigurationsAsync(int tenantId, CancellationToken cancellationToken)
