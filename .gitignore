@@ -368,3 +368,4 @@ FodyWeavers.xsd
 /portal/sdks/react-idp-sdk/dist/
 /portal/build/
 /portal/sdks/react-idp-sdk/tokenidp-react-*
+/portal/.npm-cache/
