@@ -41,6 +41,7 @@ internal sealed class ClientRepository : IClientRepository
         {
             var client = await _dbContext.Clients
                 .AsNoTracking()
+                .Include(x => x.Tenant)
                 .Include(x => x.ClientGrantTypes)
                 .Include(x => x.ClientScopes)
                 .Include(x => x.ClientApiResources)
