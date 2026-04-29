@@ -1,3 +1,4 @@
+using System.Text.Json;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
@@ -15,6 +16,7 @@ internal sealed class AuthenticationService : IAuthenticationService
     private readonly IUserRepository _userStore;
     private readonly PasswordService _passwordService;
     private readonly ILookupNormalizer _normalizer;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
     public AuthenticationService(IAppLogger<AuthenticationService> logger,
         ApplicationDbContext applicationDbContext,
@@ -22,7 +24,8 @@ internal sealed class AuthenticationService : IAuthenticationService
         IApplicationEventDispatcher applicationEventDispatcher,
         PasswordService passwordService,
         IUserRepository userStore,
-        ILookupNormalizer normalizer)
+        ILookupNormalizer normalizer,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
@@ -31,6 +34,7 @@ internal sealed class AuthenticationService : IAuthenticationService
         _passwordService = passwordService;
         _userStore = userStore;
         _normalizer = normalizer;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public async Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password)
@@ -57,6 +61,12 @@ internal sealed class AuthenticationService : IAuthenticationService
             if (user == null)
             {
                 var message = $"User not found with username or email: {userName} in tenant: {tenantId}";
+
+                await LogAuthenticationLookupMissAsync(
+                    tenantId,
+                    loginHint,
+                    normalizedLoginHint,
+                    normalizedEmailHint);
 
                 _logger.LogWarning(message);
 
@@ -124,5 +134,46 @@ internal sealed class AuthenticationService : IAuthenticationService
         {
             throw;
         }
+    }
+
+    private async Task LogAuthenticationLookupMissAsync(
+        int tenantId,
+        string loginHint,
+        string normalizedLoginHint,
+        string normalizedEmailHint)
+    {
+        var candidates = await _applicationDbContext.Users
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(u =>
+                u.UserName == loginHint ||
+                u.Email == loginHint ||
+                u.PhoneNumber == loginHint ||
+                u.NormalizedUserName == normalizedLoginHint ||
+                u.NormalizedEmail == normalizedEmailHint)
+            .Select(u => new
+            {
+                u.Id,
+                u.TenantId,
+                u.UserName,
+                u.Email,
+                u.NormalizedUserName,
+                u.NormalizedEmail,
+                u.IsDeleted,
+                u.StatusId,
+                u.EmailConfirmed
+            })
+            .Take(10)
+            .ToListAsync();
+
+        _logger.LogWarning(
+            "Authentication lookup miss details. RequestedTenantId={RequestedTenantId}, AmbientTenantId={AmbientTenantId}, LoginHint='{LoginHint}', NormalizedName='{NormalizedName}', NormalizedEmail='{NormalizedEmail}', CandidateCount={CandidateCount}, Candidates={Candidates}",
+            tenantId,
+            _tenantContextAccessor.CurrentTenantId?.ToString() ?? "none",
+            loginHint,
+            normalizedLoginHint ?? string.Empty,
+            normalizedEmailHint ?? string.Empty,
+            candidates.Count,
+            JsonSerializer.Serialize(candidates));
     }
 }
