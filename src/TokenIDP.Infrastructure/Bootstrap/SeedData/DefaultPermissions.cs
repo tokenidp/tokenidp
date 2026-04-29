@@ -11,11 +11,15 @@ internal class DefaultPermissions
         List<CreateUpdatePermission> allPermissions = new();
 
         //NavLinks
-        var socialSignInView = CreatePermission(tenantId, "tenants.socialsignin.view", "Social Sign In", "NavLink", 5, "/tenants/social-sign-in", "fa-globe me-2");
         var usersView = CreatePermission(tenantId, "users.view", "Users", "NavGroup", 6, "/users", "fa-users me-2");
         var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavGroup", 7, "/roles", "fa-shield-alt me-2");
         var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavGroup", 8, "/permissions", "fa-shield me-2");
-        var tenantsView = CreatePermission(tenantId, "tenants.view", "Tenants", "NavGroup", 4, "/tenants", "fa-building me-2");
+        var tenantsView = includeSystemTenantPermissions
+            ? CreatePermission(tenantId, "tenants.view", "Tenants", "NavGroup", 4, "/tenants", "fa-building me-2")
+            : null;
+        var socialSignInView = includeSystemTenantPermissions
+            ? CreatePermission(tenantId, "tenants.socialsignin.view", "Social Sign In", "NavLink", 5, "/tenants/social-sign-in", "fa-globe me-2")
+            : null;
 
         //NavGroups
         //var userManagement = CreatePermission(tenantId, "user.management.view", "User Management", "NavGroup", 4, null, "fa-users-gear");
@@ -25,8 +29,15 @@ internal class DefaultPermissions
         allPermissions.Add(CreatePermission(tenantId, "dashboard.view", "Dashboard", "NavGroup", 1, "/dashboard", "fa-chart-line me-2"));
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
-        allPermissions.Add(tenantsView);
-        allPermissions.Add(socialSignInView);
+        if (tenantsView is not null)
+        {
+            allPermissions.Add(tenantsView);
+        }
+
+        if (socialSignInView is not null)
+        {
+            allPermissions.Add(socialSignInView);
+        }
         allPermissions.Add(usersView);
         allPermissions.Add(rolesView);
         allPermissions.Add(permissionsView);
@@ -43,7 +54,6 @@ internal class DefaultPermissions
             .Where(p => p.PermissionKey != "dashboard.view"
                 && p.PermissionKey != "activities.view"
                 && p.PermissionKey != "apiresources.view"
-                && p.PermissionKey != "tenants.socialsignin.view"
                 && p.PermissionKey != "ciba.view"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
@@ -112,28 +122,24 @@ internal class DefaultPermissions
             }
         }
 
-        tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
-
-        socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
+        if (tenantsView is not null && socialSignInView is not null)
         {
-            CreateActionPermission(
+            tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
+
+            socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
+            {
+                CreateActionPermission(
+                    tenantId,
+                    ++i,
+                    "tenants.socialsignin.edit",
+                    "Modify Social Sign In")
+            };
+
+            tenantsView.ChildPermissions.Add(CreateActionPermission(
                 tenantId,
                 ++i,
-                "tenants.socialsignin.edit",
-                "Modify Social Sign In")
-        };
-
-        tenantsView.ChildPermissions.Add(CreateActionPermission(
-            tenantId,
-            ++i,
-            "tenant.secret.reveal",
-            "Reveal Tenant Provider Secret"));
-
-        if (!includeSystemTenantPermissions)
-        {
-            tenantsView.ChildPermissions = tenantsView.ChildPermissions
-                .Where(permission => !IsSystemOnlyTenantPermission(permission.PermissionKey))
-                .ToList();
+                "tenant.secret.reveal",
+                "Reveal Tenant Provider Secret"));
         }
 
         var apiResourcesPermission = allPermissions.FirstOrDefault(x => x.PermissionKey == "apiresources.view");
@@ -214,17 +220,8 @@ internal class DefaultPermissions
 
     private static bool RequiresDeletePermission(string permissionKey)
     {
-        return permissionKey.Equals("applications.view", StringComparison.OrdinalIgnoreCase)
-            //|| permissionKey.Equals("users.view", StringComparison.OrdinalIgnoreCase)
-            || permissionKey.Equals("roles.view", StringComparison.OrdinalIgnoreCase)
+        return permissionKey.Equals("roles.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("permissions.view", StringComparison.OrdinalIgnoreCase)
-            || permissionKey.Equals("tenants.view", StringComparison.OrdinalIgnoreCase)
             || permissionKey.Equals("settings.view", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsSystemOnlyTenantPermission(string permissionKey)
-    {
-        return permissionKey.Equals("tenants.add", StringComparison.OrdinalIgnoreCase)
-            || permissionKey.Equals("tenants.delete", StringComparison.OrdinalIgnoreCase);
     }
 }

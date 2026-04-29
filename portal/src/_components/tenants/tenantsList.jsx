@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Breadcrumbs from "../common/breadcrumbs";
-import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import { useTenants } from "../../_hooks/useTenants";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
@@ -38,7 +37,6 @@ function TenantsList() {
     state,
     loadTenants,
     loadLookups,
-    deleteTenant,
     activateTenant,
     suspendTenant,
     clearStatus,
@@ -53,8 +51,6 @@ function TenantsList() {
     status: "",
     search: "",
   });
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -151,35 +147,6 @@ function TenantsList() {
       return hasChanges ? next : prev;
     });
   }, [state.items]);
-
-  const requestDelete = (id) => {
-    setPendingDeleteId(id);
-    setConfirmOpen(true);
-  };
-
-  const closeConfirm = () => {
-    setConfirmOpen(false);
-    setPendingDeleteId(null);
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDeleteId) {
-      closeConfirm();
-      return;
-    }
-
-    const result = await deleteTenant(pendingDeleteId);
-    closeConfirm();
-
-    if (result.ok) {
-      loadTenants({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
-    }
-  };
 
   const reloadTenants = () =>
     loadTenants({
@@ -522,23 +489,6 @@ function TenantsList() {
                         >
                           <i className="fa fa-pen"></i>
                         </button>
-                        <button
-                          className="btn btn-link p-0 text-danger ButtonLink"
-                          type="button"
-                          onClick={() =>
-                            requestDelete(getField(item, "id", "Id"))
-                          }
-                          title={
-                            isSystemTenant
-                              ? "System tenant cannot be deleted"
-                              : isActive
-                                ? "Suspend before deleting"
-                                : "Delete"
-                          }
-                          disabled={isActive || isSystemTenant}
-                        >
-                          <i className="fa fa-trash"></i>
-                        </button>
                       </td>
                     </tr>
                   );
@@ -566,14 +516,6 @@ function TenantsList() {
         )}
       </div>
 
-      <ConfirmModal
-        open={confirmOpen}
-        title="Delete Tenant"
-        message="Are you sure you want to delete this tenant? This action cannot be undone."
-        confirmLabel="Delete"
-        onConfirm={confirmDelete}
-        onClose={closeConfirm}
-      />
     </div>
   );
 }

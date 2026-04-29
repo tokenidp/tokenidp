@@ -98,27 +98,6 @@ internal class ClientEndpoint : IEndpointDefinition
         .WithName("UpdateClient")
         .WithTags("Clients");
 
-        authGroup.MapDelete("/{id}", async (int id,
-            ClientCommandUseCase useCase,
-            HttpContext httpContext) =>
-        {
-            if (id <= 0)
-            {
-                return Results.BadRequest(ApiResult<ApiError>.Failure(
-                    ApiError.Failure("Record Id should be greater than zero.")));
-            }
-
-            var response = await useCase.DeleteClient(id, httpContext.RequestAborted);
-
-            return EndpointResultMapper.ToNoContentOrError(response);
-        })
-        .RequireAuthorization(new AuthorizeAttribute
-        {
-            Policy = "applications.delete"
-        })
-        .WithName("DeleteClient")
-        .WithTags("Clients");
-
         authGroup.MapPost("/{id}/regenerate-secret", async (int id,
             RotateClientSecretRequest request,
             ClientCommandUseCase useCase,

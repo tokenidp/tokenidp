@@ -10,21 +10,27 @@ internal sealed class PermissionRepository : IPermissionRepository
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ICache _cache;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
 
-    public PermissionRepository(ApplicationDbContext dbContext, ICache cache)
+    public PermissionRepository(
+        ApplicationDbContext dbContext,
+        ICache cache,
+        ITenantContextAccessor tenantContextAccessor)
     {
         _dbContext = dbContext;
         _cache = cache;
+        _tenantContextAccessor = tenantContextAccessor;
     }
 
     public Task<Permission?> GetByIdAsync(int permissionId, CancellationToken ct)
     {
-        return _dbContext.Permissions.FirstOrDefaultAsync(p => p.Id == permissionId && !p.IsDeleted, ct);
+        return ApplyTenantPermissionVisibility(_dbContext.Permissions)
+            .FirstOrDefaultAsync(p => p.Id == permissionId && !p.IsDeleted, ct);
     }
 
     public async Task<IEnumerable<PermissionList>> GetActivePermissionsAsync(CancellationToken ct)
     {
-        return await _dbContext.Permissions
+        return await ApplyTenantPermissionVisibility(_dbContext.Permissions)
             .AsNoTracking()
             .Where(p => p.IsActive != false && !p.IsDeleted)
             .OrderBy(p => p.Sequence)
@@ -35,7 +41,7 @@ internal sealed class PermissionRepository : IPermissionRepository
 
     public async Task<PaginatedList<PermissionList>> SearchPermissionsAsync(SearchData request, CancellationToken ct)
     {
-        var query = _dbContext.Permissions
+        var query = ApplyTenantPermissionVisibility(_dbContext.Permissions)
             .AsNoTracking()
             .Where(p => !p.IsDeleted);
         var criterias = request.SearchCriterias?.ToList() ?? new List<SearchCriteria>();
@@ -80,7 +86,7 @@ internal sealed class PermissionRepository : IPermissionRepository
 
     public Task<PermissionById?> GetPermissionDetailAsync(int permissionId, CancellationToken ct)
     {
-        return _dbContext.Permissions
+        return ApplyTenantPermissionVisibility(_dbContext.Permissions)
             .AsNoTracking()
             .Where(p => p.Id == permissionId && !p.IsDeleted)
             .Select(PermissionById.Projection)
@@ -95,7 +101,7 @@ internal sealed class PermissionRepository : IPermissionRepository
             cacheKey,
             async () =>
             {
-                var parentMenus = await _dbContext.Permissions
+                var parentMenus = await ApplyTenantPermissionVisibility(_dbContext.Permissions)
                     .AsNoTracking()
                     .Where(p => !p.IsDeleted &&
                                 p.IsActive != false &&
@@ -152,5 +158,17 @@ internal sealed class PermissionRepository : IPermissionRepository
     public Task<int> SaveChangesAsync(CancellationToken ct)
     {
         return _dbContext.SaveChangesAsync(ct);
+    }
+
+    private IQueryable<Permission> ApplyTenantPermissionVisibility(IQueryable<Permission> query)
+    {
+        if (!_tenantContextAccessor.HasTenant || _tenantContextAccessor.IsSystemTenant)
+        {
+            return query;
+        }
+
+        return query.Where(p =>
+            !p.PermissionKey.StartsWith("tenants.") &&
+            p.PermissionKey != "tenant.secret.reveal");
     }
 }

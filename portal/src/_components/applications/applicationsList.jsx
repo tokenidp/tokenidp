@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "tokenidp-react";
 import { useApplications } from "../../_hooks/useApplications";
 import defaultApplicationImage from "../../_assets/images/TokenIDP.svg";
 import { downloadCsv } from "../../_utils/csvExport";
 import Breadcrumbs from "../common/breadcrumbs";
-import ConfirmModal from "../common/confirmModal";
 import Pagination from "../common/pagination";
 import { normalizeGrantTypeOptions } from "./wizard/wizardState";
 
@@ -76,40 +74,13 @@ const getMultiLookupLabels = (options, values) => {
   return Array.from(new Set(labels)).join(", ");
 };
 
-const normalizePermissions = (user) => {
-  const rawPermissions = user?.permissions ?? user?.Permissions ?? [];
-  let permissions = [];
-
-  if (Array.isArray(rawPermissions)) {
-    permissions = rawPermissions;
-  } else if (typeof rawPermissions === "string") {
-    try {
-      const parsed = JSON.parse(rawPermissions);
-      permissions = Array.isArray(parsed) ? parsed : [];
-    } catch {
-      permissions = [];
-    }
-  }
-
-  return permissions
-    .map(
-      (permission) =>
-        permission?.permissionKey || permission?.PermissionKey || permission?.Key,
-    )
-    .filter(Boolean)
-    .map((permissionKey) => String(permissionKey).trim().toLowerCase());
-};
-
 function ApplicationsList() {
-  const user = useAuth();
-  const { state, loadApplications, loadLookups, deleteApplication } =
+  const { state, loadApplications, loadLookups } =
     useApplications();
   const navigate = useNavigate();
   const isFirstApplicationsLoad = useRef(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const selectAllRef = useRef(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   const [pageNumber, setPageNumber] = useState(defaultSearch.pageNumber);
   const [pageSize, setPageSize] = useState(defaultSearch.pageSize);
   const [viewMode, setViewMode] = useState("card");
@@ -119,8 +90,6 @@ function ApplicationsList() {
     status: "",
     search: "",
   });
-  const permissionKeys = normalizePermissions(user);
-  const canDeleteApplications = permissionKeys.includes("applications.delete");
 
   const totalCount = state.totalCount || 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -257,39 +226,6 @@ function ApplicationsList() {
       return hasChanges ? next : prev;
     });
   }, [state.items]);
-
-  const requestDelete = (id) => {
-    if (!canDeleteApplications) {
-      return;
-    }
-
-    setPendingDeleteId(id);
-    setConfirmOpen(true);
-  };
-
-  const closeConfirm = () => {
-    setConfirmOpen(false);
-    setPendingDeleteId(null);
-  };
-
-  const confirmDelete = async () => {
-    if (!pendingDeleteId) {
-      closeConfirm();
-      return;
-    }
-
-    const result = await deleteApplication(pendingDeleteId);
-    closeConfirm();
-
-    if (result.ok) {
-      loadApplications({
-        ...defaultSearch,
-        pageNumber,
-        pageSize,
-        SearchCriterias: buildSearchCriterias(),
-      });
-    }
-  };
 
   const handleExport = () => {
     const rowsToExport = state.items.filter((item) => {
@@ -597,16 +533,6 @@ function ApplicationsList() {
                           >
                             <i className="fa fa-pen"></i>
                           </button>
-                          {canDeleteApplications && (
-                            <button
-                              className="btn btn-link p-0 text-danger ButtonLink"
-                              type="button"
-                              onClick={() => requestDelete(getItemId(item))}
-                              title="Delete"
-                            >
-                              <i className="fa fa-trash"></i>
-                            </button>
-                          )}
                         </td>
                       </tr>
                     ))}
@@ -751,17 +677,6 @@ function ApplicationsList() {
                         >
                           <i className="fa fa-pen"></i>
                         </button>
-                        {canDeleteApplications && (
-                          <button
-                            className="btn btn-link p-0 text-danger ButtonLink"
-                            type="button"
-                            onClick={() => requestDelete(id)}
-                            title="Delete"
-                            aria-label="Delete application"
-                          >
-                            <i className="fa fa-trash"></i>
-                          </button>
-                        )}
                       </div>
                     </div>
                   );
@@ -779,14 +694,6 @@ function ApplicationsList() {
           />
         )}
       </div>
-      <ConfirmModal
-        open={confirmOpen}
-        title="Delete Application"
-        message="Are you sure you want to delete this application? This action cannot be undone."
-        confirmLabel="Delete"
-        onConfirm={confirmDelete}
-        onClose={closeConfirm}
-      />
     </div>
   );
 }

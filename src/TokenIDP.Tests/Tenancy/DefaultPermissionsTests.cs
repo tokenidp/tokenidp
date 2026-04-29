@@ -7,7 +7,7 @@ namespace TokenIDP.Tests.Tenancy;
 public sealed class DefaultPermissionsTests
 {
     [Fact]
-    public void NonSystemTenantPermissions_ShouldIncludeOwnTenantManagement_ButExcludeSystemOnlyActions()
+    public void NonSystemTenantPermissions_ShouldExcludeTenantManagementAndSystemOnlyActions()
     {
         var permissions = DefaultPermissions.CreateDefaultPermissions(
             tenantId: 42,
@@ -17,14 +17,15 @@ public sealed class DefaultPermissionsTests
             .Select(permission => permission.PermissionKey)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        flattenedKeys.Should().Contain("tenants.view");
-        flattenedKeys.Should().Contain("tenants.edit");
-        flattenedKeys.Should().Contain("tenants.socialsignin.view");
-        flattenedKeys.Should().Contain("tenants.socialsignin.edit");
-        flattenedKeys.Should().Contain("tenant.secret.reveal");
-
+        flattenedKeys.Should().NotContain("tenants.view");
+        flattenedKeys.Should().NotContain("tenants.edit");
+        flattenedKeys.Should().NotContain("tenants.socialsignin.view");
+        flattenedKeys.Should().NotContain("tenants.socialsignin.edit");
+        flattenedKeys.Should().NotContain("tenant.secret.reveal");
         flattenedKeys.Should().NotContain("tenants.add");
         flattenedKeys.Should().NotContain("tenants.delete");
+        flattenedKeys.Should().NotContain("applications.delete");
+        flattenedKeys.Should().NotContain("users.delete");
     }
 
     private static IEnumerable<CreateUpdatePermission> Flatten(IEnumerable<CreateUpdatePermission> permissions)

@@ -34,6 +34,25 @@ function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   if (!user?.isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+  const isSystemTenant =
+    String(user?.tenantKey || user?.TenantKey || "").toLowerCase() === "system" ||
+    user?.isSystemTenant === true ||
+    user?.IsSystemTenant === true;
+  const requiresTenantManagement = [
+    ...(requiredAnyOf || []),
+    ...(requiredAllOf || []),
+  ].some((key) => {
+    const normalizedKey = String(key).toLowerCase();
+    return (
+      normalizedKey.startsWith("tenants.") ||
+      normalizedKey === "tenant.secret.reveal"
+    );
+  });
+
+  if (requiresTenantManagement && !isSystemTenant) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
   const userKeys = normalizePermissions(user);
 
   const anyOk =

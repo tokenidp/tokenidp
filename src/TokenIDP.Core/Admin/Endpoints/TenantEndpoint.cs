@@ -25,10 +25,11 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
-         .RequireAuthorization(new AuthorizeAttribute
+        .RequireAuthorization(new AuthorizeAttribute
          {
              Policy = "tenants.view"
          })
+        .RequireSystemTenant()
         .WithName("Tenants")
         .WithTags("Tenants");
 
@@ -50,6 +51,7 @@ internal class TenantEndpoint : IEndpointDefinition
          {
              Policy = "tenants.view"
          })
+        .RequireSystemTenant()
         .WithName("TenantById")
         .WithTags("Tenants");
 
@@ -60,6 +62,7 @@ internal class TenantEndpoint : IEndpointDefinition
 
             return EndpointResultMapper.ToOkOrError(response);
         })
+        .RequireSystemTenant()
         .WithName("TenantLookups")
         .WithTags("Tenants");
 
@@ -99,29 +102,8 @@ internal class TenantEndpoint : IEndpointDefinition
          {
              Policy = "tenants.edit"
          })
-        .WithName("UpdateTenant")
-        .WithTags("Tenants");
-
-        authGroup.MapDelete("/{id}", async (int id,
-            TenantCommandUseCase useCase,
-            HttpContext httpContext) =>
-        {
-            if (id <= 0)
-            {
-                return Results.BadRequest(ApiResult<ApiError>.Failure(
-                    ApiError.Failure("Record Id should be greater than zero.")));
-            }
-
-            var response = await useCase.DeleteTenant(id, httpContext.RequestAborted);
-
-            return EndpointResultMapper.ToNoContentOrError(response);
-        })
-         .RequireAuthorization(new AuthorizeAttribute
-         {
-             Policy = "tenants.delete"
-         })
         .RequireSystemTenant()
-        .WithName("DeleteTenant")
+        .WithName("UpdateTenant")
         .WithTags("Tenants");
 
         authGroup.MapPost("/{id}/activate", async (int id,
@@ -185,6 +167,7 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             Policy = "tenant.secret.reveal"
         })
+        .RequireSystemTenant()
         .WithName("RevealTenantProviderSecret")
         .WithTags("Tenants");
 
@@ -206,6 +189,7 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             Policy = "tenants.socialsignin.view"
         })
+        .RequireSystemTenant()
         .WithName("TenantSocialSignIn")
         .WithTags("Tenants");
 
@@ -240,6 +224,7 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             Policy = "tenants.socialsignin.edit"
         })
+        .RequireSystemTenant()
         .WithName("UpdateTenantSocialSignInProvider")
         .WithTags("Tenants");
 
@@ -272,6 +257,7 @@ internal class TenantEndpoint : IEndpointDefinition
         {
             Policy = "tenant.secret.reveal"
         })
+        .RequireSystemTenant()
         .WithName("RevealTenantSocialSignInProviderSecret")
         .WithTags("Tenants");
     }

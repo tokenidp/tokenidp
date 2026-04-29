@@ -162,6 +162,10 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = (location.pathname.replace(/\/+$/, "") || "/").toLowerCase();
+  const isSystemTenant =
+    String(user?.tenantKey || user?.TenantKey || "").toLowerCase() === "system" ||
+    user?.isSystemTenant === true ||
+    user?.IsSystemTenant === true;
 
   const items = useMemo(() => {
     if (!user?.permissions?.length) return [];
@@ -200,9 +204,19 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
       };
     });
 
-    const tree = createTree(normalized);
+    const visiblePermissions = isSystemTenant
+      ? normalized
+      : normalized.filter((permission) => {
+          const key = String(permission.permissionKey || "").toLowerCase();
+          return (
+            !key.startsWith("tenants.") &&
+            key !== "tenant.secret.reveal"
+          );
+        });
+
+    const tree = createTree(visiblePermissions);
     return tree || [];
-  }, [createTree, user?.permissions]);
+  }, [createTree, isSystemTenant, user?.permissions]);
 
   const normalizeUrl = (url) => {
     if (!url) return "";
