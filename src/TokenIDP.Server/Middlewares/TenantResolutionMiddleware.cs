@@ -44,6 +44,7 @@ public sealed class TenantResolutionMiddleware
         }
 
         var requestResolution = tenantRequestResolver.Resolve(context);
+
         if (requestResolution.Status != TenantRequestResolutionStatus.Resolved ||
             string.IsNullOrWhiteSpace(requestResolution.TenantKey) ||
             requestResolution.Source is null)

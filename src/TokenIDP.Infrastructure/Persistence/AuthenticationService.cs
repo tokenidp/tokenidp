@@ -34,7 +34,7 @@ internal sealed class AuthenticationService : IAuthenticationService
     {
         try
         {
-            _logger.LogInfo("Authentication attempt for user: {UserName}", userName);
+            _logger.LogInfo("Authentication attempt for user: {UserName}, {TenantId}", userName, tenantId);
 
             var user = await _applicationDbContext.Users
                 .FirstOrDefaultAsync(u => u.TenantId == tenantId
@@ -46,7 +46,7 @@ internal sealed class AuthenticationService : IAuthenticationService
 
             if (user == null)
             {
-                var message = $"User not found with username or email: {userName}";
+                var message = $"User not found with username or email: {userName} in tenant: {tenantId}";
 
                 _logger.LogWarning(message);
 
