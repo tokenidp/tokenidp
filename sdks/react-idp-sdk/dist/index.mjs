@@ -337,6 +337,7 @@ var initialState = {
   userId: 0,
   tenantId: 0,
   tenantKey: "",
+  isSystemTenant: false,
   userName: "",
   landingPage: "",
   accessToken: "",
@@ -552,13 +553,16 @@ function IdpAuthProvider({ children, config }) {
         const permissions = extractPermissions(userInfo);
         const userId = userInfo.userId ?? userInfo.UserId ?? 0;
         const tenantId = userInfo.tenantId ?? userInfo.TenantId ?? 0;
+        const responseTenantKey = userInfo.tenantKey ?? userInfo.TenantKey ?? tenantKey;
+        const isSystemTenant = userInfo.isSystemTenant ?? userInfo.IsSystemTenant ?? false;
         const userName = userInfo.userName ?? userInfo.UserName ?? "";
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: {
             userId,
             tenantId,
-            tenantKey,
+            tenantKey: responseTenantKey,
+            isSystemTenant,
             userName,
             permissions,
             accessToken,
@@ -573,7 +577,8 @@ function IdpAuthProvider({ children, config }) {
         return {
           userId,
           tenantId,
-          tenantKey,
+          tenantKey: responseTenantKey,
+          isSystemTenant,
           userName,
           permissions,
           accessToken,

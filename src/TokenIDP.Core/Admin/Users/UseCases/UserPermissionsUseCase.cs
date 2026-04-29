@@ -6,13 +6,16 @@ internal class UserPermissionsUseCase
 {
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantContextAccessor _tenantContextAccessor;
     private readonly IAppLogger<UserPermissionsUseCase> _logger;
 
     public UserPermissionsUseCase(ICurrentUserService currentUserService,
+        ITenantContextAccessor tenantContextAccessor,
         IAppLogger<UserPermissionsUseCase> logger,
         IUserRepository userRepository)
     {
         _currentUserService = currentUserService;
+        _tenantContextAccessor = tenantContextAccessor;
         _logger = logger;
         _userRepository = userRepository;
     }
@@ -35,6 +38,14 @@ internal class UserPermissionsUseCase
         var permissions = await _userRepository.GetUserPermissionsAsync(
             _currentUserService.UserId,
             CancellationToken.None);
+        if (!_tenantContextAccessor.IsSystemTenant)
+        {
+            permissions = permissions
+                .Where(permission =>
+                    !permission.PermissionKey.StartsWith("tenants.", StringComparison.OrdinalIgnoreCase) &&
+                    !permission.PermissionKey.Equals("tenant.secret.reveal", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
 
         if (!permissions.IsSafe())
         {
@@ -48,6 +59,8 @@ internal class UserPermissionsUseCase
         var userInfo = UserPermission.Create(
             user.Id,
             user.TenantId,
+            _tenantContextAccessor.TenantKey,
+            _tenantContextAccessor.IsSystemTenant,
             user.FullName,
             permissions);
 

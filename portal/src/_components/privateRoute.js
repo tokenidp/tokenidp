@@ -34,10 +34,22 @@ function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   if (!user?.isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
+  const permissionEntries = Array.isArray(user?.permissions)
+    ? user.permissions
+    : Array.isArray(user?.Permissions)
+      ? user.Permissions
+      : [];
+  const hasSystemTenantPermission = permissionEntries.some((permission) => {
+    const key = String(
+      permission?.permissionKey || permission?.PermissionKey || permission?.Key || "",
+    ).toLowerCase();
+    return key === "tenants.add";
+  });
   const isSystemTenant =
     String(user?.tenantKey || user?.TenantKey || "").toLowerCase() === "system" ||
     user?.isSystemTenant === true ||
-    user?.IsSystemTenant === true;
+    user?.IsSystemTenant === true ||
+    hasSystemTenantPermission;
   const requiresTenantManagement = [
     ...(requiredAnyOf || []),
     ...(requiredAllOf || []),
@@ -62,12 +74,6 @@ function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   const allOk =
     !requiredAllOf?.length ||
     requiredAllOf.every((k) => userKeys.includes(String(k).toLowerCase()));
-
-  const permissionEntries = Array.isArray(user?.permissions)
-    ? user.permissions
-    : Array.isArray(user?.Permissions)
-      ? user.Permissions
-      : [];
 
   const hasRoutePermission = permissionEntries.some((perm) => {
     const url = perm?.url || perm?.Url;

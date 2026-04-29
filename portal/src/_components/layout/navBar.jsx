@@ -162,10 +162,19 @@ function NavBar({ onClick, isOpen, onNavigate, onToggleTheme, theme }) {
   const location = useLocation();
   const navigate = useNavigate();
   const pathname = (location.pathname.replace(/\/+$/, "") || "/").toLowerCase();
+  const hasSystemTenantPermission = Array.isArray(user?.permissions)
+    ? user.permissions.some((permission) => {
+        const key = String(
+          permission?.permissionKey || permission?.PermissionKey || "",
+        ).toLowerCase();
+        return key === "tenants.add";
+      })
+    : false;
   const isSystemTenant =
     String(user?.tenantKey || user?.TenantKey || "").toLowerCase() === "system" ||
     user?.isSystemTenant === true ||
-    user?.IsSystemTenant === true;
+    user?.IsSystemTenant === true ||
+    hasSystemTenantPermission;
 
   const items = useMemo(() => {
     if (!user?.permissions?.length) return [];
