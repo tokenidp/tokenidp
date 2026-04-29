@@ -1,9 +1,9 @@
+using Microsoft.Extensions.Options;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Tenants;
 using TokenIDP.Core.Foundation.Options;
-using Microsoft.Extensions.Options;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

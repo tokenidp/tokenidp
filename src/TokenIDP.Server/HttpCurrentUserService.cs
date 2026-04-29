@@ -1,10 +1,10 @@
-using TokenIDP.Core.Foundation.Options;
-using TokenIDP.Core.Foundation.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.Foundation.Security;
 
 namespace TokenIDP.Server;
 

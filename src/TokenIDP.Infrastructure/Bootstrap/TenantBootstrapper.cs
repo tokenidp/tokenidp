@@ -1,10 +1,9 @@
 using Microsoft.Extensions.Options;
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Admin.Configurations;
-using TokenIDP.Core.Admin.Permissions;
 using TokenIDP.Core.Admin.Roles;
 using TokenIDP.Core.Admin.Tenants;
 using TokenIDP.Core.Admin.Users;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Domain;
 using TokenIDP.Domain.AggregateRoots.Permissions;

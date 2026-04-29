@@ -1,16 +1,3 @@
-using TokenIDP.Core.OAuth.Model;
-using TokenIDP.Core.OAuth;
-using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
-using TokenIDP.Core.Foundation.Options;
-using TokenIDP.Core.Foundation.Security;
-using TokenIDP.Infrastructure.Bootstrap;
-using TokenIDP.Infrastructure.Emails;
-using TokenIDP.Infrastructure.Emails.Abstractions;
-using TokenIDP.Infrastructure.Emails.Concrete;
-using TokenIDP.Infrastructure.Emails.Primitives;
-using TokenIDP.Infrastructure.ExternalProviders;
-using TokenIDP.Infrastructure.Outbox;
-using TokenIDP.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,8 +6,20 @@ using Microsoft.Extensions.Options;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Queries;
 using TokenIDP.Core.Abstractions.Repositories;
-using TokenIDP.Infrastructure.Outbox.Abstractions;
 using TokenIDP.Core.Admin.Configurations;
+using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
+using TokenIDP.Core.OAuth.Model;
+using TokenIDP.Infrastructure.Bootstrap;
+using TokenIDP.Infrastructure.Emails;
+using TokenIDP.Infrastructure.Emails.Abstractions;
+using TokenIDP.Infrastructure.Emails.Concrete;
+using TokenIDP.Infrastructure.Emails.Primitives;
+using TokenIDP.Infrastructure.ExternalProviders;
+using TokenIDP.Infrastructure.Outbox;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Infrastructure;
 

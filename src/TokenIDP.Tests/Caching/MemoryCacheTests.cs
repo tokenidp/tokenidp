@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using TokenIDP.Core.Abstractions;
-using TokenIDP.Infrastructure;
 using InfrastructureMemoryCache = TokenIDP.Infrastructure.MemoryCache;
 
 namespace TokenIDP.Tests.Caching;

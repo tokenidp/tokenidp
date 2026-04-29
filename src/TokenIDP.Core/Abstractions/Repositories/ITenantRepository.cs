@@ -1,6 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Tenants;
-using TokenIDP.Core.Admin;
-using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Tenants;
 
 namespace TokenIDP.Core.Abstractions.Repositories;

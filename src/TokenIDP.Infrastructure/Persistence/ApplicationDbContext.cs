@@ -1,7 +1,6 @@
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.OAuth;
 using TokenIDP.Domain.AggregateRoots;
-using TokenIDP.Domain.AggregateRoots.ApiResources;
 using TokenIDP.Domain.AggregateRoots.Authorization;
 using TokenIDP.Domain.AggregateRoots.Configurations;
 using TokenIDP.Domain.AggregateRoots.Emails;

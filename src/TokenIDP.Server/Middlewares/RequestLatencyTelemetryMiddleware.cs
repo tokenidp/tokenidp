@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using System.Diagnostics;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using TokenIDP.Core.Abstractions.Telemetry;
 using TokenIDP.Server.Telemetry;
 

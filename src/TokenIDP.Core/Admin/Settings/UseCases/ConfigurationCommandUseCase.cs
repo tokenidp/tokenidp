@@ -1,4 +1,3 @@
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Domain.AggregateRoots.Configurations;
 

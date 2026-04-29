@@ -1,5 +1,4 @@
 using TokenIDP.Core.Abstractions.Repositories;
-using TokenIDP.Core.Admin;
 using TokenIDP.Core.Admin.ApiResources;
 
 namespace TokenIDP.Infrastructure.Persistence;

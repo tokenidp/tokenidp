@@ -1,7 +1,4 @@
-using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
-using TokenIDP.Core.OAuth.Model;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 

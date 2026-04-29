@@ -1,7 +1,6 @@
-using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using Microsoft.AspNetCore.WebUtilities;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 
 namespace TokenIDP.Core.OAuth.Endpoints;
 

@@ -1,8 +1,8 @@
-using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
+using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 

@@ -1,5 +1,3 @@
-using TokenIDP.Core.Abstractions;
-
 namespace TokenIDP.Core.OAuth.Endpoints;
 
 internal class MfaEndpoint : IEndpointDefinition

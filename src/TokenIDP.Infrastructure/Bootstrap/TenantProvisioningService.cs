@@ -1,4 +1,3 @@
-using TokenIDP.Infrastructure.Bootstrap;
 using TokenIDP.Core.Admin.Tenants;
 using TokenIDP.Infrastructure.Persistence;
 

@@ -1,7 +1,6 @@
 using TokenIDP.Core.Abstractions.Queries;
 using TokenIDP.Core.Admin.Activities;
 using TokenIDP.Core.Admin.Common;
-using TokenIDP.Core.Foundation.Primitives;
 using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Infrastructure.Persistence;

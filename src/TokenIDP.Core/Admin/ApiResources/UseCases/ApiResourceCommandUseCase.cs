@@ -1,4 +1,3 @@
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.Admin.ApiResources.UseCases;
@@ -178,8 +177,8 @@ internal sealed class ApiResourceCommandUseCase
         var replacementScopes = new List<ApiScope>();
         foreach (var requestedScope in request.Scopes)
         {
-            if (requestedScope.Id.HasValue 
-                && requestedScope.Id.Value != Guid.Empty 
+            if (requestedScope.Id.HasValue
+                && requestedScope.Id.Value != Guid.Empty
                 && existingScopes.TryGetValue(requestedScope.Id.Value, out var existingScope))
             {
                 replacementScopes.Add(existingScope);

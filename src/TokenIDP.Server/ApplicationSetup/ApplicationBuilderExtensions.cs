@@ -1,22 +1,9 @@
-using TokenIDP.Core.Admin;
-using TokenIDP.Core.Admin.Endpoints;
 using HealthChecks.UI.Client;
-using TokenIDP.Core.OAuth;
-using TokenIDP.Core.OAuth.Endpoints;
-using TokenIDP.Core.Foundation.Options;
-using TokenIDP.Core.Foundation.Security;
-using TokenIDP.Infrastructure;
-using TokenIDP.Server.HealthChecks;
-using TokenIDP.Server.Middlewares;
-using TokenIDP.Server.Multitenancy;
-using TokenIDP.Server.Security;
-using TokenIDP.Server.Telemetry;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -26,8 +13,20 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
-using TokenIDP.Core.OAuth.RateLimiting;
 using TokenIDP.Core.Abstractions.Telemetry;
+using TokenIDP.Core.Admin;
+using TokenIDP.Core.Admin.Endpoints;
+using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.OAuth;
+using TokenIDP.Core.OAuth.Endpoints;
+using TokenIDP.Core.OAuth.RateLimiting;
+using TokenIDP.Infrastructure;
+using TokenIDP.Server.HealthChecks;
+using TokenIDP.Server.Middlewares;
+using TokenIDP.Server.Multitenancy;
+using TokenIDP.Server.Security;
+using TokenIDP.Server.Telemetry;
 using TokenIDP.Workers;
 
 namespace TokenIDP.Server.ApplicationSetup;
@@ -134,6 +133,7 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
         app.UseMiddleware<CorrelationIdMiddleware>();
+
         app.UseMiddleware<RequestLatencyTelemetryMiddleware>();
 
         app.RegisterIDPEndpoints();

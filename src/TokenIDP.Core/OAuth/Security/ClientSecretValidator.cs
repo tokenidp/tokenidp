@@ -1,5 +1,5 @@
-using TokenIDP.Core.Foundation.Security;
 using System.Text;
+using TokenIDP.Core.Foundation.Security;
 
 namespace TokenIDP.Core.OAuth.Security;
 

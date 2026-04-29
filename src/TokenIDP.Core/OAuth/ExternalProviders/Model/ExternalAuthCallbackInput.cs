@@ -1,5 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Tenants;
-
 namespace TokenIDP.Core.OAuth.ExternalProviders.Model;
 
 public sealed record ExternalAuthCallbackInput(

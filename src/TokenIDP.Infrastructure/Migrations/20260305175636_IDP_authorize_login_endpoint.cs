@@ -46,8 +46,8 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "State",
                 table: "PreAuthorizations",
-                type: "nvarchar(50)",
-                maxLength: 50,
+                type: "nvarchar(500)",
+                maxLength: 500,
                 nullable: true);
 
             migrationBuilder.AddColumn<int>(

@@ -13,22 +13,22 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "Scopes",
                 table: "PreAuthorizations",
-                type: "nvarchar(200)",
-                maxLength: 200,
+                type: "nvarchar(1000)",
+                maxLength: 1000,
                 nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(200)",
-                oldMaxLength: 200);
+                oldType: "nvarchar(1000)",
+                oldMaxLength: 1000);
 
             migrationBuilder.AlterColumn<string>(
                 name: "RedirectUri",
                 table: "PreAuthorizations",
-                type: "nvarchar(150)",
-                maxLength: 150,
+                type: "nvarchar(2048)",
+                maxLength: 2048,
                 nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(150)",
-                oldMaxLength: 150);
+                oldType: "nvarchar(2048)",
+                oldMaxLength: 2048);
 
             migrationBuilder.AlterColumn<string>(
                 name: "CodeChallengeMethod",
@@ -43,12 +43,12 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "CodeChallenge",
                 table: "PreAuthorizations",
-                type: "nvarchar(100)",
-                maxLength: 100,
+                type: "nvarchar(256)",
+                maxLength: 256,
                 nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(100)",
-                oldMaxLength: 100);
+                oldType: "nvarchar(256)",
+                oldMaxLength: 256);
 
             migrationBuilder.AlterColumn<string>(
                 name: "ClientId",
@@ -160,25 +160,25 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "Scopes",
                 table: "PreAuthorizations",
-                type: "nvarchar(200)",
-                maxLength: 200,
+                type: "nvarchar(1000)",
+                maxLength: 1000,
                 nullable: false,
                 defaultValue: "",
                 oldClrType: typeof(string),
-                oldType: "nvarchar(200)",
-                oldMaxLength: 200,
+                oldType: "nvarchar(1000)",
+                oldMaxLength: 1000,
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
                 name: "RedirectUri",
                 table: "PreAuthorizations",
-                type: "nvarchar(150)",
-                maxLength: 150,
+                type: "nvarchar(2048)",
+                maxLength: 2048,
                 nullable: false,
                 defaultValue: "",
                 oldClrType: typeof(string),
-                oldType: "nvarchar(150)",
-                oldMaxLength: 150,
+                oldType: "nvarchar(2048)",
+                oldMaxLength: 2048,
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(
@@ -196,13 +196,13 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "CodeChallenge",
                 table: "PreAuthorizations",
-                type: "nvarchar(100)",
-                maxLength: 100,
+                type: "nvarchar(256)",
+                maxLength: 256,
                 nullable: false,
                 defaultValue: "",
                 oldClrType: typeof(string),
-                oldType: "nvarchar(100)",
-                oldMaxLength: 100,
+                oldType: "nvarchar(256)",
+                oldMaxLength: 256,
                 oldNullable: true);
 
             migrationBuilder.AlterColumn<string>(

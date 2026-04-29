@@ -1,5 +1,4 @@
 using System.Text.Json;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Domain.AggregateRoots.Emails.ValueObjects;

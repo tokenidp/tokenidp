@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Server.Telemetry;

@@ -1,5 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Configurations;
 using System.ComponentModel.DataAnnotations;
+using TokenIDP.Domain.AggregateRoots.Configurations;
 
 namespace TokenIDP.Core.Admin.Configurations;
 

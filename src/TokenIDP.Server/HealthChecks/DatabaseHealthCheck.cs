@@ -1,5 +1,5 @@
-using TokenIDP.Infrastructure.Persistence;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using TokenIDP.Infrastructure.Persistence;
 
 namespace TokenIDP.Server.HealthChecks;
 

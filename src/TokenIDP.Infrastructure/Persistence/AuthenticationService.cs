@@ -1,8 +1,8 @@
-using TokenIDP.Core.Admin.Common;
-using TokenIDP.Domain.DomainEvents.Users;
-using TokenIDP.Domain.AggregateRoots.Users.Enums;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Admin.Common;
+using TokenIDP.Domain.AggregateRoots.Users.Enums;
+using TokenIDP.Domain.DomainEvents.Users;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

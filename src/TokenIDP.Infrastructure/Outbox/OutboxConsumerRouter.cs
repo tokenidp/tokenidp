@@ -1,7 +1,5 @@
-using TokenIDP.Domain.Base;
 using TokenIDP.Domain.DomainEvents.Tokens;
 using TokenIDP.Domain.DomainEvents.Users;
-using TokenIDP.Domain.ReadModels;
 using TokenIDP.Infrastructure.Outbox.Abstractions;
 
 namespace TokenIDP.Infrastructure.Outbox;

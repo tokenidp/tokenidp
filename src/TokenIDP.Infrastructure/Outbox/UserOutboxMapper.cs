@@ -1,6 +1,5 @@
 using TokenIDP.Domain.AggregateRoots.Outbox;
 using TokenIDP.Domain.AggregateRoots.Users.Enums;
-using TokenIDP.Domain.Base;
 using TokenIDP.Domain.DomainEvents.Users;
 using TokenIDP.Domain.ReadModels.Enums;
 

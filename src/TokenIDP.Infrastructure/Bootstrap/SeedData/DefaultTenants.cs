@@ -19,6 +19,11 @@ internal class DefaultTenants
             AllowLocalLogin = true,
             TwoFactorEnabled = false,
             TwoFactorCodeExpiry = 300
+        },
+        UISetting = new TenantUISettingDetail()
+        {
+            LogoUrl = "/_content/TokenIDP.Server/images/TokenIDP.svg",
+            LoginText = "Sign in to TokenIDP"
         }
     };
 }

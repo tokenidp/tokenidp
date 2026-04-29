@@ -1,10 +1,10 @@
 using NLog;
 using NLog.Extensions.Hosting;
+using System.Reflection;
+using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Server.ApplicationSetup;
 using TokenIDP.Server.Components;
 using TokenIDP.Server.Middlewares;
-using TokenIDP.Core.Foundation.Options;
-using System.Reflection;
 
 // Bootstrap NLog early
 var logger = LogManager.Setup()

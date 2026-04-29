@@ -1,9 +1,8 @@
-using TokenIDP.Core.Foundation.Security;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using TokenIDP.Core.Foundation.Security;
 using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 
 namespace TokenIDP.Core.OAuth.Security;

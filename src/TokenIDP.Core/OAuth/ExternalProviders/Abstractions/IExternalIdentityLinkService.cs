@@ -1,4 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Users;
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
 
 namespace TokenIDP.Core.OAuth.ExternalProviders.Abstractions;

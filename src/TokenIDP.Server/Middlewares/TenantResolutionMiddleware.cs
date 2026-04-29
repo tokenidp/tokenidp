@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Foundation.Extensions;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Infrastructure;
 using TokenIDP.Server.Multitenancy;
-using Microsoft.Extensions.Hosting;
 
 namespace TokenIDP.Server.Middlewares;
 
@@ -70,7 +70,7 @@ public sealed class TenantResolutionMiddleware
             tenantContext.TenantKey,
             requestResolution.Source.Value.ToString(),
             _environment.EnvironmentName,
-            context.Request.Host.Value,
+            context.Request.Host.Value ?? "Unknown Host",
             context.Request.Path.Value ?? string.Empty);
 
         try
@@ -97,7 +97,7 @@ public sealed class TenantResolutionMiddleware
 
         _logger.LogWarning(
             "Tenant resolution rejected. Host={Host}, Path={Path}, Reason={Reason}, Count={Count}, RemoteIp={RemoteIp}, Environment={Environment}",
-            context.Request.Host.Value,
+            context.Request.Host.Value ?? "Unknown Host",
             context.Request.Path.Value ?? string.Empty,
             reason,
             throttleCount,

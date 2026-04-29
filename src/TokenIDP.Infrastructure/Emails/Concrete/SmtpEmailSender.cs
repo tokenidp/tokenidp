@@ -1,9 +1,9 @@
-using TokenIDP.Domain.AggregateRoots.Emails;
-using TokenIDP.Infrastructure.Emails.Abstractions;
-using TokenIDP.Infrastructure.Emails.Primitives;
 using System.Net;
 using System.Net.Mail;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Domain.AggregateRoots.Emails;
+using TokenIDP.Infrastructure.Emails.Abstractions;
+using TokenIDP.Infrastructure.Emails.Primitives;
 
 namespace TokenIDP.Infrastructure.Emails.Concrete;
 

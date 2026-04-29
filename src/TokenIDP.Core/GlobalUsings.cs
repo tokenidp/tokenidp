@@ -14,13 +14,13 @@ global using TokenIDP.Core.OAuth.Abstractions;
 global using TokenIDP.Core.OAuth.Model;
 global using TokenIDP.Core.OAuth.Security;
 global using TokenIDP.Domain.AggregateRoots.ApiResources;
+global using TokenIDP.Domain.AggregateRoots.Authorization;
 global using TokenIDP.Domain.AggregateRoots.Clients;
 global using TokenIDP.Domain.AggregateRoots.Roles;
 global using TokenIDP.Domain.AggregateRoots.Tenants;
 global using TokenIDP.Domain.AggregateRoots.Tokens;
 global using TokenIDP.Domain.AggregateRoots.Users;
-global using TokenIDP.Domain.ComplexTypes;
 global using TokenIDP.Domain.Base;
-global using TokenIDP.Domain.AggregateRoots.Authorization;
+global using TokenIDP.Domain.ComplexTypes;
 
 

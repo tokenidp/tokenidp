@@ -1,12 +1,7 @@
-using TokenIDP.Core.OAuth.Model;
-using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Domain.AggregateRoots.Tenants;
+using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
 using TokenIDP.Core.OAuth.ExternalProviders.Security;
-using Microsoft.Extensions.Options;
-using TokenIDP.Core.Abstractions;
-using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.ExternalProviders;
 

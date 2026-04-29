@@ -1,6 +1,6 @@
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TokenIDP.Domain.ReadModels;
 using TokenIDP.Domain.ReadModels.Enums;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace TokenIDP.Infrastructure.Config;
 

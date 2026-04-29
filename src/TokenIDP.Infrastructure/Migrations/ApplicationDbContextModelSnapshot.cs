@@ -430,8 +430,8 @@ namespace TokenIDP.Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("CodeChallenge")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<string>("CodeChallengeMethod")
                         .HasMaxLength(10)
@@ -463,16 +463,16 @@ namespace TokenIDP.Infrastructure.Migrations
                         .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("RedirectUri")
-                        .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
 
                     b.Property<string>("Scopes")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("State")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("TenantId")
                         .HasColumnType("int");

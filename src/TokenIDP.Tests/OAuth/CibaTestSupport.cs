@@ -1,8 +1,8 @@
-using System.Reflection;
-using System.Security.Cryptography;
 using FluentAssertions;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
+using System.Security.Cryptography;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Domain.AggregateRoots.Authorization;

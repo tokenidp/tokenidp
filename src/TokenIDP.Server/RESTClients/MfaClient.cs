@@ -1,11 +1,11 @@
-using TokenIDP.Core.OAuth.Model;
-using TokenIDP.Core.Foundation;
-using TokenIDP.Core.Foundation.Contracts;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Foundation;
+using TokenIDP.Core.Foundation.Contracts;
+using TokenIDP.Core.OAuth.Model;
 
 namespace TokenIDP.Server.RESTClients;
 

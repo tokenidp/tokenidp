@@ -32,6 +32,12 @@ internal class CodeSequenceGenerator : ICodeSequenceGenerator
                 $"Invalid tenant id '{tenantId}' for sequence '{sequenceKey}'.");
         }
 
+        if (sequenceKey == TenantSequenceKey)
+        {
+            var currentMaxTenantCodeValue = await GetCurrentMaxTenantCodeValueAsync(ct);
+            await EnsureSequenceAtLeastAsync(tenantId, sequenceKey, currentMaxTenantCodeValue, ct);
+        }
+
         var updatedRows = await _db.CodeSequences
             .Where(x => x.TenantId == tenantId && x.SequenceKey == sequenceKey)
             .ExecuteUpdateAsync(x =>
@@ -46,6 +52,7 @@ internal class CodeSequenceGenerator : ICodeSequenceGenerator
             }
             catch (DbUpdateException)
             {
+                _db.ChangeTracker.Clear();
                 // Another request might have created the row concurrently.
             }
 
@@ -65,6 +72,68 @@ internal class CodeSequenceGenerator : ICodeSequenceGenerator
             .Where(x => x.TenantId == tenantId && x.SequenceKey == sequenceKey)
             .Select(x => x.LastValue)
             .SingleAsync(ct);
+    }
+
+    private async Task EnsureSequenceAtLeastAsync(
+        int tenantId,
+        string sequenceKey,
+        int minimumValue,
+        CancellationToken ct)
+    {
+        var updatedRows = await _db.CodeSequences
+            .Where(x => x.TenantId == tenantId
+                && x.SequenceKey == sequenceKey
+                && x.LastValue < minimumValue)
+            .ExecuteUpdateAsync(x =>
+                x.SetProperty(p => p.LastValue, minimumValue), ct);
+
+        if (updatedRows > 0)
+        {
+            return;
+        }
+
+        var exists = await _db.CodeSequences
+            .AnyAsync(x => x.TenantId == tenantId && x.SequenceKey == sequenceKey, ct);
+
+        if (exists)
+        {
+            return;
+        }
+
+        _db.CodeSequences.Add(new CodeSequence(tenantId, sequenceKey, minimumValue));
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            _db.ChangeTracker.Clear();
+            await _db.CodeSequences
+                .Where(x => x.TenantId == tenantId
+                    && x.SequenceKey == sequenceKey
+                    && x.LastValue < minimumValue)
+                .ExecuteUpdateAsync(x =>
+                    x.SetProperty(p => p.LastValue, minimumValue), ct);
+        }
+    }
+
+    private async Task<int> GetCurrentMaxTenantCodeValueAsync(CancellationToken ct)
+    {
+        var prefix = $"TEN-{DateTime.UtcNow:yyyy}-";
+        var tenantCodes = await _db.Tenants
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(x => x.TenantCode.StartsWith(prefix))
+            .Select(x => x.TenantCode)
+            .ToListAsync(ct);
+
+        return tenantCodes
+            .Select(code => code.Length > prefix.Length
+                && int.TryParse(code[prefix.Length..], out var value)
+                    ? value
+                    : 0)
+            .DefaultIfEmpty(0)
+            .Max();
     }
 }
 

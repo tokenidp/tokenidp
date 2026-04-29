@@ -1,6 +1,6 @@
+using System.Linq.Expressions;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Domain.AggregateRoots.Configurations;
-using System.Linq.Expressions;
 
 namespace TokenIDP.Infrastructure.Projections;
 

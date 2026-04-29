@@ -1,4 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
@@ -28,12 +27,12 @@ internal class AuthorizeEndpoint : IEndpointDefinition
                     authorizationStore);
             }
 
-                return await StartAuthorization(
-                    httpContext,
-                    authorizationValidator,
-                    authorizationCodeUseCase,
-                    authorizationStore,
-                    tenantContextAccessor);
+            return await StartAuthorization(
+                httpContext,
+                authorizationValidator,
+                authorizationCodeUseCase,
+                authorizationStore,
+                tenantContextAccessor);
         });
     }
 
@@ -213,9 +212,10 @@ internal class AuthorizeEndpoint : IEndpointDefinition
             state,
             authorizationRequest.Scopes!);
 
+        using var saveTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         await authorizationStore.CreatePreAuthorization(
             preAuthorization,
-            httpContext.RequestAborted);
+            saveTimeout.Token);
 
         var loginUrl = QueryHelpers.AddQueryString("/login", "ctx", correlationId);
 

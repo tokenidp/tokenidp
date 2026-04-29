@@ -1,5 +1,5 @@
-using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 using System.Security.Cryptography.X509Certificates;
+using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 
 namespace TokenIDP.Core.Foundation.Security;
 

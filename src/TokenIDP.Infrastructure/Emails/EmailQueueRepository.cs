@@ -1,8 +1,8 @@
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Infrastructure.Emails.Primitives;
 using TokenIDP.Infrastructure.Persistence;
-using TokenIDP.Core.Abstractions;
-using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Infrastructure.Emails;
 

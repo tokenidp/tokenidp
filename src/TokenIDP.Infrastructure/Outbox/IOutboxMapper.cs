@@ -1,5 +1,4 @@
 using TokenIDP.Domain.AggregateRoots.Outbox;
-using TokenIDP.Domain.Base;
 
 namespace TokenIDP.Infrastructure.Outbox;
 

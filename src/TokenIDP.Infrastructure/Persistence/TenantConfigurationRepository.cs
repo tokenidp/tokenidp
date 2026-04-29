@@ -1,5 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Configurations;
 using TokenIDP.Core.Admin.Configurations;
+using TokenIDP.Domain.AggregateRoots.Configurations;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

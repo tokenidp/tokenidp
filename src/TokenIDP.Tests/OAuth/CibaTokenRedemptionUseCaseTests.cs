@@ -3,13 +3,11 @@ using Microsoft.Extensions.Options;
 using Moq;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
-using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.OAuth.Model;
 using TokenIDP.Core.OAuth.Security;
 using TokenIDP.Core.OAuth.UseCases;
 using TokenIDP.Domain;
 using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Domain.AggregateRoots.Clients;
 using TokenIDP.Domain.AggregateRoots.Tokens;
 
 namespace TokenIDP.Tests.OAuth;

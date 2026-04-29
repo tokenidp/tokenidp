@@ -1,9 +1,8 @@
 using FluentAssertions;
 using Moq;
-using TokenIDP.Core.Admin.Tenants;
-using TokenIDP.Core.Admin.Tenants.UseCases;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Admin.Tenants.UseCases;
 using TokenIDP.Core.OAuth;
 using TokenIDP.Domain.AggregateRoots.Tenants;
 using TokenIDP.Tests.OAuth;

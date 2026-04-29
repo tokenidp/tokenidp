@@ -1,8 +1,6 @@
-using TokenIDP.Core.OAuth.Policies;
-using TokenIDP.Domain.AggregateRoots.Authorization;
-using TokenIDP.Core.Foundation.Security;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.OAuth.Policies;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 

@@ -1,5 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Tokens;
-
 namespace TokenIDP.Core.Admin.Tokens;
 
 public sealed class TokenListItem

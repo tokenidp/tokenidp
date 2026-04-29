@@ -1,5 +1,4 @@
 using TokenIDP.Core.Abstractions.Repositories;
-using TokenIDP.Core.Foundation.Exceptions;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
@@ -48,7 +47,7 @@ public sealed class AuthorizationRequestValidator : IAuthorizationRequestValidat
                 "Invalid redirect_uri.");
         }
 
-        if (!string.Equals(parsedRedirectUri.Scheme, 
+        if (!string.Equals(parsedRedirectUri.Scheme,
             Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) &&
             !parsedRedirectUri.IsLoopback)
         {

@@ -1,5 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Outbox;
-using TokenIDP.Infrastructure.Persistence;
 using System.Data;
 
 namespace TokenIDP.Workers.Queries;

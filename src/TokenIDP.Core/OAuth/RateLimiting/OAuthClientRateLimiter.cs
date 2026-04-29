@@ -1,6 +1,6 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Threading.RateLimiting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace TokenIDP.Core.OAuth.RateLimiting;
 

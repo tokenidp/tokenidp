@@ -1,10 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Infrastructure.Emails.Abstractions;
 using TokenIDP.Infrastructure.Emails.Concrete;
 using TokenIDP.Workers.Queries;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Workers;
 

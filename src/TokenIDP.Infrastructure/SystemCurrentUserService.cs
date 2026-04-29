@@ -1,4 +1,4 @@
-﻿﻿
+﻿
 using TokenIDP.Core.Abstractions;
 
 internal sealed class SystemCurrentUserService : ICurrentUserService

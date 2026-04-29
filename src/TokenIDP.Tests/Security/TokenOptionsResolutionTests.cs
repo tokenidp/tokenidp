@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Moq;
-using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
 using TokenIDP.Server.ApplicationSetup;
 

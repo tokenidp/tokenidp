@@ -1,5 +1,4 @@
 using TokenIDP.Core.Admin.Activities;
-using TokenIDP.Core.Admin.Common;
 
 namespace TokenIDP.Core.Abstractions.Queries;
 

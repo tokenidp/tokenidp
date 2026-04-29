@@ -13,12 +13,12 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "State",
                 table: "PreAuthorizations",
-                type: "nvarchar(100)",
-                maxLength: 100,
+                type: "nvarchar(500)",
+                maxLength: 500,
                 nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(50)",
-                oldMaxLength: 50,
+                oldType: "nvarchar(500)",
+                oldMaxLength: 500,
                 oldNullable: true);
         }
 
@@ -28,12 +28,12 @@ namespace TokenIDP.Infrastructure.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "State",
                 table: "PreAuthorizations",
-                type: "nvarchar(50)",
-                maxLength: 50,
+                type: "nvarchar(500)",
+                maxLength: 500,
                 nullable: true,
                 oldClrType: typeof(string),
-                oldType: "nvarchar(100)",
-                oldMaxLength: 100,
+                oldType: "nvarchar(500)",
+                oldMaxLength: 500,
                 oldNullable: true);
         }
     }

@@ -1,6 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Configurations;
 using Microsoft.Extensions.Configuration;
-using System.Reflection;
+using TokenIDP.Domain.AggregateRoots.Configurations;
 
 namespace TokenIDP.Infrastructure.Bootstrap.SeedData;
 

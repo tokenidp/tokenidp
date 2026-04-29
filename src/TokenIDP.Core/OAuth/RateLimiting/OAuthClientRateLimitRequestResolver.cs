@@ -1,6 +1,5 @@
 using System.Text;
 using System.Text.Json;
-using TokenIDP.Domain.AggregateRoots.Clients;
 
 namespace TokenIDP.Core.OAuth.RateLimiting;
 

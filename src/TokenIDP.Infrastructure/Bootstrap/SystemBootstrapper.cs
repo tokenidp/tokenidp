@@ -1,14 +1,13 @@
-using TokenIDP.Infrastructure.Bootstrap;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Roles;
-using TokenIDP.Domain.AggregateRoots.Permissions;
 using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Domain;
+using TokenIDP.Domain.AggregateRoots.Permissions;
 using TokenIDP.Infrastructure.Bootstrap.SeedData;
 using TokenIDP.Infrastructure.Persistence;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Configuration;
-using TokenIDP.Core.Abstractions;
-using TokenIDP.Domain;
 
 namespace TokenIDP.Infrastructure.Bootstrap;
 

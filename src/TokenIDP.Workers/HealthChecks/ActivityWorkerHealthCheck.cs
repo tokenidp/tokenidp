@@ -1,5 +1,5 @@
-using TokenIDP.Workers.HealthChecks.States;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using TokenIDP.Workers.HealthChecks.States;
 
 namespace TokenIDP.Workers.HealthChecks;
 

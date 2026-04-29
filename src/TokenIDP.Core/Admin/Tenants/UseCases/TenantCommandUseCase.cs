@@ -1,7 +1,5 @@
-using TokenIDP.Core.Admin.Common;
-using TokenIDP.Core.Foundation;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Admin.Common;
 
 namespace TokenIDP.Core.Admin.Tenants.UseCases;
 

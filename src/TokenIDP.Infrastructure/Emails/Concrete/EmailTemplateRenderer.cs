@@ -1,6 +1,6 @@
+using System.Text.Json;
 using TokenIDP.Infrastructure.Emails.Abstractions;
 using TokenIDP.Infrastructure.Emails.Primitives;
-using System.Text.Json;
 
 namespace TokenIDP.Infrastructure.Emails.Concrete;
 

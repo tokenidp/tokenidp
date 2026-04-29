@@ -1,7 +1,7 @@
-using TokenIDP.Domain.AggregateRoots.Configurations;
-using TokenIDP.Infrastructure.Projections;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Domain.AggregateRoots.Configurations;
+using TokenIDP.Infrastructure.Projections;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

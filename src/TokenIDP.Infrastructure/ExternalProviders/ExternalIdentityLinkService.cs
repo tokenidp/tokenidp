@@ -1,10 +1,10 @@
+using System.Security.Cryptography;
+using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using TokenIDP.Core.OAuth.ExternalProviders.Model;
-using System.Security.Cryptography;
 using TokenIDP.Infrastructure.Persistence;
-using TokenIDP.Core.Abstractions;
-using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Infrastructure.ExternalProviders;
 

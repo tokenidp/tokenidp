@@ -1,6 +1,3 @@
-using TokenIDP.Core.Foundation;
-using TokenIDP.Core.Foundation.Contracts;
-using TokenIDP.Core.Foundation.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +5,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.Foundation;
+using TokenIDP.Core.Foundation.Contracts;
+using TokenIDP.Core.Foundation.Extensions;
 
 namespace TokenIDP.Server.Middlewares;
 
@@ -66,6 +66,12 @@ public class ExceptionHandlingMiddleware
 
         switch (exception)
         {
+            case OperationCanceledException when context.RequestAborted.IsCancellationRequested:
+                _logger.LogWarning("Request was cancelled by the client. Correlation ID: {CorrelationId}. " +
+                    "Request: {@RequestData}", correlationId, requestData);
+                context.Response.StatusCode = 499;
+                break;
+
             case DbUpdateConcurrencyException dbEx:
                 _logger.LogError(dbEx, "DbUpdateConcurrencyException with correlation ID: {CorrelationId}." +
                     " Request: {@RequestData}", correlationId, requestData);

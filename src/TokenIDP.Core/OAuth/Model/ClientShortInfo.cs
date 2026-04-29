@@ -1,5 +1,3 @@
-using TokenIDP.Domain.AggregateRoots.Clients;
-
 namespace TokenIDP.Core.OAuth.Model;
 
 public class ClientShortInfo

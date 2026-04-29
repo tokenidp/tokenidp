@@ -11,9 +11,10 @@ internal class DefaultPermissions
         List<CreateUpdatePermission> allPermissions = new();
 
         //NavLinks
-        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavGroup", 5, "/users", "fa-users me-2");
-        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavGroup", 6, "/roles", "fa-shield-alt me-2");
-        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavGroup", 7, "/permissions", "fa-shield me-2");
+        var socialSignInView = CreatePermission(tenantId, "tenants.socialsignin.view", "Social Sign In", "NavLink", 5, "/tenants/social-sign-in", "fa-globe me-2");
+        var usersView = CreatePermission(tenantId, "users.view", "Users", "NavGroup", 6, "/users", "fa-users me-2");
+        var rolesView = CreatePermission(tenantId, "roles.view", "Roles", "NavGroup", 7, "/roles", "fa-shield-alt me-2");
+        var permissionsView = CreatePermission(tenantId, "permissions.view", "Permissions", "NavGroup", 8, "/permissions", "fa-shield me-2");
         var tenantsView = CreatePermission(tenantId, "tenants.view", "Tenants", "NavGroup", 4, "/tenants", "fa-building me-2");
 
         //NavGroups
@@ -25,22 +26,24 @@ internal class DefaultPermissions
         allPermissions.Add(CreatePermission(tenantId, "applications.view", "Applications", "NavGroup", 2, "/applications", "fa-layer-group me-2"));
         allPermissions.Add(CreatePermission(tenantId, "apiresources.view", "API Resources", "NavGroup", 3, "/api-resources", "fa-network-wired me-2"));
         allPermissions.Add(tenantsView);
+        allPermissions.Add(socialSignInView);
         allPermissions.Add(usersView);
         allPermissions.Add(rolesView);
         allPermissions.Add(permissionsView);
         //allPermissions.Add(userManagement);
-        allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 8, "/tokens", "fa-id-badge me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 9, "/activities", "fa-clipboard-list me-2"));
-        allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 10, "/settings", "fa-cog me-2"));
-        var cibaView = CreatePermission(tenantId, "ciba.view", "CIBA Requests", "NavGroup", 11, "/ciba-requests", "fa-mobile-screen-button me-2");
+        allPermissions.Add(CreatePermission(tenantId, "tokens.view", "Token Management", "NavGroup", 9, "/tokens", "fa-id-badge me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "activities.view", "Activities", "NavGroup", 10, "/activities", "fa-clipboard-list me-2"));
+        allPermissions.Add(CreatePermission(tenantId, "settings.view", "Settings", "NavGroup", 11, "/settings", "fa-cog me-2"));
+        var cibaView = CreatePermission(tenantId, "ciba.view", "CIBA Requests", "NavGroup", 12, "/ciba-requests", "fa-mobile-screen-button me-2");
         allPermissions.Add(cibaView);
 
         //Actions
-        int i = 11;
+        int i = 12;
         foreach (var permission in allPermissions
             .Where(p => p.PermissionKey != "dashboard.view"
                 && p.PermissionKey != "activities.view"
                 && p.PermissionKey != "apiresources.view"
+                && p.PermissionKey != "tenants.socialsignin.view"
                 && p.PermissionKey != "ciba.view"))
         {
             if (permission.ChildPermissions == null || permission.ChildPermissions.Count == 0)
@@ -111,14 +114,6 @@ internal class DefaultPermissions
 
         tenantsView.ChildPermissions ??= new List<CreateUpdatePermission>();
 
-        var socialSignInView = CreatePermission(
-            tenantId,
-            "tenants.socialsignin.view",
-            "Social Sign In",
-            "NavLink",
-            ++i,
-            "/tenants/social-sign-in",
-            "fa-globe");
         socialSignInView.ChildPermissions = new List<CreateUpdatePermission>
         {
             CreateActionPermission(
@@ -127,7 +122,6 @@ internal class DefaultPermissions
                 "tenants.socialsignin.edit",
                 "Modify Social Sign In")
         };
-        tenantsView.ChildPermissions.Add(socialSignInView);
 
         tenantsView.ChildPermissions.Add(CreateActionPermission(
             tenantId,

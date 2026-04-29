@@ -1,16 +1,14 @@
+using Microsoft.Extensions.Configuration;
+using System.Diagnostics;
+using System.Globalization;
 using TokenIDP.Core.Abstractions.Queries;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Abstractions.Telemetry;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Dashboard;
-using TokenIDP.Domain.AggregateRoots;
 using TokenIDP.Domain.AggregateRoots.Configurations;
 using TokenIDP.Domain.ReadModels;
 using TokenIDP.Domain.ReadModels.Enums;
-using Microsoft.Extensions.Configuration;
-using System.Diagnostics;
-using System.Globalization;
-using System.Reflection;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

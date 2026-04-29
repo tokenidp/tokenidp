@@ -1,11 +1,11 @@
-using TokenIDP.Workers.HealthChecks.States;
-using TokenIDP.Workers.Mappers;
-using TokenIDP.Workers.Projectors;
-using TokenIDP.Workers.Queries;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NLog;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Workers.HealthChecks.States;
+using TokenIDP.Workers.Mappers;
+using TokenIDP.Workers.Projectors;
+using TokenIDP.Workers.Queries;
 
 namespace TokenIDP.Workers.Workers;
 

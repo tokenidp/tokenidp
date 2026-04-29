@@ -1,9 +1,10 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using TokenIDP.Core.Admin.Activities.UseCases;
 using TokenIDP.Core.Admin.ApiResources.UseCases;
 using TokenIDP.Core.Admin.Clients;
 using TokenIDP.Core.Admin.Clients.UseCases;
 using TokenIDP.Core.Admin.Common;
-using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Dashboard;
 using TokenIDP.Core.Admin.Permissions.UseCases;
 using TokenIDP.Core.Admin.Roles.UseCases;
@@ -13,8 +14,6 @@ using TokenIDP.Core.Admin.Tokens.UseCases;
 using TokenIDP.Core.Admin.Users;
 using TokenIDP.Core.Admin.Users.UseCases;
 using TokenIDP.Core.Foundation.Validation;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace TokenIDP.Core.Admin;
 

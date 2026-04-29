@@ -1,7 +1,7 @@
-using TokenIDP.Core.Admin.Configurations;
-using TokenIDP.Core.Admin.Settings.UseCases;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using TokenIDP.Core.Admin.Configurations;
+using TokenIDP.Core.Admin.Settings.UseCases;
 
 namespace TokenIDP.Core.Admin.Endpoints;
 

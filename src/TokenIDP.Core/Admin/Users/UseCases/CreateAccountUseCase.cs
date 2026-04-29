@@ -1,8 +1,6 @@
-using TokenIDP.Core.Admin.Common;
-using System.ComponentModel.DataAnnotations;
 using FluentValidation;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Admin.Common;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 

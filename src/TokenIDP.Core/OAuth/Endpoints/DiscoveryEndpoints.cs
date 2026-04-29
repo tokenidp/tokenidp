@@ -1,11 +1,9 @@
-using TokenIDP.Core.Foundation.Security;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TokenIDP.Core.Foundation.Security;
 using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;
 
 namespace TokenIDP.Core.OAuth.Endpoints;

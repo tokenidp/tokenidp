@@ -1,5 +1,5 @@
-using TokenIDP.Core.OAuth.Model;
 using System.Linq.Expressions;
+using TokenIDP.Core.OAuth.Model;
 
 namespace TokenIDP.Infrastructure.Projections;
 

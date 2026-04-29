@@ -1,8 +1,8 @@
-using TokenIDP.Workers.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NLog;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Workers.Metrics;
 
 namespace TokenIDP.Workers.Workers;
 

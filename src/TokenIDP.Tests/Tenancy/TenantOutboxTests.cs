@@ -7,7 +7,6 @@ using TokenIDP.Domain.AggregateRoots.Outbox;
 using TokenIDP.Domain.AggregateRoots.Tenants;
 using TokenIDP.Domain.DomainEvents.Tenants;
 using TokenIDP.Domain.ReadModels.Enums;
-using TokenIDP.Infrastructure.Outbox.Abstractions;
 using TokenIDP.Infrastructure.Persistence;
 using TokenIDP.Workers.Mappers;
 using TokenIDP.Workers.Projectors;

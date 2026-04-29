@@ -1,6 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Permissions;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Domain.AggregateRoots.Permissions;
 
 namespace TokenIDP.Core.Admin.Permissions.UseCases;
 

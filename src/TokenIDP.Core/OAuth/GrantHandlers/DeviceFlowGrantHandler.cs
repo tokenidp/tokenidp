@@ -1,7 +1,6 @@
-using TokenIDP.Core.OAuth.UseCases;
-using TokenIDP.Core.Foundation.Security;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.OAuth.UseCases;
 
 namespace TokenIDP.Core.OAuth.GrantHandlers;
 

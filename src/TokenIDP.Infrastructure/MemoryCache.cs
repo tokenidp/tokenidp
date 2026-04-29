@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
-using TokenIDP.Core.Abstractions;
 using System.Collections.Concurrent;
+using TokenIDP.Core.Abstractions;
 
 namespace TokenIDP.Infrastructure;
 

@@ -1,8 +1,8 @@
-using TokenIDP.Domain.AggregateRoots.Tokens;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Tokens;
+using TokenIDP.Domain.AggregateRoots.Tokens;
 
 namespace TokenIDP.Infrastructure.Persistence;
 
@@ -45,7 +45,7 @@ internal sealed class TokenRepository : ITokenRepository
     public async Task<Token?> GetRefreshToken(byte[] tokenHash)
     {
         var refreshToken = await _dbContext.Tokens
-            .FirstOrDefaultAsync(t => t.RefreshToken.TokenHash == tokenHash 
+            .FirstOrDefaultAsync(t => t.RefreshToken.TokenHash == tokenHash
             && t.TokenStatus != TokenStatus.Revoked);
 
         return refreshToken;

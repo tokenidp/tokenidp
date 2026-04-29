@@ -1,9 +1,8 @@
-using TokenIDP.Core.OAuth.Model;
-using TokenIDP.Infrastructure.Projections;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Clients;
 using TokenIDP.Core.Admin.Common;
+using TokenIDP.Core.OAuth.Model;
 
 namespace TokenIDP.Infrastructure.Persistence;
 

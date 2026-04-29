@@ -1,11 +1,10 @@
-using TokenIDP.Domain.AggregateRoots.Emails;
-using TokenIDP.Domain.AggregateRoots.Emails.ValueObjects;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Domain.AggregateRoots.Emails;
+using TokenIDP.Domain.AggregateRoots.Emails.ValueObjects;
 
 namespace TokenIDP.Core.Admin.Users.UseCases;
 

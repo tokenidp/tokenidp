@@ -1,5 +1,3 @@
-using TokenIDP.Core.Admin;
-using TokenIDP.Core.Admin.Common;
 using TokenIDP.Core.Admin.Tokens;
 
 namespace TokenIDP.Core.Abstractions.Repositories;

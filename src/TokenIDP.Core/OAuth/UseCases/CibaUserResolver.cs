@@ -1,8 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Foundation.Security;
 using TokenOptions = TokenIDP.Core.Foundation.Options.TokenOptions;

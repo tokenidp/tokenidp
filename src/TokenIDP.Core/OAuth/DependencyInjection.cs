@@ -1,17 +1,15 @@
-using TokenIDP.Core.OAuth.Endpoints;
-using TokenIDP.Core.OAuth.GrantHandlers;
-using TokenIDP.Core.OAuth.Policies;
-using TokenIDP.Core.OAuth.UseCases;
-using TokenIDP.Core.Foundation.Validation;
-using TokenIDP.Domain.AggregateRoots.Clients;
-using TokenIDP.Core.OAuth.ExternalProviders;
-using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Foundation.Options;
+using TokenIDP.Core.Foundation.Validation;
+using TokenIDP.Core.OAuth.Endpoints;
+using TokenIDP.Core.OAuth.ExternalProviders;
+using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
+using TokenIDP.Core.OAuth.GrantHandlers;
+using TokenIDP.Core.OAuth.Policies;
 using TokenIDP.Core.OAuth.RateLimiting;
+using TokenIDP.Core.OAuth.UseCases;
 
 namespace TokenIDP.Core.OAuth;
 

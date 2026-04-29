@@ -1,6 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Emails;
-using TokenIDP.Infrastructure.Persistence;
 using System.Data;
+using TokenIDP.Domain.AggregateRoots.Emails;
 
 namespace TokenIDP.Workers.Queries;
 

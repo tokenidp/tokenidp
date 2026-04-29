@@ -1,7 +1,5 @@
-using TokenIDP.Domain.AggregateRoots.Clients;
 using System.Text;
 using System.Text.Json;
-using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 
 namespace TokenIDP.Core.OAuth.Endpoints;

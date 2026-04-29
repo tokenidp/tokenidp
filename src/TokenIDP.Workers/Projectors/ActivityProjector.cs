@@ -1,6 +1,5 @@
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Domain.ReadModels.Enums;
-using System.Text.Json;
 
 namespace TokenIDP.Workers.Projectors;
 
