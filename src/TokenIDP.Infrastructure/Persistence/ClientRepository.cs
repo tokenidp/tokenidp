@@ -76,6 +76,7 @@ internal sealed class ClientRepository : IClientRepository
             var apiScopeAssignments = activeApiResourceNames.Length == 0
                 ? new List<ClientApiScopeAssignment>()
                 : await _dbContext.ApiResources
+                    .IgnoreQueryFilters()
                     .AsNoTracking()
                     .Where(x =>
                         x.TenantId == client.TenantId &&
