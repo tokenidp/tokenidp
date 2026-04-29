@@ -50,6 +50,44 @@ public sealed class ClientRepositoryTests
         client.IsSystemTenant.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task GetClientShortInfo_ShouldResolveSystemClient_WhenTenantContextTargetsOperationalTenant()
+    {
+        var databaseName = Guid.NewGuid().ToString("N");
+
+        await using (var seedContext = CreateDbContext(
+            databaseName,
+            CreateCurrentUserService(userId: 1, tenantId: 0).Object,
+            new TenantContextAccessor()))
+        {
+            await SeedTenantAsync(seedContext, tenantId: 1, tenantKey: "system", isSystemTenant: true);
+            await SeedTenantAsync(seedContext, tenantId: 2, tenantKey: "smartdev", isSystemTenant: false);
+            await SeedClientAsync(seedContext, tenantId: 1, clientId: "idp-admin");
+            await seedContext.SaveChangesAsync();
+        }
+
+        var tenantContextAccessor = new TenantContextAccessor();
+        tenantContextAccessor.SetTenant(new TenantContext(2, "smartdev", false));
+        var currentUserService = CreateCurrentUserService(userId: 99, tenantId: 0);
+
+        await using var queryContext = CreateDbContext(databaseName, currentUserService.Object, tenantContextAccessor);
+        var cache = new TokenIDP.Infrastructure.MemoryCache(
+            new Microsoft.Extensions.Caching.Memory.MemoryCache(new MemoryCacheOptions()),
+            Mock.Of<IAppLogger<TokenIDP.Infrastructure.MemoryCache>>());
+        var repository = new ClientRepository(
+            queryContext,
+            Mock.Of<IAppLogger<ClientRepository>>(),
+            cache,
+            currentUserService.Object,
+            tenantContextAccessor);
+
+        var client = await repository.GetClientShortInfo("idp-admin");
+
+        client.ClientName.Should().Be("Admin Portal");
+        client.TenantId.Should().Be(1);
+        client.IsSystemTenant.Should().BeTrue();
+    }
+
     private static Mock<ICurrentUserService> CreateCurrentUserService(int userId, int tenantId)
     {
         var currentUserService = new Mock<ICurrentUserService>();

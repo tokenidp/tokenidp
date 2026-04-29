@@ -39,7 +39,13 @@ internal sealed class ClientRepository : IClientRepository
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
+            var systemTenantIds = _dbContext.Tenants
+                .IgnoreQueryFilters()
+                .Where(x => x.IsSystemTenant)
+                .Select(x => x.Id);
+
             var client = await _dbContext.Clients
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .Include(x => x.Tenant)
                 .Include(x => x.ClientGrantTypes)
@@ -52,9 +58,9 @@ internal sealed class ClientRepository : IClientRepository
                     !x.IsDeleted &&
                     (!scopedTenantId.HasValue ||
                      x.TenantId == scopedTenantId.Value ||
-                     x.Tenant.IsSystemTenant))
+                     systemTenantIds.Contains(x.TenantId)))
                 .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
-                .ThenByDescending(x => x.Tenant.IsSystemTenant)
+                .ThenByDescending(x => systemTenantIds.Contains(x.TenantId))
                 .FirstOrDefaultAsync();
 
             if (client == null)
@@ -130,13 +136,19 @@ internal sealed class ClientRepository : IClientRepository
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
             var client = await _dbContext.Clients
+                .AsNoTracking()
+                .Include(x => x.Tenant)
+                .Include(x => x.ClientAuthPolicy)
+                .Include(x => x.ClientScopes)
+                .Include(x => x.ClientGrantTypes)
                 .Where(x => x.Id == clientId && !x.IsDeleted)
-                .Select(ClientShortInfoProjection.Projection)
                 .FirstOrDefaultAsync();
 
             _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
-            return client;
+            return client is null
+                ? null
+                : MapClientShortInfo(client);
         });
 
         _logger.LogDebug("Retrieved client client validation result for {ClientId}", clientId);
@@ -155,21 +167,33 @@ internal sealed class ClientRepository : IClientRepository
 
         var clientDto = await _cache.GetOrCreateAsync(cacheKey, async () =>
         {
+            var systemTenantIds = _dbContext.Tenants
+                .IgnoreQueryFilters()
+                .Where(x => x.IsSystemTenant)
+                .Select(x => x.Id);
+
             var client = await _dbContext.Clients
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Include(x => x.Tenant)
+                .Include(x => x.ClientAuthPolicy)
+                .Include(x => x.ClientScopes)
+                .Include(x => x.ClientGrantTypes)
                 .Where(x =>
                     x.ClientId == clientId &&
                     !x.IsDeleted &&
                     (!scopedTenantId.HasValue ||
                      x.TenantId == scopedTenantId.Value ||
-                     x.Tenant.IsSystemTenant))
+                     systemTenantIds.Contains(x.TenantId)))
                 .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
-                .ThenByDescending(x => x.Tenant.IsSystemTenant)
-                .Select(ClientShortInfoProjection.Projection)
+                .ThenByDescending(x => systemTenantIds.Contains(x.TenantId))
                 .FirstOrDefaultAsync();
 
             _logger.LogDebug("Cached client for {CacheKey}", cacheKey);
 
-            return client;
+            return client is null
+                ? null
+                : MapClientShortInfo(client);
         });
 
         _logger.LogDebug("Retrieved client client validation result for {ClientId}", clientId);
@@ -180,8 +204,13 @@ internal sealed class ClientRepository : IClientRepository
     public Task<ClientRateLimitProfile?> FindRateLimitProfileAsync(string clientId, CancellationToken ct)
     {
         var scopedTenantId = ResolveScopedTenantId();
+        var systemTenantIds = _dbContext.Tenants
+            .IgnoreQueryFilters()
+            .Where(x => x.IsSystemTenant)
+            .Select(x => x.Id);
 
         return _dbContext.Clients
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(x =>
                 x.ClientId == clientId &&
@@ -189,9 +218,9 @@ internal sealed class ClientRepository : IClientRepository
                 !x.IsDeleted &&
                 (!scopedTenantId.HasValue ||
                  x.TenantId == scopedTenantId.Value ||
-                 x.Tenant.IsSystemTenant))
+                 systemTenantIds.Contains(x.TenantId)))
             .OrderByDescending(x => scopedTenantId.HasValue && x.TenantId == scopedTenantId.Value)
-            .ThenByDescending(x => x.Tenant.IsSystemTenant)
+            .ThenByDescending(x => systemTenantIds.Contains(x.TenantId))
             .Select(x => new ClientRateLimitProfile(
                 x.ClientId,
                 x.TenantId,
@@ -211,6 +240,20 @@ internal sealed class ClientRepository : IClientRepository
         return _currentUserService.TenantId > 0
             ? _currentUserService.TenantId
             : null;
+    }
+
+    private static ClientShortInfo MapClientShortInfo(Client client)
+    {
+        return new ClientShortInfo(
+            client.Id,
+            client.TenantId,
+            client.Tenant?.IsSystemTenant == true,
+            client.ClientAuthPolicy?.AllowForgotPassword ?? false,
+            client.ClientName,
+            client.RedirectUri,
+            client.RequiredPkce,
+            client.ClientScopes.Select(s => s.Scope),
+            client.ClientGrantTypes.Select(g => g.AllowedGrantType));
     }
 
     public async Task<ClientExpiringSecret> GetClientExpiringSecretsAsync(int daysAhead,
