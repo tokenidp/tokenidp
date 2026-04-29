@@ -14,13 +14,15 @@ internal sealed class AuthenticationService : IAuthenticationService
     private readonly IAppLogger<AuthenticationService> _logger;
     private readonly IUserRepository _userStore;
     private readonly PasswordService _passwordService;
+    private readonly ILookupNormalizer _normalizer;
 
     public AuthenticationService(IAppLogger<AuthenticationService> logger,
         ApplicationDbContext applicationDbContext,
         ICurrentUserService currentUserService,
         IApplicationEventDispatcher applicationEventDispatcher,
         PasswordService passwordService,
-        IUserRepository userStore)
+        IUserRepository userStore,
+        ILookupNormalizer normalizer)
     {
         _logger = logger;
         _applicationDbContext = applicationDbContext;
@@ -28,6 +30,7 @@ internal sealed class AuthenticationService : IAuthenticationService
         _applicationEventDispatcher = applicationEventDispatcher;
         _passwordService = passwordService;
         _userStore = userStore;
+        _normalizer = normalizer;
     }
 
     public async Task<AuthenticationContext> Authenticate(int tenantId, string userName, string password)
@@ -36,13 +39,20 @@ internal sealed class AuthenticationService : IAuthenticationService
         {
             _logger.LogInfo("Authentication attempt for user: {UserName}, {TenantId}", userName, tenantId);
 
+            var loginHint = userName.Trim();
+            var normalizedLoginHint = _normalizer.NormalizeName(loginHint);
+            var normalizedEmailHint = _normalizer.NormalizeEmail(loginHint);
+
             var user = await _applicationDbContext.Users
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.TenantId == tenantId
                 && !u.IsDeleted
                 && (
-                 u.UserName == userName
-                || u.Email == userName
-                || u.PhoneNumber == userName));
+                 u.NormalizedUserName == normalizedLoginHint
+                || u.NormalizedEmail == normalizedEmailHint
+                || u.UserName == loginHint
+                || u.Email == loginHint
+                || u.PhoneNumber == loginHint));
 
             if (user == null)
             {
@@ -53,7 +63,7 @@ internal sealed class AuthenticationService : IAuthenticationService
                 _applicationEventDispatcher.Raise(
                         new AuthenticationFlowEvent(
                             UserId: null,
-                            TenantId: _currentUserService.TenantId,
+                            TenantId: tenantId,
                             Action: AuthenticationAction.Login,
                             Result: AuthenticationResult.Failed,
                             Description: message,

@@ -24,7 +24,7 @@ internal class ActivityProjector
                 evt.EventType, evt.Id);
         }
 
-        Activity activity = default!;
+        Activity? activity = null;
 
         switch (activityType)
         {
@@ -39,6 +39,10 @@ internal class ActivityProjector
             case ActivityEventType.AccountLocked:
             case ActivityEventType.AccountUnlocked:
                 activity = ProjectAuthActivity<AuthenticationFlowEvent>(evt, ct);
+                if (activity is null)
+                {
+                    return;
+                }
                 break;
             case ActivityEventType.TenantCreated:
             case ActivityEventType.TenantUpdated:
@@ -79,7 +83,7 @@ internal class ActivityProjector
 
         _db.Activities.Add(activity);
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(ct);
     }
 
     private Activity OnTokenIssued(OutboxEvent evt, CancellationToken ct) =>
@@ -97,7 +101,7 @@ internal class ActivityProjector
     private Activity OnTokenExpired(OutboxEvent evt, CancellationToken ct) =>
         ProjectTokenLifecycleActivity<TokenExpiredEvent>(evt, ActivityEventType.TokenExpired, "Expired", "Token expired", ct);
 
-    private Activity ProjectAuthActivity<TEvent>(OutboxEvent outboxEvent, CancellationToken ct)
+    private Activity? ProjectAuthActivity<TEvent>(OutboxEvent outboxEvent, CancellationToken ct)
         where TEvent : class
     {
         var evt = JsonSerializer.Deserialize<TEvent>(outboxEvent.PayloadJson)
@@ -106,29 +110,50 @@ internal class ActivityProjector
 
         return evt switch
         {
-            AuthenticationFlowEvent e =>
-                Activity.Create
-                (
-                    tenantId: outboxEvent.TenantId,
-                    category: ActivityCategory.Authentication,
-                    eventType: Enum.Parse<ActivityEventType>(outboxEvent.EventType),
-                    severity: ActivitySeverity.Info,
-                    actorType: ActivityActorType.User,
-                    actorId: e.UserId?.ToString(),
-                    actorDisplayName: null,
-                    targetType: ActivityTargetType.User,
-                    targetId: e.UserId?.ToString(),
-                    targetDescription: e.Description,
-                    status: e.Result.ToString(),
-                    description: e.Description,
-                    correlationId: e.CorrelationId,
-                    ipAddress: e.IpAddress,
-                    userAgent: e.UserAgent,
-                    outboxEventId: outboxEvent.Id
-                ),
+            AuthenticationFlowEvent e => ProjectAuthenticationFlowActivity(outboxEvent, e),
             _ => throw new InvalidOperationException(
             $"No activity mapping defined for {evt.GetType().Name}")
         };
+    }
+
+    private Activity? ProjectAuthenticationFlowActivity(
+        OutboxEvent outboxEvent,
+        AuthenticationFlowEvent evt)
+    {
+        var tenantId = outboxEvent.TenantId > 0
+            ? outboxEvent.TenantId
+            : evt.TenantId;
+
+        if (tenantId <= 0)
+        {
+            _appLogger.LogWarning(
+                "Skipping auth activity projection for OutboxEvent {OutboxEventId} because TenantId is invalid. OutboxTenantId={OutboxTenantId}, PayloadTenantId={PayloadTenantId}",
+                outboxEvent.Id,
+                outboxEvent.TenantId,
+                evt.TenantId);
+
+            return null;
+        }
+
+        return Activity.Create
+        (
+            tenantId: tenantId,
+            category: ActivityCategory.Authentication,
+            eventType: Enum.Parse<ActivityEventType>(outboxEvent.EventType),
+            severity: ActivitySeverity.Info,
+            actorType: ActivityActorType.User,
+            actorId: evt.UserId?.ToString(),
+            actorDisplayName: null,
+            targetType: ActivityTargetType.User,
+            targetId: evt.UserId?.ToString(),
+            targetDescription: evt.Description,
+            status: evt.Result.ToString(),
+            description: evt.Description,
+            correlationId: evt.CorrelationId,
+            ipAddress: evt.IpAddress,
+            userAgent: evt.UserAgent,
+            outboxEventId: outboxEvent.Id
+        );
     }
 
     private Activity ProjectTokenActivity<TEvent>(OutboxEvent outboxEvent, ActivityEventType eventType, CancellationToken ct)
