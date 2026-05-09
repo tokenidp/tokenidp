@@ -710,7 +710,7 @@ function Dashboard() {
               value: formatNumber(emptyDashboard.registeredClients),
             },
             {
-              label: "Token TTL (avg)",
+              label: "Avg Access Token Lifetime",
               value: formatTokenTtl(emptyDashboard.averageTokenTtlSeconds),
             },
           ],
