@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import axios from "axios";
 import { trackPromise } from "react-promise-tracker";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "./useAuth";
 import { useGlobalError } from "./useGlobalError";
 
 const defaultBaseURL = process.env.REACT_APP_BASE_URL;

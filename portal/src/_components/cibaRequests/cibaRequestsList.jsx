@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../../_hooks/useAuth";
 import Breadcrumbs from "../common/breadcrumbs";
 import ConfirmModal from "../common/confirmModal";
 import InfoModal from "../common/infoModal";

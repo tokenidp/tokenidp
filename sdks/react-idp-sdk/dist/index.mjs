@@ -33,7 +33,6 @@ var defaultAuthConfig = {
   tokenPath: "/token",
   revokePath: "/revoke",
   logoutPath: "/logout",
-  userPermissionsPath: "/admin/user/permissions",
   // storage: "memory" | "sessionStorage" | "localStorage"
   storage: "sessionStorage",
   // keys
@@ -196,27 +195,6 @@ async function httpPostJson(url, body, extraHeaders = {}) {
   }
   return data;
 }
-async function httpGetJson(url, extraHeaders = {}) {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { ...extraHeaders }
-  });
-  const text = await res.text();
-  let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-  if (!res.ok) {
-    const msg = getErrorMessage(data, res.status);
-    const err = new Error(msg);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-  return data;
-}
 function getErrorMessage(data, status) {
   var _a;
   if (!data) return `HTTP ${status}`;
@@ -242,12 +220,6 @@ function extractToken(tokenPayload) {
   ) || 0;
   const idToken = tokenPayload.idToken || tokenPayload.id_token || "";
   return { accessToken, refreshToken, expiresIn, idToken };
-}
-function extractPermissions(userInfo) {
-  const direct = (userInfo == null ? void 0 : userInfo.permissions) || (userInfo == null ? void 0 : userInfo.Permissions) || (userInfo == null ? void 0 : userInfo.claims) || (userInfo == null ? void 0 : userInfo.Claims);
-  if (Array.isArray(direct)) return direct;
-  if (Array.isArray(userInfo == null ? void 0 : userInfo.permissionKeys)) return userInfo.permissionKeys;
-  return [];
 }
 async function exchangeAuthorizationCode(config, payload) {
   const url = withTenant(config.authority + config.tokenPath, config, "auth");
@@ -293,10 +265,6 @@ async function revokeToken(config, { accessToken, token, reasonRevoked }) {
   }
   return data;
 }
-async function loadUserPermissions(config, accessToken) {
-  const url = withTenant(config.authority + config.userPermissionsPath, config, "api");
-  return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
-}
 function buildLogoutUrl(config) {
   if (!(config == null ? void 0 : config.authority)) return "";
   const url = new URL(
@@ -334,18 +302,13 @@ function resolvePostLogoutRedirectUri(config) {
 var AuthContext = createContext(null);
 var initialState = {
   isAuthenticated: false,
-  userId: 0,
-  tenantId: 0,
   tenantKey: "",
-  isSystemTenant: false,
-  userName: "",
   landingPage: "",
   accessToken: "",
   refreshToken: "",
   idToken: "",
   expiresAt: 0,
-  error: "",
-  permissions: []
+  error: ""
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -452,15 +415,6 @@ function IdpAuthProvider({ children, config }) {
   const api = useMemo(() => {
     return {
       ...state,
-      hasPermission: (perm) => Array.isArray(state.permissions) && state.permissions.includes(perm),
-      hasAnyPermission: (perms) => Array.isArray(perms) && perms.some((p) => {
-        var _a;
-        return (_a = state.permissions) == null ? void 0 : _a.includes(p);
-      }),
-      hasAllPermissions: (perms) => Array.isArray(perms) && perms.every((p) => {
-        var _a;
-        return (_a = state.permissions) == null ? void 0 : _a.includes(p);
-      }),
       login: async (options = {}) => {
         if (!mergedConfig.authority || !mergedConfig.clientId || !mergedConfig.redirectUri) {
           throw new Error(
@@ -508,9 +462,8 @@ function IdpAuthProvider({ children, config }) {
         }
         clearLocalSession();
       },
-      // exchanges code->tokens, loads permissions, stores everything
+      // exchanges code->tokens and stores the OAuth session
       handleCallback: async ({ code, state: returnedState }) => {
-        var _a;
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
         const tenantKey = resolveApiTenantKey(mergedConfig);
@@ -540,31 +493,10 @@ function IdpAuthProvider({ children, config }) {
         if (!accessToken)
           throw new Error("Token response did not include an access token.");
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1e3 : 0;
-        const userInfoResult = await loadUserPermissions(
-          mergedConfig,
-          accessToken
-        );
-        if ((userInfoResult == null ? void 0 : userInfoResult.isSuccess) === false) {
-          throw new Error(
-            ((_a = userInfoResult == null ? void 0 : userInfoResult.error) == null ? void 0 : _a.error) || "Unable to load user permissions."
-          );
-        }
-        const userInfo = (userInfoResult == null ? void 0 : userInfoResult.value) || {};
-        const permissions = extractPermissions(userInfo);
-        const userId = userInfo.userId ?? userInfo.UserId ?? 0;
-        const tenantId = userInfo.tenantId ?? userInfo.TenantId ?? 0;
-        const responseTenantKey = userInfo.tenantKey ?? userInfo.TenantKey ?? tenantKey;
-        const isSystemTenant = userInfo.isSystemTenant ?? userInfo.IsSystemTenant ?? false;
-        const userName = userInfo.userName ?? userInfo.UserName ?? "";
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: {
-            userId,
-            tenantId,
-            tenantKey: responseTenantKey,
-            isSystemTenant,
-            userName,
-            permissions,
+            tenantKey,
             accessToken,
             refreshToken: refreshToken || "",
             idToken: idToken || "",
@@ -575,12 +507,7 @@ function IdpAuthProvider({ children, config }) {
         sessionStorage.removeItem(mergedConfig.pkceVerifierKey);
         sessionStorage.removeItem(mergedConfig.oauthStateKey);
         return {
-          userId,
-          tenantId,
-          tenantKey: responseTenantKey,
-          isSystemTenant,
-          userName,
-          permissions,
+          tenantKey,
           accessToken,
           refreshToken: refreshToken || "",
           idToken: idToken || "",
@@ -642,7 +569,13 @@ function buildInitialState(persistedState, config) {
   }
   return {
     ...initialState,
-    ...persistedState,
+    isAuthenticated: !!persistedState.isAuthenticated,
+    landingPage: persistedState.landingPage || "",
+    accessToken: persistedState.accessToken || "",
+    refreshToken: persistedState.refreshToken || "",
+    idToken: persistedState.idToken || "",
+    expiresAt: persistedState.expiresAt || 0,
+    error: persistedState.error || "",
     tenantKey: config.tenantKey
   };
 }

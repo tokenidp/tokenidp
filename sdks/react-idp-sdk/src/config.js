@@ -16,7 +16,6 @@ export const defaultAuthConfig = {
   tokenPath: "/token",
   revokePath: "/revoke",
   logoutPath: "/logout",
-  userPermissionsPath: "/admin/user/permissions",
 
   // storage: "memory" | "sessionStorage" | "localStorage"
   storage: "sessionStorage",

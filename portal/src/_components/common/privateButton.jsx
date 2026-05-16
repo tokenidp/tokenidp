@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../../_hooks/useAuth";
 
 function PrivateButton(props) {
   const user = useAuth();

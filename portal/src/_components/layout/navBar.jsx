@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../../_hooks/useAuth";
 import useTree from "../../_hooks/useTree";
 import logo from "../../_assets/images/TokenIDP.svg";
 

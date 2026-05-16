@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../../_hooks/useAuth";
 import Breadcrumbs from "../common/breadcrumbs";
 import Pagination from "../common/pagination";
 import { useRoles } from "../../_hooks/useRoles";

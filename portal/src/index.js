@@ -8,6 +8,7 @@ import { GlobalSuccessProvider } from "./_hooks/useGlobalSuccess";
 import Spinner from "./_components/common/spinner";
 import GlobalSuccessToast from "./_components/common/globalSuccessToast";
 import { IdpAuthProvider } from "tokenidp-react";
+import { AuthProvider } from "./_hooks/useAuth";
 
 const container = document.getElementById("root");
 const root = ReactDOM.createRoot(container);
@@ -37,9 +38,11 @@ root.render(
     >
       <GlobalErrorProvider>
         <GlobalSuccessProvider>
-          <App />
-          <GlobalSuccessToast />
-          <Spinner />
+          <AuthProvider>
+            <App />
+            <GlobalSuccessToast />
+            <Spinner />
+          </AuthProvider>
         </GlobalSuccessProvider>
       </GlobalErrorProvider>
     </IdpAuthProvider>

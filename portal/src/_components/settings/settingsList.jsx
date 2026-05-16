@@ -4,7 +4,7 @@ import ConfirmModal from "../common/confirmModal";
 import InfoModal from "../common/infoModal";
 import { useSettings } from "../../_hooks/useSettings";
 import { useGlobalSuccess } from "../../_hooks/useGlobalSuccess";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../../_hooks/useAuth";
 
 const defaultSearch = {
   pageNumber: 1,

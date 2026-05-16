@@ -20,9 +20,7 @@ import {
   exchangeAuthorizationCode,
   refreshWithToken,
   revokeToken,
-  loadUserPermissions,
   extractToken,
-  extractPermissions,
   buildLogoutUrl,
 } from "./authApi";
 
@@ -30,18 +28,13 @@ const AuthContext = createContext(null);
 
 const initialState = {
   isAuthenticated: false,
-  userId: 0,
-  tenantId: 0,
   tenantKey: "",
-  isSystemTenant: false,
-  userName: "",
   landingPage: "",
   accessToken: "",
   refreshToken: "",
   idToken: "",
   expiresAt: 0,
   error: "",
-  permissions: [],
 };
 
 function reducer(state, action) {
@@ -171,15 +164,6 @@ export function IdpAuthProvider({ children, config }) {
     return {
       ...state,
 
-      hasPermission: (perm) =>
-        Array.isArray(state.permissions) && state.permissions.includes(perm),
-      hasAnyPermission: (perms) =>
-        Array.isArray(perms) &&
-        perms.some((p) => state.permissions?.includes(p)),
-      hasAllPermissions: (perms) =>
-        Array.isArray(perms) &&
-        perms.every((p) => state.permissions?.includes(p)),
-
       login: async (options = {}) => {
         if (
           !mergedConfig.authority ||
@@ -240,7 +224,7 @@ export function IdpAuthProvider({ children, config }) {
         clearLocalSession();
       },
 
-      // exchanges code->tokens, loads permissions, stores everything
+      // exchanges code->tokens and stores the OAuth session
       handleCallback: async ({ code, state: returnedState }) => {
         const verifier = sessionStorage.getItem(mergedConfig.pkceVerifierKey);
         if (!verifier) throw new Error("Missing code verifier (PKCE).");
@@ -277,38 +261,10 @@ export function IdpAuthProvider({ children, config }) {
 
         const expiresAt = expiresIn ? Date.now() + expiresIn * 1000 : 0;
 
-        // permissions/user info
-        const userInfoResult = await loadUserPermissions(
-          mergedConfig,
-          accessToken,
-        );
-
-        // Your API pattern: { isSuccess, value, error }
-        if (userInfoResult?.isSuccess === false) {
-          throw new Error(
-            userInfoResult?.error?.error || "Unable to load user permissions.",
-          );
-        }
-
-        const userInfo = userInfoResult?.value || {};
-        const permissions = extractPermissions(userInfo);
-
-        const userId = userInfo.userId ?? userInfo.UserId ?? 0;
-        const tenantId = userInfo.tenantId ?? userInfo.TenantId ?? 0;
-        const responseTenantKey = userInfo.tenantKey ?? userInfo.TenantKey ?? tenantKey;
-        const isSystemTenant =
-          userInfo.isSystemTenant ?? userInfo.IsSystemTenant ?? false;
-        const userName = userInfo.userName ?? userInfo.UserName ?? "";
-
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: {
-            userId,
-            tenantId,
-            tenantKey: responseTenantKey,
-            isSystemTenant,
-            userName,
-            permissions,
+            tenantKey,
             accessToken,
             refreshToken: refreshToken || "",
             idToken: idToken || "",
@@ -322,12 +278,7 @@ export function IdpAuthProvider({ children, config }) {
         sessionStorage.removeItem(mergedConfig.oauthStateKey);
 
         return {
-          userId,
-          tenantId,
-          tenantKey: responseTenantKey,
-          isSystemTenant,
-          userName,
-          permissions,
+          tenantKey,
           accessToken,
           refreshToken: refreshToken || "",
           idToken: idToken || "",
@@ -402,7 +353,13 @@ function buildInitialState(persistedState, config) {
 
   return {
     ...initialState,
-    ...persistedState,
+    isAuthenticated: !!persistedState.isAuthenticated,
+    landingPage: persistedState.landingPage || "",
+    accessToken: persistedState.accessToken || "",
+    refreshToken: persistedState.refreshToken || "",
+    idToken: persistedState.idToken || "",
+    expiresAt: persistedState.expiresAt || 0,
+    error: persistedState.error || "",
     tenantKey: config.tenantKey,
   };
 }

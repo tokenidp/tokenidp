@@ -26,31 +26,6 @@ async function httpPostJson(url, body, extraHeaders = {}) {
   return data;
 }
 
-async function httpGetJson(url, extraHeaders = {}) {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { ...extraHeaders },
-  });
-
-  const text = await res.text();
-  let data = null;
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
-  }
-
-  if (!res.ok) {
-    const msg = getErrorMessage(data, res.status);
-    const err = new Error(msg);
-    err.status = res.status;
-    err.data = data;
-    throw err;
-  }
-
-  return data;
-}
-
 function getErrorMessage(data, status) {
   if (!data) return `HTTP ${status}`;
 
@@ -103,20 +78,6 @@ export function extractToken(tokenPayload) {
   return { accessToken, refreshToken, expiresIn, idToken };
 }
 
-export function extractPermissions(userInfo) {
-  const direct =
-    userInfo?.permissions ||
-    userInfo?.Permissions ||
-    userInfo?.claims ||
-    userInfo?.Claims;
-
-  if (Array.isArray(direct)) return direct;
-
-  if (Array.isArray(userInfo?.permissionKeys)) return userInfo.permissionKeys;
-
-  return [];
-}
-
 export async function exchangeAuthorizationCode(config, payload) {
   const url = withTenant(config.authority + config.tokenPath, config, "auth");
   return await httpPostJson(url, payload);
@@ -167,11 +128,6 @@ export async function revokeToken(config, { accessToken, token, reasonRevoked })
   }
 
   return data;
-}
-
-export async function loadUserPermissions(config, accessToken) {
-  const url = withTenant(config.authority + config.userPermissionsPath, config, "api");
-  return await httpGetJson(url, { Authorization: `Bearer ${accessToken}` });
 }
 
 export function buildLogoutUrl(config) {

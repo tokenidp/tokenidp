@@ -1,6 +1,6 @@
 import React from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "tokenidp-react";
+import { useAuth } from "../_hooks/useAuth";
 
 function normalizePermissions(user) {
   const rawPerms = user?.permissions ?? user?.Permissions ?? [];
@@ -33,6 +33,12 @@ function PrivateRoute({ children, requiredAnyOf, requiredAllOf }) {
   const location = useLocation();
   if (!user?.isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  if (
+    user?.permissionsLoading &&
+    (requiredAnyOf?.length || requiredAllOf?.length)
+  ) {
+    return null;
   }
   const permissionEntries = Array.isArray(user?.permissions)
     ? user.permissions
