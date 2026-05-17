@@ -99,50 +99,11 @@ else if (ui != null)
 
             @foreach (var p in ui.ExternalProviders.Where(x => x.Enabled))
             {
-                if (p.DisplayName == "Google")
-                {
-                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
-                        <span class="btn-icon">
-                            <svg viewBox="0 0 533.5 544.3">
-                                <path fill="#4285f4"
-                                      d="M533.5 278.4c0-17.4-1.6-34.1-4.7-50.3H272v95.2h146.9c-6.3 34.1-25 63-53.4 82.3v68h86.4c50.5-46.5 81.6-115.1 81.6-195.2z" />
-                                <path fill="#34a853"
-                                      d="M272 544.3c72.6 0 133.6-24 178.1-65.2l-86.4-68c-24 16.2-54.6 25.8-91.7 25.8-70.5 0-130.2-47.6-151.6-111.3h-89.7v69.9c44.5 88.1 136 148.8 241.3 148.8z" />
-                                <path fill="#fbbc04"
-                                      d="M120.4 325.6c-10.2-30.4-10.2-63.2 0-93.6v-69.9h-89.7c-38.6 76.8-38.6 166.7 0 243.5l89.7-69.9z" />
-                                <path fill="#ea4335"
-                                      d="M272 107.7c39.5-.6 77.6 14.1 106.6 41.1l79.3-79.3C407.7 24.5 345.3-1.1 272 0 166.7 0 75.2 60.7 30.7 148.8l89.7 69.9C141.8 155.3 201.5 107.7 272 107.7z" />
-                            </svg>
-                        </span>
-                        <span class="btn-text">Sign in with Google</span>
-                    </button>
-                }
-                if (p.DisplayName == "Microsoft")
-                {
-                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
-                        <span class="btn-icon">
-                            <svg viewBox="0 0 23 23">
-                                <rect fill="#f25022" x="1" y="1" width="10" height="10" />
-                                <rect fill="#7fba00" x="12" y="1" width="10" height="10" />
-                                <rect fill="#00a4ef" x="1" y="12" width="10" height="10" />
-                                <rect fill="#ffb900" x="12" y="12" width="10" height="10" />
-                            </svg>
-                        </span>
-                        <span class="btn-text">Sign in with Microsoft</span>
-                    </button>
-                }
-                if (p.DisplayName == "GitHub")
-                {
-                    <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
-                        <span class="btn-icon">
-                            <svg viewBox="0 0 24 24">
-                                <path fill="#181717"
-                                      d="M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.43 7.86 10.96.57.1.78-.25.78-.55v-2.1c-3.2.7-3.87-1.54-3.87-1.54-.53-1.35-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.45.11-3.02 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 2.9-.39c.99 0 1.99.13 2.9.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.57.23 2.73.11 3.02.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.41.35.78 1.04.78 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z" />
-                            </svg>
-                        </span>
-                        <span class="btn-text">Continue with GitHub</span>
-                    </button>
-                }
+                var providerUi = GetProviderUi(p.DisplayName);
+                <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
+                    <span class="btn-icon">@((MarkupString)providerUi.IconSvg)</span>
+                    <span class="btn-text">@providerUi.ButtonText</span>
+                </button>
             }
         }
     </div>
@@ -166,6 +127,8 @@ else if (ui != null)
 
         public bool RememberMe { get; set; }
     }
+
+    private sealed record ExternalProviderUi(string ButtonText, string IconSvg);
 
     private AuthorizationPageUi? ui;
     private PreAuthorization? preAuthorization;
@@ -341,6 +304,54 @@ else if (ui != null)
             new Dictionary<string, string?> { ["ctx"] = authorizationContextId });
 
         Navigation.NavigateTo(url, forceLoad: true);
+    }
+
+    private static ExternalProviderUi GetProviderUi(string? displayName)
+    {
+        var providerName = string.IsNullOrWhiteSpace(displayName)
+            ? "external provider"
+            : displayName.Trim();
+
+        return providerName.ToUpperInvariant() switch
+        {
+            "GOOGLE" => new("Sign in with Google",
+                "<svg viewBox='0 0 533.5 544.3'>" +
+                "<path fill='#4285f4' d='M533.5 278.4c0-17.4-1.6-34.1-4.7-50.3H272v95.2h146.9c-6.3 34.1-25 63-53.4 82.3v68h86.4c50.5-46.5 81.6-115.1 81.6-195.2z' />" +
+                "<path fill='#34a853' d='M272 544.3c72.6 0 133.6-24 178.1-65.2l-86.4-68c-24 16.2-54.6 25.8-91.7 25.8-70.5 0-130.2-47.6-151.6-111.3h-89.7v69.9c44.5 88.1 136 148.8 241.3 148.8z' />" +
+                "<path fill='#fbbc04' d='M120.4 325.6c-10.2-30.4-10.2-63.2 0-93.6v-69.9h-89.7c-38.6 76.8-38.6 166.7 0 243.5l89.7-69.9z' />" +
+                "<path fill='#ea4335' d='M272 107.7c39.5-.6 77.6 14.1 106.6 41.1l79.3-79.3C407.7 24.5 345.3-1.1 272 0 166.7 0 75.2 60.7 30.7 148.8l89.7 69.9C141.8 155.3 201.5 107.7 272 107.7z' />" +
+                "</svg>"),
+            "MICROSOFT" => new("Sign in with Microsoft",
+                "<svg viewBox='0 0 23 23'>" +
+                "<rect fill='#f25022' x='1' y='1' width='10' height='10' />" +
+                "<rect fill='#7fba00' x='12' y='1' width='10' height='10' />" +
+                "<rect fill='#00a4ef' x='1' y='12' width='10' height='10' />" +
+                "<rect fill='#ffb900' x='12' y='12' width='10' height='10' />" +
+                "</svg>"),
+            "GITHUB" => new("Continue with GitHub",
+                "<svg viewBox='0 0 24 24'>" +
+                "<path fill='#181717' d='M12 .5C5.73.5.5 5.73.5 12c0 5.1 3.29 9.43 7.86 10.96.57.1.78-.25.78-.55v-2.1c-3.2.7-3.87-1.54-3.87-1.54-.53-1.35-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.45.11-3.02 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 2.9-.39c.99 0 1.99.13 2.9.39 2.21-1.49 3.18-1.18 3.18-1.18.63 1.57.23 2.73.11 3.02.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.4-5.25 5.68.41.35.78 1.04.78 2.1v3.12c0 .3.21.66.79.55A11.51 11.51 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5z' />" +
+                "</svg>"),
+            "APPLE" => new("Continue with Apple",
+                "<svg viewBox='0 0 24 24'>" +
+                "<path fill='#000000' d='M16.7 12.6c0-2.2 1.8-3.3 1.9-3.4-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.7-.8-2.9-.8-1.5 0-2.9.9-3.7 2.2-1.6 2.8-.4 6.9 1.1 9.1.8 1.1 1.7 2.4 2.9 2.3 1.1 0 1.6-.7 2.9-.7s1.7.7 2.9.7c1.2 0 2-1.1 2.7-2.2.9-1.3 1.2-2.5 1.2-2.6 0-.1-2.4-1-2.4-3.7zM14.5 6c.6-.8 1.1-1.8 1-2.9-1 .1-2.1.7-2.8 1.4-.6.7-1.1 1.7-1 2.8 1.1.1 2.2-.5 2.8-1.3z' />" +
+                "</svg>"),
+            "LINKEDIN" => new("Continue with LinkedIn",
+                "<svg viewBox='0 0 24 24'>" +
+                "<rect fill='#0a66c2' width='24' height='24' rx='3' />" +
+                "<path fill='#ffffff' d='M5.3 9h3.1v9.9H5.3V9zm1.6-4.9c1 0 1.7.7 1.7 1.6s-.7 1.6-1.7 1.6-1.7-.7-1.7-1.6.7-1.6 1.7-1.6zM10.3 9h3v1.4h.1c.4-.8 1.5-1.7 3-1.7 3.2 0 3.8 2.1 3.8 4.9v5.3h-3.1v-4.7c0-1.1 0-2.6-1.6-2.6s-1.8 1.2-1.8 2.5v4.8h-3.1V9z' />" +
+                "</svg>"),
+            "OKTA" => new("Continue with Okta",
+                "<svg viewBox='0 0 24 24'>" +
+                "<circle fill='#00297a' cx='12' cy='12' r='11' />" +
+                "<text x='12' y='14.8' text-anchor='middle' font-size='5.2' font-family='Arial, Helvetica, sans-serif' font-weight='700' fill='#ffffff'>OKTA</text>" +
+                "</svg>"),
+            _ => new($"Continue with {providerName}",
+                "<svg viewBox='0 0 24 24'>" +
+                "<circle fill='#475467' cx='12' cy='12' r='11' />" +
+                "<path fill='#ffffff' d='M12 5.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zm0 8.5c2.7 0 5 1.4 5 3.1v.9H7v-.9c0-1.7 2.3-3.1 5-3.1z' />" +
+                "</svg>")
+        };
     }
 
     private string GetErrorDisplayStyle() => string.IsNullOrEmpty(ErrorMessage) ? "display:none;" : "";
