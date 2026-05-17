@@ -4,7 +4,21 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>TokenIDP.Core</PackageId>
+    <Title>TokenIDP Core</Title>
+    <Description>Core OAuth, OpenID Connect, and identity provider abstractions for TokenIDP.</Description>
+    <Authors>TokenIDP</Authors>
+    <Company>TokenIDP</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>identity;oauth;openid-connect;core</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="OAuth\Endpoints\LoginEndpoint.cs" />

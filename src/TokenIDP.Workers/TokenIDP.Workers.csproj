@@ -4,7 +4,21 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>TokenIDP.Workers</PackageId>
+    <Title>TokenIDP Workers</Title>
+    <Description>Background worker components for TokenIDP.</Description>
+    <Authors>TokenIDP</Authors>
+    <Company>TokenIDP</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>identity;oauth;openid-connect;workers</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="6.0.6" />

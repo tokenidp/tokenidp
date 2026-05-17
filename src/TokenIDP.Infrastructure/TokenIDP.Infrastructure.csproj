@@ -4,7 +4,21 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>TokenIDP.Infrastructure</PackageId>
+    <Title>TokenIDP Infrastructure</Title>
+    <Description>Persistence, external provider, and infrastructure integrations for TokenIDP.</Description>
+    <Authors>TokenIDP</Authors>
+    <Company>TokenIDP</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>identity;oauth;openid-connect;infrastructure</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="ExternalProviders\Source\**\*.cs" />

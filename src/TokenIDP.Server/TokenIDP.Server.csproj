@@ -4,6 +4,18 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <PackageId>TokenIDP.Server</PackageId>
+    <Title>TokenIDP Server</Title>
+    <Description>TokenIDP server components and identity provider host package.</Description>
+    <Authors>TokenIDP</Authors>
+    <Company>TokenIDP</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>SmartDevCon;identity;oauth;openid-connect;blazor;aspnetcore</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>TokenIDP.png</PackageIcon>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +39,11 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="TokenIDP.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

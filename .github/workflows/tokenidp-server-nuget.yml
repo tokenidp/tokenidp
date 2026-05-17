@@ -1,0 +1,90 @@
+name: Pack TokenIDP Server NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish package to NuGet feed"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      version:
+        description: "Optional exact package version, for example 1.2.3"
+        required: false
+        default: ""
+      baseVersion:
+        description: "Base version for prerelease builds"
+        required: false
+        default: "0.1.0"
+      source:
+        description: "NuGet package source"
+        required: false
+        default: "https://api.nuget.org/v3/index.json"
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+    paths:
+      - "src/TokenIDP.Server/**"
+      - "src/TokenIDP.Core/**"
+      - "src/TokenIDP.Domain/**"
+      - "src/TokenIDP.Infrastructure/**"
+      - "src/TokenIDP.Workers/**"
+      - "scripts/Pack-TokenIDPServer.ps1"
+      - ".github/workflows/tokenidp-server-nuget.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Pack package
+        id: pack
+        shell: pwsh
+        run: >
+          ./scripts/Pack-TokenIDPServer.ps1
+          -Configuration Release
+          -OutputDirectory artifacts/nuget
+          -BaseVersion "${{ inputs.baseVersion || '0.1.0' }}"
+          -Version "${{ inputs.version || '' }}"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokenidp-server-nuget
+          path: artifacts/nuget/*.nupkg
+          if-no-files-found: error
+
+      - name: Publish package
+        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish == 'true' }}
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
+            throw "Publishing requires repository secret NUGET_API_KEY."
+          }
+
+          Get-ChildItem -Path artifacts/nuget -Filter "*.nupkg" | ForEach-Object {
+            dotnet nuget push $_.FullName `
+              --source "${{ inputs.source || 'https://api.nuget.org/v3/index.json' }}" `
+              --api-key $env:NUGET_API_KEY `
+              --skip-duplicate
+          }
