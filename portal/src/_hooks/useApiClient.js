@@ -3,14 +3,14 @@ import axios from "axios";
 import { trackPromise } from "react-promise-tracker";
 import { useAuth } from "./useAuth";
 import { useGlobalError } from "./useGlobalError";
-
-const defaultBaseURL = process.env.REACT_APP_BASE_URL;
-const tenantQueryParameter = process.env.REACT_APP_TENANT_QUERY_PARAMETER || "tenant";
+import { getPortalConfig } from "../config";
 
 const useApiClient = (options = {}) => {
   const user = useAuth();
   const { setError } = useGlobalError();
-  const { baseURL = defaultBaseURL, skipAuth = false, track = true } = options;
+  const portalConfig = getPortalConfig();
+  const tenantQueryParameter = portalConfig.tenantQueryParameter;
+  const { baseURL = portalConfig.baseUrl, skipAuth = false, track = true } = options;
 
   const apiClient = useMemo(() => axios.create({ baseURL }), [baseURL]);
 
@@ -35,7 +35,7 @@ const useApiClient = (options = {}) => {
       ...config,
       params,
     };
-  }, []);
+  }, [tenantQueryParameter]);
 
   useEffect(() => {
     const interceptorId = apiClient.interceptors.request.use((config) => {

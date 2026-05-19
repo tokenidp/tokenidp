@@ -1,3 +1,25 @@
+# TokenIDP Admin Portal
+
+The admin portal is built as a static React application. Production releases are
+distributed as `TokenIDP.AdminPortal.{version}.zip`; extract the ZIP to IIS,
+Nginx, Azure Static Web Apps, S3/CloudFront, Netlify, or another static host.
+
+Edit `config.json` after extracting the ZIP:
+
+```json
+{
+  "baseUrl": "https://idp.customer.com",
+  "authority": "https://idp.customer.com",
+  "clientId": "idp-admin",
+  "redirectUri": "https://admin.customer.com/auth/callback",
+  "postLogoutRedirectUri": "https://admin.customer.com/login",
+  "scope": "openid profile tokenidp.admin.write tokenidp.admin.read"
+}
+```
+
+The IDP backend must allow the portal origin in CORS and register the same
+redirect/logout URLs for the `idp-admin` SPA client.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

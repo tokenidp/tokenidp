@@ -29,7 +29,7 @@ jobs:
         run: npm ci
         working-directory: portal
 
-      - name: Generate production env file
+      - name: Generate runtime config
         env:
           REACT_APP_DEPLOYMENT_ENV: ${{ vars.REACT_APP_DEPLOYMENT_ENV }}
           REACT_APP_BASE_URL: ${{ vars.REACT_APP_BASE_URL }}
@@ -39,7 +39,6 @@ jobs:
           REACT_APP_OAUTH_REDIRECT_URI: ${{ vars.REACT_APP_OAUTH_REDIRECT_URI }}
           REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI: ${{ vars.REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI }}
           REACT_APP_OAUTH_SCOPE: ${{ vars.REACT_APP_OAUTH_SCOPE }}
-          REACT_APP_OAUTH_CODE_VERIFIER_KEY: ${{ vars.REACT_APP_OAUTH_CODE_VERIFIER_KEY }}
         run: |
           DEPLOYMENT_ENV="${REACT_APP_DEPLOYMENT_ENV:-staging}"
           BASE_URL="${REACT_APP_BASE_URL:-https://tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net}"
@@ -49,18 +48,23 @@ jobs:
           REDIRECT_URI="${REACT_APP_OAUTH_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/auth/callback}"
           POST_LOGOUT_REDIRECT_URI="${REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/login}"
           OAUTH_SCOPE="${REACT_APP_OAUTH_SCOPE:-openid profile tokenidp.admin.write tokenidp.admin.read}"
-          CODE_VERIFIER_KEY="${REACT_APP_OAUTH_CODE_VERIFIER_KEY:-pkce_code_verifier}"
           cat > .env.production <<EOF
           GENERATE_SOURCEMAP=false
-          REACT_APP_DEPLOYMENT_ENV=${DEPLOYMENT_ENV}
-          REACT_APP_BASE_URL=${BASE_URL}
-          REACT_APP_AUTH_BASE_URL=${AUTH_BASE_URL}
-          REACT_APP_TENANT_PROPAGATION_MODE=${TENANT_PROPAGATION_MODE}
-          REACT_APP_OAUTH_CLIENT_ID=${CLIENT_ID}
-          REACT_APP_OAUTH_REDIRECT_URI=${REDIRECT_URI}
-          REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI=${POST_LOGOUT_REDIRECT_URI}
-          REACT_APP_OAUTH_SCOPE=${OAUTH_SCOPE}
-          REACT_APP_OAUTH_CODE_VERIFIER_KEY=${CODE_VERIFIER_KEY}
+          EOF
+          cat > public/config.json <<EOF
+          {
+            "deploymentEnvironment": "${DEPLOYMENT_ENV}",
+            "baseUrl": "${BASE_URL}",
+            "authority": "${AUTH_BASE_URL}",
+            "tenantPropagationMode": "${TENANT_PROPAGATION_MODE}",
+            "tenantQueryParameter": "tenant",
+            "userPermissionsPath": "admin/user/permissions",
+            "clientId": "${CLIENT_ID}",
+            "redirectUri": "${REDIRECT_URI}",
+            "postLoginRedirectUri": "/dashboard",
+            "postLogoutRedirectUri": "${POST_LOGOUT_REDIRECT_URI}",
+            "scope": "${OAUTH_SCOPE}"
+          }
           EOF
         working-directory: portal
 

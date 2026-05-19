@@ -1,0 +1,13 @@
+{
+  "deploymentEnvironment": "production",
+  "baseUrl": "https://idp.example.com",
+  "authority": "https://idp.example.com",
+  "tenantPropagationMode": "none",
+  "tenantQueryParameter": "tenant",
+  "userPermissionsPath": "admin/user/permissions",
+  "clientId": "idp-admin",
+  "redirectUri": "https://admin.example.com/auth/callback",
+  "postLoginRedirectUri": "/dashboard",
+  "postLogoutRedirectUri": "https://admin.example.com/login",
+  "scope": "openid profile tokenidp.admin.write tokenidp.admin.read"
+}

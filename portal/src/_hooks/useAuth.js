@@ -7,12 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useAuth as useIdpAuth } from "tokenidp-react";
-
-const defaultBaseURL = process.env.REACT_APP_BASE_URL;
-const tenantQueryParameter =
-  process.env.REACT_APP_TENANT_QUERY_PARAMETER || "tenant";
-const userPermissionsPath =
-  process.env.REACT_APP_USER_PERMISSIONS_PATH || "admin/user/permissions";
+import { getPortalConfig } from "../config";
 
 const PortalAuthContext = createContext(null);
 
@@ -35,7 +30,13 @@ function extractPermissions(userInfo) {
 }
 
 function buildPermissionUrl(tenantKey) {
-  const url = new URL(userPermissionsPath, defaultBaseURL || window.location.origin);
+  const portalConfig = getPortalConfig();
+  const url = new URL(
+    portalConfig.userPermissionsPath,
+    portalConfig.baseUrl || window.location.origin,
+  );
+  const tenantQueryParameter = portalConfig.tenantQueryParameter;
+
   if (tenantKey && !url.searchParams.has(tenantQueryParameter)) {
     url.searchParams.set(tenantQueryParameter, tenantKey);
   }
