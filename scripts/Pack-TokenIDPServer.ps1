@@ -5,7 +5,7 @@ param(
     [string]$OutputDirectory = "artifacts/nuget",
     [string]$BaseVersion = "0.1.0",
     [string]$Version = "",
-    [bool]$PackDependencies = $true,
+    [bool]$PackDependencies = $false,
     [switch]$Publish,
     [string]$Source = "https://api.nuget.org/v3/index.json",
     [string]$ApiKey = $env:NUGET_API_KEY,
