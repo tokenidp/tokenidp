@@ -39,9 +39,7 @@ public static class DatabaseProviderResolver
         switch (NormalizeProvider(provider))
         {
             case MySql:
-                optionsBuilder.UseMySql(
-                    connectionString,
-                    ServerVersion.AutoDetect(connectionString));
+                optionsBuilder.UseMySQL(connectionString);
                 break;
 
             case SqlServer:

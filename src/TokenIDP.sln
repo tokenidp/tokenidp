@@ -12,11 +12,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Workers", "TokenID
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Server", "TokenIDP.Server\TokenIDP.Server.csproj", "{C30DDEDF-CA23-4C93-AD9F-7B84691283A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenIDP.Service", "TokenIDP.Service\TokenIDP.Service.csproj", "{838889C3-77A6-41BE-8A69-775B9642773D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Service", "TokenIDP.Service\TokenIDP.Service.csproj", "{838889C3-77A6-41BE-8A69-775B9642773D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TokenIDP.Tests", "TokenIDP.Tests\TokenIDP.Tests.csproj", "{CA867F06-7DC2-4BE1-84B5-691DF5770F00}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TokenIDP.Tests", "TokenIDP.Tests\TokenIDP.Tests.csproj", "{CA867F06-7DC2-4BE1-84B5-691DF5770F00}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

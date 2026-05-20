@@ -34,8 +34,9 @@ public sealed class TenantOutboxTests
 
         createResult.IsSuccess.Should().BeTrue();
         tenant.Should().NotBeNull();
+        tenant!.GenerateTenantCode(1);
 
-        dbContext.Tenants.Add(tenant!);
+        dbContext.Tenants.Add(tenant);
         await dbContext.SaveChangesAsync();
 
         var updateResult = tenant!.UpdateBranding("Dark", "logo.svg", "#445566", "en", "Welcome");
