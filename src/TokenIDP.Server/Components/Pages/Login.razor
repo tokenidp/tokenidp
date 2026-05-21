@@ -17,7 +17,6 @@
 @inject NavigationManager Navigation
 @inject IAuthorizationRepository authorizationStore
 @inject IAuthorizationPageUiUseCase PageUiUseCase
-@inject IAuthorizationCodeUseCase AuthService
 @inject ILogger<Login> logger
 
 @if (!isRequestValid)
@@ -60,31 +59,28 @@ else if (ui != null)
 
         @if (ui.AllowLocalLogin)
         {
-            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm" id="local-login-form">
+            <form method="post" action="@LocalLoginUrl" id="local-login-form">
                 <AntiforgeryToken />
-                <DataAnnotationsValidator />
                 <div class="field">
                     <label for="username">Username</label>
-                    <InputText @bind-Value="loginModel.UserName" id="username" />
-                    <ValidationMessage For="@(() => loginModel.UserName)" />
+                    <input name="username" id="username" required />
                 </div>
 
                 <div class="field">
                     <label for="password">Password</label>
-                    <InputText @bind-Value="loginModel.Password" id="password" type="password" />
-                    <ValidationMessage For="@(() => loginModel.Password)" />
+                    <input name="password" id="password" type="password" required />
                 </div>
 
                 <div class="options-row">
                     @if (ui.AllowStaySignedIn)
                     {
-                        <label><InputCheckbox @bind-Value="loginModel.RememberMe" /> Stay signed in</label>
+                        <label><input type="checkbox" name="rememberMe" value="true" /> Stay signed in</label>
                     }
 
                     <a href="@ForgotPasswordUrl">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-primary" data-login-submit>Sign In</button>
-            </EditForm>
+            </form>
         }
 
         @* EXTERNAL PROVIDERS *@
@@ -135,10 +131,9 @@ else if (ui != null)
 
     private string authorizationContextId = string.Empty;
 
-    [SupplyParameterFromForm(FormName = "LoginForm")]
-    private LoginModel loginModel { get; set; } = default!;
-
     private Dictionary<string, string> QueryParams = new();
+
+    private string LocalLoginUrl => QueryHelpers.AddQueryString("/local-login/form", "ctx", authorizationContextId);
 
     private string ForgotPasswordUrl => QueryHelpers.AddQueryString("/forgot-password",
         new Dictionary<string, string?>(StringComparer.Ordinal)
@@ -155,13 +150,14 @@ else if (ui != null)
 
     protected override async Task OnInitializedAsync()
     {
-        loginModel ??= new LoginModel();
-
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
         authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
         var created = query.TryGetValue("created", out var createdValue) && createdValue == "1";
         var verifyRequired = query.TryGetValue("verify", out var verifyValue) && verifyValue == "1";
         var confirmed = query.TryGetValue("confirmed", out var confirmedValue) && confirmedValue == "1";
+        var loginError = query.TryGetValue("error_description", out var loginErrorValue)
+            ? loginErrorValue.ToString()
+            : string.Empty;
 
         SuccessMessage = confirmed
             ? "Your email has been confirmed. You can now sign in."
@@ -170,6 +166,7 @@ else if (ui != null)
                 : created
                     ? "Your account has been created successfully. You can now sign in."
                     : string.Empty;
+        ErrorMessage = loginError;
 
         if (string.IsNullOrWhiteSpace(authorizationContextId))
         {
@@ -212,66 +209,6 @@ else if (ui != null)
         catch (Exception ex)
         {
             SetRequestError("server_error", ex.Message);
-        }
-    }
-
-    private async Task HandleLogin()
-    {
-        ErrorMessage = string.Empty;
-        SuccessMessage = string.Empty;
-
-        AuthorizationRequest request = new()
-        {
-            UserName = loginModel.UserName,
-            Password = loginModel.Password,
-            ClientId = preAuthorization?.ClientId!,
-            CodeChallenge = preAuthorization?.CodeChallenge!,
-            RedirectUri = preAuthorization?.RedirectUri!,
-            CodeChallengeMethod = preAuthorization?.CodeChallengeMethod!,
-            Scopes = preAuthorization?.Scopes!,
-            RememberMe = loginModel.RememberMe,
-            AuthorizationContextId = preAuthorization?.CorrelationId!,
-            TenantId = preAuthorization?.TenantId ?? 0
-        };
-
-        try
-        {
-            logger.LogInformation(
-                "Local login form submitted. UserName={UserName}, TenantId={TenantId}, AuthorizationContextId={AuthorizationContextId}",
-                request.UserName,
-                request.TenantId,
-                request.AuthorizationContextId);
-
-            var authCodeResponse = await AuthService.Authenticate(request);
-
-            if (authCodeResponse?.IsSuccess == false)
-            {
-                ErrorMessage = authCodeResponse.Error ?? "Invalid login.";
-                logger.LogWarning(
-                    "Local login failed. UserName={UserName}, TenantId={TenantId}, Error={Error}",
-                    request.UserName,
-                    request.TenantId,
-                    ErrorMessage);
-                return;
-            }
-
-            if (authCodeResponse?.TwoFactorEnabled == true)
-            {
-                var uri = $"/mfa?uid={authCodeResponse.UserId}&corid={authCodeResponse.CorrelationId}&flow=authorize&redirect_uri={preAuthorization?.RedirectUri!}";
-                Navigation.NavigateTo(uri);
-                return;
-            }
-
-            Navigation.NavigateTo($"/authorize?ctx={preAuthorization?.CorrelationId}", forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex,
-                "Local login failed with an exception. UserName={UserName}, TenantId={TenantId}, AuthorizationContextId={AuthorizationContextId}",
-                request.UserName,
-                request.TenantId,
-                request.AuthorizationContextId);
-            ErrorMessage = $"An error occurred: {ex.Message}";
         }
     }
 
