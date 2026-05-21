@@ -49,6 +49,12 @@ function Get-PackageVersion {
         return $env:PACKAGE_VERSION.Trim()
     }
 
+    if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_REF_NAME) -and
+        $env:GITHUB_REF -like "refs/tags/*" -and
+        $env:GITHUB_REF_NAME -match "^v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?)$") {
+        return $Matches[1]
+    }
+
     $exactTag = Invoke-Git -Arguments @("describe", "--tags", "--exact-match", "HEAD")
     if ($exactTag -match "^v?(\d+\.\d+\.\d+(?:\.\d+)?(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?)$") {
         return $Matches[1]
