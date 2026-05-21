@@ -58,7 +58,7 @@ public sealed class TenantResolutionMiddleware
         context.Items[TenantResolutionHttpContextItems.TenantKey] = requestResolution.TenantKey;
         context.Items[TenantResolutionHttpContextItems.ResolutionSource] = requestResolution.Source.Value.ToString();
 
-        var tenantContext = await tenantResolver.ResolveAsync(requestResolution.TenantKey, context.RequestAborted);
+        var tenantContext = await tenantResolver.ResolveAsync(requestResolution.TenantKey, CancellationToken.None);
         if (tenantContext is null)
         {
             await RejectUnavailableTenantAsync(context, "tenant_unavailable");
