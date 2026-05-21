@@ -1,7 +1,6 @@
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.WebUtilities
 @using Microsoft.Extensions.Logging
-@using System.Text.Json
 @using TokenIDP.Core.Abstractions.Repositories
 @using TokenIDP.Core.Foundation.Exceptions
 @using TokenIDP.Core.OAuth
@@ -10,19 +9,15 @@
 @using TokenIDP.Core.OAuth.Model
 @using TokenIDP.Domain.AggregateRoots.Authorization
 @using TokenIDP.Server.Middlewares
-@using TokenIDP.Server.RESTClients
 
 @page "/login"
-@rendermode InteractiveServer
 
 <PageTitle>Authorize</PageTitle>
 
-@inject LoadService LoadService
 @inject NavigationManager Navigation
 @inject IAuthorizationRepository authorizationStore
 @inject IAuthorizationPageUiUseCase PageUiUseCase
-@inject AntiforgeryStateProvider AntiforgeryProvider
-@inject IJSRuntime JSRuntime
+@inject IAuthorizationCodeUseCase AuthService
 @inject ILogger<Login> logger
 
 @if (!isRequestValid)
@@ -65,7 +60,7 @@ else if (ui != null)
 
         @if (ui.AllowLocalLogin)
         {
-            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm" id="local-login-form">
                 <AntiforgeryToken />
                 <DataAnnotationsValidator />
                 <div class="field">
@@ -86,9 +81,9 @@ else if (ui != null)
                         <label><InputCheckbox @bind-Value="loginModel.RememberMe" /> Stay signed in</label>
                     }
 
-                    <a href="#" @onclick="GoToForgotPassword">Forgot password?</a>
+                    <a href="@ForgotPasswordUrl">Forgot password?</a>
                 </div>
-                <button type="submit" class="btn-primary">Sign In</button>
+                <button type="submit" class="btn-primary" data-login-submit>Sign In</button>
             </EditForm>
         }
 
@@ -100,10 +95,10 @@ else if (ui != null)
             @foreach (var p in ui.ExternalProviders.Where(x => x.Enabled))
             {
                 var providerUi = GetProviderUi(p.DisplayName);
-                <button type="button" class="btn-secondary" @onclick="() => LoginWithProvider(p.DisplayName)">
+                <a class="btn-secondary" href="@BuildExternalProviderUrl(p.DisplayName)">
                     <span class="btn-icon">@((MarkupString)providerUi.IconSvg)</span>
                     <span class="btn-text">@providerUi.ButtonText</span>
-                </button>
+                </a>
             }
         }
     </div>
@@ -111,7 +106,7 @@ else if (ui != null)
     @if (ui.AllowSignup)
     {
         <div class="footer">
-            <span>Don't have an account?</span> <a href="#" @onclick="GoToSignup">@ui.SignupText</a>
+            <span>Don't have an account?</span> <a href="@SignupUrl">@ui.SignupText</a>
         </div>
     }
 }
@@ -140,11 +135,28 @@ else if (ui != null)
 
     private string authorizationContextId = string.Empty;
 
-    private readonly LoginModel loginModel = new();
+    [SupplyParameterFromForm(FormName = "LoginForm")]
+    private LoginModel loginModel { get; set; } = default!;
+
     private Dictionary<string, string> QueryParams = new();
+
+    private string ForgotPasswordUrl => QueryHelpers.AddQueryString("/forgot-password",
+        new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["ctx"] = authorizationContextId
+        });
+
+    private string SignupUrl => QueryHelpers.AddQueryString(
+        ui?.SignupUrl ?? "/signup",
+        new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["ctx"] = authorizationContextId
+        });
 
     protected override async Task OnInitializedAsync()
     {
+        loginModel ??= new LoginModel();
+
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
         authorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
         var created = query.TryGetValue("created", out var createdValue) && createdValue == "1";
@@ -203,19 +215,6 @@ else if (ui != null)
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await InitializeJs();
-        }
-    }
-
-    private async Task InitializeJs()
-    {
-        await JSRuntime.InvokeVoidAsync("initializeLoginButton");
-    }
-
     private async Task HandleLogin()
     {
         ErrorMessage = string.Empty;
@@ -237,19 +236,22 @@ else if (ui != null)
 
         try
         {
-            LoadService.ShowLoader();
+            logger.LogInformation(
+                "Local login form submitted. UserName={UserName}, TenantId={TenantId}, AuthorizationContextId={AuthorizationContextId}",
+                request.UserName,
+                request.TenantId,
+                request.AuthorizationContextId);
 
-            var tokenRequest = AntiforgeryProvider.GetAntiforgeryToken();
-
-            var authCodePayload = await JSRuntime.InvokeAsync<JsonElement>(
-                "idpAuth.localLogin",
-                request,
-                tokenRequest?.Value);
-            var authCodeResponse = AuthResponseDto.FromJson(authCodePayload);
+            var authCodeResponse = await AuthService.Authenticate(request);
 
             if (authCodeResponse?.IsSuccess == false)
             {
                 ErrorMessage = authCodeResponse.Error ?? "Invalid login.";
+                logger.LogWarning(
+                    "Local login failed. UserName={UserName}, TenantId={TenantId}, Error={Error}",
+                    request.UserName,
+                    request.TenantId,
+                    ErrorMessage);
                 return;
             }
 
@@ -264,46 +266,22 @@ else if (ui != null)
         }
         catch (Exception ex)
         {
+            logger.LogError(ex,
+                "Local login failed with an exception. UserName={UserName}, TenantId={TenantId}, AuthorizationContextId={AuthorizationContextId}",
+                request.UserName,
+                request.TenantId,
+                request.AuthorizationContextId);
             ErrorMessage = $"An error occurred: {ex.Message}";
         }
-        finally
-        {
-            LoadService.HideLoader();
-        }
     }
 
-    private void GoToForgotPassword()
-    {
-        var url = QueryHelpers.AddQueryString("/forgot-password",
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                ["ctx"] = authorizationContextId
-            });
-
-        Navigation.NavigateTo(url);
-    }
-
-    private void GoToSignup()
-    {
-        var url = QueryHelpers.AddQueryString(
-            ui?.SignupUrl ?? "/signup",
-            new Dictionary<string, string?>(StringComparer.Ordinal)
-            {
-                ["ctx"] = authorizationContextId
-            });
-
-        Navigation.NavigateTo(url);
-    }
-
-    private void LoginWithProvider(string providerKey)
+    private string BuildExternalProviderUrl(string providerKey)
     {
         var provider = providerKey.Trim();
         var challengePath = $"/external/{Uri.EscapeDataString(provider)}/challenge";
-        var url = QueryHelpers.AddQueryString(
+        return QueryHelpers.AddQueryString(
             challengePath,
             new Dictionary<string, string?> { ["ctx"] = authorizationContextId });
-
-        Navigation.NavigateTo(url, forceLoad: true);
     }
 
     private static ExternalProviderUi GetProviderUi(string? displayName)

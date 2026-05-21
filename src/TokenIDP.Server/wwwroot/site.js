@@ -106,41 +106,37 @@ window.idpAuth.localLogin = async (request, antiforgeryToken) => {
     }
 };
 
-window.initializeLoginButton = async () => {
-    const loginBtn = document.getElementById("login-btn");
-    if (loginBtn) {
-        loginBtn.addEventListener("click", function (e) {
-            e.preventDefault();
-
-            document.getElementById("general-error").style.display = "none";
-            document.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
-            document.querySelectorAll(".invalid-feedback").forEach(el => el.style.display = "none");
-
-            const username = document.getElementById("userName");
-            const password = document.getElementById("password");
-            let isValid = true;
-
-            if (!username.value.trim()) {
-                username.classList.add("is-invalid");
-                username.nextElementSibling.style.display = "block";
-                isValid = false;
-            }
-
-            if (!password.value.trim()) {
-                password.classList.add("is-invalid");
-                password.nextElementSibling.style.display = "block";
-                isValid = false;
-            }
-
-            if (isValid) {
-                setTimeout(() => {
-                    if (username.value !== "demo" || password.value !== "password123") {
-                        document.getElementById("general-error").style.display = "block";
-                    } else {
-                        alert("Login successful!");
-                    }
-                }, 500);
-            }
-        });
+function showLoginLoader() {
+    if (document.getElementById("static-login-loader")) {
+        return;
     }
-};
+
+    const overlay = document.createElement("div");
+    overlay.id = "static-login-loader";
+    overlay.className = "loading-overlay";
+    overlay.setAttribute("role", "status");
+    overlay.setAttribute("aria-live", "polite");
+    overlay.setAttribute("aria-label", "Loading");
+    overlay.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Loading...</div>';
+    document.body.appendChild(overlay);
+}
+
+function wireLoginFormLoader() {
+    const form = document.getElementById("local-login-form");
+    if (!form || form.dataset.loaderWired === "true") {
+        return;
+    }
+
+    form.dataset.loaderWired = "true";
+    form.addEventListener("submit", () => {
+        const submitButton = form.querySelector("[data-login-submit]");
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+        showLoginLoader();
+    });
+}
+
+document.addEventListener("DOMContentLoaded", wireLoginFormLoader);
+window.addEventListener("pageshow", wireLoginFormLoader);
