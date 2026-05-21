@@ -28,16 +28,19 @@ internal class ExternalAuthEndpoints : IEndpointDefinition
             var result = await useCase.StartChallengeAsync(
                 providerType,
                 ctx,
-                httpContext.RequestAborted);
+                CancellationToken.None);
 
             return Results.Redirect(result.RedirectUrl);
         });
 
         group.MapGet("/{provider}/callback", async (
             string provider,
-            string code,
-            string state,
+            string? code,
+            string? state,
+            string? error,
+            string? error_description,
             IExternalAuthUseCase useCase,
+            IAppLogger<ExternalAuthEndpoints> logger,
             HttpContext httpContext) =>
         {
             if (!TryParseProvider(provider, out var providerType))
@@ -45,8 +48,27 @@ internal class ExternalAuthEndpoints : IEndpointDefinition
                 return Results.BadRequest("Invalid provider.");
             }
 
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                logger.LogWarning(
+                    "External authentication provider returned an error. Provider={Provider}, Error={Error}, Description={Description}",
+                    providerType,
+                    error,
+                    error_description ?? string.Empty);
+
+                return Results.BadRequest("External authentication provider returned an error.");
+            }
+
             if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state))
             {
+                logger.LogWarning(
+                    "External authentication callback is missing code or state. Provider={Provider}, HasCode={HasCode}, HasState={HasState}, Path={Path}, QueryString={QueryString}",
+                    providerType,
+                    !string.IsNullOrWhiteSpace(code),
+                    !string.IsNullOrWhiteSpace(state),
+                    httpContext.Request.Path.Value ?? string.Empty,
+                    httpContext.Request.QueryString.Value ?? string.Empty);
+
                 return Results.BadRequest("Missing code/state.");
             }
 
@@ -55,7 +77,7 @@ internal class ExternalAuthEndpoints : IEndpointDefinition
                 code,
                 state);
 
-            var result = await useCase.HandleCallbackAsync(input, httpContext.RequestAborted);
+            var result = await useCase.HandleCallbackAsync(input, CancellationToken.None);
 
             return Results.Redirect(result.ResumeAuthorizeUrl);
         });
