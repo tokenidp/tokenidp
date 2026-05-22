@@ -45,6 +45,9 @@ internal class TenantProvisioningService : ITenantProvisioningService
 
         await db.SaveChangesAsync(ct);
 
+        tenant!.MarkProvisioned();
+        await db.SaveChangesAsync(ct);
+
         return tenant!;
     }
 

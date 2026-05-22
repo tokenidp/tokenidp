@@ -1,16 +1,22 @@
 using Microsoft.AspNetCore.RateLimiting;
 using System.Text.Json;
 using System.Threading.RateLimiting;
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Core.OAuth.RateLimiting;
 
 public sealed class OAuthRateLimitRejectionHandler
 {
     private readonly IAppLogger<OAuthRateLimitRejectionHandler> _logger;
+    private readonly IApplicationEventDispatcher _applicationEventDispatcher;
 
-    public OAuthRateLimitRejectionHandler(IAppLogger<OAuthRateLimitRejectionHandler> logger)
+    public OAuthRateLimitRejectionHandler(
+        IAppLogger<OAuthRateLimitRejectionHandler> logger,
+        IApplicationEventDispatcher applicationEventDispatcher)
     {
         _logger = logger;
+        _applicationEventDispatcher = applicationEventDispatcher;
     }
 
     public async Task HandleAsync(OnRejectedContext context, CancellationToken cancellationToken)
@@ -47,6 +53,8 @@ public sealed class OAuthRateLimitRejectionHandler
                 DateTime.UtcNow,
                 metadata.PermitLimit,
                 metadata.TimeWindow.TotalSeconds);
+
+            await RaiseRateLimitTriggeredAsync(httpContext, metadata, cancellationToken);
         }
         else
         {
@@ -57,6 +65,8 @@ public sealed class OAuthRateLimitRejectionHandler
                 "OAuth client rate limit exceeded without resolved metadata. Endpoint: {Endpoint}, TimestampUtc: {TimestampUtc}",
                 httpContext.Request.Path.Value ?? string.Empty,
                 DateTime.UtcNow);
+
+            await RaiseRateLimitTriggeredAsync(httpContext, null, cancellationToken);
         }
 
         var payload = new
@@ -66,5 +76,47 @@ public sealed class OAuthRateLimitRejectionHandler
         };
 
         await response.WriteAsync(JsonSerializer.Serialize(payload), cancellationToken);
+    }
+
+    private Task RaiseRateLimitTriggeredAsync(
+        HttpContext httpContext,
+        OAuthClientRateLimitResponseMetadata? metadata,
+        CancellationToken cancellationToken)
+    {
+        var targetId = metadata?.ClientId ?? metadata?.IpAddress ?? ResolveIpAddress(httpContext);
+        var targetDescription = metadata?.ClientId is not null
+            ? $"Client {metadata.ClientId}"
+            : $"IP {targetId}";
+        var endpoint = metadata?.Endpoint ?? httpContext.Request.Path.Value ?? string.Empty;
+
+        return _applicationEventDispatcher.RaiseAsync(
+            new ActivityDomainEvent(
+                TenantId: metadata?.TenantId ?? 0,
+                EventType: ActivityEventType.RateLimitTriggered,
+                AggregateType: "RateLimit",
+                AggregateId: targetId,
+                ActorId: null,
+                ActorDisplayName: null,
+                TargetId: targetId,
+                TargetDescription: targetDescription,
+                Status: "Rejected",
+                Description: $"Rate limit triggered for {targetDescription} on {endpoint}.",
+                CorrelationId: ResolveCorrelationId(httpContext),
+                IpAddress: ResolveIpAddress(httpContext),
+                UserAgent: httpContext.Request.Headers.UserAgent.ToString()),
+            cancellationToken);
+    }
+
+    private static string ResolveIpAddress(HttpContext httpContext)
+    {
+        return httpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
+    }
+
+    private static Guid? ResolveCorrelationId(HttpContext httpContext)
+    {
+        var value = httpContext.Items["CorrelationId"]?.ToString();
+        return Guid.TryParse(value, out var correlationId)
+            ? correlationId
+            : null;
     }
 }

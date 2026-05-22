@@ -1,5 +1,7 @@
 using TokenIDP.Domain.AggregateRoots.Users.Enums;
+using TokenIDP.Domain.DomainEvents.Activities;
 using TokenIDP.Domain.DomainEvents.Users;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Domain.AggregateRoots.Users;
 
@@ -101,6 +103,10 @@ public partial class User : AggregateRoot<int>, ITenant
         PhoneNumber = phone;
 
         SyncRoles(roles);
+        AddUserActivity(
+            ActivityEventType.UserUpdated,
+            "Updated",
+            $"User '{UserName}' updated.");
 
         return Result.Success(Id);
     }
@@ -123,7 +129,18 @@ public partial class User : AggregateRoot<int>, ITenant
             return;
         }
 
+        var previousStatus = StatusId;
         StatusId = userStatus;
+
+        if (previousStatus == userStatus)
+        {
+            return;
+        }
+
+        AddUserActivity(
+            userStatus == UserStatus.Active ? ActivityEventType.UserEnabled : ActivityEventType.UserDisabled,
+            userStatus == UserStatus.Active ? "Enabled" : "Disabled",
+            $"User '{UserName}' status changed to '{userStatus}'.");
     }
 
     public Result ReplaceAddresses(IEnumerable<UserAddress> addresses)
@@ -196,6 +213,11 @@ public partial class User : AggregateRoot<int>, ITenant
             phone.Trim(),
             roles);
 
+        user.AddUserActivity(
+            ActivityEventType.UserCreated,
+            "Created",
+            $"User '{user.UserName}' created.");
+
         return Result.Success(0);
     }
 
@@ -235,6 +257,10 @@ public partial class User : AggregateRoot<int>, ITenant
         StatusId = UserStatus.Inactive;
         LockoutEnabled = true;
         LockoutEnd = DateTimeOffset.UtcNow;
+        AddUserActivity(
+            ActivityEventType.UserDeleted,
+            "Deleted",
+            $"User '{UserName}' deleted.");
 
         return Result.Success(Id);
     }
@@ -250,6 +276,11 @@ public partial class User : AggregateRoot<int>, ITenant
         foreach (var role in toRemove)
         {
             _userRoles.Remove(role);
+            AddUserActivity(
+                ActivityEventType.RoleRemoved,
+                "Removed",
+                $"Role '{role.RoleId}' removed from user '{UserName}'.",
+                role.RoleId.ToString());
         }
 
         foreach (var roleId in desiredRoles)
@@ -260,7 +291,31 @@ public partial class User : AggregateRoot<int>, ITenant
             }
 
             _userRoles.Add(new UserRole(roleId));
+            AddUserActivity(
+                ActivityEventType.RoleAssigned,
+                "Assigned",
+                $"Role '{roleId}' assigned to user '{UserName}'.",
+                roleId.ToString());
         }
+    }
+
+    private void AddUserActivity(
+        ActivityEventType eventType,
+        string status,
+        string description,
+        string? targetDescription = null)
+    {
+        AddDomainEvent(new ActivityDomainEvent(
+            TenantId: TenantId,
+            EventType: eventType,
+            AggregateType: "User",
+            AggregateId: Id > 0 ? Id.ToString() : UserName,
+            ActorId: null,
+            ActorDisplayName: null,
+            TargetId: Id > 0 ? Id.ToString() : UserName,
+            TargetDescription: targetDescription ?? UserName,
+            Status: status,
+            Description: description));
     }
 
     private static Result ValidateInput(

@@ -1,4 +1,6 @@
+using TokenIDP.Domain.DomainEvents.Activities;
 using TokenIDP.Domain.DomainEvents.Tokens;
+using TokenIDP.Domain.DomainEvents.Tenants;
 using TokenIDP.Domain.DomainEvents.Users;
 using TokenIDP.Infrastructure.Outbox.Abstractions;
 
@@ -24,6 +26,22 @@ public sealed class OutboxConsumerRouter : IOutboxConsumerRouter
                 },
 
             AuthenticationFlowEvent
+                => new[]
+                {
+                    OutboxConsumers.Activity
+                },
+
+            ActivityDomainEvent
+                => new[]
+                {
+                    OutboxConsumers.Activity
+                },
+
+            TenantCreatedEvent or
+            TenantActivatedEvent or
+            TenantInactivatedEvent or
+            TenantBrandingChangedEvent or
+            TenantPlanChangedEvent
                 => new[]
                 {
                     OutboxConsumers.Activity

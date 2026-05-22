@@ -41,11 +41,30 @@ public sealed class DashboardMetricsWorker : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Dashboard metrics worker failed");
+                    await RecordWorkerFailureAsync(ex, ParseCorrelationId(correlationId), stoppingToken);
                 }
 
                 await Task.Delay(Interval, stoppingToken);
             }
         }
+    }
+
+    private async Task RecordWorkerFailureAsync(
+        Exception exception,
+        Guid? correlationId,
+        CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        BackgroundJobActivityEvents.RaiseFailure(
+            db,
+            "DashboardMetricsWorker",
+            _workerId,
+            exception,
+            correlationId);
+
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task ProcessHourlyMetricsAsync(CancellationToken ct)
@@ -171,6 +190,13 @@ public sealed class DashboardMetricsWorker : BackgroundService
             minute,
             0,
             DateTimeKind.Utc);
+    }
+
+    private static Guid? ParseCorrelationId(string value)
+    {
+        return Guid.TryParse(value, out var correlationId)
+            ? correlationId
+            : null;
     }
 }
 

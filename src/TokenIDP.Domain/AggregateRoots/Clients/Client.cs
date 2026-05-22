@@ -1,3 +1,6 @@
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
+
 namespace TokenIDP.Domain.AggregateRoots.Clients;
 
 public enum ClientTypes
@@ -203,6 +206,8 @@ public class Client : AggregateRoot<int>, ITenant
             }
         }
 
+        var wasActive = IsActive;
+
         ClientName = clientName;
         Description = description;
         IconUrl = iconUrl;
@@ -228,6 +233,21 @@ public class Client : AggregateRoot<int>, ITenant
         AllowCibaLoginHint = allowCibaLoginHint;
         AllowCibaLoginHintToken = allowCibaLoginHintToken;
         AllowCibaIdTokenHint = allowCibaIdTokenHint;
+
+        if (wasActive != IsActive)
+        {
+            AddClientActivity(
+                IsActive ? ActivityEventType.ClientEnabled : ActivityEventType.ClientDisabled,
+                IsActive ? "Enabled" : "Disabled",
+                $"Client '{ClientId}' {(IsActive ? "enabled" : "disabled")}.");
+        }
+        else
+        {
+            AddClientActivity(
+                ActivityEventType.ClientUpdated,
+                "Updated",
+                $"Client '{ClientId}' updated.");
+        }
 
         return Result.Success(Id);
     }
@@ -258,6 +278,10 @@ public class Client : AggregateRoot<int>, ITenant
 
         IsDeleted = true;
         IsActive = false;
+        AddClientActivity(
+            ActivityEventType.ClientDisabled,
+            "Deleted",
+            $"Client '{ClientId}' deleted.");
 
         return Result.Success(Id);
     }
@@ -273,6 +297,11 @@ public class Client : AggregateRoot<int>, ITenant
         {
             secret.Revoke();
         }
+
+        AddClientActivity(
+            ActivityEventType.ClientSecretRotated,
+            "Rotated",
+            $"Client secret rotated for '{ClientId}'.");
     }
 
     public Result ReplaceScopes(IEnumerable<ClientScope> scopes)
@@ -303,6 +332,11 @@ public class Client : AggregateRoot<int>, ITenant
         {
             ClientGrantTypes.Add(grantType);
         }
+
+        AddClientActivity(
+            ActivityEventType.GrantTypeChanged,
+            "Changed",
+            $"Grant types changed for client '{ClientId}'.");
 
         return Result.Success(Id);
     }
@@ -489,7 +523,27 @@ public class Client : AggregateRoot<int>, ITenant
             allowCibaLoginHintToken,
             allowCibaIdTokenHint);
 
+        client.AddClientActivity(
+            ActivityEventType.ClientCreated,
+            "Created",
+            $"Client '{client.ClientId}' created.");
+
         return Result.Success(0);
+    }
+
+    private void AddClientActivity(ActivityEventType eventType, string status, string description)
+    {
+        AddDomainEvent(new ActivityDomainEvent(
+            TenantId: TenantId,
+            EventType: eventType,
+            AggregateType: "Client",
+            AggregateId: Id > 0 ? Id.ToString() : ClientId,
+            ActorId: null,
+            ActorDisplayName: null,
+            TargetId: Id > 0 ? Id.ToString() : ClientId,
+            TargetDescription: ClientId,
+            Status: status,
+            Description: description));
     }
 
     private static Result ValidateInput(

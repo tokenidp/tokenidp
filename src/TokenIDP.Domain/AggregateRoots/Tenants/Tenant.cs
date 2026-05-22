@@ -1,4 +1,6 @@
 using TokenIDP.Domain.DomainEvents.Tenants;
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Domain.AggregateRoots.Tenants;
 
@@ -151,6 +153,10 @@ public partial class Tenant : AggregateRoot<int>
 
         TenantName = tenantName.Trim();
         TenantKey = NormalizeTenantKey(tenantKey);
+        AddActivity(
+            ActivityEventType.TenantUpdated,
+            "Updated",
+            $"Tenant '{TenantKey}' renamed.");
 
         return Result.Success(Id);
     }
@@ -184,6 +190,10 @@ public partial class Tenant : AggregateRoot<int>
 
         IsDeleted = true;
         IsActive = false;
+        AddActivity(
+            ActivityEventType.TenantDisabled,
+            "Deleted",
+            $"Tenant '{TenantKey}' deleted.");
 
         return Result.Success(Id);
     }
@@ -196,7 +206,20 @@ public partial class Tenant : AggregateRoot<int>
         if (TenantAuthSetting is null)
             return Result.Failure("tenant.authsettings.missing", "Tenant auth settings are missing.");
 
+        var previousMfaPolicy = TenantAuthSetting.TwoFactor;
         configure(TenantAuthSetting);
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Changed",
+            $"Tenant '{TenantKey}' security policy changed.");
+
+        if (previousMfaPolicy != TenantAuthSetting.TwoFactor)
+        {
+            AddActivity(
+                ActivityEventType.MfaPolicyChanged,
+                "Changed",
+                $"Tenant '{TenantKey}' MFA policy changed.");
+        }
 
         return Result.Success(Id);
     }
@@ -277,6 +300,10 @@ public partial class Tenant : AggregateRoot<int>
 
         var provider = TenantExternalProvider.Create(Id, providerType, config);
         _tenantExternalProviders.Add(provider);
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Changed",
+            $"Tenant '{TenantKey}' external provider '{providerType}' added.");
 
         return Result.Success(Id);
     }
@@ -301,6 +328,10 @@ public partial class Tenant : AggregateRoot<int>
         }
 
         provider.UpdateOidcConfig(config);
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Changed",
+            $"Tenant '{TenantKey}' external provider '{providerType}' updated.");
         return Result.Success(Id);
     }
 
@@ -322,6 +353,10 @@ public partial class Tenant : AggregateRoot<int>
         }
 
         provider.Enable();
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Enabled",
+            $"Tenant '{TenantKey}' external provider '{providerType}' enabled.");
         return Result.Success(Id);
     }
 
@@ -343,6 +378,10 @@ public partial class Tenant : AggregateRoot<int>
         }
 
         provider.Disable();
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Disabled",
+            $"Tenant '{TenantKey}' external provider '{providerType}' disabled.");
         return Result.Success(Id);
     }
 
@@ -364,7 +403,26 @@ public partial class Tenant : AggregateRoot<int>
         }
 
         _tenantExternalProviders.Remove(provider);
+        AddActivity(
+            ActivityEventType.SecurityPolicyChanged,
+            "Removed",
+            $"Tenant '{TenantKey}' external provider '{providerType}' removed.");
         return Result.Success(Id);
+    }
+
+    private void AddActivity(ActivityEventType eventType, string status, string description)
+    {
+        AddDomainEvent(new ActivityDomainEvent(
+            TenantId: Id,
+            EventType: eventType,
+            AggregateType: "Tenant",
+            AggregateId: Id > 0 ? Id.ToString() : TenantKey,
+            ActorId: null,
+            ActorDisplayName: null,
+            TargetId: Id > 0 ? Id.ToString() : TenantKey,
+            TargetDescription: TenantKey,
+            Status: status,
+            Description: description));
     }
 
     private static Result ValidateInput(string tenantName, string tenantKey, bool isSystemTenant)

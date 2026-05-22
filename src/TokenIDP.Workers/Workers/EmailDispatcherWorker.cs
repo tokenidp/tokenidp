@@ -5,6 +5,7 @@ using TokenIDP.Domain.AggregateRoots.Emails;
 using TokenIDP.Infrastructure.Emails.Abstractions;
 using TokenIDP.Infrastructure.Emails.Concrete;
 using TokenIDP.Workers.Queries;
+using TokenIDP.Workers.Workers;
 
 namespace TokenIDP.Workers;
 
@@ -58,6 +59,7 @@ public sealed class EmailDispatcherWorker : BackgroundService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "EmailDispatcherWorker loop error");
+                await RecordWorkerFailureAsync("EmailDispatcherWorker", ex, stoppingToken);
 
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }
@@ -175,11 +177,30 @@ public sealed class EmailDispatcherWorker : BackgroundService
                 // treat unknown exceptions as transient unless you decide otherwise
                 var next = retrySchedule.ComputeNextAttemptUtc(email.AttemptCount + 1, DateTime.UtcNow);
                 email.MarkTransientFailure(ex.Message, next);
+                BackgroundJobActivityEvents.RaiseFailure(
+                    db,
+                    "EmailDispatcherWorker",
+                    _workerId,
+                    ex,
+                    tenantId: email.TenantId,
+                    targetId: email.Id.ToString());
 
                 _logger.LogError(ex, "Email processing exception. Id={Id}", email.Id);
                 await db.SaveChangesAsync(ct);
             }
         }
+    }
+
+    private async Task RecordWorkerFailureAsync(
+        string jobName,
+        Exception exception,
+        CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        BackgroundJobActivityEvents.RaiseFailure(db, jobName, _workerId, exception);
+        await db.SaveChangesAsync(ct);
     }
 
     private TimeSpan GetNextPollInterval(TimeSpan currentInterval)

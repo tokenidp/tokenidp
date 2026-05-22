@@ -1,3 +1,5 @@
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Domain.AggregateRoots.Roles;
 
@@ -91,6 +93,11 @@ public class Role : AggregateRoot<int>, ITenant
         }
 
         _rolePermissions.Add(new RolePermission(tenantPermissionId, permissionKey, isAllowed));
+        AddRoleActivity(
+            isAllowed ? ActivityEventType.PermissionGranted : ActivityEventType.PermissionRevoked,
+            isAllowed ? "Granted" : "Revoked",
+            $"Permission '{permissionKey}' {(isAllowed ? "granted to" : "revoked from")} role '{Name}'.",
+            permissionKey);
 
         return Result.Success(id: Id);
     }
@@ -117,6 +124,11 @@ public class Role : AggregateRoot<int>, ITenant
         }
 
         permission.Set(isAllowed);
+        AddRoleActivity(
+            isAllowed ? ActivityEventType.PermissionGranted : ActivityEventType.PermissionRevoked,
+            isAllowed ? "Granted" : "Revoked",
+            $"Permission '{permissionKey}' {(isAllowed ? "granted to" : "revoked from")} role '{Name}'.",
+            permissionKey);
 
         return Result.Success(id: Id);
     }
@@ -140,7 +152,31 @@ public class Role : AggregateRoot<int>, ITenant
         }
 
         _rolePermissions.Remove(permission);
+        AddRoleActivity(
+            ActivityEventType.PermissionRevoked,
+            "Revoked",
+            $"Permission '{permissionKey}' removed from role '{Name}'.",
+            permissionKey);
         return Result.Success(id: Id);
+    }
+
+    private void AddRoleActivity(
+        ActivityEventType eventType,
+        string status,
+        string description,
+        string? targetDescription = null)
+    {
+        AddDomainEvent(new ActivityDomainEvent(
+            TenantId: TenantId,
+            EventType: eventType,
+            AggregateType: "Role",
+            AggregateId: Id > 0 ? Id.ToString() : Name,
+            ActorId: null,
+            ActorDisplayName: null,
+            TargetId: targetDescription ?? (Id > 0 ? Id.ToString() : Name),
+            TargetDescription: targetDescription ?? Name,
+            Status: status,
+            Description: description));
     }
 
     private Result ValidateEditable(bool bypassEditableCheck = false)

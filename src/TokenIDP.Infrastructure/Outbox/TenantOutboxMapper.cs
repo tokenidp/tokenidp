@@ -1,5 +1,6 @@
 using TokenIDP.Domain.AggregateRoots.Outbox;
 using TokenIDP.Domain.DomainEvents.Tenants;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Infrastructure.Outbox;
 
@@ -42,31 +43,31 @@ internal sealed class TenantOutboxMapper : IOutboxMapper
         {
             TenantCreatedEvent e => new OutboxMetadata(
                 e.TenantId,
-                nameof(TenantCreatedEvent),
+                ActivityEventType.TenantCreated.ToString(),
                 "Tenant",
                 e.TenantId.ToString(),
                 $"tenant:{e.TenantId}:tenant"),
             TenantActivatedEvent e => new OutboxMetadata(
                 e.TenantId,
-                nameof(TenantActivatedEvent),
+                ActivityEventType.TenantUpdated.ToString(),
                 "Tenant",
                 e.TenantId.ToString(),
                 $"tenant:{e.TenantId}:tenant"),
             TenantInactivatedEvent e => new OutboxMetadata(
                 e.TenantId,
-                nameof(TenantInactivatedEvent),
+                ActivityEventType.TenantDisabled.ToString(),
                 "Tenant",
                 e.TenantId.ToString(),
                 $"tenant:{e.TenantId}:tenant"),
             TenantBrandingChangedEvent e => new OutboxMetadata(
                 e.TenantId,
-                nameof(TenantBrandingChangedEvent),
+                ActivityEventType.TenantUpdated.ToString(),
                 "Tenant",
                 e.TenantId.ToString(),
                 $"tenant:{e.TenantId}:tenant"),
             TenantPlanChangedEvent e => new OutboxMetadata(
                 e.TenantId,
-                nameof(TenantPlanChangedEvent),
+                ActivityEventType.TenantUpdated.ToString(),
                 "Tenant",
                 e.TenantId.ToString(),
                 $"tenant:{e.TenantId}:tenant"),

@@ -16,4 +16,10 @@ internal class ApplicationEventDispatcher : IApplicationEventDispatcher
         // Store domain event temporarily on DbContext
         _dbContext.AddDomainEvent(evt);
     }
+
+    public async Task RaiseAsync(IDomainEvent evt, CancellationToken cancellationToken = default)
+    {
+        Raise(evt);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
 }

@@ -62,6 +62,7 @@ internal sealed class TokenOutboxWorker : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogFatal(ex, "OutboxWorker crashed. Restarting in 5s");
+                    await RecordWorkerFailureAsync("TokenOutboxWorker", ex, ParseCorrelationId(correlationId), stoppingToken);
                     await SafeDelay(TimeSpan.FromSeconds(5), stoppingToken);
                 }
             }
@@ -120,6 +121,12 @@ internal sealed class TokenOutboxWorker : BackgroundService
             catch (Exception ex)
             {
                 evt.MarkFailed(DateTime.UtcNow, ex.ToString(), ComputeBackoff(evt.RetryCount), MaxRetries);
+                BackgroundJobActivityEvents.RaiseFailure(
+                    db,
+                    "TokenOutboxWorker",
+                    _workerId,
+                    ex,
+                    targetId: evt.OutboxEventId.ToString());
 
                 _logger.LogError(ex,
                     "Outbox event failed. Id={Id} Type={Type} Retry={Retry}",
@@ -127,6 +134,19 @@ internal sealed class TokenOutboxWorker : BackgroundService
             }
         }
 
+        await db.SaveChangesAsync(ct);
+    }
+
+    private async Task RecordWorkerFailureAsync(
+        string jobName,
+        Exception exception,
+        Guid? correlationId,
+        CancellationToken ct)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        BackgroundJobActivityEvents.RaiseFailure(db, jobName, _workerId, exception, correlationId);
         await db.SaveChangesAsync(ct);
     }
 
@@ -152,6 +172,13 @@ internal sealed class TokenOutboxWorker : BackgroundService
             await Task.Delay(delay, ct);
         }
         catch (OperationCanceledException) { }
+    }
+
+    private static Guid? ParseCorrelationId(string value)
+    {
+        return Guid.TryParse(value, out var correlationId)
+            ? correlationId
+            : null;
     }
 }
 

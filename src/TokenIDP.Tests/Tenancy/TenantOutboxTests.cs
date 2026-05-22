@@ -97,7 +97,8 @@ public sealed class TenantOutboxTests
         {
             new TokenOutboxMapper(),
             new UserOutboxMapper(),
-            new TenantOutboxMapper()
+            new TenantOutboxMapper(),
+            new ActivityOutboxMapper()
         };
 
         return new ApplicationDbContext(

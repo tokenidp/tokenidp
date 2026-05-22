@@ -1,3 +1,6 @@
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
+
 namespace TokenIDP.Domain.AggregateRoots.Permissions;
 
 public enum ControlTypes
@@ -77,6 +80,10 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         IsDeleted = false;
         IsSystem = false;
         SetCreated(1);
+        AddPermissionActivity(
+            ActivityEventType.PermissionGranted,
+            "Created",
+            $"Permission '{PermissionKey}' created.");
     }
 
     public Result Update(
@@ -118,6 +125,10 @@ public sealed class Permission : AggregateRoot<int>, ITenant
         Icon = icon;
         ControlType = parsedControlType;
         IsActive = isActive;
+        AddPermissionActivity(
+            isActive ? ActivityEventType.PermissionGranted : ActivityEventType.PermissionRevoked,
+            isActive ? "Updated" : "Disabled",
+            $"Permission '{PermissionKey}' updated.");
 
         return Result.Success(Id);
     }
@@ -146,8 +157,27 @@ public sealed class Permission : AggregateRoot<int>, ITenant
 
         IsDeleted = true;
         IsActive = false;
+        AddPermissionActivity(
+            ActivityEventType.PermissionRevoked,
+            "Deleted",
+            $"Permission '{PermissionKey}' deleted.");
 
         return Result.Success(Id);
+    }
+
+    private void AddPermissionActivity(ActivityEventType eventType, string status, string description)
+    {
+        AddDomainEvent(new ActivityDomainEvent(
+            TenantId: TenantId,
+            EventType: eventType,
+            AggregateType: "Permission",
+            AggregateId: Id > 0 ? Id.ToString() : PermissionKey,
+            ActorId: null,
+            ActorDisplayName: null,
+            TargetId: Id > 0 ? Id.ToString() : PermissionKey,
+            TargetDescription: PermissionKey,
+            Status: status,
+            Description: description));
     }
 
     private static Result ValidateKey(string key)

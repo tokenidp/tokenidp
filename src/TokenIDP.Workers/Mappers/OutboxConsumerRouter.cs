@@ -1,4 +1,5 @@
 using TokenIDP.Infrastructure.Outbox.Abstractions;
+using TokenIDP.Domain.DomainEvents.Activities;
 
 namespace TokenIDP.Workers.Mappers;
 
@@ -22,6 +23,12 @@ public class OutboxConsumerRouter : IOutboxConsumerRouter
                 },
 
             AuthenticationFlowEvent
+                => new[]
+                {
+                    OutboxConsumers.Activity
+                },
+
+            ActivityDomainEvent
                 => new[]
                 {
                     OutboxConsumers.Activity

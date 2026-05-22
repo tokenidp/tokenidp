@@ -119,9 +119,17 @@ public partial class ApplicationDbContext : DbContext
 
         foreach (var evt in allEvents)
         {
-            var outbox = _resolver.Resolve(evt);
+            var consumers = _consumerRouter.ResolveConsumers(evt) ?? Array.Empty<string>();
+            if (consumers.Count == 0)
+            {
+                continue;
+            }
 
-            var consumers = _consumerRouter.ResolveConsumers(evt);
+            var outbox = _resolver.Resolve(evt);
+            if (outbox is null)
+            {
+                continue;
+            }
 
             foreach (var consumer in consumers)
             {

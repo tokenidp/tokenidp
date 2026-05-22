@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxMapper, TokenOutboxMapper>();
         services.AddScoped<IOutboxMapper, UserOutboxMapper>();
         services.AddScoped<IOutboxMapper, TenantOutboxMapper>();
+        services.AddScoped<IOutboxMapper, ActivityOutboxMapper>();
         services.AddScoped<IOutboxMapperResolver, OutboxMapperResolver>();
         services.AddScoped<IOutboxConsumerRouter, OutboxConsumerRouter>();
 
@@ -26,6 +27,7 @@ public static class DependencyInjection
         services.AddHostedService<ActivityOutboxWorker>();
         services.AddHostedService<DashboardMetricsWorker>();
         services.AddHostedService<EmailDispatcherWorker>();
+        services.AddHostedService<TokenSigningMaterialMonitorWorker>();
 
         services.AddSingleton<TokenWorkerState>();
         services.AddSingleton<ActivityWorkerState>();
