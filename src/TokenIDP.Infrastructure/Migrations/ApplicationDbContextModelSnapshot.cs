@@ -221,6 +221,29 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<DateTime?>("ApprovedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("ApprovalDecisionAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ApprovalLinkSentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ApprovalTokenConsumedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ApprovalTokenCreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ApprovalTokenExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ApprovalTokenHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ApprovalTokenUserHintHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<string>("AuthReqIdHash")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -258,6 +281,17 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.Property<DateTime?>("DeniedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DecisionIpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("DecisionUserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("DecisionByUserId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("ExpiresAtUtc")
                         .HasColumnType("datetime2");
 
@@ -277,6 +311,9 @@ namespace TokenIDP.Infrastructure.Migrations
 
                     b.Property<int>("PollCount")
                         .HasColumnType("int");
+
+                    b.Property<Guid>("PublicRequestId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int?>("RequestedExpirySeconds")
                         .HasColumnType("int");
@@ -314,6 +351,10 @@ namespace TokenIDP.Infrastructure.Migrations
                     b.HasIndex("AuthReqIdHash")
                         .IsUnique()
                         .HasDatabaseName("IX_BackchannelAuthenticationRequests_AuthReqIdHash");
+
+                    b.HasIndex("PublicRequestId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_BackchannelAuthenticationRequests_PublicRequestId");
 
                     b.HasIndex("TenantId", "ClientId", "Status", "ExpiresAtUtc")
                         .HasDatabaseName("IX_BackchannelAuthenticationRequests_Client_Status_Expiry");
