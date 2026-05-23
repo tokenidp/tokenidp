@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Cryptography;
 using TokenIDP.Core.Abstractions.Repositories;
+using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Core.OAuth.UseCases;
 
@@ -11,17 +14,32 @@ internal sealed class CibaBackchannelAuthenticationUseCase
 
     private readonly IAuthorizationRepository _authorizationRepository;
     private readonly IClientRepository _clientRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly ICibaApprovalNotificationService _notificationService;
+    private readonly ICurrentUserService _currentUserService;
+    private readonly IApplicationEventDispatcher _applicationEventDispatcher;
+    private readonly CibaOptions _cibaOptions;
     private readonly CibaUserResolver _userResolver;
     private readonly IAppLogger<CibaBackchannelAuthenticationUseCase> _logger;
 
     public CibaBackchannelAuthenticationUseCase(
         IAuthorizationRepository authorizationRepository,
         IClientRepository clientRepository,
+        IUserRepository userRepository,
+        ICibaApprovalNotificationService notificationService,
+        ICurrentUserService currentUserService,
+        IApplicationEventDispatcher applicationEventDispatcher,
+        IOptions<CibaOptions> cibaOptions,
         CibaUserResolver userResolver,
         IAppLogger<CibaBackchannelAuthenticationUseCase> logger)
     {
         _authorizationRepository = authorizationRepository;
         _clientRepository = clientRepository;
+        _userRepository = userRepository;
+        _notificationService = notificationService;
+        _currentUserService = currentUserService;
+        _applicationEventDispatcher = applicationEventDispatcher;
+        _cibaOptions = cibaOptions.Value;
         _userResolver = userResolver;
         _logger = logger;
     }
@@ -61,6 +79,8 @@ internal sealed class CibaBackchannelAuthenticationUseCase
 
         var authReqId = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
         var authReqIdHash = SecretHasher.HashSecret(authReqId);
+        var approvalToken = WebEncoders.Base64UrlEncode(
+            RandomNumberGenerator.GetBytes(Math.Max(16, _cibaOptions.ApprovalTokenBytes)));
 
         var entity = TokenIDP.Domain.AggregateRoots.Authorization.BackchannelAuthenticationRequest.Create(
             request.TenantId,
@@ -80,6 +100,18 @@ internal sealed class CibaBackchannelAuthenticationUseCase
             null,
             request.AcrValues);
 
+        var tokenCreatedAtUtc = DateTime.UtcNow;
+        var configuredTokenLifetimeSeconds = _cibaOptions.ApprovalTokenLifetimeSeconds <= 0
+            ? 300
+            : _cibaOptions.ApprovalTokenLifetimeSeconds;
+        var tokenLifetimeSeconds = Math.Min(configuredTokenLifetimeSeconds, expiresIn);
+        entity.SetApprovalChallenge(
+            Guid.NewGuid(),
+            SecretHasher.HashSecret(approvalToken),
+            tokenCreatedAtUtc,
+            tokenCreatedAtUtc.AddSeconds(tokenLifetimeSeconds),
+            resolvedUser.HintValueHash);
+
         await _authorizationRepository.CreateBackchannelAuthenticationRequest(entity, ct);
 
         _logger.LogInfo(
@@ -89,6 +121,8 @@ internal sealed class CibaBackchannelAuthenticationUseCase
             entity.ClientId,
             entity.UserId ?? 0);
 
+        await SendApprovalNotificationAsync(entity, client, resolvedUser.UserId, approvalToken, ct);
+
         return new CibaBackchannelAuthenticationResponse
         {
             AuthReqId = authReqId,
@@ -96,6 +130,94 @@ internal sealed class CibaBackchannelAuthenticationUseCase
             Interval = client.CibaMinIntervalSeconds
         };
     }
+
+    private async Task SendApprovalNotificationAsync(
+        TokenIDP.Domain.AggregateRoots.Authorization.BackchannelAuthenticationRequest entity,
+        ClientValidationSnapshot client,
+        int userId,
+        string approvalToken,
+        CancellationToken ct)
+    {
+        try
+        {
+            var user = await _userRepository.GetUserById(userId);
+            var approvalUrl = BuildApprovalUrl(entity.PublicRequestId, approvalToken);
+
+            await _notificationService.SendApprovalRequestAsync(
+                new CibaApprovalNotification
+                {
+                    TenantId = entity.TenantId,
+                    UserId = userId,
+                    UserEmail = user.Email ?? string.Empty,
+                    ClientName = client.ClientName,
+                    BindingMessage = entity.BindingMessage ?? string.Empty,
+                    ApprovalUrl = approvalUrl,
+                    ExpiresAtUtc = entity.ExpiresAtUtc,
+                    RequestedScopes = entity.RequestedScopes
+                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                },
+                ct);
+
+            entity.MarkApprovalLinkSent(DateTime.UtcNow);
+            await _authorizationRepository.UpdateBackchannelAuthenticationRequest(entity, ct);
+
+            await _applicationEventDispatcher.RaiseAsync(
+                CreateActivity(
+                    entity,
+                    ActivityEventType.CibaApprovalEmailSent,
+                    "Sent",
+                    $"CIBA approval email sent for {client.ClientName}."),
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "CIBA approval notification failed. RequestId={RequestId}, TenantId={TenantId}, ClientId={ClientId}",
+                entity.Id,
+                entity.TenantId,
+                entity.ClientId);
+
+            if (_cibaOptions.RequireNotificationDelivery)
+            {
+                throw new BackchannelAuthenticationValidationException(
+                    "server_error",
+                    "CIBA approval notification could not be delivered.");
+            }
+        }
+    }
+
+    private string BuildApprovalUrl(Guid publicRequestId, string approvalToken)
+    {
+        var baseUrl = !string.IsNullOrWhiteSpace(_cibaOptions.ApprovalBaseUrl)
+            ? _cibaOptions.ApprovalBaseUrl!.TrimEnd('/')
+            : _currentUserService.BaseUrl.TrimEnd('/');
+
+        return QueryHelpers.AddQueryString(
+            $"{baseUrl}/ciba/approve",
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["requestId"] = publicRequestId.ToString("D"),
+                ["token"] = approvalToken
+            });
+    }
+
+    private static ActivityDomainEvent CreateActivity(
+        TokenIDP.Domain.AggregateRoots.Authorization.BackchannelAuthenticationRequest request,
+        ActivityEventType eventType,
+        string status,
+        string description)
+        => new(
+            TenantId: request.TenantId,
+            EventType: eventType,
+            AggregateType: "CibaRequest",
+            AggregateId: request.PublicRequestId.ToString("D"),
+            ActorId: request.UserId?.ToString(),
+            ActorDisplayName: null,
+            TargetId: request.PublicRequestId.ToString("D"),
+            TargetDescription: request.ClientId,
+            Status: status,
+            Description: description);
 
     private static void ValidateClientConfiguration(ClientValidationSnapshot client)
     {

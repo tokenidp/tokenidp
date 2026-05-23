@@ -19,6 +19,7 @@ public interface IAuthorizationRepository
     Task<int> UpdateBackchannelAuthenticationRequest(BackchannelAuthenticationRequest request, CancellationToken ct);
     Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByHashAsync(string authReqIdHash, CancellationToken ct);
     Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByIdAsync(int id, CancellationToken ct);
+    Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByPublicIdAsync(Guid publicRequestId, CancellationToken ct);
     Task<IReadOnlyList<BackchannelAuthenticationRequest>> GetPendingBackchannelRequestsForUserAsync(int tenantId, int userId, CancellationToken ct);
 }
 

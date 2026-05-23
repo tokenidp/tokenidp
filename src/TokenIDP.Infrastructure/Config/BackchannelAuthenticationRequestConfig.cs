@@ -33,9 +33,22 @@ internal sealed class BackchannelAuthenticationRequestConfig
         builder.Property(x => x.ApprovedAcr).HasMaxLength(100);
         builder.Property(x => x.ApprovedAmr).HasMaxLength(250);
         builder.Property(x => x.DenialReason).HasMaxLength(500);
+        builder.Property(x => x.PublicRequestId).IsRequired();
+        builder.Property(x => x.ApprovalTokenHash).HasMaxLength(256);
+        builder.Property(x => x.ApprovalTokenCreatedAtUtc);
+        builder.Property(x => x.ApprovalTokenExpiresAtUtc);
+        builder.Property(x => x.ApprovalTokenConsumedAtUtc);
+        builder.Property(x => x.ApprovalTokenUserHintHash).HasMaxLength(256);
+        builder.Property(x => x.ApprovalDecisionAtUtc);
+        builder.Property(x => x.DecisionIpAddress).HasMaxLength(64);
+        builder.Property(x => x.DecisionUserAgent).HasMaxLength(512);
         builder.Property(x => x.PollCount).IsRequired();
         builder.Property(x => x.CreatedAtUtc).IsRequired();
         builder.Property(x => x.CreatedBy).IsRequired();
+
+        builder.HasIndex(x => x.PublicRequestId)
+            .IsUnique()
+            .HasDatabaseName("IX_BackchannelAuthenticationRequests_PublicRequestId");
 
         builder.HasIndex(x => x.AuthReqIdHash)
             .IsUnique()

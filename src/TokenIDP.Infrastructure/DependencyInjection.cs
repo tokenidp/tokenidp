@@ -9,6 +9,7 @@ using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.Foundation.Security;
+using TokenIDP.Core.OAuth.Abstractions;
 using TokenIDP.Core.OAuth.ExternalProviders.Abstractions;
 using TokenIDP.Core.OAuth.Model;
 using TokenIDP.Infrastructure.Bootstrap;
@@ -128,6 +129,7 @@ public static class DependencyInjection
         services.AddScoped<EmailProviderFactory>();
         services.AddScoped<EmailConfigurationProvider>();
         services.AddScoped<IEmailQueueRepository, EmailQueueRepository>();
+        services.AddScoped<ICibaApprovalNotificationService, EmailCibaApprovalNotificationService>();
         services.AddScoped<IRetrySchedule, ExponentialRetrySchedule>();
         services.AddScoped<IEmailTemplateRenderer, EmailTemplateRenderer>();
 

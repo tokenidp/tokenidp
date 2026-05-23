@@ -149,9 +149,10 @@ internal static class CibaTestData
         string clientId = "ciba-client",
         int userId = 101,
         string scopes = "openid profile",
-        int intervalSeconds = 5)
+        int intervalSeconds = 5,
+        string? approvalToken = null)
     {
-        return BackchannelAuthenticationRequest.Create(
+        var request = BackchannelAuthenticationRequest.Create(
             tenantId,
             clientId,
             userId,
@@ -168,6 +169,18 @@ internal static class CibaTestData
             intervalSeconds: intervalSeconds,
             clientNotificationTokenHash: null,
             acrValues: null);
+
+        if (!string.IsNullOrWhiteSpace(approvalToken))
+        {
+            request.SetApprovalChallenge(
+                Guid.NewGuid(),
+                TokenIDP.Core.Foundation.Security.SecretHasher.HashSecret(approvalToken),
+                DateTime.UtcNow,
+                DateTime.UtcNow.AddMinutes(5),
+                "hint-hash");
+        }
+
+        return request;
     }
 
     public static void SetProperty<TTarget, TValue>(TTarget target, string propertyName, TValue value)

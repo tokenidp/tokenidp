@@ -378,7 +378,7 @@ internal class ActivityProjector
             >= ActivityEventType.UserCreated and <= ActivityEventType.PermissionRevoked => ActivityCategory.UserManagement,
             >= ActivityEventType.ClientCreated and <= ActivityEventType.GrantTypeChanged => ActivityCategory.ClientManagement,
             >= ActivityEventType.TenantCreated and <= ActivityEventType.IpRestrictionChanged => ActivityCategory.TenantManagement,
-            >= ActivityEventType.SuspiciousLoginDetected and <= ActivityEventType.CertificateExpired => ActivityCategory.SystemSecurity,
+            >= ActivityEventType.SuspiciousLoginDetected and <= ActivityEventType.CibaRequestExpired => ActivityCategory.SystemSecurity,
             _ => ActivityCategory.SystemSecurity
         };
 
@@ -397,6 +397,7 @@ internal class ActivityProjector
             ActivityEventType.OutboxFailed or
             ActivityEventType.BackgroundJobFailed or
             ActivityEventType.CertificateExpired => ActivitySeverity.Alert,
+            ActivityEventType.CibaRequestRejected or ActivityEventType.CibaRequestExpired => ActivitySeverity.Warning,
 
             ActivityEventType.UserDeleted or
             ActivityEventType.UserDisabled or
@@ -454,6 +455,11 @@ internal class ActivityProjector
             ActivityEventType.BruteForceDetected or
             ActivityEventType.RateLimitTriggered or
             ActivityEventType.CertificateExpired => "Detected",
+            ActivityEventType.CibaApprovalEmailSent => "Sent",
+            ActivityEventType.CibaApprovalPageOpened => "Opened",
+            ActivityEventType.CibaRequestApproved => "Approved",
+            ActivityEventType.CibaRequestRejected => "Rejected",
+            ActivityEventType.CibaRequestExpired => "Expired",
             ActivityEventType.TokenRevoked or
             ActivityEventType.ConsentRevoked or
             ActivityEventType.PermissionRevoked => "Revoked",
@@ -512,6 +518,11 @@ internal class ActivityProjector
             ActivityEventType.BackgroundJobFailed => $"Background job failed for {target}.",
             ActivityEventType.SigningKeyRotated => "Signing key rotated.",
             ActivityEventType.CertificateExpired => $"Certificate expired for {target}.",
+            ActivityEventType.CibaApprovalEmailSent => $"CIBA approval email sent for {target}.",
+            ActivityEventType.CibaApprovalPageOpened => $"CIBA approval page opened for {target}.",
+            ActivityEventType.CibaRequestApproved => $"CIBA request approved for {target}.",
+            ActivityEventType.CibaRequestRejected => $"CIBA request rejected for {target}.",
+            ActivityEventType.CibaRequestExpired => $"CIBA request expired for {target}.",
             _ => $"{eventType} activity recorded for {target}."
         };
     }

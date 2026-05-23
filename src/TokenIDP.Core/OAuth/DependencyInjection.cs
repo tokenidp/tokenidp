@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddAssemblyValidators(typeof(DependencyInjection).Assembly);
         services.Configure<RefreshTokenCookieOptions>(
             configuration.GetSection(RefreshTokenCookieOptions.SectionName));
+        services.Configure<CibaOptions>(
+            configuration.GetSection(CibaOptions.SectionName));
 
         services.AddScoped<JwtTokenGenerator>();
         services.AddScoped<TokenSecretGenerator>();

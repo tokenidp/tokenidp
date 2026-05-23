@@ -59,5 +59,11 @@ public enum ActivityEventType
     OutboxFailed = 6004,
     BackgroundJobFailed = 6005,
     SigningKeyRotated = 6006,
-    CertificateExpired = 6007
+    CertificateExpired = 6007,
+    CibaApprovalEmailSent = 6008,
+    CibaApprovalPageOpened = 6009,
+    CibaRequestApproved = 6010,
+    CibaRequestRejected = 6011,
+    CibaRequestExpired = 6012
 }
+

@@ -58,6 +58,17 @@ public sealed class BackchannelAuthenticationRequest : AggregateRoot<int>, ITena
     public DateTime? ConsumedAtUtc { get; private set; }
     public DateTime? LastPolledAtUtc { get; private set; }
     public int PollCount { get; private set; }
+    public Guid PublicRequestId { get; private set; }
+    public string? ApprovalTokenHash { get; private set; }
+    public DateTime? ApprovalTokenCreatedAtUtc { get; private set; }
+    public DateTime? ApprovalTokenExpiresAtUtc { get; private set; }
+    public DateTime? ApprovalTokenConsumedAtUtc { get; private set; }
+    public string? ApprovalTokenUserHintHash { get; private set; }
+    public DateTime? ApprovalLinkSentAtUtc { get; private set; }
+    public DateTime? ApprovalDecisionAtUtc { get; private set; }
+    public int? DecisionByUserId { get; private set; }
+    public string? DecisionIpAddress { get; private set; }
+    public string? DecisionUserAgent { get; private set; }
 
     public static BackchannelAuthenticationRequest Create(
         int tenantId,
@@ -119,11 +130,84 @@ public sealed class BackchannelAuthenticationRequest : AggregateRoot<int>, ITena
             ExpiresAtUtc = expiresAtUtc,
             IntervalSeconds = intervalSeconds,
             ClientNotificationTokenHash = clientNotificationTokenHash,
-            AcrValues = acrValues
+            AcrValues = acrValues,
+            PublicRequestId = Guid.NewGuid()
         };
     }
 
-    public void Approve(string? acr = null, string? amr = null)
+    public void SetApprovalChallenge(
+        Guid publicRequestId,
+        string approvalTokenHash,
+        DateTime tokenCreatedAtUtc,
+        DateTime tokenExpiresAtUtc,
+        string approvalTokenUserHintHash)
+    {
+        if (publicRequestId == Guid.Empty)
+            throw new DomainException("Public request id is required.");
+
+        if (string.IsNullOrWhiteSpace(approvalTokenHash))
+            throw new DomainException("Approval token hash is required.");
+
+        if (tokenExpiresAtUtc <= tokenCreatedAtUtc)
+            throw new DomainException("Approval token expiration must be after creation.");
+
+        if (string.IsNullOrWhiteSpace(approvalTokenUserHintHash))
+            throw new DomainException("Approval token user hint hash is required.");
+
+        PublicRequestId = publicRequestId;
+        ApprovalTokenHash = approvalTokenHash;
+        ApprovalTokenCreatedAtUtc = tokenCreatedAtUtc;
+        ApprovalTokenExpiresAtUtc = tokenExpiresAtUtc;
+        ApprovalTokenConsumedAtUtc = null;
+        ApprovalTokenUserHintHash = approvalTokenUserHintHash;
+    }
+
+    public void MarkApprovalLinkSent(DateTime sentAtUtc)
+    {
+        ApprovalLinkSentAtUtc = sentAtUtc;
+    }
+
+    public void EnsureApprovalTokenCanBeUsed(string approvalTokenHash)
+    {
+        if (PublicRequestId == Guid.Empty ||
+            string.IsNullOrWhiteSpace(ApprovalTokenHash) ||
+            string.IsNullOrWhiteSpace(ApprovalTokenUserHintHash) ||
+            !string.Equals(ApprovalTokenUserHintHash, HintValueHash, StringComparison.Ordinal) ||
+            !string.Equals(ApprovalTokenHash, approvalTokenHash, StringComparison.Ordinal))
+        {
+            throw new DomainException("invalid_token");
+        }
+
+        if (ApprovalTokenConsumedAtUtc.HasValue)
+        {
+            throw new DomainException("invalid_token");
+        }
+
+        if (!ApprovalTokenExpiresAtUtc.HasValue || DateTime.UtcNow > ApprovalTokenExpiresAtUtc.Value)
+        {
+            throw new DomainException("expired_token");
+        }
+
+        if (Status != CibaRequestStatus.AwaitingAuthorization)
+        {
+            throw new DomainException("invalid_token");
+        }
+    }
+
+    public void ConsumeApprovalToken()
+    {
+        if (ApprovalTokenConsumedAtUtc.HasValue)
+            throw new DomainException("invalid_token");
+
+        ApprovalTokenConsumedAtUtc = DateTime.UtcNow;
+    }
+
+    public void Approve(
+        string? acr = null,
+        string? amr = null,
+        int? decisionByUserId = null,
+        string? decisionIpAddress = null,
+        string? decisionUserAgent = null)
     {
         EnsureNotExpired();
 
@@ -132,13 +216,21 @@ public sealed class BackchannelAuthenticationRequest : AggregateRoot<int>, ITena
 
         Status = CibaRequestStatus.Approved;
         ApprovedAtUtc = DateTime.UtcNow;
+        ApprovalDecisionAtUtc = ApprovedAtUtc;
         ApprovedAcr = acr;
         ApprovedAmr = amr;
         DenialReason = null;
         DeniedAtUtc = null;
+        DecisionByUserId = decisionByUserId;
+        DecisionIpAddress = Truncate(decisionIpAddress, 64);
+        DecisionUserAgent = Truncate(decisionUserAgent, 512);
     }
 
-    public void Deny(string? reason = null)
+    public void Deny(
+        string? reason = null,
+        int? decisionByUserId = null,
+        string? decisionIpAddress = null,
+        string? decisionUserAgent = null)
     {
         EnsureNotExpired();
 
@@ -148,6 +240,10 @@ public sealed class BackchannelAuthenticationRequest : AggregateRoot<int>, ITena
         Status = CibaRequestStatus.Denied;
         DenialReason = reason;
         DeniedAtUtc = DateTime.UtcNow;
+        ApprovalDecisionAtUtc = DeniedAtUtc;
+        DecisionByUserId = decisionByUserId;
+        DecisionIpAddress = Truncate(decisionIpAddress, 64);
+        DecisionUserAgent = Truncate(decisionUserAgent, 512);
     }
 
     public void Cancel(string? reason = null)
@@ -232,5 +328,14 @@ public sealed class BackchannelAuthenticationRequest : AggregateRoot<int>, ITena
     public bool IsExpired()
     {
         return DateTime.UtcNow > ExpiresAtUtc;
+    }
+
+    private static string? Truncate(string? value, int maxLength)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Length <= maxLength
+                ? value
+                : value[..maxLength];
     }
 }

@@ -236,6 +236,14 @@ internal sealed class AuthorizationRepository : IAuthorizationRepository
             .FirstOrDefaultAsync(x => x.Id == id, ct);
     }
 
+    public Task<BackchannelAuthenticationRequest?> GetBackchannelAuthenticationRequestByPublicIdAsync(
+        Guid publicRequestId,
+        CancellationToken ct)
+    {
+        return _dbContext.BackchannelAuthenticationRequests
+            .FirstOrDefaultAsync(x => x.PublicRequestId == publicRequestId, ct);
+    }
+
     public async Task<IReadOnlyList<BackchannelAuthenticationRequest>> GetPendingBackchannelRequestsForUserAsync(
         int tenantId,
         int userId,

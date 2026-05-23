@@ -105,6 +105,48 @@ public sealed class EmailMessage : AggregateRoot<long>, ITenant
         return msg;
     }
 
+    public static EmailMessage CreateRendered(
+        int tenantId,
+        string messageKey,
+        ValueObjects.EmailRecipient recipient,
+        string subject,
+        string? bodyHtml,
+        string? bodyText,
+        string? provider = null,
+        string? fromAddress = null,
+        string? fromName = null,
+        byte priority = 5,
+        int maxAttempts = 10,
+        DateTime? scheduledAtUtc = null,
+        Guid? correlationId = null,
+        string? tags = null)
+    {
+        if (string.IsNullOrWhiteSpace(messageKey)) throw new ArgumentException("MessageKey is required.");
+
+        var msg = new EmailMessage
+        {
+            TenantId = tenantId,
+            MessageKey = messageKey.Trim(),
+            Status = EmailStatus.Pending,
+            Priority = priority,
+            PayloadMode = EmailPayloadMode.RenderedBodies,
+            Provider = provider,
+            FromAddress = fromAddress,
+            FromName = fromName,
+            Subject = subject,
+            BodyHtml = bodyHtml,
+            BodyText = bodyText,
+            ScheduledAtUtc = scheduledAtUtc,
+            MaxAttempts = maxAttempts,
+            CorrelationId = correlationId,
+            Tags = tags
+        };
+
+        msg.AddRecipients(recipient);
+        msg.ValidatePayload();
+        return msg;
+    }
+
     public void AddRecipients(ValueObjects.EmailRecipient recipient)
     {
         if (recipient == null) throw new InvalidOperationException("At least one recipient is required.");
