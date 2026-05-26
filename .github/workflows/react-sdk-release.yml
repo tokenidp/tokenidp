@@ -1,0 +1,89 @@
+name: Release React SDK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional npm SDK version. Defaults to sdks/react-idp-sdk/package.json."
+        required: false
+        default: ""
+      publish:
+        description: "Publish sdks/react-idp-sdk to npm using NPM_TOKEN"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+  push:
+    tags:
+      - "react-sdk-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+          cache-dependency-path: sdks/react-idp-sdk/package-lock.json
+
+      - name: Install SDK dependencies
+        run: npm ci
+        working-directory: sdks/react-idp-sdk
+
+      - name: Resolve SDK version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/react-sdk-v* ]]; then
+            VERSION="${GITHUB_REF_NAME#react-sdk-v}"
+          elif [[ -n "${{ inputs.version }}" ]]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="$(node -p "require('./package.json').version")"
+          fi
+
+          npm version "${VERSION}" --no-git-tag-version --allow-same-version
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+        working-directory: sdks/react-idp-sdk
+
+      - name: Build SDK
+        run: npm run build
+        working-directory: sdks/react-idp-sdk
+
+      - name: Pack SDK artifact
+        run: |
+          mkdir -p ../../artifacts/react-sdk
+          npm pack --pack-destination ../../artifacts/react-sdk
+        working-directory: sdks/react-idp-sdk
+
+      - name: Upload SDK package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tokenidp-react-sdk
+          path: artifacts/react-sdk/*.tgz
+          if-no-files-found: error
+
+      - name: Publish SDK to npm
+        if: ${{ startsWith(github.ref, 'refs/tags/react-sdk-v') || inputs.publish == 'true' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [[ -z "${NODE_AUTH_TOKEN}" ]]; then
+            echo "Skipping npm publish because NPM_TOKEN is not configured."
+            exit 0
+          fi
+
+          npm publish
+        working-directory: sdks/react-idp-sdk
