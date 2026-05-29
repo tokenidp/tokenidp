@@ -1,8 +1,10 @@
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using System.Reflection;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Telemetry;
@@ -22,6 +25,7 @@ using TokenIDP.Core.OAuth;
 using TokenIDP.Core.OAuth.Endpoints;
 using TokenIDP.Core.OAuth.RateLimiting;
 using TokenIDP.Infrastructure;
+using TokenIDP.Server.Components;
 using TokenIDP.Server.HealthChecks;
 using TokenIDP.Server.Middlewares;
 using TokenIDP.Server.Multitenancy;
@@ -68,7 +72,7 @@ public static class ApplicationBuilderExtensions
                 ForwardedHeaders.XForwardedHost |
                 ForwardedHeaders.XForwardedProto;
 
-            options.KnownNetworks.Clear();
+            options.KnownIPNetworks.Clear();
             options.KnownProxies.Clear();
             options.RequireHeaderSymmetry = false;
         });
@@ -125,10 +129,22 @@ public static class ApplicationBuilderExtensions
         builder.Services.AddScoped<IAuthorizationHandler, DynamicRolePolicyHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, SystemTenantAuthorizationHandler>();
 
+        builder.Services.AddAuthorization();
+
+        builder.Services
+            .AddRazorComponents()
+            .AddInteractiveServerComponents();
+
+        // Bind to Azure-injected port (Linux App Service uses 8080)
+        //var port = Environment.GetEnvironmentVariable("WEBSITES_PORT") ?? "8080";
+        //builder.WebHost.UseUrls($"http://*:{port}");
+
         return builder;
     }
 
-    public static async Task<WebApplication> UseTokenIDPAsync(this WebApplication app, string connectionStringName = "")
+    public static async Task<WebApplication> UseTokenIDPAsync(this WebApplication app,
+        string[] allowedOrigins,
+        string connectionStringName = "")
     {
         app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -136,19 +152,60 @@ public static class ApplicationBuilderExtensions
 
         app.UseMiddleware<RequestLatencyTelemetryMiddleware>();
 
+        app.UseMiddleware<TenantResolutionMiddleware>();
+
+        app.UseForwardedHeaders();
+        app.UseHttpsRedirection();
+
+        app.UseStaticFiles();
+        app.UseRouting();
+
+        app.UseCors(policy => policy
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .WithOrigins(allowedOrigins)
+            .AllowCredentials()
+        );
+
+        app.UseRateLimiter();
+
+        app.UseAntiforgery();
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapRazorComponents<App>()
+           .AddInteractiveServerRenderMode();
+
         app.RegisterIDPEndpoints();
 
         app.RegisterAdminEndpoints();
 
         await app.EnsureSystemBootstrap(connectionStringName);
 
-        //app.MapHealthChecks("/health");
+        app.MapGet("/", () => "TokenIDP is running.");
 
         app.MapHealthChecks("/health", new HealthCheckOptions
         {
             Predicate = _ => true,
             ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
         });
+
+        var entryAssembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+        var informationalVersion =
+            entryAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? entryAssembly.GetName().Version?.ToString()
+            ?? "unknown";
+        var productVersion = informationalVersion.Split('+', 2)[0];
+
+        //var buildCommitSha = builder.Configuration["Build:CommitSha"] ?? "unknown";
+        //var buildRunId = builder.Configuration["Build:RunId"] ?? "unknown";
+
+        app.MapGet("/health/version", () => Results.Ok(new
+        {
+            environment = app.Environment.EnvironmentName,
+            version = productVersion,
+            informationalVersion
+        }));
 
         return app;
     }
@@ -235,5 +292,3 @@ public static class ApplicationBuilderExtensions
         return tokenOptions;
     }
 }
-
-
