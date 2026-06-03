@@ -1,15 +1,16 @@
 <div align="center">
-  <img src="TokenIDP.svg" alt="TokenIDP Logo" width="180">
+  <img src="TokenIDP.png" alt="TokenIDP Logo" width="180">
 
   <p>
     A modern, tenant-aware Identity Provider for OAuth 2.x and OpenID Connect,
     built on .NET 10 with an admin portal and application SDKs.
   </p>
 
-  [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-  [![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev/)
-  [![Angular](https://img.shields.io/badge/Angular-21-DD0031)](https://angular.dev/)
-  [![Status](https://img.shields.io/badge/status-alpha-orange)](#project-status)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
+[![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev/)
+[![Angular](https://img.shields.io/badge/Angular-21-DD0031)](https://angular.dev/)
+[![Status](https://img.shields.io/badge/status-alpha-orange)](#project-status)
+
 </div>
 
 ---
@@ -37,17 +38,17 @@ The project is organized as a product-grade identity system: domain rules live i
 
 TokenIDP follows a layered architecture so that identity rules, infrastructure, and hosting concerns stay separate.
 
-| Area | Path | Purpose |
-| --- | --- | --- |
-| Domain | `src/TokenIDP.Domain` | Aggregates, value objects, domain events, read models, and business invariants. |
-| Core | `src/TokenIDP.Core` | OAuth, admin, security, validation, application services, endpoints, and abstractions. |
+| Area           | Path                          | Purpose                                                                                                  |
+| -------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Domain         | `src/TokenIDP.Domain`         | Aggregates, value objects, domain events, read models, and business invariants.                          |
+| Core           | `src/TokenIDP.Core`           | OAuth, admin, security, validation, application services, endpoints, and abstractions.                   |
 | Infrastructure | `src/TokenIDP.Infrastructure` | EF Core persistence, repositories, migrations, caching, bootstrapping, projections, outbox, and logging. |
-| Workers | `src/TokenIDP.Workers` | Background processors for tokens, activity, email, and metrics. |
-| Server package | `src/TokenIDP.Server` | Reusable server components and application setup extensions. |
-| Service host | `src/TokenIDP.Service` | ASP.NET Core host for running TokenIDP as a service. |
-| Tests | `src/TokenIDP.Tests` | Unit and integration coverage for OAuth, tenancy, admin, security, caching, and domain behavior. |
-| Admin portal | `portal` | React admin interface. |
-| SDKs | `sdks` | React and Angular authentication SDKs. |
+| Workers        | `src/TokenIDP.Workers`        | Background processors for tokens, activity, email, and metrics.                                          |
+| Server package | `src/TokenIDP.Server`         | Reusable server components and application setup extensions.                                             |
+| Service host   | `src/TokenIDP.Service`        | ASP.NET Core host for running TokenIDP as a service.                                                     |
+| Tests          | `src/TokenIDP.Tests`          | Unit and integration coverage for OAuth, tenancy, admin, security, caching, and domain behavior.         |
+| Admin portal   | `portal`                      | React admin interface.                                                                                   |
+| SDKs           | `sdks`                        | React and Angular authentication SDKs.                                                                   |
 
 ## Repository Layout
 

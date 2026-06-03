@@ -1,6 +1,6 @@
 # TokenIDP Angular SDK
 
-Official Angular SDK for integrating TokenIDP / SmartDevCon Identity Provider into Angular applications.
+Official Angular SDK for integrating TokenIDP OAuth and OpenID Connect authentication into Angular applications.
 
 This SDK handles:
 
@@ -65,6 +65,22 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
+Required values:
+
+- `authority`
+- `clientId`
+- `redirectUri`
+
+Common optional values:
+
+- `scope`, default `openid profile offline_access`
+- `audience`
+- `postLoginRedirectUri`, default `/`
+- `postLogoutRedirectUri`, default `/login`
+- `storage`, one of `memory`, `sessionStorage`, or `localStorage`
+- `autoRefresh`, default `true`
+- `refreshSkewSeconds`, default `180`
+
 ## Use Auth State
 
 ```ts
@@ -86,6 +102,20 @@ export class LoginButtonComponent {
   readonly auth = inject(TokenIdpAuthService);
 }
 ```
+
+The service exposes Angular signals for:
+
+- `state`
+- `isAuthenticated`
+- `accessToken`
+- `refreshToken`
+- `idToken`
+- `expiresAt`
+- `tenantKey`
+- `error`
+- `landingPage`
+
+It also exposes `login(options)`, `logout()`, `handleCallback(params)`, `refresh()`, and `setError(message)`.
 
 ## Built-In Login Component
 
@@ -116,3 +146,22 @@ provideTokenIdpAuth({
   tenantQueryParameter: 'tenant',
 });
 ```
+
+Tenant propagation modes:
+
+- `all`: add tenant query parameter to hosted authorization and built-in auth endpoint calls
+- `api`: resolve and persist tenant for application API usage without adding tenant to hosted auth endpoint calls
+- `none`: do not resolve or propagate tenant automatically
+
+The SDK resolves tenant key from explicit login options, provider config, the current URL query parameter, or session storage.
+
+## Logout
+
+`logout()` attempts to revoke the refresh token, clears the local session, and redirects to the TokenIDP logout endpoint with `client_id` and `post_logout_redirect_uri`.
+
+## Notes
+
+- PKCE uses `S256`.
+- OAuth state is stored in `sessionStorage` and validated during callback handling.
+- Refresh uses the configured refresh token and keeps the previous refresh token if the server does not return a rotated value.
+- The SDK stores tokens according to the configured storage mode. Use `sessionStorage` or `memory` for browser clients unless the application explicitly accepts the persistence tradeoff of `localStorage`.

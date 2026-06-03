@@ -1,182 +1,170 @@
-\# SmartDevCon IDP – React SDK
+# TokenIDP React SDK
 
+Official React SDK for integrating TokenIDP OAuth and OpenID Connect authentication into React applications.
 
+The SDK handles Authorization Code + PKCE, OAuth callback processing, token persistence, refresh-token rotation, logout and revocation, hosted-login redirects, auth state, and tenant propagation.
 
-Official React SDK for integrating SmartDevCon Identity Provider (OAuth 2.1 + OpenID Connect) into React applications.
-
-
-
-This SDK handles:
-
-\- OAuth 2.1 Authorization Code + PKCE flow
-
-\- Token management (access + refresh)
-
-\- Login / Logout helpers
-
-\- Auth state management
-
-\- Secure token exchange with SmartDevCon IDP
-
-
-
----
-
-
-
-\## ✨ Features
-
-
-
-\- ✅ OAuth 2.1 + OpenID Connect compliant
-
-\- 🔐 PKCE enforced for public clients
-
-\- 🔁 Automatic token refresh
-
-\- 🧠 React hooks for auth state
-
-\- ⚡ Works with React + Vite / Next.js / CRA
-
-\- 🧩 Minimal configuration
-
-
-
----
-
-
-
-\## 📦 Installation
-
-
+## Package
 
 ```bash
-
-npm install @smartdevcon/idp-react
-
-\# or
-
-yarn add @smartdevcon/idp-react
-
-
-
-
-
-
-
-SDK
-
-npx tsup
-
-npm pack
-
-
-
-Admin App
-
-npm install "D:\\Solutions\\VSCode\\React-App\\idp-sdk\\tokenidp-react-0.1.0.tgz"
-
-
-
-Wrap App with Provider
-
-
-
-import { IdpAuthProvider, LoginPage } from "tokenidp-react";
-
-
-
-<IdpAuthProvider
-
-&nbsp;     config={{
-
-&nbsp;       authority: process.env.REACT\_APP\_AUTH\_BASE\_URL,
-
-&nbsp;       clientId: process.env.REACT\_APP\_OAUTH\_CLIENT\_ID,
-
-&nbsp;       redirectUri: process.env.REACT\_APP\_OAUTH\_REDIRECT\_URI,
-
-&nbsp;       postLoginRedirectUri: "/dashboard",
-
-&nbsp;       postLogoutRedirectUri: "/login",
-
-&nbsp;       scope: process.env.REACT\_APP\_OAUTH\_SCOPE,
-
-&nbsp;       storage: "localStorage",
-
-&nbsp;     }}
-
-&nbsp;   >
-
-&nbsp;	<App />
-
-</IdpAuthProvider>
-
-
-
-Optional built-in login route
-
-
-
-<Route
-
-&nbsp; path="/login"
-
-&nbsp; element={
-
-&nbsp;&nbsp; <LoginPage
-
-&nbsp;&nbsp;&nbsp; title="Redirecting to TokenIDP..."
-
-&nbsp;&nbsp;&nbsp; subtitle="Please wait while we securely connect to Identity."
-
-&nbsp;&nbsp;&nbsp; signedOutTitle="You have been signed out"
-
-&nbsp;&nbsp; />
-
-&nbsp; }
-
-/>
-
-
-
-var auth  = useAuth();
-
-
-
-Add Login Button
-
-
-
-import { useAuth } from "@smartdevcon/idp-react";
-
-
-
-export function Login() {
-
-&nbsp; const { login, isAuthenticated, user } = useAuth();
-
-
-
-&nbsp; if (isAuthenticated) {
-
-&nbsp;   return <div>Welcome {user?.profile?.name}</div>;
-
-&nbsp; }
-
-
-
-&nbsp; return <button onClick={login}>Login</button>;
-
+npm install tokenidp-react
+```
+
+For local development from this repository:
+
+```bash
+cd sdks/react-idp-sdk
+npm install
+npm run build
+npm run pack
+```
+
+Then install the generated `.tgz` in a React app.
+
+## Exports
+
+```js
+import {
+  AuthCallback,
+  IdpAuthProvider,
+  LoginPage,
+  defaultAuthConfig,
+  useAuth,
+} from "tokenidp-react";
+```
+
+## Configure Auth
+
+Wrap the app with `IdpAuthProvider`.
+
+```jsx
+import { IdpAuthProvider } from "tokenidp-react";
+
+export function Root() {
+  return (
+    <IdpAuthProvider
+      config={{
+        authority: "https://idp.example.com",
+        clientId: "react-client",
+        redirectUri: `${window.location.origin}/auth/callback`,
+        postLoginRedirectUri: "/dashboard",
+        postLogoutRedirectUri: "/login?logged_out=1",
+        scope: "openid profile offline_access",
+        storage: "sessionStorage",
+      }}
+    >
+      <App />
+    </IdpAuthProvider>
+  );
 }
+```
 
+Required values:
 
+- `authority`
+- `clientId`
+- `redirectUri`
 
-Add Callback Route
+Common optional values:
 
+- `scope`, default `openid profile offline_access`
+- `audience`
+- `postLoginRedirectUri`, default `/`
+- `postLogoutRedirectUri`, default `/login`
+- `storage`, one of `memory`, `sessionStorage`, or `localStorage`
+- `autoRefresh`, default `true`
+- `refreshSkewSeconds`, default `180`
 
+## Routes
 
-<Route path="/callback" element={<AuthCallback />} />
+Add a login route and callback route with React Router.
 
+```jsx
+import { AuthCallback, LoginPage } from "tokenidp-react";
 
+<Routes>
+  <Route path="/login" element={<LoginPage />} />
+  <Route path="/auth/callback" element={<AuthCallback />} />
+</Routes>
+```
 
+`LoginPage` automatically redirects to TokenIDP unless the URL contains `logged_out=1`, in which case it shows a signed-out state and a sign-in button.
+
+`AuthCallback` reads `code` and `state`, validates OAuth state, exchanges the code for tokens, stores the session, and navigates to `postLoginRedirectUri` unless `redirectTo` is supplied.
+
+## Use Auth State
+
+```jsx
+import { useAuth } from "tokenidp-react";
+
+export function LoginButton() {
+  const auth = useAuth();
+
+  if (auth.isAuthenticated) {
+    return <button onClick={auth.logout}>Logout</button>;
+  }
+
+  return <button onClick={() => auth.login()}>Login</button>;
+}
+```
+
+The `useAuth()` value includes:
+
+- `isAuthenticated`
+- `tenantKey`
+- `landingPage`
+- `accessToken`
+- `refreshToken`
+- `idToken`
+- `expiresAt`
+- `error`
+- `login(options)`
+- `logout()`
+- `handleCallback({ code, state })`
+- `refresh()`
+- `setError(message)`
+
+## Login Options
+
+`login(options)` supports:
+
+- `prompt`
+- `loginHint`
+- `audience`
+- `tenantKey`
+
+```jsx
+auth.login({
+  loginHint: "user@example.com",
+  tenantKey: "tenant-a",
+});
+```
+
+## Tenant Propagation
+
+Tenant propagation is controlled by:
+
+- `tenantKey`
+- `tenantPropagationMode`: `all`, `api`, or `none`
+- `tenantQueryParameter`, default `tenant`
+- `tenantHeaderName`, default `X-Tenant-Key`
+- `tenantKeyStorageKey`, default `idp_tenant_key`
+
+Modes:
+
+- `all`: add tenant query parameter to hosted authorization and built-in auth endpoint calls
+- `api`: resolve and persist tenant for application API usage without adding tenant to hosted auth endpoint calls
+- `none`: do not resolve or propagate tenant automatically
+
+The SDK resolves tenant key from explicit login options, provider config, the current URL query parameter, or session storage.
+
+## Logout
+
+`logout()` attempts to revoke the refresh token, clears the local session, and redirects to the TokenIDP logout endpoint with `client_id` and `post_logout_redirect_uri`.
+
+## Notes
+
+- PKCE uses `S256`.
+- OAuth state is stored in `sessionStorage` and validated during callback handling.
+- Refresh uses the configured refresh token and keeps the previous refresh token if the server does not return a rotated value.
+- The SDK stores tokens according to the configured storage mode. Use `sessionStorage` or `memory` for browser clients unless the application explicitly accepts the persistence tradeoff of `localStorage`.

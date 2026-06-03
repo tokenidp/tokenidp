@@ -235,7 +235,61 @@ Behavior:
 
 ## CIBA
 
-- `CibaGrantHandler` currently returns unsupported grant behavior
+### `/backchannel-authentication`
+
+Handled by `BackchannelAuthenticationEndpoint` and `CibaBackchannelAuthenticationUseCase`.
+
+Rules:
+
+- client must exist, be active, have `ciba` in its grant list, and have CIBA enabled
+- only poll delivery mode is currently supported
+- `scope` is required and must include `openid`
+- requested scopes must be configured on the client
+- `binding_message`, when supplied, is limited to printable ASCII and 255 characters
+- user hints resolve through `CibaUserResolver`
+- resolved user must belong to the request tenant
+- if the client requires `user_code`, the submitted code must match the resolved user's expected code
+- requested expiry must be positive and is capped by the client's configured default expiry
+
+Behavior:
+
+- generates `auth_req_id` and stores only its hash
+- generates an approval token and stores only its hash
+- creates a pending backchannel authentication request
+- sends an approval notification containing the approval URL
+- returns `auth_req_id`, `expires_in`, and polling `interval`
+
+### CIBA approval
+
+`CibaApprovalEndpoint` and `CibaApprovalUseCase` support approval links and signed-in-user approval workflows.
+
+Rules:
+
+- approval token must match the stored challenge hash
+- request must still be pending and unexpired
+- approve and reject transitions are persisted as activity events
+- pending approval queries are scoped to the current user
+
+### CIBA token redemption
+
+Handled by `CibaGrantHandler` and `CibaTokenRedemptionUseCase`.
+
+Rules:
+
+- `auth_req_id` is required
+- client authentication is required
+- stored `auth_req_id` hash must exist and belong to the requesting client
+- client must still be active, CIBA-enabled, and configured for poll delivery
+- polling too quickly returns `slow_down`
+- pending approval returns `authorization_pending`
+- expired requests return `expired_token`
+- denied requests return `access_denied`
+
+Behavior:
+
+- approved requests are converted into a user token context
+- token issuance uses the normal `TokenIssuerUseCase`
+- request is marked token-issued after successful redemption
 
 ## Token context rules
 
@@ -598,6 +652,6 @@ Other user lifecycle flows:
 ## Important Observations
 
 - Backend is the real enforcement layer; frontend mirrors some rules but is not authoritative.
-- CIBA exists in models/lookups but is intentionally unsupported at execution time.
+- CIBA poll mode is implemented for backchannel authentication, approval, and token redemption.
 - Password flow and device flow both integrate with the same MFA use case.
 - Multiple API audiences are explicitly unsupported during token issuance.

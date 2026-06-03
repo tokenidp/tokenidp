@@ -31,6 +31,7 @@ Reviewed areas:
 - `/auth/callback` is handled by `AuthCallback`.
 - If `logged_out=1` is present, the login page shows a signed-out state and offers re-login.
 - The portal does not implement its own username/password, MFA challenge, device activation, self-registration, or forgot-password completion UI.
+- Pending CIBA approvals are handled by the `/ciba-requests` admin route for the currently signed-in user.
 
 ### Route authorization
 
@@ -110,6 +111,7 @@ Additional rules:
 - `client_credentials` is blocked for SPA, Mobile, Desktop.
 - `password` is blocked for SPA and Device/IOT.
 - `ciba` is limited to WebApp and also marked in the UI as under development.
+- CIBA is configured in the wizard for supported clients; the backend currently supports poll delivery mode.
 - `device_code` is limited to Mobile, Desktop, Device/IOT.
 
 ### Redirect URI validation
@@ -194,6 +196,19 @@ Frontend MFA behavior is administrative:
 - client form can set `mfaPolicyOverride`
 - dashboard shows MFA challenge metrics
 - settings may hold MFA-related keys but validation there is type-based only
+
+## CIBA Approval Queue
+
+Route: `/ciba-requests`
+
+- requires `ciba.view`
+- loads pending requests from `backchannel-authentication/requests/pending`
+- shows pending requests for the currently signed-in user only
+- displays client name, client ID, requested scopes, binding message, creation time, and expiry
+- approve action requires `ciba.approve`
+- deny action requires `ciba.deny`
+- deny reason is optional
+- successful approve/deny refreshes the queue
 
 ## Admin Aggregates
 
@@ -304,9 +319,11 @@ Frontend MFA behavior is administrative:
 - read-only audit list
 - filters: date range, event type, actor type, status, search
 - search waits for 3 chars
+- CIBA approval, denial, expiry, and notification events can appear as activity records when raised by the backend
 
 ## Important Observations
 
 - The portal is primarily an admin console plus hosted-auth shell.
-- End-user OAuth login, MFA verification, device approval, self-registration, and password reset completion are handled outside this React app.
+- End-user OAuth login, MFA verification, device activation, self-registration, and password reset completion are handled outside this React app.
+- CIBA approval is the exception: the portal includes a pending-request queue for the signed-in user's backchannel authentication requests.
 - The densest frontend business-rule layer is the Application wizard; most other screens are thin validation plus API orchestration.

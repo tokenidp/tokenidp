@@ -30,14 +30,19 @@ is selected (by `NotAfter`), enabling rotation.
 If the environment is Production and no certificate is configured, startup
 fails with an error.
 
-## Development (PEM or dev key)
+## Development (PEM or built-in dev key)
 
 Development allows PEM keys:
 - `TokenOptions:KeyPath` (file path to PEM or base64 key), or
 - `TokenOptions:Key` (inline PEM or base64 key)
 
-If neither PEM nor certificate is provided in development, a built-in dev key
-is used.
+When the service is configured through `AddTokenIDPServices(...)`, non-production
+startup injects a built-in development RSA private key if no key or certificate
+is configured. That fallback is for local development only.
+
+Lower-level token signing helpers do not invent key material by themselves. If
+they are used without the server setup layer, `TokenOptions:Key`,
+`TokenOptions:KeyPath`, or certificate configuration must already be present.
 
 ## Audience Requirement
 
@@ -89,6 +94,7 @@ is used.
 ## Operational Notes
 
 - Private keys must never be committed to source control.
+- The built-in development key must never be used in production.
 - For production, use a secure store (OS cert store, HSM, or cloud KMS).
 - Rotate certificates by installing a newer cert with the same subject name.
 - Distribute public keys to resource servers via JWKS or a public certificate.
