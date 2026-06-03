@@ -4,6 +4,10 @@ TokenIDP Server is the ASP.NET Core host package for TokenIDP, a modern identity
 
 It is designed for teams that need a complete identity foundation: secure sign-in flows, tenant-aware authentication, token issuance, client management, user administration, and operational background processing.
 
+For more information, see the [TokenIDP website](https://www.tokenidp.com).
+
+Source and documentation are available on GitHub at [naeem-engr/tokenidp](https://github.com/naeem-engr/tokenidp).
+
 ## What It Provides
 
 - OAuth and OpenID Connect endpoints for application sign-in and token handling.

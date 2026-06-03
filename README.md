@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="TokenIDP.png" alt="TokenIDP Logo" width="180">
+  <img src="TokenIDP.svg" alt="TokenIDP Logo" width="180">
 
   <p>
     A modern, tenant-aware Identity Provider for OAuth 2.x and OpenID Connect,
@@ -14,6 +14,8 @@
 </div>
 
 ---
+
+For more information, see the [TokenIDP website](https://www.tokenidp.com).
 
 ## Why TokenIDP
 
