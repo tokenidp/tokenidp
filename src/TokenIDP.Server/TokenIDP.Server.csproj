@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -12,8 +12,8 @@
     <Company>TokenIDP</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>SmartDevCon;oauth;openid-connect;identity-provider;iam;authentication;authorization;oauth2;oidc;jwt;dotnet;aspnetcore</PackageTags>
-    <Copyright>Copyright (c) 2026 SmartDevCon</Copyright>
+    <PackageTags>TokenIDP;oauth;openid-connect;identity-provider;iam;authentication;authorization;oauth2;oidc;jwt;dotnet;aspnetcore</PackageTags>
+    <Copyright>Copyright (c) 2026 TokenIDP</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>TokenIDP.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
