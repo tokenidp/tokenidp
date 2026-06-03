@@ -1,8 +1,6 @@
 <div align="center">
   <img src="TokenIDP.svg" alt="TokenIDP Logo" width="180">
 
-  <h1>TokenIDP</h1>
-
   <p>
     A modern, tenant-aware Identity Provider for OAuth 2.x and OpenID Connect,
     built on .NET 10 with an admin portal and application SDKs.
