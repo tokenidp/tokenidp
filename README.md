@@ -1,17 +1,13 @@
-<div align="center">
-  <img src="TokenIDP.png" alt="TokenIDP Logo" width="180">
+# TokenIDP
 
-  <p>
-    A modern, tenant-aware Identity Provider for OAuth 2.x and OpenID Connect,
-    built on .NET 10 with an admin portal and application SDKs.
-  </p>
+![TokenIDP Logo](TokenIDP.png)
+
+A modern, tenant-aware Identity Provider for OAuth 2.x and OpenID Connect, built on .NET 10 with an admin portal and application SDKs.
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
 [![React](https://img.shields.io/badge/React-18-61DAFB)](https://react.dev/)
 [![Angular](https://img.shields.io/badge/Angular-21-DD0031)](https://angular.dev/)
 [![Status](https://img.shields.io/badge/status-alpha-orange)](#project-status)
-
-</div>
 
 ---
 
