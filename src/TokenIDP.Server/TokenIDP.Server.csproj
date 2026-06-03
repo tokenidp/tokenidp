@@ -12,7 +12,8 @@
     <Company>TokenIDP</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>SmartDevCon;identity;oauth;openid-connect;blazor;aspnetcore</PackageTags>
+    <PackageTags>SmartDevCon;oauth;openid-connect;identity-provider;iam;authentication;authorization;oauth2;oidc;jwt;dotnet;aspnetcore</PackageTags>
+    <Copyright>Copyright (c) 2026 SmartDevCon</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>TokenIDP.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
