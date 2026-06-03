@@ -1,92 +1,312 @@
 # TokenIDP Admin Portal
 
-The admin portal is built as a static React application. Production releases are
-distributed as `TokenIDP.AdminPortal.{version}.zip`; extract the ZIP to IIS,
-Nginx, Azure Static Web Apps, S3/CloudFront, Netlify, or another static host.
+## Scope
 
-Edit `config.json` after extracting the ZIP:
+Summary of UI validations, client-configuration rules, and admin behaviors implemented in `portal/src`.
 
-```json
-{
-  "baseUrl": "https://idp.customer.com",
-  "authority": "https://idp.customer.com",
-  "clientId": "idp-admin",
-  "redirectUri": "https://admin.customer.com/auth/callback",
-  "postLogoutRedirectUri": "https://admin.customer.com/login",
-  "scope": "openid profile tokenidp.admin.write tokenidp.admin.read"
-}
-```
+Reviewed areas:
 
-The IDP backend must allow the portal origin in CORS and register the same
-redirect/logout URLs for the `idp-admin` SPA client.
+- auth shell: `index.js`, `App.js`, `privateRoute.js`, `useApiClient.js`
+- client/app wizard: `applications/*`
+- admin aggregates: `apiResources/*`, `tenants/*`, `users/*`, `roles/*`, `permissions/*`, `settings/*`, `tokens/*`, `activities/*`
 
-# Getting Started with Create React App
+## Cross-Cutting Rules
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### Auth shell
 
-## Available Scripts
+- The portal uses `IdpAuthProvider` from `tokenidp-react`.
+- Config comes from:
+  - `REACT_APP_AUTH_BASE_URL`
+  - `REACT_APP_OAUTH_CLIENT_ID`
+  - `REACT_APP_OAUTH_REDIRECT_URI`
+  - `REACT_APP_OAUTH_POST_LOGOUT_REDIRECT_URI`
+  - `REACT_APP_OAUTH_SCOPE`
+- Tokens are stored in `localStorage`.
+- Post-login redirect is `/dashboard`.
+- Post-logout redirect defaults to `/login`.
 
-In the project directory, you can run:
+### Login/logout flow
 
-### `npm start`
+- `/login` delegates to hosted auth via `auth.login()`.
+- `/auth/callback` is handled by `AuthCallback`.
+- If `logged_out=1` is present, the login page shows a signed-out state and offers re-login.
+- The portal does not implement its own username/password, MFA challenge, device activation, self-registration, or forgot-password completion UI.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Route authorization
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- `PrivateRoute` requires `isAuthenticated`.
+- Access is granted when either:
+  - required permission keys satisfy `requiredAnyOf` / `requiredAllOf`
+  - a permission entry has a `url` matching the route and its value is not false
+- Permission keys are normalized to lowercase.
 
-### `npm test`
+### API client behavior
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `useApiClient` injects `Bearer` access tokens unless `skipAuth` is true.
+- Error payloads are normalized from multiple server shapes and pushed to global error UI.
 
-### `npm run build`
+### List behavior
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Most search screens debounce requests by `250ms` to `400ms`.
+- Most text searches do not query until at least 3 characters are entered.
+- After create/update/delete/admin actions, lists refresh from the server.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## OAuth / Grant Logic In The Client Wizard
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Main source: `applicationWizard.jsx` plus `wizard/steps/*`.
 
-### `npm run eject`
+### App types
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- `0` SPA
+- `1` Mobile
+- `2` Desktop
+- `3` WebApp
+- `4` Backend
+- `5` Device/IOT
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+SPA, Mobile, and Desktop are treated as public clients. WebApp and Backend are secret-capable. Device/IOT is forced into device flow assumptions.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Grant catalog
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+- `authorization_code`
+- `refresh_token`
+- `client_credentials`
+- `device_code`
+- `ciba`
+- `password`
 
-## Learn More
+### Grant compatibility enforced in UI
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- SPA:
+  - must include `authorization_code`
+  - may include `refresh_token`
+  - cannot use `client_credentials`
+  - cannot use `password`
+- Mobile:
+  - may use `authorization_code`
+  - may use `refresh_token`
+  - may use `password`
+- Desktop:
+  - may use `authorization_code`
+  - may use `refresh_token`
+  - may use `device_code`
+  - may use `password`
+- WebApp:
+  - may use `authorization_code`
+  - may use `refresh_token`
+  - may use `password`
+  - may use `ciba`
+- Backend:
+  - may use `client_credentials`
+  - may use `refresh_token`
+  - may use `password`
+- Device/IOT:
+  - must use `device_code`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Additional rules:
 
-### Code Splitting
+- `refresh_token` requires `authorization_code` or `password`.
+- Public clients and Device/IOT clients cannot have client secrets.
+- `client_credentials` is blocked for SPA, Mobile, Desktop.
+- `password` is blocked for SPA and Device/IOT.
+- `ciba` is limited to WebApp and also marked in the UI as under development.
+- `device_code` is limited to Mobile, Desktop, Device/IOT.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Redirect URI validation
 
-### Analyzing the Bundle Size
+- Required only when `authorization_code` is enabled.
+- Disabled for `client_credentials`-only clients.
+- One URI per line.
+- Wildcards `*` rejected.
+- Fragments `#` rejected.
+- Values starting with `?` rejected.
+- Each line must parse as a URL.
+- Only `https:` allowed, except `http://localhost`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Logout redirect URIs use the same validation when supplied.
 
-### Making a Progressive Web App
+### Secret handling
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+- Secret fields are disabled for public clients and Device/IOT.
+- Secret regeneration is edit-mode only.
+- The UI warns that regenerated secrets are shown once and then only the hash is stored.
+- Secret expiry is configured in days.
 
-### Advanced Configuration
+### Scope and audience rules
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- `openid` is described as required for OIDC login / ID token issuance.
+- `offline_access` is disabled unless `refresh_token` is enabled.
+- For `client_credentials`, the UI disables:
+  - `openid`
+  - `profile`
+  - `email`
+  - `offline_access`
+- Selecting an API scope auto-selects its owning API resource.
+- Deselecting an API resource removes its owned scopes.
+- The wizard warns that the IDP issues single-audience tokens and rejects multi-resource token requests.
 
-### Deployment
+### Token settings
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+- Token type is required.
+- Token type choices are `JWT` and `Reference`.
+- Selecting reference tokens shows an introspection/performance warning.
+- Access token lifetime:
+  - required
+  - minimum 1
+- Authorization code lifetime:
+  - required only if `authorization_code` is enabled
+  - minimum 1
+- Refresh token expiration:
+  - required only if `refresh_token` is enabled
+  - minimum 1
+  - maximum 30 days enforced in UI
 
-### `npm run build` fails to minify
+### Client auth policy options exposed
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `allowLocalLoginOverride`
+- `allowSelfRegistrationOverride`
+- `mfaPolicyOverride`
+- `showStaySignedIn`
+- `showCreateAccountLink`
+- `showExternalProviders`
+- `autoCreateUsers`
+- `defaultRoleId`
+
+UI rule:
+
+- if `autoCreateUsers` is enabled, a default role is expected
+- if external providers are hidden, selected providers are omitted from payload
+
+### Protection step
+
+- Permit limit, queue limit, time window, and interaction tracking are editable.
+- The screen explicitly marks them as saved-but-not-enforced yet.
+- `timeWindow` must match supported duration formats.
+
+## MFA In The Frontend
+
+There is no dedicated MFA challenge UI in the portal.
+
+Frontend MFA behavior is administrative:
+
+- tenant form can enable tenant MFA and set code expiry minutes
+- user form can toggle per-user `twoFactorEnabled`
+- client form can set `mfaPolicyOverride`
+- dashboard shows MFA challenge metrics
+- settings may hold MFA-related keys but validation there is type-based only
+
+## Admin Aggregates
+
+### Applications / Clients
+
+- list filters: app type, token type, status, search
+- search waits for 3 chars
+- table and card views exist
+- delete is permission-gated by `applications.delete`
+- export includes client name, client ID, app type, token type, status
+- payloads trim strings and normalize enum-like values to numbers
+
+### ApiResources
+
+- `name` required
+- `displayName` required
+- scope draft requires `name` and `displayName`
+- scopes can be added/edited/removed locally before submit
+- delete refreshes the list after success
+
+### Tenants
+
+- `tenantName` required
+- `authenticationMode` required
+- email uses email input semantics
+- `twoFactorCodeExpiry` must be at least 1 when MFA is enabled
+- tenant code is disabled/system-managed
+- delete is disabled in the list while tenant is active
+- search waits for 3 chars
+- enabled external providers require client ID in UI validation
+- existing provider secrets are masked, revealable only in edit mode, and auto-hide after 6 seconds
+
+### Users
+
+- required:
+  - status
+  - first name
+  - last name
+  - username
+  - email
+  - phone
+  - at least one role
+- password required only on create
+- username is read-only on edit
+- address requires:
+  - address type
+  - address line 1
+  - city
+  - state/province
+  - postal code
+  - country
+- contact section is optional, but if any contact detail is entered then `contactType` becomes required
+- lockout end is editable only when lockout is enabled
+- admin functions from list:
+  - password reset email
+  - active/inactive status toggle
+  - soft-delete/archive
+
+### Roles
+
+- role name required
+- UI does not require description, though backend does
+- inactive role forces `isAssignableToNewUsers` off
+- non-editable/system roles cannot change new-user assignment flag
+- permission selection uses a tree with cascading menu selection
+- permission search activates at 3+ chars
+- delete is permission-gated by `roles.delete`
+
+### Permissions
+
+- permission name required
+- permission key required
+- key forced to lowercase while typing
+- key pattern only allows lowercase letters, digits, `_`, `.`
+- `Action` and `WorkflowAction` require a parent/root menu
+- `accessUrl`, if supplied, must start with `/`
+- list supports filters for name, key, control type, status
+- name/key searches require at least 3 chars
+
+### Settings
+
+- edit permission depends on `settings.edit`
+- delete permission depends on `settings.delete`
+- bulk save validates every pending item
+- each item needs a non-empty key
+- value rules:
+  - `Int`: whole number
+  - `Bool`: `true` or `false`
+  - `Json`: valid JSON
+  - all types reject empty values
+- read-only entries are locked from edit/delete
+- settings are grouped by scope:
+  - System
+  - Security
+  - Notification
+  - Branding
+  - Integration
+
+### Tokens
+
+- search by token ID / user waits for 3 chars
+- revoke / force-expire enabled only for token types interpreted as refresh or reference
+- revoked tokens cannot be managed again from the UI
+- token detail is loaded lazily in inspect modal
+
+### Activities
+
+- read-only audit list
+- filters: date range, event type, actor type, status, search
+- search waits for 3 chars
+
+## Important Observations
+
+- The portal is primarily an admin console plus hosted-auth shell.
+- End-user OAuth login, MFA verification, device approval, self-registration, and password reset completion are handled outside this React app.
+- The densest frontend business-rule layer is the Application wizard; most other screens are thin validation plus API orchestration.
