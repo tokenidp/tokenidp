@@ -14,7 +14,7 @@
     <RepositoryType>git</RepositoryType>
     <PackageTags>TokenIDP;oauth;openid-connect;identity-provider;iam;authentication;authorization;oauth2;oidc;jwt;dotnet;aspnetcore</PackageTags>
     <Copyright>Copyright (c) 2026 TokenIDP</Copyright>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>README.NuGet.md</PackageReadmeFile>
     <PackageIcon>TokenIDP.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="README.NuGet.md" Pack="true" PackagePath="README.md" />
     <None Include="TokenIDP.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
