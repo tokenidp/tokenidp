@@ -3,7 +3,7 @@
   
   &nbsp;
   
-  [![.NET](https://img.shields.io/badge/.NET-9.0-purple)](https://dotnet.microsoft.com/)
+  [![.NET](https://img.shields.io/badge/.NET-10.0-purple)](https://dotnet.microsoft.com/)
 </div>
 
 ## Features
