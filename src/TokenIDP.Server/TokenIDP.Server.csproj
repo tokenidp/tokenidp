@@ -17,6 +17,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>TokenIDP.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,9 +49,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TokenIDP.Core\TokenIDP.Core.csproj" />
-    <ProjectReference Include="..\TokenIDP.Infrastructure\TokenIDP.Infrastructure.csproj" />
-    <ProjectReference Include="..\TokenIDP.Workers\TokenIDP.Workers.csproj" />
+    <ProjectReference Include="..\TokenIDP.Core\TokenIDP.Core.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\TokenIDP.Infrastructure\TokenIDP.Infrastructure.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\TokenIDP.Workers\TokenIDP.Workers.csproj" PrivateAssets="all" />
   </ItemGroup>
 
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
 </Project>
