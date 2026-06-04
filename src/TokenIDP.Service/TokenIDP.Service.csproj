@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TokenIDP.Core\TokenIDP.Core.csproj" />
     <ProjectReference Include="..\TokenIDP.Server\TokenIDP.Server.csproj" />
   </ItemGroup>
 

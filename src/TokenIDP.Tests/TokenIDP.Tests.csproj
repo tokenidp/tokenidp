@@ -38,6 +38,7 @@
     <ProjectReference Include="..\TokenIDP.Domain\TokenIDP.Domain.csproj" />
     <ProjectReference Include="..\TokenIDP.Infrastructure\TokenIDP.Infrastructure.csproj" />
     <ProjectReference Include="..\TokenIDP.Server\TokenIDP.Server.csproj" />
+    <ProjectReference Include="..\TokenIDP.Workers\TokenIDP.Workers.csproj" />
   </ItemGroup>
 
   <ItemGroup>
