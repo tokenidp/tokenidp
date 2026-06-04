@@ -1,77 +1,108 @@
 # Token Signing Key Management
 
-This document explains how token signing keys are handled in this solution for
-development and production, including PEM keys and X.509 certificates.
+TokenIDP signs access tokens and identity tokens with asymmetric RSA signing material. APIs and clients trust those tokens only when they can validate the signature against the public key exposed by TokenIDP discovery and JWKS endpoints.
 
-## Overview
+This document describes the signing-key options supported by the current implementation and how to configure them safely for development and production.
 
-JWTs are signed by the authorization server. In production, we use an X.509
-certificate with a private key stored in a secure store. In development, a PEM
-key can be used for convenience.
+## How TokenIDP Resolves Signing Material
 
-Key configuration is provided via `TokenOptions` (appsettings or code).
+TokenIDP reads signing settings from the `TokenOptions` configuration section.
 
-## Production (X.509 Certificate)
+Supported options are:
 
-Production requires a signing certificate:
-- The authorization server uses the certificate *private key* to sign tokens.
-- Resource servers validate tokens using the public key (JWKS or public cert).
-- Client apps that only request tokens do not need the certificate.
+- `TokenOptions:KeyPath` - path to a PEM file or a file containing a base64-encoded RSA private key.
+- `TokenOptions:Key` - inline PEM or base64-encoded RSA private key.
+- `TokenOptions:CertificateThumbprint` - certificate lookup by thumbprint.
+- `TokenOptions:CertificateSubjectName` - certificate lookup by subject name.
+- `TokenOptions:CertificateStoreName` - certificate store name. Defaults to `My`.
+- `TokenOptions:CertificateStoreLocation` - certificate store location. Defaults to `CurrentUser`.
+- `TokenOptions:Issuer` - issuer URL used in generated tokens and discovery metadata.
+- `TokenOptions:Audience` - token audience. When using `AddTokenIDPServices(...)`, the audience is supplied by the method argument and overrides `TokenOptions:Audience` from configuration.
 
-Certificate selection:
-- Preferred: `TokenOptions:CertificateThumbprint`
-- Optional: `TokenOptions:CertificateSubjectName`
-- Optional: `TokenOptions:CertificateStoreName` (default: `My`)
-- Optional: `TokenOptions:CertificateStoreLocation` (default: `CurrentUser`)
+Resolution order is:
 
-When `CertificateSubjectName` is used, the newest certificate with a private key
-is selected (by `NotAfter`), enabling rotation.
+1. If certificate configuration is present, TokenIDP loads the configured certificate and uses it for signing.
+2. In non-production environments, if no certificate is configured, TokenIDP uses `TokenOptions:KeyPath` or `TokenOptions:Key`.
+3. In non-production environments, if no key or certificate is configured, `AddTokenIDPServices(...)` injects a built-in development RSA key.
+4. In production, TokenIDP requires certificate configuration and fails startup when neither `CertificateThumbprint` nor `CertificateSubjectName` is configured.
 
-If the environment is Production and no certificate is configured, startup
-fails with an error.
+The built-in development key is only a local fallback. Do not rely on it for shared development environments, staging, or production.
 
-## Development (PEM or built-in dev key)
+## Recommended Local Development Setup
 
-Development allows PEM keys:
-- `TokenOptions:KeyPath` (file path to PEM or base64 key), or
-- `TokenOptions:Key` (inline PEM or base64 key)
+For local development, keep non-secret values in `appsettings.json` and keep the private signing key outside source control.
 
-When the service is configured through `AddTokenIDPServices(...)`, non-production
-startup injects a built-in development RSA private key if no key or certificate
-is configured. That fallback is for local development only.
-
-Lower-level token signing helpers do not invent key material by themselves. If
-they are used without the server setup layer, `TokenOptions:Key`,
-`TokenOptions:KeyPath`, or certificate configuration must already be present.
-
-## Audience Requirement
-
-`TokenOptions:Audience` is required. It is validated in JWT bearer auth via
-`ValidAudience`.
-
-## Configuration Examples
-
-### Production with certificate thumbprint
+Example `appsettings.json`:
 
 ```json
 {
   "TokenOptions": {
-    "Audience": "admin.api",
-    "Issuer": "https://idp.example.com",
-    "CertificateThumbprint": "YOUR_CERT_THUMBPRINT",
+    "Issuer": "https://localhost:5001"
+  }
+}
+```
+
+Store the private key path with .NET user secrets:
+
+```powershell
+dotnet user-secrets init
+dotnet user-secrets set "TokenOptions:KeyPath" "D:\TokenIDP\signing-key.pem"
+```
+
+The file at `D:\TokenIDP\signing-key.pem` should contain a PEM-formatted RSA private key:
+
+```text
+-----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
+```
+
+Do not commit the PEM file to source control. Store it outside the project folder or add the containing folder to `.gitignore`.
+
+`WebApplication.CreateBuilder(args)` loads user secrets automatically when the host runs in the `Development` environment, so `TokenOptions:KeyPath` becomes available to TokenIDP without placing the private key in `appsettings.json`.
+
+## Inline Development Key
+
+`TokenOptions:Key` is also supported for local development, but it is less convenient and easier to leak.
+
+If you use an inline PEM value from PowerShell, use PowerShell newline escapes so the value contains real PEM newlines:
+
+```powershell
+dotnet user-secrets set "TokenOptions:Key" "-----BEGIN PRIVATE KEY-----`n...`n-----END PRIVATE KEY-----"
+```
+
+Prefer `TokenOptions:KeyPath` for local development because the key remains a normal PEM file and command history does not contain the full private key.
+
+## Production Setup
+
+Production requires certificate-based signing.
+
+Use one of:
+
+- `TokenOptions:CertificateThumbprint`
+- `TokenOptions:CertificateSubjectName`
+
+The certificate must be installed in the configured certificate store and must have an accessible private key. TokenIDP uses the private key to sign tokens and publishes the public key through JWKS.
+
+Example with certificate thumbprint:
+
+```json
+{
+  "TokenOptions": {
+    "Issuer": "https://id.example.com",
+    "CertificateThumbprint": "ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12",
     "CertificateStoreName": "My",
     "CertificateStoreLocation": "LocalMachine"
   }
 }
 ```
 
-### Production with subject name (rotation)
+Example with subject name:
 
 ```json
 {
   "TokenOptions": {
-    "Audience": "admin.api",
-    "Issuer": "https://idp.example.com",
+    "Issuer": "https://id.example.com",
     "CertificateSubjectName": "CN=IDP Signing",
     "CertificateStoreName": "My",
     "CertificateStoreLocation": "LocalMachine"
@@ -79,22 +110,50 @@ they are used without the server setup layer, `TokenOptions:Key`,
 }
 ```
 
-### Development with PEM
+When `CertificateSubjectName` is used, TokenIDP selects the newest matching certificate with a private key by expiration date. This supports certificate rotation by installing a newer certificate with the same subject name and then restarting the host.
 
-```json
-{
-  "TokenOptions": {
-    "Audience": "admin.api",
-    "Issuer": "https://localhost:5001",
-    "KeyPath": "C:\\secrets\\dev-signing-key.pem"
-  }
-}
+## JWKS Publishing
+
+TokenIDP publishes public signing key material at:
+
+```text
+/.well-known/jwks.json
 ```
 
-## Operational Notes
+Downstream APIs should validate tokens by using TokenIDP discovery and JWKS rather than copying public keys manually. After key rotation, confirm the new public key appears in JWKS and that downstream validators refresh their key cache.
 
-- Private keys must never be committed to source control.
-- The built-in development key must never be used in production.
-- For production, use a secure store (OS cert store, HSM, or cloud KMS).
-- Rotate certificates by installing a newer cert with the same subject name.
-- Distribute public keys to resource servers via JWKS or a public certificate.
+## Rotation Runbook
+
+For planned production rotation:
+
+1. Create or obtain a new signing certificate with a private key.
+2. Install the certificate in the configured store.
+3. Update configuration if using thumbprint-based lookup.
+4. Restart or redeploy TokenIDP.
+5. Confirm `/.well-known/jwks.json` exposes the new key.
+6. Issue a test token and validate it against a downstream API.
+7. Monitor token validation failures while downstream caches refresh.
+8. Remove the retired certificate only after all validators have moved to the new key.
+
+For emergency rollover after a private-key compromise:
+
+1. Remove or disable the compromised key.
+2. Deploy a new signing certificate.
+3. Restart TokenIDP and verify JWKS.
+4. Revoke sensitive refresh tokens if compromise scope is unclear.
+5. Review audit logs for unusual token issuance or administrative changes.
+
+## Common Pitfalls
+
+- Putting a private signing key in `appsettings.json`.
+- Committing PEM files, `.pfx` files, or user-secrets files to source control.
+- Using `TokenOptions:KeyPath` in production. The current server setup requires certificate configuration in production.
+- Expecting `TokenOptions:Audience` in configuration to win over `AddTokenIDPServices(...)`. The method argument sets the effective audience.
+- Rotating a certificate without confirming downstream JWKS cache behavior.
+
+## Troubleshooting
+
+- If local startup says the signing key file was not found, verify the exact `TokenOptions:KeyPath` value and confirm the process account can read the file.
+- If local startup says the key must be PEM or base64-encoded RSA private key, confirm the PEM file contains a private key, not a public key.
+- If production startup fails, verify `TokenOptions:CertificateThumbprint` or `TokenOptions:CertificateSubjectName` is configured and the certificate exists in the configured store.
+- If token validation fails after rotation, compare the token header `kid`, the JWKS response, and the downstream API key-cache behavior.
