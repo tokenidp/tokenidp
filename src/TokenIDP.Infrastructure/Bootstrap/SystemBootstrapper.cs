@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Roles;
+using TokenIDP.Core.Admin.Tenants;
 using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Domain;
 using TokenIDP.Domain.AggregateRoots.Permissions;
@@ -118,6 +119,25 @@ internal class SystemBootstrapper : ISystemBootstrapper
                 {
                     throw new InvalidOperationException(
                         $"Failed to activate system tenant: {FormatErrors(activateResult)}");
+                }
+
+                normalized = true;
+            }
+
+            if (ShouldNormalizeUiSettings(existing, defaultTenant))
+            {
+                var uiSetting = defaultTenant.UISetting;
+                var brandingResult = existing.UpdateBranding(
+                    uiSetting.Theme ?? "Light",
+                    uiSetting.LogoUrl ?? string.Empty,
+                    uiSetting.PrimaryColor ?? "default",
+                    uiSetting.DefaultLanguage ?? "en",
+                    uiSetting.LoginText ?? string.Empty);
+
+                if (!brandingResult.IsSuccess)
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to normalize system tenant UI settings: {FormatErrors(brandingResult)}");
                 }
 
                 normalized = true;
@@ -531,6 +551,19 @@ internal class SystemBootstrapper : ISystemBootstrapper
         }
 
         return clientApiResource;
+    }
+
+    private static bool ShouldNormalizeUiSettings(Tenant existing, CreateUpdateTenant defaultTenant)
+    {
+        var current = existing.TenantUISetting;
+        var expected = defaultTenant.UISetting;
+
+        return current is null ||
+               !string.Equals(current.Theme, expected.Theme ?? "Light", StringComparison.Ordinal) ||
+               !string.Equals(current.LogoUrl, expected.LogoUrl ?? string.Empty, StringComparison.Ordinal) ||
+               !string.Equals(current.PrimaryColor, expected.PrimaryColor ?? "default", StringComparison.Ordinal) ||
+               !string.Equals(current.DefaultLanguage, expected.DefaultLanguage ?? "en", StringComparison.Ordinal) ||
+               !string.Equals(current.LoginText, expected.LoginText ?? string.Empty, StringComparison.Ordinal);
     }
 
     private static string FormatErrors(Result result)

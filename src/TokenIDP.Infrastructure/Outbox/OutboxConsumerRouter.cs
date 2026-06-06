@@ -1,6 +1,6 @@
 using TokenIDP.Domain.DomainEvents.Activities;
-using TokenIDP.Domain.DomainEvents.Tokens;
 using TokenIDP.Domain.DomainEvents.Tenants;
+using TokenIDP.Domain.DomainEvents.Tokens;
 using TokenIDP.Domain.DomainEvents.Users;
 using TokenIDP.Infrastructure.Outbox.Abstractions;
 

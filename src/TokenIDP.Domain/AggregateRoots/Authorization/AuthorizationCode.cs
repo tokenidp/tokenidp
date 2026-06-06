@@ -1,4 +1,5 @@
 namespace TokenIDP.Domain.AggregateRoots.Authorization;
+
 public class AuthorizationCode : AggregateRoot<int>
 {
     public string Code { get; private set; } = string.Empty;

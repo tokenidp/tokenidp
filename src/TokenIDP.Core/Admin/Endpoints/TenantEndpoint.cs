@@ -26,9 +26,9 @@ internal class TenantEndpoint : IEndpointDefinition
             return EndpointResultMapper.ToOkOrError(response);
         })
         .RequireAuthorization(new AuthorizeAttribute
-         {
-             Policy = "tenants.view"
-         })
+        {
+            Policy = "tenants.view"
+        })
         .RequireSystemTenant()
         .WithName("Tenants")
         .WithTags("Tenants");

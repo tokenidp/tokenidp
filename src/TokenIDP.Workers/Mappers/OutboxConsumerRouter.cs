@@ -1,5 +1,5 @@
-using TokenIDP.Infrastructure.Outbox.Abstractions;
 using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Infrastructure.Outbox.Abstractions;
 
 namespace TokenIDP.Workers.Mappers;
 

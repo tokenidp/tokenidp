@@ -1,8 +1,8 @@
-using System.Net.Http.Headers;
-using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Moq;
+using System.Net.Http.Headers;
+using System.Text;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Foundation.Exceptions;

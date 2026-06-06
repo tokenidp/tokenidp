@@ -5,9 +5,9 @@ using Moq;
 using System.Text.Json;
 using System.Threading.RateLimiting;
 using TokenIDP.Core.Abstractions;
+using TokenIDP.Core.OAuth.RateLimiting;
 using TokenIDP.Domain.Base;
 using TokenIDP.Domain.DomainEvents.Activities;
-using TokenIDP.Core.OAuth.RateLimiting;
 
 namespace TokenIDP.Tests.OAuth;
 

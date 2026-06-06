@@ -33,9 +33,9 @@ try
         .Get<CorsOptions>() ?? new CorsOptions();
 
     var app = builder.Build();
-    
+
     app.UseExceptionHandler("/error");
-   
+
     await app.UseTokenIDPAsync(corsOptions.AllowedOrigins, "Identity_DB");
 
     await app.RunAsync();

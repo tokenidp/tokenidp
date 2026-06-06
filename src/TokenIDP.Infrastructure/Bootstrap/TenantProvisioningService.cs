@@ -27,7 +27,13 @@ internal class TenantProvisioningService : ITenantProvisioningService
         else
             authSettings.DisableTwoFactor();
 
-        var uiSetting = TenantUISetting.Create("Light", "default", "default", "en", string.Empty);
+        var uiSettingsRequest = command.UISetting ?? new TenantUISettingDetail();
+        var uiSetting = TenantUISetting.Create(
+            uiSettingsRequest.Theme ?? "Light",
+            uiSettingsRequest.LogoUrl ?? string.Empty,
+            uiSettingsRequest.PrimaryColor ?? "default",
+            uiSettingsRequest.DefaultLanguage ?? "en",
+            uiSettingsRequest.LoginText ?? string.Empty);
 
         var createResult = Tenant.Create(
             command.TenantName,
@@ -56,6 +62,7 @@ internal class TenantProvisioningService : ITenantProvisioningService
         CancellationToken ct)
     {
         var existingTenant = await db.Tenants
+            .Include(t => t.TenantUISetting)
             .Where(t => !t.IsDeleted &&
                         (t.IsSystemTenant ||
                          t.TenantKey == "system" ||

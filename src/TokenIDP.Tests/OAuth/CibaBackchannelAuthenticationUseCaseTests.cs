@@ -7,8 +7,8 @@ using TokenIDP.Core.Foundation.Options;
 using TokenIDP.Core.OAuth.Abstractions;
 using TokenIDP.Core.OAuth.Model;
 using TokenIDP.Core.OAuth.UseCases;
-using TokenIDP.Domain.Base;
 using TokenIDP.Domain.AggregateRoots.Authorization;
+using TokenIDP.Domain.Base;
 
 namespace TokenIDP.Tests.OAuth;
 

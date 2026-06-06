@@ -1,5 +1,5 @@
-using TokenIDP.Domain.DomainEvents.Tenants;
 using TokenIDP.Domain.DomainEvents.Activities;
+using TokenIDP.Domain.DomainEvents.Tenants;
 using TokenIDP.Domain.ReadModels.Enums;
 
 namespace TokenIDP.Domain.AggregateRoots.Tenants;
