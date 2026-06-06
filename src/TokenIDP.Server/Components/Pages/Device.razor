@@ -1,53 +1,43 @@
-@using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.WebUtilities
-@using TokenIDP.Core.Abstractions
-@using TokenIDP.Core.OAuth.Abstractions
 
 @page "/device"
-@rendermode InteractiveServer
 
 <PageTitle>Device Activation</PageTitle>
 
 @inject NavigationManager Navigation
-@inject IDeviceAuthenticationUseCase AuthUseCase
-@inject IJSRuntime JSRuntime
-@inject IAppLogger<Device> Logger
 
 <div class="card">
     <h1>Activate Your Device</h1>
 
     <div class="alert-danger" style="@GetErrorStyle()">@ErrorMessage</div>
 
-    @if (!isApproved)
+    @if (!IsApproved)
     {
-        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
-            <DataAnnotationsValidator />
+        <form method="post" action="/device/form">
+            <AntiforgeryToken />
 
             <div class="field">
-                <label>User Code</label>
-                <InputText @bind-Value="model.UserCode" />
-                <ValidationMessage For="@(() => model.UserCode)" />
+                <label for="user-code">User Code</label>
+                <input name="user_code" id="user-code" value="@UserCode" required />
             </div>
 
             <div class="field">
-                <label>Username</label>
-                <InputText @bind-Value="model.UserName" />
-                <ValidationMessage For="@(() => model.UserName)" />
+                <label for="username">Username</label>
+                <input name="username" id="username" required />
             </div>
 
             <div class="field">
-                <label>Password</label>
-                <InputText @bind-Value="model.Password" type="password" />
-                <ValidationMessage For="@(() => model.Password)" />
+                <label for="password">Password</label>
+                <input name="password" id="password" type="password" required />
             </div>
 
             <button type="submit" class="btn-primary">Activate Device</button>
-        </EditForm>
+        </form>
     }
     else
     {
         <div class="success-message">
-            ? Device successfully activated.
+            Device successfully activated.
             <br />
             You may now return to your device.
         </div>
@@ -55,71 +45,17 @@
 </div>
 
 @code {
-
-    private sealed class DeviceLoginModel
-    {
-        [Required]
-        public string UserCode { get; set; } = default!;
-
-        [Required]
-        public string UserName { get; set; } = default!;
-
-        [Required]
-        public string Password { get; set; } = default!;
-    }
-
-    private readonly DeviceLoginModel model = new();
-
-    private bool isApproved = false;
+    private string UserCode = string.Empty;
     private string ErrorMessage = string.Empty;
+    private bool IsApproved;
 
     protected override void OnInitialized()
     {
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
 
-        if (query.TryGetValue("user_code", out var code))
-        {
-            model.UserCode = code.ToString();
-        }
-    }
-
-    private async Task HandleSubmit()
-    {
-        ErrorMessage = string.Empty;
-
-        try
-        {
-            var authResult = await AuthUseCase.AuthenticateAsync(model.UserCode, model.UserName, model.Password);
-
-            if (authResult?.IsSuccess == false)
-            {
-                ErrorMessage = authResult.Error ?? "Invalid credentials.";
-                return;
-            }
-
-            if (authResult?.TwoFactorEnabled == true)
-            {
-                Navigation.NavigateTo($"/mfa?uid={authResult.UserId}&corid={authResult.CorrelationId}&flow=device");
-                return;
-            }
-
-            var approvalResult = await AuthUseCase.ApproveAsync(
-                model.UserCode,
-                authResult!.UserId);
-
-            if (!approvalResult.IsSuccess)
-            {
-                ErrorMessage = approvalResult.Error ?? "Invalid or expired code.";
-                return;
-            }
-
-            isApproved = true;
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Device activation failed");
-            ErrorMessage = "An unexpected error occurred.";
-        }
+        UserCode = query.TryGetValue("user_code", out var code) ? code.ToString() : string.Empty;
+        ErrorMessage = query.TryGetValue("error_description", out var error) ? error.ToString() : string.Empty;
+        IsApproved = query.TryGetValue("approved", out var approved) && approved == "1";
     }
 
     private string GetErrorStyle()

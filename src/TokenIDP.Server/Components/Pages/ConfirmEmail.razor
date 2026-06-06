@@ -1,9 +1,11 @@
-﻿@page "/confirm-email"
-@rendermode InteractiveServer
+@page "/confirm-email"
 
-@using System.Net.Http.Json
 @using Microsoft.AspNetCore.WebUtilities
+@using TokenIDP.Core.Admin.Users
+@using TokenIDP.Core.Admin.Users.UseCases
+
 @inject NavigationManager NavigationManager
+@inject EmailConfirmationUseCase EmailConfirmationUseCase
 
 <PageTitle>Confirm Email</PageTitle>
 
@@ -24,100 +26,59 @@
     @if (!string.IsNullOrWhiteSpace(ReturnUrl))
     {
         <div class="back-to-login mt-3">
-            <a @onclick="ReturnToLogin" class="text-link" style="cursor: pointer;">Back to Login</a>
+            <a href="@ReturnUrl" class="text-link">Back to Login</a>
         </div>
     }
 </div>
 
 @code {
-    private string token = string.Empty;
-    private string authorizationContextId = string.Empty;
+    private string Token = string.Empty;
+    private string AuthorizationContextId = string.Empty;
     private string ErrorMessage = string.Empty;
     private string SuccessMessage = string.Empty;
     private string ReturnUrl = string.Empty;
-    private bool attempted;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var uri = new Uri(NavigationManager.Uri);
         var query = QueryHelpers.ParseQuery(uri.Query);
 
-        if (query.TryGetValue("token", out var tokenValue))
-        {
-            token = tokenValue.ToString();
-        }
-
-        if (query.TryGetValue("ctx", out var ctxValue))
-        {
-            authorizationContextId = ctxValue.ToString();
-        }
-
+        Token = query.TryGetValue("token", out var tokenValue) ? tokenValue.ToString() : string.Empty;
+        AuthorizationContextId = query.TryGetValue("ctx", out var ctxValue) ? ctxValue.ToString() : string.Empty;
         ReturnUrl = BuildLoginUrl();
-    }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender || attempted)
-        {
-            return;
-        }
-
-        attempted = true;
         await ConfirmEmailAsync();
-        StateHasChanged();
     }
 
     private async Task ConfirmEmailAsync()
     {
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(Token))
         {
             ErrorMessage = "Confirmation token is missing.";
             SuccessMessage = string.Empty;
             return;
         }
 
-        try
-        {
-            using var client = new HttpClient
+        var response = await EmailConfirmationUseCase.CompleteEmailConfirmation(
+            new CompleteEmailConfirmationCommand
             {
-                BaseAddress = new Uri(NavigationManager.BaseUri)
-            };
+                RawToken = Token
+            });
 
-            var response = await client.PostAsJsonAsync(
-                "auth/confirm-email",
-                new
-                {
-                    token
-                });
-
-            if (!response.IsSuccessStatusCode)
-            {
-                ErrorMessage = "Invalid or expired confirmation link.";
-                SuccessMessage = string.Empty;
-                return;
-            }
-
-            ErrorMessage = string.Empty;
-            SuccessMessage = "Your email has been confirmed successfully.";
-        }
-        catch
+        if (!response.IsSuccess)
         {
-            ErrorMessage = "Unable to confirm your email right now. Please try again.";
+            ErrorMessage = "Invalid or expired confirmation link.";
             SuccessMessage = string.Empty;
+            return;
         }
-    }
 
-    private void ReturnToLogin()
-    {
-        if (!string.IsNullOrWhiteSpace(ReturnUrl))
-        {
-            NavigationManager.NavigateTo(ReturnUrl, forceLoad: true);
-        }
+        ErrorMessage = string.Empty;
+        SuccessMessage = "Your email has been confirmed successfully.";
     }
 
     private string BuildLoginUrl()
     {
-        if (string.IsNullOrWhiteSpace(authorizationContextId))
+        if (string.IsNullOrWhiteSpace(AuthorizationContextId))
         {
             return string.Empty;
         }
@@ -126,7 +87,7 @@
             "/login",
             new Dictionary<string, string?>(StringComparer.Ordinal)
             {
-                ["ctx"] = authorizationContextId,
+                ["ctx"] = AuthorizationContextId,
                 ["confirmed"] = "1"
             });
     }

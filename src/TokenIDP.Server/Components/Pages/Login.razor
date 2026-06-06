@@ -22,86 +22,120 @@
 }
 else if (ui != null)
 {
-    @* <div class="logo">
-        @if (!string.IsNullOrWhiteSpace(ui.LogoUrl))
-        {
-            <img src="@ui.LogoUrl" alt="@ui.ProductName" style="height:42px;" />
-        }
-        else
-        {
-            <span>??</span>
-        }
-    </div> *@
-
-    <div class="card" data-theme="@ui.Theme" style="@GetAccentStyle(ui.AccentColor)">
-        <div class="logo">
-            @if (!string.IsNullOrWhiteSpace(ui.LogoUrl))
-            {
-                <img src="@ui.LogoUrl" alt="@ui.ProductName logo" width="250" />
-            }
-            else
-            {
-                <img src="/_content/TokenIDP.Server/images/TokenIDP.svg" alt="TokenIDP logo" width="250" />
-            }
-        </div>
-
-        <h1>Sign in to @ui.ProductName</h1>
-        @if (!string.IsNullOrWhiteSpace(ui.LoginText))
-        {
-            <p>@ui.LoginText</p>
-        }
-
-        <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
-        <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>
-
-        @if (ui.AllowLocalLogin)
-        {
-            <form method="post" action="@LocalLoginUrl" id="local-login-form">
-                <AntiforgeryToken />
-                <div class="field">
-                    <label for="username">Username</label>
-                    <input name="username" id="username" required />
-                </div>
-
-                <div class="field">
-                    <label for="password">Password</label>
-                    <input name="password" id="password" type="password" required />
-                </div>
-
-                <div class="options-row">
-                    @if (ui.AllowStaySignedIn)
+    <div class="login-page" data-theme="@ui.Theme" style="@GetAccentStyle(ui.AccentColor)">
+        <div class="container-login">
+            <div class="login-section">
+                <div class="logo-placeholder">
+                    @if (!string.IsNullOrWhiteSpace(ui.LogoUrl))
                     {
-                        <label><input type="checkbox" name="rememberMe" value="true" /> Stay signed in</label>
+                        <img src="@ui.LogoUrl" alt="@ui.ProductName logo" />
                     }
-
-                    <a href="@ForgotPasswordUrl">Forgot password?</a>
+                    else
+                    {
+                        <img src="/_content/TokenIDP.Server/images/TokenIDP.svg" alt="TokenIDP logo" />
+                    }
                 </div>
-                <button type="submit" class="btn-primary" data-login-submit>Sign In</button>
-            </form>
-        }
 
-        @* EXTERNAL PROVIDERS *@
-        @if (ui.ExternalProviders.Any(x => x.Enabled))
-        {
-            <div class="divider">or</div>
+                <h1 class="login-title">Sign in</h1>
+                @if (!string.IsNullOrWhiteSpace(ui.LoginText))
+                {
+                    <p class="login-text">@ui.LoginText</p>
+                }
 
-            @foreach (var p in ui.ExternalProviders.Where(x => x.Enabled))
-            {
-                var providerUi = GetProviderUi(p.DisplayName);
-                <a class="btn-secondary" href="@BuildExternalProviderUrl(p.DisplayName)">
-                    <span class="btn-icon">@((MarkupString)providerUi.IconSvg)</span>
-                    <span class="btn-text">@providerUi.ButtonText</span>
-                </a>
-            }
-        }
-    </div>
+                <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
+                <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>
 
-    @if (ui.AllowSignup)
-    {
-        <div class="footer">
-            <span>Don't have an account?</span> <a href="@SignupUrl">@ui.SignupText</a>
+                @if (ui.AllowLocalLogin)
+                {
+                    <form method="post" action="@LocalLoginUrl" id="local-login-form">
+                        <AntiforgeryToken />
+                        <div class="form-group">
+                            <label for="username">Email Address</label>
+                            <div class="input-icon-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="2" y="4" width="20" height="16" rx="2" />
+                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                </svg>
+                                <input name="username" id="username" type="email" class="form-control" placeholder="john@example.com" required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <div class="input-icon-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <input name="password" id="password" type="password" class="form-control" placeholder="********" required />
+                            </div>
+                        </div>
+
+                        <div class="login-options-row">
+                            @if (ui.AllowStaySignedIn)
+                            {
+                                <label class="remember">
+                                    <input type="checkbox" name="rememberMe" value="true" />
+                                    Remember me
+                                </label>
+                            }
+
+                            <a href="@ForgotPasswordUrl">Forgot Password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-login" data-login-submit>Sign In</button>
+                    </form>
+                }
+
+                @if (ui.AllowSignup)
+                {
+                    <div class="signup">
+                        Don't have an account?
+                        <a href="@SignupUrl">@ui.SignupText</a>
+                    </div>
+                }
+
+                @if (ui.ExternalProviders.Any(x => x.Enabled))
+                {
+                    <div class="social-login">
+                        @foreach (var p in ui.ExternalProviders.Where(x => x.Enabled))
+                        {
+                            var providerUi = GetProviderUi(p.DisplayName);
+                            <a class="social-btn" href="@BuildExternalProviderUrl(p.DisplayName)" title="@providerUi.ButtonText" aria-label="@providerUi.ButtonText">
+                                @((MarkupString)providerUi.IconSvg)
+                            </a>
+                        }
+                    </div>
+                }
+
+                <div class="footer">
+                    &copy; 2026 TokenIDP &bull; <a href="#">Terms of Use</a> &bull; <a href="#">Privacy Policy</a>
+                </div>
+            </div>
+
+            <div class="hero-panel">
+                <img src="/_content/TokenIDP.Server/images/Vector.svg" class="circle-vector" alt="" />
+
+                <div class="hero-content">
+                    <h2>Welcome to TokenIDP</h2>
+                    <p>
+                        Secure identity and access management platform built for
+                        OAuth 2.1, OpenID Connect, JWT, multi-tenant SaaS,
+                        APIs, mobile applications and enterprise systems.
+                    </p>
+
+                    <div class="info-card">
+                        <h3>Centralized Identity for Modern Applications</h3>
+                        <p>
+                            Manage users, applications, tenants, roles,
+                            permissions and authentication flows from a
+                            single secure platform.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
+    </div>
 }
 
 @code {

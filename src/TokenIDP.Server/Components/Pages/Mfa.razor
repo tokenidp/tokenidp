@@ -1,297 +1,120 @@
 @page "/mfa"
-@using TokenIDP.Core.OAuth
-@using TokenIDP.Core.OAuth.Abstractions
-@using TokenIDP.Core.OAuth.Model
-@using TokenIDP.Core.OAuth
-
-@rendermode InteractiveServer
+@using Microsoft.AspNetCore.WebUtilities
 
 @inject NavigationManager Navigation
-@inject IMfaUseCase MfaService
-@inject IAuthorizationCodeUseCase AuthService
-@inject IDeviceAuthenticationUseCase AuthUseCase
-@inject IJSRuntime JSRuntime
-@inject LoadService LoadService
 
 <div class="mfa-container">
     <h2>Multi-Factor Authentication</h2>
     <p>Please enter the 6-digit verification code sent to your email.</p>
 
-    <EditForm Model="@mfaModel" OnValidSubmit="@VerifyCode" autocomplete="off">
-        <div class="code-input-container">
+    <form method="post" action="/mfa/verify/form" autocomplete="off" id="mfa-form">
+        <AntiforgeryToken />
+        <input type="hidden" name="uid" value="@UserId" />
+        <input type="hidden" name="corid" value="@CorrelationId" />
+        <input type="hidden" name="flow" value="@FlowType" />
+        <input type="hidden" name="user_code" value="@UserCode" />
+        <input type="hidden" name="code" id="mfa-code" />
 
-            @for (int i = 0; i < 6; i++)
+        <div class="code-input-container">
+            @for (var i = 0; i < 6; i++)
             {
-                int index = i;
                 <input type="text"
                        maxlength="1"
-                       class="code-input @(IsInvalid ? "invalid" : "")"
-                       @bind="mfaModel.Digits[index]"
-                       @oninput="@(e => HandleInput(e, index))"
-                       @onkeydown="@(e => HandleKeyDown(e, index))"
-                       @onfocus="ClearError"
-                       @onpaste="@(e => HandlePaste())"
-                       autocomplete="off"
+                       class="code-input @(HasError ? "invalid" : "")"
+                       autocomplete="one-time-code"
                        inputmode="numeric"
                        autocorrect="off"
                        autocapitalize="off"
                        spellcheck="false"
-                       name="@($"otp-digit-{i}")"
                        pattern="[0-9]*" />
             }
         </div>
 
-        @if (IsInvalid)
+        @if (HasError)
         {
             <div class="validation-message">@ErrorMessage</div>
         }
 
         <div class="button-container">
-            <button type="submit" class="btn btn-primary" disabled="@isLoading">Verify</button>
-            <button type="button" class="btn btn-secondary" @onclick="ResendCode" disabled="@isLoading">Resend Code</button>
+            <button type="submit" class="btn btn-primary">Verify</button>
+            <button type="submit" class="btn btn-secondary" formaction="/mfa/resend/form">Resend Code</button>
         </div>
-    </EditForm>
+    </form>
 
-    @if (IsResending)
-    {
-        <div class="resend-message">Sending new code...</div>
-    }
-    else if (WasResent)
+    @if (WasResent)
     {
         <div class="resend-message">New code sent successfully!</div>
     }
 </div>
 
+<script>
+    (() => {
+        const form = document.getElementById('mfa-form');
+        if (!form) return;
+
+        const inputs = Array.from(form.querySelectorAll('.code-input'));
+        const codeInput = document.getElementById('mfa-code');
+
+        const syncCode = () => {
+            codeInput.value = inputs.map(input => input.value).join('');
+        };
+
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                input.value = input.value.replace(/\D/g, '').slice(0, 1);
+                if (input.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+                syncCode();
+            });
+
+            input.addEventListener('keydown', event => {
+                if (event.key === 'Backspace' && !input.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+
+            input.addEventListener('paste', event => {
+                event.preventDefault();
+                const pasted = (event.clipboardData || window.clipboardData)
+                    .getData('text')
+                    .replace(/\D/g, '')
+                    .slice(0, inputs.length);
+
+                pasted.split('').forEach((digit, digitIndex) => {
+                    inputs[digitIndex].value = digit;
+                });
+
+                const focusIndex = Math.min(pasted.length, inputs.length) - 1;
+                if (focusIndex >= 0) {
+                    inputs[focusIndex].focus();
+                }
+                syncCode();
+            });
+        });
+
+        form.addEventListener('submit', syncCode);
+    })();
+</script>
+
 @code {
-
-    private sealed class MfaModel
-    {
-        public string[] Digits { get; set; } = new string[6];
-    }
-
-    private MfaModel mfaModel = new();
-    private bool IsInvalid { get; set; }
-    private bool IsResending { get; set; }
-    private bool WasResent { get; set; }
-    private string? ErrorMessage;
-    private bool isLoading;
-    private string? flowType;
-    private string? correlationId;
-    private Dictionary<string, string> QueryParams = new();
+    private string UserId = string.Empty;
+    private string CorrelationId = string.Empty;
+    private string FlowType = string.Empty;
+    private string UserCode = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool WasResent;
+    private bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
 
     protected override void OnInitialized()
     {
-        var uri = Navigation.Uri;
-        var queryParams = new Uri(uri).Query;
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
 
-        if (!string.IsNullOrEmpty(queryParams))
-        {
-            var parsedParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(queryParams);
-
-            QueryParams = parsedParams.ToDictionary(
-                kvp => kvp.Key,
-                 kvp => kvp.Value is IEnumerable<string> values
-                     ? string.Join(",", values)
-                     : kvp.Value.ToString() ?? ""
-                 );
-
-            QueryParams.TryGetValue("flow", out var flow);
-            flowType = flow;
-
-            QueryParams.TryGetValue("corid", out var corId);
-            correlationId = corId;
-        }
-    }
-
-    private void HandleInput(ChangeEventArgs e, int currentIndex)
-    {
-        var value = e.Value?.ToString();
-
-        if (!string.IsNullOrEmpty(value) && value.Length == 1 && char.IsDigit(value[0]))
-        {
-            mfaModel.Digits[currentIndex] = value;
-
-            // Auto-focus to next input
-            if (currentIndex < 5)
-            {
-                FocusNextInput(currentIndex);
-            }
-        }
-        else
-        {
-            mfaModel.Digits[currentIndex] = string.Empty;
-        }
-    }
-
-    private void HandleKeyDown(KeyboardEventArgs e, int currentIndex)
-    {
-        // Handle backspace to move to previous input
-        if (e.Key == "Backspace" && string.IsNullOrEmpty(mfaModel.Digits[currentIndex])
-        && currentIndex > 0)
-        {
-            FocusPreviousInput(currentIndex);
-        }
-    }
-
-    private async Task HandlePaste()
-    {
-        try
-        {
-            var pastedText = await JSRuntime.InvokeAsync<string>("readClipboard");
-            if (!string.IsNullOrEmpty(pastedText))
-            {
-                var digits = pastedText.Where(char.IsDigit).Take(6).ToArray();
-
-                for (int i = 0; i < digits.Length && i < 6; i++)
-                {
-                    mfaModel.Digits[i] = digits[i].ToString();
-                }
-
-                // Focus the last input box with a value
-                int lastFilled = digits.Length - 1;
-                if (lastFilled >= 0 && lastFilled < 5)
-                {
-                    FocusNextInput(lastFilled);
-                }
-            }
-        }
-        catch
-        {
-            // Couldn't read clipboard, ignore
-        }
-    }
-
-    private void FocusNextInput(int currentIndex)
-    {
-        // Use JS interop to focus the next input
-        JSRuntime.InvokeVoidAsync("focusElement", $"input.code-input:nth-of-type({currentIndex + 2})");
-    }
-
-    private void FocusPreviousInput(int currentIndex)
-    {
-        JSRuntime.InvokeVoidAsync("focusElement", $"input.code-input:nth-of-type({currentIndex})");
-    }
-
-    private void ClearError()
-    {
-        IsInvalid = false;
-    }
-
-    private async Task VerifyCode()
-    {
-        var code = string.Join("", mfaModel.Digits);
-
-        if (code.Length != 6 || !code.All(char.IsDigit))
-        {
-            IsInvalid = true;
-            return;
-        }
-
-        try
-        {
-            IsInvalid = false;
-
-            isLoading = true;
-            LoadService.ShowLoader();
-
-            await VerifyCodeWithServer(code);
-        }
-        catch
-        {
-            IsInvalid = true;
-        }
-        finally
-        {
-            isLoading = false;
-            LoadService.HideLoader();
-        }
-    }
-
-    private async Task VerifyCodeWithServer(string code)
-    {
-        ErrorMessage = string.Empty;
-
-        var mfaRequest = new MfaRequest()
-        {
-            CorrelationId = correlationId ?? string.Empty,
-            Code = code,
-            UserId = Convert.ToInt32(QueryParams["uid"])
-        };
-
-        var (authRequest, authResponse) = await MfaService.VerifyMfaRequest(mfaRequest);
-
-        if (authResponse?.IsSuccess == true)
-        {
-            if (flowType == "authorize")
-            {
-                Navigation.NavigateTo($"/authorize?ctx={correlationId}", true);               
-            }
-            else if (flowType == "device")
-            {
-                var userCode = QueryParams["user_code"];
-                await AuthUseCase.ApproveAsync(userCode, mfaRequest.UserId);
-
-                Navigation.NavigateTo("/device-success");
-            }
-
-            return;
-        }
-
-        ErrorMessage = authResponse?.Error ?? "Unable to verify the code. Please try again.";
-        IsInvalid = true;
-    }
-
-    private async Task ResendCode()
-    {
-        IsResending = true;
-        WasResent = false;
-
-        try
-        {
-            LoadService.ShowLoader();
-
-            var resent = await SendNewCodeToUser();
-
-            WasResent = resent;
-
-            // Clear the form
-            if (resent)
-            {
-                mfaModel = new MfaModel();
-            }
-        }
-        finally
-        {
-            IsResending = false;
-            LoadService.HideLoader();
-        }
-    }
-
-    private async Task<bool> SendNewCodeToUser()
-    {
-        var mfaRequest = new MfaRequest()
-        {
-            CorrelationId = QueryParams["corid"],
-            UserId = Convert.ToInt32(QueryParams["uid"])
-        };
-
-        if (string.IsNullOrEmpty(mfaRequest.CorrelationId))
-        {
-            ErrorMessage = "Correlation Id cannot be empty.";
-            IsInvalid = true;
-            return false;
-        }
-
-        var result = await MfaService.ResendMfaCode(mfaRequest);
-
-        if (result?.IsSuccess != true)
-        {
-            ErrorMessage = result?.Error ?? "Unable to resend the code. Please try again.";
-            IsInvalid = true;
-            return false;
-        }
-
-        return true;
+        UserId = query.TryGetValue("uid", out var uid) ? uid.ToString() : string.Empty;
+        CorrelationId = query.TryGetValue("corid", out var corid) ? corid.ToString() : string.Empty;
+        FlowType = query.TryGetValue("flow", out var flow) ? flow.ToString() : string.Empty;
+        UserCode = query.TryGetValue("user_code", out var userCode) ? userCode.ToString() : string.Empty;
+        ErrorMessage = query.TryGetValue("error_description", out var error) ? error.ToString() : string.Empty;
+        WasResent = query.TryGetValue("resent", out var resent) && resent == "1";
     }
 }
-
