@@ -37,11 +37,6 @@ else if (ui != null)
                 </div>
 
                 <h1 class="login-title">Sign in</h1>
-                @if (!string.IsNullOrWhiteSpace(ui.LoginText))
-                {
-                    <p class="login-text">@ui.LoginText</p>
-                }
-
                 <div class="alert-danger" style="@GetErrorDisplayStyle()">@ErrorMessage</div>
                 <div class="alert" style="@GetSuccessDisplayStyle()">@SuccessMessage</div>
 
@@ -51,12 +46,18 @@ else if (ui != null)
                         <AntiforgeryToken />
                         <div class="form-group field">
                             <label for="username">Username</label>
-                            <input name="username" id="username" required />
+                            <div class="login-input-wrap">
+                                <i class="fa-solid fa-user login-input-icon" aria-hidden="true"></i>
+                                <input name="username" id="username" required />
+                            </div>
                         </div>
 
                         <div class="form-group field">
                             <label for="password">Password</label>
-                            <input name="password" id="password" type="password" required />
+                            <div class="login-input-wrap">
+                                <i class="fa-solid fa-lock login-input-icon" aria-hidden="true"></i>
+                                <input name="password" id="password" type="password" required />
+                            </div>
                         </div>
 
                         <div class="login-options-row options-row">
