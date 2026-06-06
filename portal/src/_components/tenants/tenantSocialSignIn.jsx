@@ -539,8 +539,9 @@ function TenantSocialSignIn() {
               </div>
               <button
                 type="button"
-                className="btn btn-link"
+                className="btn btn-link side-drawer-close"
                 onClick={closeProvider}
+                aria-label="Close provider settings"
               >
                 <i className="fa fa-times"></i>
               </button>

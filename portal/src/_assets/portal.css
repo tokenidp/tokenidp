@@ -661,6 +661,32 @@ a {
   border-bottom: 1px solid var(--surface-border);
 }
 
+.side-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.side-drawer-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin-top: -5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.side-drawer-close:hover,
+.side-drawer-close:focus {
+  color: var(--text);
+  text-decoration: none;
+}
+
 .side-drawer-footer {
   border-top: 1px solid var(--surface-border);
   border-bottom: 0;

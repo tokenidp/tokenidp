@@ -18,17 +18,26 @@
 
             <div class="field">
                 <label for="user-code">User Code</label>
-                <input name="user_code" id="user-code" value="@UserCode" required />
+                <div class="login-input-wrap">
+                    <i class="fa-solid fa-key login-input-icon" aria-hidden="true"></i>
+                    <input name="user_code" id="user-code" value="@UserCode" required />
+                </div>
             </div>
 
             <div class="field">
                 <label for="username">Username</label>
-                <input name="username" id="username" required />
+                <div class="login-input-wrap">
+                    <i class="fa-solid fa-user login-input-icon" aria-hidden="true"></i>
+                    <input name="username" id="username" required />
+                </div>
             </div>
 
             <div class="field">
                 <label for="password">Password</label>
-                <input name="password" id="password" type="password" required />
+                <div class="login-input-wrap">
+                    <i class="fa-solid fa-lock login-input-icon" aria-hidden="true"></i>
+                    <input name="password" id="password" type="password" required />
+                </div>
             </div>
 
             <button type="submit" class="btn-primary">Activate Device</button>
