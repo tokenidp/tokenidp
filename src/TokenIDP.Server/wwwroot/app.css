@@ -315,7 +315,9 @@ body {
   width: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 42px;
+  padding-bottom: 30px;
 }
 
 .logo-placeholder {
@@ -352,12 +354,28 @@ body {
   margin-bottom: 18px;
 }
 
+.login-page .login-field-compact {
+  margin-bottom: 14px;
+}
+
 .login-page .form-group label {
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+}
+
+.login-page .form-group label.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .login-input-wrap {
@@ -592,6 +610,8 @@ body {
 
   .login-section {
     justify-content: flex-start;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 
   .hero-content {
