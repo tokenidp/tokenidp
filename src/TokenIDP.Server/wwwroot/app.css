@@ -337,8 +337,8 @@ body {
 }
 
 .login-title {
-  font-size: 38px;
-  font-weight: 800;
+  font-size: 35px;
+  font-weight: 700;
   color: var(--login-text);
   margin: 0 0 35px;
 }
