@@ -275,10 +275,10 @@ body {
 }
 
 .legal {
-  margin-top: 40px;
-  font-size: 12px;
-  color: #9ca3af;
-  text-align: center;
+    margin: 24px 0 14px;
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
 }
 
 /* =========================
@@ -292,10 +292,9 @@ body {
   --login-muted: #6b7280;
   --login-border: #e5e7eb;
   width: 100%;
-  height: calc(100vh - 73px);
-  min-height: 0;
+  min-height: calc(100vh - 88px);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   padding: 30px;
   background: var(--login-background);
@@ -306,19 +305,17 @@ body {
   display: grid;
   grid-template-columns: 40% 1fr;
   gap: 100px;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
   max-width: 1400px;
-  height: 100%;
+  min-height: calc(100vh - 148px);
 }
 
 .login-section {
   width: 100%;
-  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow-y: auto;
 }
 
 .logo-placeholder {
@@ -490,8 +487,8 @@ body {
 .hero-panel {
   position: relative;
   overflow: hidden;
-  height: 100%;
-  min-height: 0;
+  min-height: 100%;
+  height: auto;
   border-radius: 20px;
   background: linear-gradient(
     219deg,
@@ -585,8 +582,7 @@ body {
   .container-login {
     grid-template-columns: 1fr;
     width: 100%;
-    height: auto;
-    min-height: 100%;
+    min-height: 0;
   }
 
   .hero-panel {
@@ -595,7 +591,7 @@ body {
   }
 
   .login-section {
-    height: auto;
+    justify-content: flex-start;
   }
 
   .hero-content {
@@ -606,8 +602,6 @@ body {
 @media (max-width: 768px) {
   .login-page {
     padding: 15px;
-    min-height: 0;
-    overflow-y: auto;
   }
 
   .hero-panel {
