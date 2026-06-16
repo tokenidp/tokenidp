@@ -20,7 +20,7 @@ export const useCibaRequests = () => {
     }));
 
     try {
-      const response = await get("backchannel-authentication/requests/pending");
+      const response = await get("admin/backchannel-authentication/requests/pending");
       const items = readValue(response);
       setState((prev) => ({
         ...prev,
@@ -48,7 +48,7 @@ export const useCibaRequests = () => {
       }));
 
       try {
-        return await post(`backchannel-authentication/requests/${id}/approve`, {});
+        return await post(`admin/backchannel-authentication/requests/${id}/approve`, {});
       } finally {
         setState((prev) => ({
           ...prev,
@@ -69,7 +69,7 @@ export const useCibaRequests = () => {
       }));
 
       try {
-        return await post(`backchannel-authentication/requests/${id}/deny`, {
+        return await post(`admin/backchannel-authentication/requests/${id}/deny`, {
           reason: reason?.trim() || null,
         });
       } finally {
