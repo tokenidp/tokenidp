@@ -10,7 +10,12 @@ const useApiClient = (options = {}) => {
   const { setError } = useGlobalError();
   const portalConfig = getPortalConfig();
   const tenantQueryParameter = portalConfig.tenantQueryParameter;
-  const { baseURL = portalConfig.baseUrl, skipAuth = false, track = true } = options;
+  const {
+    baseURL = portalConfig.baseUrl,
+    skipAuth = false,
+    track = true,
+    suppressGlobalError = false,
+  } = options;
 
   const apiClient = useMemo(() => axios.create({ baseURL }), [baseURL]);
 
@@ -148,17 +153,19 @@ const useApiClient = (options = {}) => {
         }
 
         const message = messages[0] || "Request failed.";
-        setError({
-          title: status ? `Request failed (${status})` : "Request failed",
-          message,
-          messages,
-        });
+        if (!suppressGlobalError) {
+          setError({
+            title: status ? `Request failed (${status})` : "Request failed",
+            message,
+            messages,
+          });
+        }
         error.message = message;
         error.messages = messages;
         throw error;
       }
     },
-    [apiClient, applyTenantQuery, run, setError, skipAuth, user?.accessToken, user?.tenantKey],
+    [apiClient, applyTenantQuery, run, setError, skipAuth, suppressGlobalError, user?.accessToken, user?.tenantKey],
   );
 
   const get = useCallback(

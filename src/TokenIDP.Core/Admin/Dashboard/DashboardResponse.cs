@@ -13,7 +13,9 @@ public class DashboardResponse
     public int MfaChallenge { get; set; }
     public int AccountLockout { get; set; }
     public int MultipleFailedLogin { get; set; }
+    public DateTime? MultipleFailedLoginAt { get; set; }
     public int SuspiciousActivity { get; set; }
+    public DateTime? SuspiciousActivityAt { get; set; }
     public int ExpiringClientCount { get; set; }
     public int ActiveSessions { get; set; }
     public int RegisteredClients { get; set; }

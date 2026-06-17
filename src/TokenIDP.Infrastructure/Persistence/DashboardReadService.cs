@@ -6,6 +6,7 @@ using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Abstractions.Telemetry;
 using TokenIDP.Core.Admin.Configurations;
 using TokenIDP.Core.Admin.Dashboard;
+using TokenIDP.Core.OAuth.Model;
 using TokenIDP.Domain.AggregateRoots.Configurations;
 using TokenIDP.Domain.ReadModels;
 using TokenIDP.Domain.ReadModels.Enums;
@@ -43,10 +44,8 @@ internal sealed class DashboardReadService : IDashboardReadService
     public async Task<DashboardResponse> GetDashboardAsync(int tenantId, DashboardPeriod period, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
-        var minute = now.Minute - now.Minute % 15;
         var currentWindowStart = period.GetWindowStart(now);
         var currentBucketStart = period.GetCurrentBucketStart(now);
-        var latest15MinBucketStart = new DateTime(now.Year, now.Month, now.Day, now.Hour, minute, 0, DateTimeKind.Utc);
         var dashboard = new DashboardResponse
         {
             Period = period.ToQueryValue(),
@@ -56,7 +55,7 @@ internal sealed class DashboardReadService : IDashboardReadService
         await PopulateTokenMetricsAsync(dashboard, tenantId, period, currentWindowStart, currentBucketStart, now, ct);
         await PopulateAuthMetricsAsync(dashboard, tenantId, period, currentWindowStart, currentBucketStart, now, ct);
         await PopulateTopClientsAsync(dashboard, tenantId, currentWindowStart, now, ct);
-        await PopulateFailedLoginsAsync(dashboard, tenantId, latest15MinBucketStart, ct);
+        await PopulateSecurityAlertsAsync(dashboard, tenantId, now, ct);
         await PopulateTechnicalDetailsAsync(dashboard, tenantId, now, ct);
 
         var expiringSecret = await _clientRepository.GetClientExpiringSecretsAsync(7, ct);
@@ -159,9 +158,12 @@ internal sealed class DashboardReadService : IDashboardReadService
 
         if (currentHourMax != null && currentHourMax.Count >= (maxRow?.MetricValue ?? 0))
         {
-            var client = await _clientRepository.GetClientShortInfo(currentHourMax.ClientId);
-            dashboard.TokenVolumeSpike.Value = currentHourMax.Count;
-            dashboard.TokenVolumeSpike.Dimension = client.ClientName;
+            var client = await TryGetClientShortInfoAsync(currentHourMax.ClientId);
+            if (client != null)
+            {
+                dashboard.TokenVolumeSpike.Value = currentHourMax.Count;
+                dashboard.TokenVolumeSpike.Dimension = client.ClientName;
+            }
             return;
         }
 
@@ -172,9 +174,12 @@ internal sealed class DashboardReadService : IDashboardReadService
 
             if (clientPart != null && int.TryParse(clientPart["client:".Length..], out var clientId))
             {
-                var client = await _clientRepository.GetClientShortInfo(clientId);
-                dashboard.TokenVolumeSpike.Value = maxRow.MetricValue;
-                dashboard.TokenVolumeSpike.Dimension = client.ClientName;
+                var client = await TryGetClientShortInfoAsync(clientId);
+                if (client != null)
+                {
+                    dashboard.TokenVolumeSpike.Value = maxRow.MetricValue;
+                    dashboard.TokenVolumeSpike.Dimension = client.ClientName;
+                }
             }
         }
     }
@@ -295,8 +300,10 @@ internal sealed class DashboardReadService : IDashboardReadService
             .Distinct()
             .ToList();
 
-        var clients = await Task.WhenAll(clientIds.Select(id => _clientRepository.GetClientShortInfo(id)));
-        var clientMap = clients.ToDictionary(c => c.Id, c => c);
+        var clients = await Task.WhenAll(clientIds.Select(TryGetClientShortInfoAsync));
+        var clientMap = clients
+            .Where(c => c != null)
+            .ToDictionary(c => c!.Id, c => c!);
 
         dashboard.TopClients = rows.Select((r, index) =>
         {
@@ -313,17 +320,45 @@ internal sealed class DashboardReadService : IDashboardReadService
         }).ToList();
     }
 
-    private async Task PopulateFailedLoginsAsync(DashboardResponse dashboard, int tenantId, DateTime latest15MinBucketStart, CancellationToken ct)
+    private async Task<ClientShortInfo?> TryGetClientShortInfoAsync(int clientId)
     {
-        dashboard.MultipleFailedLogin = await _db.DashboardMetrics
+        try
+        {
+            return await _clientRepository.GetClientShortInfo(clientId);
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    private async Task PopulateSecurityAlertsAsync(DashboardResponse dashboard, int tenantId, DateTime now, CancellationToken ct)
+    {
+        var since = now.AddMinutes(-15);
+        var alertRows = await _db.Activities
             .AsNoTracking()
-            .Where(m =>
-                m.TenantId == tenantId &&
-                m.MetricKey == MetricType.MultipleFailedAttempts &&
-                m.BucketType == TimeBucketType.Window15Min &&
-                m.BucketStart == latest15MinBucketStart)
-            .Select(m => m.MetricValue)
-            .FirstOrDefaultAsync(ct);
+            .Where(a =>
+                a.TenantId == tenantId &&
+                a.CreatedAtUtc >= since &&
+                a.CreatedAtUtc <= now &&
+                (a.EventType == ActivityEventType.LoginFailed ||
+                 a.EventType == ActivityEventType.SuspiciousLoginDetected))
+            .GroupBy(a => a.EventType)
+            .Select(g => new
+            {
+                EventType = g.Key,
+                Count = g.Count(),
+                LastAt = g.Max(a => a.CreatedAtUtc)
+            })
+            .ToListAsync(ct);
+
+        var failedLogins = alertRows.FirstOrDefault(x => x.EventType == ActivityEventType.LoginFailed);
+        dashboard.MultipleFailedLogin = failedLogins?.Count ?? 0;
+        dashboard.MultipleFailedLoginAt = failedLogins?.LastAt;
+
+        var suspiciousActivity = alertRows.FirstOrDefault(x => x.EventType == ActivityEventType.SuspiciousLoginDetected);
+        dashboard.SuspiciousActivity = suspiciousActivity?.Count ?? 0;
+        dashboard.SuspiciousActivityAt = suspiciousActivity?.LastAt;
     }
 
     private async Task PopulateTechnicalDetailsAsync(

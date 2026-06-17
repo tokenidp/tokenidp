@@ -246,6 +246,11 @@ const POLL_INTERVAL_MS = 60_000; // refresh every 60 seconds
 
 function Dashboard() {
   const { get } = useApiClient();
+  const { get: getHealth } = useApiClient({
+    skipAuth: true,
+    suppressGlobalError: true,
+    track: false,
+  });
   const [dashboard, setDashboard] = useState(null);
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -257,27 +262,33 @@ function Dashboard() {
       if (!silent) setLoading(true);
       setError("");
 
+      const [dashboardResponse, healthResponse] = await Promise.allSettled([
+        get(`admin/dashboard?period=${selectedPeriod}`),
+        getHealth("health"),
+      ]);
+
       try {
-        const [dashboardResponse, healthResponse] = await Promise.all([
-          get(`admin/dashboard?period=${selectedPeriod}`),
-          get("health"),
-        ]);
+        if (dashboardResponse.status === "rejected") {
+          throw dashboardResponse.reason;
+        }
+
         const dashboardResult =
-          dashboardResponse?.data?.value ?? dashboardResponse?.data ?? null;
-        const healthResult = healthResponse?.data ?? null;
+          dashboardResponse.value?.data?.value ?? dashboardResponse.value?.data ?? null;
         setDashboard(dashboardResult);
-        setHealth(healthResult);
+
+        if (healthResponse.status === "fulfilled") {
+          setHealth(healthResponse.value?.data ?? null);
+        }
       } catch (err) {
         setError(err?.message || "Unable to load dashboard.");
         if (!silent) {
           setDashboard(null);
-          setHealth(null);
         }
       } finally {
         if (!silent) setLoading(false);
       }
     },
-    [get, selectedPeriod],
+    [get, getHealth, selectedPeriod],
   );
 
   useEffect(() => {
