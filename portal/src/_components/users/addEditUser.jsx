@@ -32,6 +32,15 @@ const getLookupLabel = (item) =>
   item?.Key ??
   "";
 
+const getStatusValue = (item) =>
+  item?.value ??
+  item?.Value ??
+  item?.name ??
+  item?.Name ??
+  item?.key ??
+  item?.Key ??
+  "";
+
 const resolveAddressTypeValue = (rawValue, options) => {
   if (rawValue === undefined || rawValue === null || rawValue === "") {
     return "";
@@ -56,6 +65,16 @@ const resolveAddressTypeValue = (rawValue, options) => {
     }
   }
   return rawString;
+};
+
+const resolveStatusValue = (options, targetLabel) => {
+  const target = String(targetLabel || "").trim().toLowerCase();
+  const matched = (options || []).find((option) => {
+    const value = String(getStatusValue(option));
+    const label = String(getLookupLabel(option));
+    return value.toLowerCase() === target || label.toLowerCase() === target;
+  });
+  return matched ? String(getStatusValue(matched)) : targetLabel;
 };
 
 function AddEditUser({ mode }) {
@@ -101,7 +120,7 @@ function AddEditUser({ mode }) {
       email: "",
       phone: "",
       password: "",
-      status: "",
+      status: "Active",
       emailConfirmed: false,
       phoneNumberConfirmed: false,
       twoFactorEnabled: false,
@@ -130,6 +149,7 @@ function AddEditUser({ mode }) {
   });
 
   const watchedRoles = watch("roles");
+  const status = watch("status");
   const selectedRoles = Array.isArray(watchedRoles)
     ? watchedRoles
     : EMPTY_SELECTION;
@@ -326,6 +346,18 @@ function AddEditUser({ mode }) {
       setValue("addressType", firstOptionValue);
     }
   }, [addressType, addressTypeOptions, mode, setValue]);
+
+  useEffect(() => {
+    if (mode !== "add") return;
+    if (status && status !== "Active") return;
+    const activeStatusValue = resolveStatusValue(state.statuses, "Active");
+    if (activeStatusValue && activeStatusValue !== status) {
+      setValue("status", activeStatusValue, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
+    }
+  }, [mode, setValue, state.statuses, status]);
 
   useEffect(() => {
     if (mode !== "add") return;
@@ -529,8 +561,11 @@ function AddEditUser({ mode }) {
                               >
                                 <option value="">Select Status</option>
                                 {state.statuses.map((status) => (
-                                  <option key={status.key} value={status.value}>
-                                    {status.value}
+                                  <option
+                                    key={status.key ?? status.Key ?? getStatusValue(status)}
+                                    value={getStatusValue(status)}
+                                  >
+                                    {getLookupLabel(status)}
                                   </option>
                                 ))}
                               </select>
