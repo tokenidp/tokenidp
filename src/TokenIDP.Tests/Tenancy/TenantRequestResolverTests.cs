@@ -63,7 +63,7 @@ public sealed class TenantRequestResolverTests
     {
         var resolver = CreateResolver(Environments.Staging);
         var httpContext = CreateHttpContext(
-            "tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net",
+            "tokenidp-api-dtbce3asgqdqe5a6.canadacentral-01.azurewebsites.net",
             "?tenant=acme");
 
         var result = resolver.Resolve(httpContext);
@@ -92,7 +92,7 @@ public sealed class TenantRequestResolverTests
     {
         var resolver = CreateResolver(Environments.Staging);
         var httpContext = CreateHttpContext(
-            "tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net",
+            "tokenidp-api-dtbce3asgqdqe5a6.canadacentral-01.azurewebsites.net",
             "?tenant=Acme!");
 
         var result = resolver.Resolve(httpContext);
@@ -104,7 +104,7 @@ public sealed class TenantRequestResolverTests
     public void Staging_ShouldUseDefaultTenantWhenMissing()
     {
         var resolver = CreateResolver(Environments.Staging);
-        var httpContext = CreateHttpContext("tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net");
+        var httpContext = CreateHttpContext("tokenidp-api-dtbce3asgqdqe5a6.canadacentral-01.azurewebsites.net");
 
         var result = resolver.Resolve(httpContext);
 

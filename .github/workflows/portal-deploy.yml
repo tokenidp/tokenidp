@@ -41,8 +41,8 @@ jobs:
           REACT_APP_OAUTH_SCOPE: ${{ vars.REACT_APP_OAUTH_SCOPE }}
         run: |
           DEPLOYMENT_ENV="${REACT_APP_DEPLOYMENT_ENV:-staging}"
-          BASE_URL="${REACT_APP_BASE_URL:-https://tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net}"
-          AUTH_BASE_URL="${REACT_APP_AUTH_BASE_URL:-https://tresorauth-fxh4budpa9hha4db.canadacentral-01.azurewebsites.net}"
+          BASE_URL="${REACT_APP_BASE_URL:-https://tokenidp-api-dtbce3asgqdqe5a6.canadacentral-01.azurewebsites.net}"
+          AUTH_BASE_URL="${REACT_APP_AUTH_BASE_URL:-https://tokenidp-api-dtbce3asgqdqe5a6.canadacentral-01.azurewebsites.net}"
           TENANT_PROPAGATION_MODE="${REACT_APP_TENANT_PROPAGATION_MODE:-none}"
           CLIENT_ID="${REACT_APP_OAUTH_CLIENT_ID:-idp-admin}"
           REDIRECT_URI="${REACT_APP_OAUTH_REDIRECT_URI:-https://ashy-meadow-06d616803.7.azurestaticapps.net/auth/callback}"
