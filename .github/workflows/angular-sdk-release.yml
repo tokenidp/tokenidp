@@ -1,14 +1,14 @@
-name: Release React SDK
+name: Release Angular SDK
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Optional npm SDK version. Defaults to sdks/react-idp-sdk/package.json."
+        description: "Optional npm SDK version. Defaults to sdks/angular-idp-sdk/package.json."
         required: false
         default: ""
       publish:
-        description: "Publish tokenidp-react to npm using trusted publishing"
+        description: "Publish tokenidp-angular to npm using trusted publishing"
         required: true
         default: "false"
         type: choice
@@ -17,7 +17,7 @@ on:
           - "true"
   push:
     tags:
-      - "react-sdk-v*"
+      - "angular-sdk-v*"
 
 permissions:
   contents: read
@@ -41,14 +41,14 @@ jobs:
 
       - name: Install SDK dependencies
         run: npm ci
-        working-directory: sdks/react-idp-sdk
+        working-directory: sdks/angular-idp-sdk
 
       - name: Resolve SDK version
         id: version
         shell: bash
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/react-sdk-v* ]]; then
-            VERSION="${GITHUB_REF_NAME#react-sdk-v}"
+          if [[ "${GITHUB_REF}" == refs/tags/angular-sdk-v* ]]; then
+            VERSION="${GITHUB_REF_NAME#angular-sdk-v}"
           elif [[ -n "${{ inputs.version }}" ]]; then
             VERSION="${{ inputs.version }}"
           else
@@ -57,26 +57,26 @@ jobs:
 
           npm version "${VERSION}" --no-git-tag-version --allow-same-version
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-        working-directory: sdks/react-idp-sdk
+        working-directory: sdks/angular-idp-sdk
 
       - name: Build SDK
         run: npm run build
-        working-directory: sdks/react-idp-sdk
+        working-directory: sdks/angular-idp-sdk
 
       - name: Pack SDK artifact
         run: |
-          mkdir -p ../../artifacts/react-sdk
-          npm pack --pack-destination ../../artifacts/react-sdk
-        working-directory: sdks/react-idp-sdk
+          mkdir -p ../../artifacts/angular-sdk
+          npm pack ./dist --pack-destination ../../artifacts/angular-sdk
+        working-directory: sdks/angular-idp-sdk
 
       - name: Upload SDK package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tokenidp-react-sdk
-          path: artifacts/react-sdk/*.tgz
+          name: tokenidp-angular-sdk
+          path: artifacts/angular-sdk/*.tgz
           if-no-files-found: error
 
       - name: Publish SDK to npm
-        if: ${{ startsWith(github.ref, 'refs/tags/react-sdk-v') || inputs.publish == 'true' }}
-        run: npm publish --access public
-        working-directory: sdks/react-idp-sdk
+        if: ${{ startsWith(github.ref, 'refs/tags/angular-sdk-v') || inputs.publish == 'true' }}
+        run: npm publish ./dist --access public
+        working-directory: sdks/angular-idp-sdk

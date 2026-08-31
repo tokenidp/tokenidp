@@ -87,8 +87,10 @@ Portal deployment uses these additional public environment variables:
 - `REACT_APP_OAUTH_SCOPE`
 
 The portal workflow also requires the environment secret
-`AZURE_STATIC_WEB_APPS_API_TOKEN`. Package publishing uses `NPM_TOKEN` and
-`NUGET_API_KEY`; store those as secrets, never variables.
+`AZURE_STATIC_WEB_APPS_API_TOKEN`. The npm SDK and NuGet release workflows use
+OIDC trusted publishing, so neither `NPM_TOKEN` nor `NUGET_API_KEY` is required.
+Keep the `release` GitHub environment to scope the trusted-publisher identity
+and apply release protection rules.
 
 ### GitHub access controls
 

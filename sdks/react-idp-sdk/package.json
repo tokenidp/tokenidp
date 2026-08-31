@@ -23,10 +23,28 @@
     "build": "tsup",
     "pack": "npm run build && npm pack"
   },
-  "keywords": [],
+  "keywords": [
+    "react",
+    "oauth2",
+    "openid-connect",
+    "pkce",
+    "tokenidp"
+  ],
   "author": "",
-  "license": "ISC",
-  "description": "",
+  "license": "MIT",
+  "description": "React SDK for integrating TokenIDP OAuth 2.1 and OpenID Connect authentication.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/naeemraza-dev/tokenidp.git",
+    "directory": "sdks/react-idp-sdk"
+  },
+  "homepage": "https://github.com/naeemraza-dev/tokenidp#readme",
+  "bugs": {
+    "url": "https://github.com/naeemraza-dev/tokenidp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
