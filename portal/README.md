@@ -1,5 +1,28 @@
 # TokenIDP Admin Portal
 
+## Local configuration
+
+Portal configuration is public browser configuration. Never place passwords,
+private keys, API tokens, or client secrets in a `REACT_APP_*` value or in
+`public/config.json`; both are delivered to the browser.
+
+For local development, copy the example environment file:
+
+```powershell
+Copy-Item .env.development.example .env.development
+npm install
+npm start
+```
+
+For runtime-hosted configuration, copy `public/config.example.json` to
+`public/config.json` and replace the example URLs. Deployment workflows generate
+`public/config.json` from GitHub environment variables, so deployment-specific
+values do not need to be committed.
+
+The SDK uses its internal `idp_pkce_verifier` session-storage key. The key name
+is not secret, the verifier is generated dynamically for each authorization
+request, and no GitHub variable is required for it.
+
 ## Scope
 
 Summary of UI validations, client-configuration rules, and admin behaviors implemented in `portal/src`.

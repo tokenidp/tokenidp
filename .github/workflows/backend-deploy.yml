@@ -1,5 +1,9 @@
 name: Deploy Backend API
 
+permissions:
+  contents: read
+  id-token: write
+
 on:
   push:
     branches:
@@ -16,10 +20,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up .NET 9
+      - name: Set up .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Restore solution dependencies
         run: dotnet restore TokenIDP.sln
@@ -36,27 +40,97 @@ jobs:
       - name: Log in to Azure
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Configure App Service application settings
-        if: ${{ vars.AZURE_WEBAPP_RESOURCE_GROUP != '' }}
         env:
           AZURE_WEBAPP_NAME: ${{ vars.AZURE_WEBAPP_NAME }}
           AZURE_WEBAPP_RESOURCE_GROUP: ${{ vars.AZURE_WEBAPP_RESOURCE_GROUP }}
           ASPNETCORE_ENVIRONMENT_VALUE: ${{ vars.ASPNETCORE_ENVIRONMENT }}
+          TOKEN_ISSUER: ${{ vars.TOKEN_ISSUER }}
+          TOKEN_CERTIFICATE_THUMBPRINT: ${{ vars.TOKEN_CERTIFICATE_THUMBPRINT }}
+          TOKEN_CERTIFICATE_SUBJECT_NAME: ${{ vars.TOKEN_CERTIFICATE_SUBJECT_NAME }}
+          TOKEN_CERTIFICATE_STORE_NAME: ${{ vars.TOKEN_CERTIFICATE_STORE_NAME }}
+          TOKEN_CERTIFICATE_STORE_LOCATION: ${{ vars.TOKEN_CERTIFICATE_STORE_LOCATION }}
+          BOOTSTRAP_ENABLE: ${{ vars.BOOTSTRAP_ENABLE }}
           BOOTSTRAP_REDIRECT_URI: ${{ vars.BOOTSTRAP_REDIRECT_URI }}
           BOOTSTRAP_LOGOUT_REDIRECT_URI: ${{ vars.BOOTSTRAP_LOGOUT_REDIRECT_URI }}
+          SECURITY_KEY_ID: ${{ vars.SECURITY_KEY_ID }}
+          IDENTITY_DB_CONNECTION_STRING: ${{ secrets.IDENTITY_DB_CONNECTION_STRING }}
+          SECURITY_KEY_BASE64: ${{ secrets.SECURITY_KEY_BASE64 }}
+          BOOTSTRAP_ADMIN_TEMP_PASSWORD: ${{ secrets.BOOTSTRAP_ADMIN_TEMP_PASSWORD }}
+          TOKEN_SIGNING_KEY: ${{ secrets.TOKEN_SIGNING_KEY }}
           BUILD_COMMIT_SHA: ${{ github.sha }}
           BUILD_RUN_ID: ${{ github.run_id }}
         run: |
-          APP_NAME="${AZURE_WEBAPP_NAME:-tresorauth}"
           ENV_NAME="${ASPNETCORE_ENVIRONMENT_VALUE:-Staging}"
+          BOOTSTRAP_ENABLED="${BOOTSTRAP_ENABLE:-false}"
+
+          if [ -z "$AZURE_WEBAPP_NAME" ] || [ -z "$AZURE_WEBAPP_RESOURCE_GROUP" ]; then
+            echo "AZURE_WEBAPP_NAME and AZURE_WEBAPP_RESOURCE_GROUP environment variables are required."
+            exit 1
+          fi
+
+          if [ -z "$IDENTITY_DB_CONNECTION_STRING" ] || [ -z "$SECURITY_KEY_BASE64" ]; then
+            echo "IDENTITY_DB_CONNECTION_STRING and SECURITY_KEY_BASE64 environment secrets are required."
+            exit 1
+          fi
+
+          if [ -z "$TOKEN_ISSUER" ]; then
+            echo "TOKEN_ISSUER environment variable is required."
+            exit 1
+          fi
+
+          if [ "$ENV_NAME" = "Production" ]; then
+            if [ -z "$TOKEN_CERTIFICATE_THUMBPRINT" ] && [ -z "$TOKEN_CERTIFICATE_SUBJECT_NAME" ]; then
+              echo "Production requires TOKEN_CERTIFICATE_THUMBPRINT or TOKEN_CERTIFICATE_SUBJECT_NAME."
+              exit 1
+            fi
+          elif [ "$ENV_NAME" != "Development" ]; then
+            if [ -z "$TOKEN_SIGNING_KEY" ] && [ -z "$TOKEN_CERTIFICATE_THUMBPRINT" ] && [ -z "$TOKEN_CERTIFICATE_SUBJECT_NAME" ]; then
+              echo "Non-Development deployments require TOKEN_SIGNING_KEY or certificate configuration."
+              exit 1
+            fi
+          fi
+
+          if [ "$BOOTSTRAP_ENABLED" = "true" ] && [ -z "$BOOTSTRAP_ADMIN_TEMP_PASSWORD" ]; then
+            echo "BOOTSTRAP_ADMIN_TEMP_PASSWORD is required when BOOTSTRAP_ENABLE is true."
+            exit 1
+          fi
+
           SETTINGS=(
             "ASPNETCORE_ENVIRONMENT=$ENV_NAME"
             "DOTNET_ENVIRONMENT=$ENV_NAME"
+            "ConnectionStrings__Identity_DB=$IDENTITY_DB_CONNECTION_STRING"
+            "Security__KeyBase64=$SECURITY_KEY_BASE64"
+            "Security__KeyId=${SECURITY_KEY_ID:-default}"
+            "TokenOptions__Issuer=$TOKEN_ISSUER"
+            "Bootstrap__Enable=$BOOTSTRAP_ENABLED"
             "Build__CommitSha=$BUILD_COMMIT_SHA"
             "Build__RunId=$BUILD_RUN_ID"
           )
+
+          if [ -n "$TOKEN_SIGNING_KEY" ]; then
+            SETTINGS+=("TokenOptions__Key=$TOKEN_SIGNING_KEY")
+          fi
+
+          if [ -n "$TOKEN_CERTIFICATE_THUMBPRINT" ]; then
+            SETTINGS+=("TokenOptions__CertificateThumbprint=$TOKEN_CERTIFICATE_THUMBPRINT")
+          fi
+
+          if [ -n "$TOKEN_CERTIFICATE_SUBJECT_NAME" ]; then
+            SETTINGS+=("TokenOptions__CertificateSubjectName=$TOKEN_CERTIFICATE_SUBJECT_NAME")
+          fi
+
+          if [ -n "$TOKEN_CERTIFICATE_STORE_NAME" ]; then
+            SETTINGS+=("TokenOptions__CertificateStoreName=$TOKEN_CERTIFICATE_STORE_NAME")
+          fi
+
+          if [ -n "$TOKEN_CERTIFICATE_STORE_LOCATION" ]; then
+            SETTINGS+=("TokenOptions__CertificateStoreLocation=$TOKEN_CERTIFICATE_STORE_LOCATION")
+          fi
 
           if [ -n "$BOOTSTRAP_REDIRECT_URI" ]; then
             SETTINGS+=("Bootstrap__RedirectUri=$BOOTSTRAP_REDIRECT_URI")
@@ -66,13 +140,18 @@ jobs:
             SETTINGS+=("Bootstrap__LogoutRedirectUri=$BOOTSTRAP_LOGOUT_REDIRECT_URI")
           fi
 
+          if [ -n "$BOOTSTRAP_ADMIN_TEMP_PASSWORD" ]; then
+            SETTINGS+=("Bootstrap__AdminTempPassword=$BOOTSTRAP_ADMIN_TEMP_PASSWORD")
+          fi
+
           az webapp config appsettings set \
-            --name "$APP_NAME" \
+            --name "$AZURE_WEBAPP_NAME" \
             --resource-group "$AZURE_WEBAPP_RESOURCE_GROUP" \
-            --settings "${SETTINGS[@]}"
+            --settings "${SETTINGS[@]}" \
+            --output none
 
       - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v3
         with:
-          app-name: "tresorauth"
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
           package: "${{ github.workspace }}/publish"

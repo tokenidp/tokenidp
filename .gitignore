@@ -369,3 +369,17 @@ FodyWeavers.xsd
 /portal/build/
 /portal/sdks/react-idp-sdk/tokenidp-react-*
 /portal/.npm-cache/
+
+# Local configuration and secret material
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/secrets.json
+*.pem
+*.key
+*.p12
+portal/public/config.json
+!portal/public/config.example.json

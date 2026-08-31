@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Moq;
+using System.Security.Cryptography;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Repositories;
 using TokenIDP.Core.Foundation.Options;
@@ -94,7 +95,7 @@ public sealed class RefreshTokenGrantHandlerTests
         {
             Issuer = "https://issuer.example",
             Audience = "tokenidp",
-            Key = TokenKeyDefault.DevelopmentKey
+            Key = CreateTestSigningKey()
         }), currentUserService.Object);
 
         var tokenIssuerUseCase = new TokenIssuerUseCase(
@@ -195,5 +196,11 @@ public sealed class RefreshTokenGrantHandlerTests
             allowCibaLoginHint: true,
             allowCibaLoginHintToken: false,
             allowCibaIdTokenHint: false);
+    }
+
+    private static string CreateTestSigningKey()
+    {
+        using var rsa = RSA.Create(2048);
+        return rsa.ExportPkcs8PrivateKeyPem();
     }
 }

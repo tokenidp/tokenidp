@@ -99,7 +99,18 @@ dotnet test TokenIDP.sln
 
 ### Run the Identity Service
 
-Update local configuration before starting the service. At minimum, provide a database connection string and token settings appropriate for your environment.
+The tracked configuration contains localhost defaults only. Before first run,
+store a local AES-256 encryption key with .NET User Secrets:
+
+```powershell
+cd src/TokenIDP.Service
+$secretKey = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+dotnet user-secrets set "Security:KeyBase64" $secretKey
+```
+
+Bootstrap is disabled by default. If you enable it locally, set
+`Bootstrap:AdminTempPassword` with User Secrets rather than editing
+`appsettings.json`.
 
 ```powershell
 cd src/TokenIDP.Service
@@ -112,6 +123,7 @@ The service host wires TokenIDP through `AddTokenIDPServices(...)` and starts th
 
 ```powershell
 cd portal
+Copy-Item .env.development.example .env.development
 npm install
 npm start
 ```
@@ -130,6 +142,9 @@ Configuration is supplied through standard ASP.NET Core configuration sources. I
 - `Security` for secret-protection keys.
 
 Production deployments should use secure configuration providers or secret stores. Do not commit live database passwords, encryption keys, certificate private keys, or client secrets.
+
+For the complete local and GitHub Actions configuration matrix, see
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 For signing-key details, see [`src/KEY_MANAGEMENT.md`](src/KEY_MANAGEMENT.md).
 
@@ -186,4 +201,4 @@ TokenIDP is currently marked as `alpha`. The repository already contains a broad
 
 ## License
 
-TokenIDP server package metadata declares the project under the MIT license.
+TokenIDP is available under the [MIT License](LICENSE).

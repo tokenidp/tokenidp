@@ -1,7 +1,7 @@
 {
   "deploymentEnvironment": "production",
-  "baseUrl": "https://idp.example.com",
-  "authority": "https://idp.example.com",
+  "baseUrl": "https://id.example.com",
+  "authority": "https://id.example.com",
   "tenantPropagationMode": "none",
   "tenantQueryParameter": "tenant",
   "userPermissionsPath": "admin/user/permissions",

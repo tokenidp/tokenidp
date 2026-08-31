@@ -19,10 +19,6 @@ on:
         description: "Base version for prerelease builds"
         required: false
         default: "0.1.0"
-      source:
-        description: "NuGet package source"
-        required: false
-        default: "https://api.nuget.org/v3/index.json"
   push:
     branches:
       - main
@@ -74,19 +70,39 @@ jobs:
           path: artifacts/nuget/*.nupkg
           if-no-files-found: error
 
-      - name: Publish package
-        if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish == 'true' }}
-        shell: pwsh
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:NUGET_API_KEY)) {
-            throw "Publishing requires repository secret NUGET_API_KEY."
-          }
+  publish:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish == 'true' }}
+    needs: pack
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
 
+    steps:
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Download package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tokenidp-server-nuget
+          path: artifacts/nuget
+
+      - name: Log in to NuGet.org with OIDC
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: naeemr
+
+      - name: Publish package
+        shell: pwsh
+        run: |
           Get-ChildItem -Path artifacts/nuget -Filter "*.nupkg" | ForEach-Object {
             dotnet nuget push $_.FullName `
-              --source "${{ inputs.source || 'https://api.nuget.org/v3/index.json' }}" `
-              --api-key $env:NUGET_API_KEY `
+              --source "https://api.nuget.org/v3/index.json" `
+              --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" `
               --skip-duplicate
           }

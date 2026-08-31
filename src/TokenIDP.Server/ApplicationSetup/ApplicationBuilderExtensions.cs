@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 using TokenIDP.Core.Abstractions;
 using TokenIDP.Core.Abstractions.Telemetry;
@@ -260,28 +261,33 @@ public static class ApplicationBuilderExtensions
         tokenOptions.Audience = audience;
         configureToken?.Invoke(tokenOptions);
 
-        if (!environment.IsProduction())
+        var hasSigningMaterial =
+            !string.IsNullOrWhiteSpace(tokenOptions.Key) ||
+            !string.IsNullOrWhiteSpace(tokenOptions.KeyPath) ||
+            !string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) ||
+            !string.IsNullOrWhiteSpace(tokenOptions.CertificateSubjectName);
+
+        if (environment.IsDevelopment())
         {
-            if (string.IsNullOrWhiteSpace(tokenOptions.Key) &&
-                string.IsNullOrWhiteSpace(tokenOptions.KeyPath) &&
-                string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) &&
-                string.IsNullOrWhiteSpace(tokenOptions.CertificateSubjectName))
+            if (!hasSigningMaterial)
             {
-                tokenOptions.Key = TokenKeyDefault.DevelopmentKey;
+                using var rsa = RSA.Create(2048);
+                tokenOptions.Key = rsa.ExportPkcs8PrivateKeyPem();
             }
         }
-        else if (string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) &&
+        else if (environment.IsProduction() &&
+                 string.IsNullOrWhiteSpace(tokenOptions.CertificateThumbprint) &&
                  string.IsNullOrWhiteSpace(tokenOptions.CertificateSubjectName))
         {
             throw new InvalidOperationException(
                 "Token signing certificate is required in production. " +
                 "Provide TokenOptions:CertificateThumbprint or TokenOptions:CertificateSubjectName.");
         }
-
-        if (string.Equals(tokenOptions.Key, TokenKeyDefault.DevelopmentKey, StringComparison.Ordinal) &&
-            environment.IsProduction())
+        else if (!hasSigningMaterial)
         {
-            throw new InvalidOperationException("Development signing key cannot be used in production.");
+            throw new InvalidOperationException(
+                "Token signing material is required outside Development. " +
+                "Provide TokenOptions:Key, TokenOptions:KeyPath, or certificate configuration.");
         }
 
         _ = TokenOptionsResolver.ResolveIssuer(tokenOptions);

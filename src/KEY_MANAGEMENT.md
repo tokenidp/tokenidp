@@ -23,10 +23,13 @@ Resolution order is:
 
 1. If certificate configuration is present, TokenIDP loads the configured certificate and uses it for signing.
 2. In non-production environments, if no certificate is configured, TokenIDP uses `TokenOptions:KeyPath` or `TokenOptions:Key`.
-3. In non-production environments, if no key or certificate is configured, `AddTokenIDPServices(...)` injects a built-in development RSA key.
+3. In Development, if no key or certificate is configured, `AddTokenIDPServices(...)` generates an ephemeral RSA key in memory.
 4. In production, TokenIDP requires certificate configuration and fails startup when neither `CertificateThumbprint` nor `CertificateSubjectName` is configured.
 
-The built-in development key is only a local fallback. Do not rely on it for shared development environments, staging, or production.
+The generated Development key changes whenever the process starts, so previously
+issued tokens stop validating after a restart. Staging and other shared
+non-Production environments must receive stable signing material from their
+deployment secret store. Production must use a signing certificate.
 
 ## Recommended Local Development Setup
 
@@ -45,7 +48,7 @@ Example `appsettings.json`:
 Store the private key path with .NET user secrets:
 
 ```powershell
-dotnet user-secrets init
+cd src/TokenIDP.Service
 dotnet user-secrets set "TokenOptions:KeyPath" "D:\TokenIDP\signing-key.pem"
 ```
 

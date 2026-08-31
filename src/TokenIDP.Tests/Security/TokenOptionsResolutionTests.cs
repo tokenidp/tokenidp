@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Moq;
-using TokenIDP.Core.Foundation.Security;
 using TokenIDP.Server.ApplicationSetup;
 
 namespace TokenIDP.Tests.Security;
@@ -10,10 +9,10 @@ namespace TokenIDP.Tests.Security;
 public sealed class TokenOptionsResolutionTests
 {
     [Fact]
-    public void ResolveTokenOptions_ShouldUseDevelopmentKey_InStaging_WhenNoCertificateConfigured()
+    public void ResolveTokenOptions_ShouldGenerateEphemeralKey_InDevelopment_WhenNoSigningMaterialConfigured()
     {
         var configuration = CreateConfiguration();
-        var environment = CreateEnvironment(Environments.Staging);
+        var environment = CreateEnvironment(Environments.Development);
 
         var options = ApplicationBuilderExtensions.ResolveTokenOptions(
             configuration,
@@ -21,7 +20,44 @@ public sealed class TokenOptionsResolutionTests
             "tokenidp.admin.api",
             configureToken: null);
 
-        options.Key.Should().Be(TokenKeyDefault.DevelopmentKey);
+        options.Key.Should().StartWith("-----BEGIN PRIVATE KEY-----");
+    }
+
+    [Fact]
+    public void ResolveTokenOptions_ShouldGenerateDifferentKeys_ForSeparateDevelopmentStarts()
+    {
+        var configuration = CreateConfiguration();
+        var environment = CreateEnvironment(Environments.Development);
+
+        var first = ApplicationBuilderExtensions.ResolveTokenOptions(
+            configuration,
+            environment,
+            "tokenidp.admin.api",
+            configureToken: null);
+        var second = ApplicationBuilderExtensions.ResolveTokenOptions(
+            configuration,
+            environment,
+            "tokenidp.admin.api",
+            configureToken: null);
+
+        first.Key.Should().NotBe(second.Key);
+    }
+
+    [Fact]
+    public void ResolveTokenOptions_ShouldRequireSigningMaterial_InStaging()
+    {
+        var configuration = CreateConfiguration();
+        var environment = CreateEnvironment(Environments.Staging);
+
+        var act = () => ApplicationBuilderExtensions.ResolveTokenOptions(
+            configuration,
+            environment,
+            "tokenidp.admin.api",
+            configureToken: null);
+
+        act.Should()
+            .Throw<InvalidOperationException>()
+            .WithMessage("Token signing material is required outside Development*");
     }
 
     [Fact]
@@ -46,7 +82,7 @@ public sealed class TokenOptionsResolutionTests
         return new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["TokenOptions:Issuer"] = "https://tresorauth.example.com"
+                ["TokenOptions:Issuer"] = "https://id.example.com"
             })
             .Build();
     }
