@@ -15,7 +15,7 @@
     <PackageTags>TokenIDP;oauth;openid-connect;identity-provider;iam;authentication;authorization;oauth2;oidc;jwt;dotnet;aspnetcore</PackageTags>
     <Copyright>Copyright (c) 2026 TokenIDP</Copyright>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageIcon>logo.svg</PackageIcon>
+    <PackageIcon>TokenIDP.png</PackageIcon>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
@@ -56,7 +56,6 @@
   <ItemGroup>
     <None Include="README.NuGet.md" Pack="true" PackagePath="README.md" />
     <None Include="TokenIDP.png" Pack="true" PackagePath="\" />
-	<None Include="logo.svg" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
