@@ -35,12 +35,12 @@
   "description": "React SDK for integrating TokenIDP OAuth 2.1 and OpenID Connect authentication.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/naeemraza-dev/tokenidp.git",
+    "url": "git+https://github.com/tokenidp/tokenidp.git",
     "directory": "sdks/react-idp-sdk"
   },
-  "homepage": "https://github.com/naeemraza-dev/tokenidp#readme",
+  "homepage": "https://github.com/tokenidp/tokenidp#readme",
   "bugs": {
-    "url": "https://github.com/naeemraza-dev/tokenidp/issues"
+    "url": "https://github.com/tokenidp/tokenidp/issues"
   },
   "publishConfig": {
     "access": "public"

@@ -14,12 +14,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/naeemraza-dev/tokenidp.git",
+    "url": "git+https://github.com/tokenidp/tokenidp.git",
     "directory": "sdks/angular-idp-sdk"
   },
-  "homepage": "https://github.com/naeemraza-dev/tokenidp#readme",
+  "homepage": "https://github.com/tokenidp/tokenidp#readme",
   "bugs": {
-    "url": "https://github.com/naeemraza-dev/tokenidp/issues"
+    "url": "https://github.com/tokenidp/tokenidp/issues"
   },
   "publishConfig": {
     "access": "public"

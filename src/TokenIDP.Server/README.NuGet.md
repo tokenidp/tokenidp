@@ -6,7 +6,7 @@ It is designed for teams that need a complete identity foundation: secure sign-i
 
 For more information, see the [TokenIDP website](https://www.tokenidp.com).
 
-Source and documentation are available on GitHub at [naeem-engr/tokenidp](https://github.com/naeem-engr/tokenidp).
+Source and documentation are available on GitHub at [tokenidp/tokenidp](https://github.com/tokenidp/tokenidp).
 
 ## What It Provides
 
