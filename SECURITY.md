@@ -2,8 +2,8 @@
 
 ## Supported versions
 
-TokenIDP is currently alpha software. Security fixes are applied to the latest
-version on the default branch unless a release announcement says otherwise.
+Security fixes are applied to the latest stable release and the default branch
+unless a release announcement says otherwise.
 
 ## Reporting a vulnerability
 
