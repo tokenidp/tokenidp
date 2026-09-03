@@ -34,7 +34,7 @@ jobs:
         working-directory: src
 
       - name: Publish API
-        run: dotnet publish TokenIDP.Service/TokenIDP.Service.csproj --configuration Release --no-build --output "${{ github.workspace }}/publish"
+        run: dotnet publish TokenIDP.Host/TokenIDP.Host.csproj --configuration Release --no-build --output "${{ github.workspace }}/publish"
         working-directory: src
 
       - name: Log in to Azure

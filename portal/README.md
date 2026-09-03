@@ -6,13 +6,18 @@ Portal configuration is public browser configuration. Never place passwords,
 private keys, API tokens, or client secrets in a `REACT_APP_*` value or in
 `public/config.json`; both are delivered to the browser.
 
-For local development, copy the example environment file:
+For local development, start `TokenIDP.Host` first. This repository includes
+`.env.development.example` with settings that match the checked-in host defaults.
+Copy it to the local, Git-ignored `.env.development` file:
 
 ```powershell
 Copy-Item .env.development.example .env.development
-npm install
+npm ci
 npm start
 ```
+
+Open `http://localhost:3000`. The portal authority, client ID, redirect URI, and
+post-logout redirect URI must exactly match the corresponding host settings.
 
 For runtime-hosted configuration, copy `public/config.example.json` to
 `public/config.json` and replace the example URLs. Deployment workflows generate

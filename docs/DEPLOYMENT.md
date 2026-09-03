@@ -10,15 +10,25 @@ or certificate private key belongs in the repository.
 
 ## Local development
 
-`src/TokenIDP.Service/appsettings.json` contains a local SQL Server connection
+`src/TokenIDP.Host/appsettings.json` contains a local SQL Server connection
 using Windows integrated authentication. Store local secret values with .NET
 User Secrets:
 
 ```powershell
-cd src/TokenIDP.Service
+cd src/TokenIDP.Host
 
-$secretKey = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-dotnet user-secrets set "Security:KeyBase64" $secretKey
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+
+try {
+    $secretKeyBytes = New-Object byte[] 32
+    $rng.GetBytes($secretKeyBytes)
+    $secretKey = [Convert]::ToBase64String($secretKeyBytes)
+    dotnet user-secrets set "Security:KeyBase64" $secretKey
+}
+finally {
+    $rng.Dispose()
+    Remove-Variable rng, secretKeyBytes, secretKey -ErrorAction SilentlyContinue
+}
 ```
 
 Bootstrap is disabled by default. To opt in locally:
