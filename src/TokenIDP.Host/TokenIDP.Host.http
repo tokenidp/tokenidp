@@ -1,0 +1,6 @@
+@TokenIDP_HostAddress = https://localhost:7292
+
+GET {{TokenIDP_HostAddress}}/.well-known/openid-configuration
+Accept: application/json
+
+###

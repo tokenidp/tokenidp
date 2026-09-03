@@ -119,9 +119,9 @@ public sealed class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<App
     private static IEnumerable<string> GetConfigurationDirectoryCandidates(string directory)
     {
         yield return directory;
-        yield return Path.Combine(directory, "TokenIDP.Service");
+        yield return Path.Combine(directory, "TokenIDP.Host");
         yield return Path.Combine(directory, "IDP.Service");
-        yield return Path.Combine(directory, "src", "TokenIDP.Service");
+        yield return Path.Combine(directory, "src", "TokenIDP.Host");
         yield return Path.Combine(directory, "src", "IDP.Service");
     }
 }

@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>TokenIDP.Service-development</UserSecretsId>
+    <UserSecretsId>TokenIDP.Host-development</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

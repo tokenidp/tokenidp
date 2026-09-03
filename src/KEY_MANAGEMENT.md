@@ -48,7 +48,7 @@ Example `appsettings.json`:
 Store the private key path with .NET user secrets:
 
 ```powershell
-cd src/TokenIDP.Service
+cd src/TokenIDP.Host
 dotnet user-secrets set "TokenOptions:KeyPath" "D:\TokenIDP\signing-key.pem"
 ```
 
